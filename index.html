@@ -16,8 +16,20 @@
   <main>
     <form id="snow-report-form">
       <label for="location">Location:</label>
-      <input type="text" id="location" name="location" required placeholder="Enter location">
 
+      <label for="country">Country:</label>
+      <select id="country" name="country" required>
+        <option value="">Select a country</option>
+        <option value="Austria">Austria</option>
+        <option value="Germany">Germany</option>
+        <option value="Italy">Italy</option>
+        <option value="Slovakia">Slovakia</option>
+      </select>
+      <label for="region">Region:</label>
+      <select id="region" name="region" required>
+        <option value="">Select a region</option>
+      </select>
+      
       <label for="snow-depth">Snow Depth (cm):</label>
       <input type="number" id="snow-depth" name="snow-depth" required placeholder="Enter snow depth">
 
