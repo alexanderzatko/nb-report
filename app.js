@@ -24,7 +24,7 @@ function updateRegions() {
 
 async function initiateOAuth() {
   try {
-    const response = await fetch('http://localhost:3000/api/initiate-oauth', {
+    const response = await fetch('/api/initiate-oauth', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -39,7 +39,7 @@ async function initiateOAuth() {
 
 async function exchangeToken(code) {
   try {
-    const response = await fetch('http://localhost:3000/api/exchange-token', {
+    const response = await fetch('/api/exchange-token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
