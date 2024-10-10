@@ -68,11 +68,21 @@ async function exchangeToken(code) {
 function handleOAuthCallback() {
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get('code');
+  const state = urlParams.get('state');
+  const storedState = localStorage.getItem('oauthState');
+
+  if (state !== storedState) {
+    console.error('State mismatch. Possible CSRF attack.');
+    return;
+  }
+
   if (code) {
     exchangeToken(code);
   }
-}
 
+  // Clear the stored state
+  localStorage.removeItem('oauthState');
+}
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
     navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
@@ -99,5 +109,6 @@ document.getElementById('snow-report-form').addEventListener('submit', function(
 
 document.getElementById('oauth-login-button').addEventListener('click', initiateOAuth);
 
-// Call this function when the page loads to handle OAuth callback
-handleOAuthCallback();
+document.addEventListener('DOMContentLoaded', () => {
+  handleOAuthCallback();
+});
