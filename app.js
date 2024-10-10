@@ -10,9 +10,8 @@ function updateRegions() {
   const regionSelect = document.getElementById('region');
   const selectedCountry = countrySelect.value;
   
-  // Clear existing options
   regionSelect.innerHTML = '<option value="">Select a region</option>';
-  // Populate regions based on selected country
+
   if (selectedCountry in regionData) {
     regionData[selectedCountry].forEach(region => {
       const option = document.createElement('option');
@@ -23,7 +22,46 @@ function updateRegions() {
   }
 }
 
-// Register the service worker
+async function initiateOAuth() {
+  try {
+    const response = await fetch('http://localhost:3000/initiate-oauth', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    const data = await response.json();
+    window.location.href = data.url;
+  } catch (error) {
+    console.error('Failed to initiate OAuth:', error);
+  }
+}
+
+async function exchangeToken(code) {
+  try {
+    const response = await fetch('http://localhost:3000/exchange-token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ code }),
+    });
+    const data = await response.json();
+    localStorage.setItem('access_token', data.access_token);
+    console.log('Token exchanged successfully');
+  } catch (error) {
+    console.error('Failed to exchange token:', error);
+  }
+}
+
+function handleOAuthCallback() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const code = urlParams.get('code');
+  if (code) {
+    exchangeToken(code);
+  }
+}
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
     navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
@@ -34,10 +72,8 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Add event listener for country selection
 document.getElementById('country').addEventListener('change', updateRegions);
 
-// Modify the form submission handler
 document.getElementById('snow-report-form').addEventListener('submit', function(event) {
   event.preventDefault();
   
@@ -45,57 +81,12 @@ document.getElementById('snow-report-form').addEventListener('submit', function(
   const region = document.getElementById('region').value;
   const snowDepth = document.getElementById('snow-depth').value;
   const snowType = document.getElementById('snow-type').value;
+
   console.log(`Country: ${country}, Region: ${region}, Snow Depth: ${snowDepth}, Snow Type: ${snowType}`);
   alert("Report submitted successfully!");
 });
 
+document.getElementById('oauth-login-button').addEventListener('click', initiateOAuth);
 
-
-// OAuth2 configuration
-const oauthConfig = {
-  clientId: 'nbreport',
-  authorizationEndpoint: 'https://nabezky.sk/auth',
-  tokenEndpoint: 'https://nabezky.sk/token',
-  redirectUri: 'https://report.nabezky.sk/nblogin/',
-  scope: 'email'
-};
-
-// Check if user is authenticated
-function isAuthenticated() {
-  return !!localStorage.getItem('access_token');
-}
-
-// Show/hide content based on authentication status
-function updateUIBasedOnAuth() {
-  const loginSection = document.getElementById('login-section');
-  const appContent = document.getElementById('app-content');
-  
-  if (isAuthenticated()) {
-    loginSection.style.display = 'none';
-    appContent.style.display = 'block';
-  } else {
-    loginSection.style.display = 'block';
-    appContent.style.display = 'none';
-  }
-}
-
-// Handle OAuth2 login
-document.getElementById('oauth-login-button').addEventListener('click', function() {
-  const authUrl = `${oauthConfig.authorizationEndpoint}?client_id=${oauthConfig.clientId}&redirect_uri=${encodeURIComponent(oauthConfig.redirectUri)}&response_type=code&scope=${encodeURIComponent(oauthConfig.scope)}`;
-  window.location.href = authUrl;
-});
-
-// Handle OAuth2 callback
-if (window.location.search.includes('code=')) {
-  const urlParams = new URLSearchParams(window.location.search);
-  const code = urlParams.get('code');
-  
-  // Exchange code for token (you'll need to implement this part)
-  exchangeCodeForToken(code).then(token => {
-    localStorage.setItem('access_token', token);
-    updateUIBasedOnAuth();
-  });
-}
-
-// Call this function on page load
-updateUIBasedOnAuth();
+// Call this function when the page loads to handle OAuth callback
+handleOAuthCallback();
