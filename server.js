@@ -14,12 +14,12 @@ const OAUTH_CLIENT_SECRET = process.env.OAUTH_CLIENT_SECRET;
 const OAUTH_REDIRECT_URI = 'http://localhost:8080/callback';
 const OAUTH_PROVIDER_URL = 'https://nabezky.sk';
 
-app.post('/initiate-oauth', (req, res) => {
+app.post('/api/initiate-oauth', (req, res) => {
   const authUrl = `${OAUTH_PROVIDER_URL}/oauth/authorize?client_id=${OAUTH_CLIENT_ID}&redirect_uri=${OAUTH_REDIRECT_URI}&response_type=code`;
   res.json({ url: authUrl });
 });
 
-app.post('/exchange-token', async (req, res) => {
+app.post('/api/exchange-token', async (req, res) => {
   const { code } = req.body;
   try {
     const response = await axios.post(`${OAUTH_PROVIDER_URL}/oauth/token`, {
