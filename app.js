@@ -82,7 +82,33 @@ function handleOAuthCallback() {
 
   // Clear the stored state
   localStorage.removeItem('oauthState');
+
+  // Clear the URL parameters
+  window.history.replaceState({}, document.title, "/");
 }
+
+function handleOAuthCallback() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const code = urlParams.get('code');
+  const state = urlParams.get('state');
+  const storedState = localStorage.getItem('oauthState');
+
+  if (state !== storedState) {
+    console.error('State mismatch. Possible CSRF attack.');
+    return;
+  }
+
+  if (code) {
+    exchangeToken(code);
+  }
+
+  // Clear the stored state
+  localStorage.removeItem('oauthState');
+
+  // Clear the URL parameters
+  window.history.replaceState({}, document.title, "/");
+}
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
     navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
