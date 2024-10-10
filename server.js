@@ -11,7 +11,7 @@ app.use(express.json());
 
 const OAUTH_CLIENT_ID = process.env.OAUTH_CLIENT_ID;
 const OAUTH_CLIENT_SECRET = process.env.OAUTH_CLIENT_SECRET;
-const OAUTH_REDIRECT_URI = 'http://localhost:8080/callback';
+const OAUTH_REDIRECT_URI = 'https://report.nabezky.sk/nblogin/';
 const OAUTH_PROVIDER_URL = 'https://nabezky.sk';
 
 app.post('/api/initiate-oauth', (req, res) => {
