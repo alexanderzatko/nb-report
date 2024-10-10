@@ -24,7 +24,7 @@ function updateRegions() {
 
 async function initiateOAuth() {
   try {
-    const response = await fetch('http://localhost:3000/initiate-oauth', {
+    const response = await fetch('https://report.nabezky.sk:3000/initiate-oauth', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
