@@ -24,16 +24,27 @@ function updateRegions() {
 
 async function initiateOAuth() {
   try {
+    // Generate a random state
+    const state = Math.random().toString(36).substring(2, 15);
+    
+    // Store the state in localStorage
+    localStorage.setItem('oauthState', state);
+
     const response = await fetch('/api/initiate-oauth', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify({ state }),
     });
     const data = await response.json();
-    window.location.href = data.url;
+    if (data.authUrl) {
+      window.location.href = data.authUrl;
+    } else {
+      console.error('No auth URL received');
+    }
   } catch (error) {
-    console.error('Failed to initiate OAuth:', error);
+    console.error('Error initiating OAuth:', error);
   }
 }
 
