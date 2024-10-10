@@ -24,7 +24,7 @@ function updateRegions() {
 
 async function initiateOAuth() {
   try {
-    const response = await fetch('https://report.nabezky.sk/api/initiate-oauth', {
+    const response = await fetch('https://report.nabezky.sk/initiate-oauth', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
