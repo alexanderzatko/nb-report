@@ -21,6 +21,15 @@ app.post('/api/initiate-oauth', (req, res) => {
   res.json({ authUrl });
 });
 
+app.get('/nblogin', (req, res) => {
+  const { code, state } = req.query;
+  
+  // code for validating the state here
+  
+  // Redirect to the frontend with the code
+  res.redirect(`/?code=${code}&state=${state}`);
+});
+
 app.post('/api/exchange-token', async (req, res) => {
   const { code } = req.body;
   try {
