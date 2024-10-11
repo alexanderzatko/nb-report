@@ -204,9 +204,14 @@ document.getElementById('snow-report-form').addEventListener('submit', function(
 document.getElementById('oauth-login-button').addEventListener('click', initiateOAuth);
 
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('DOMContentLoaded event fired');
   updateUIBasedOnAuthState();
   const urlParams = new URLSearchParams(window.location.search);
+  console.log('URL params:', urlParams.toString());
   if (urlParams.has('code')) {
+    console.log('Code parameter found in URL');
     handleOAuthCallback();
+  } else {
+    console.log('No code parameter in URL');
   }
 });
