@@ -34,6 +34,16 @@ function getUserData() {
   return userData;
 }
 
+// authentication
+function toggleAuth() {
+  const userData = getUserData();
+  if (userData && userData.authenticated) {
+    logout();
+  } else {
+    initiateOAuth();
+  }
+}
+
 function logout() {
   localStorage.removeItem('userData');
   updateUIBasedOnAuthState();
@@ -42,17 +52,14 @@ function logout() {
 
 function updateUIBasedOnAuthState() {
   const userData = getUserData();
-  const loginButton = document.getElementById('oauth-login-button');
-  const logoutButton = document.getElementById('logout-button');
+  const authButton = document.getElementById('auth-button');
   const snowReportForm = document.getElementById('snow-report-form');
 
   if (userData && userData.authenticated) {
-    loginButton.style.display = 'none';
-    logoutButton.style.display = 'block';
+    authButton.textContent = 'Logout';
     snowReportForm.style.display = 'block';
   } else {
-    loginButton.style.display = 'block';
-    logoutButton.style.display = 'none';
+    authButton.textContent = 'Login';
     snowReportForm.style.display = 'none';
   }
 }
@@ -171,7 +178,6 @@ if ('serviceWorker' in navigator) {
   });
 }
 document.getElementById('country').addEventListener('change', updateRegions);
-
 document.getElementById('snow-report-form').addEventListener('submit', function(event) {
   event.preventDefault();
   
@@ -184,13 +190,12 @@ document.getElementById('snow-report-form').addEventListener('submit', function(
   alert("Report submitted successfully!");
 });
 
-document.getElementById('oauth-login-button').addEventListener('click', initiateOAuth);
-
-document.getElementById('logout-button').addEventListener('click', logout);
+document.getElementById('auth-button').addEventListener('click', toggleAuth);
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log('DOMContentLoaded event fired');
   updateUIBasedOnAuthState();
+  
   const urlParams = new URLSearchParams(window.location.search);
   console.log('URL params:', urlParams.toString());
   if (urlParams.has('code')) {
