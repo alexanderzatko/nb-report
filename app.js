@@ -39,6 +39,7 @@ function updateUIBasedOnAuthState() {
 
   if (userData && userData.accessToken) {
     // User is logged in
+console.log('firing the show/hide logic');
     if (loginButton) loginButton.style.display = 'none';
     if (snowReportForm) snowReportForm.style.display = 'block';
   } else {
