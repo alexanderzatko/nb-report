@@ -41,18 +41,13 @@ app.post('/api/exchange-token', async (req, res) => {
       redirect_uri: OAUTH_REDIRECT_URI
     });
 
-    const { access_token } = response.data;
-
-    // Fetch additional data using the access token
-    const userDataResponse = await axios.get(`${OAUTH_PROVIDER_URL}/oauth2/userinfo`, {
-      headers: { Authorization: `Bearer ${access_token}` },
-    });
-    const userData = userDataResponse.data;
-
-    // Send both the access token and user data to the client
-    res.json({ access_token, userData });
-    
+    if (response.data && response.data.access_token) {
+      res.json({ authenticated: true });
+    } else {
+      throw new Error('Failed to obtain access token');
+    }
   } catch (error) {
+    console.error('Error exchanging token:', error);
     res.status(500).json({ error: 'Failed to exchange token' });
   }
 });
