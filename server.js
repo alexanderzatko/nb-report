@@ -44,7 +44,7 @@ app.post('/api/exchange-token', async (req, res) => {
     const { access_token } = response.data;
 
     // Fetch additional data using the access token
-    const userDataResponse = await axios.get(`${OAUTH_PROVIDER_URL}/oauth2/userinfo', {
+    const userDataResponse = await axios.get(`${OAUTH_PROVIDER_URL}/oauth2/userinfo`, {
       headers: { Authorization: `Bearer ${access_token}` },
     });
     const userData = userDataResponse.data;
