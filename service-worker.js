@@ -1,10 +1,10 @@
-const CACHE_NAME = 'snow-report-cache-v1';
+const CACHE_NAME = 'snow-report-cache-v2';
 const urlsToCache = [
   '/',
   '/index.html',
   '/styles.css',
   '/app.js',
-  '/manifest.json'
+  '/manifest.json?v=1',
 ];
 
 self.addEventListener('install', function(event) {
