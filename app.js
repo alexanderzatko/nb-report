@@ -27,51 +27,24 @@ function updateRegions() {
 }
 
 function getUserData() {
-  const userData = JSON.parse(localStorage.getItem('user_data'));
+  const userData = JSON.parse(localStorage.getItem('userData'));
   if (userData) {
-    console.log('User email:', userData.email);
-    console.log('Rovas API Key:', userData.rovas_api_key);
-    console.log('Rovas Token:', userData.rovas_token);
-    // Use the data as needed in your application
+    console.log('User is authenticated');
   }
+  return userData;
 }
 
 function updateUIBasedOnAuthState() {
-  const userData = JSON.parse(localStorage.getItem('userData'));
+  const userData = getUserData();
   const loginButton = document.getElementById('oauth-login-button');
   const snowReportForm = document.getElementById('snow-report-form');
 
-  console.log('updateUIBasedOnAuthState called');
-  console.log('userData:', userData);
-
-  if (userData && userData.accessToken) {
-    console.log('User is logged in, hiding login button');
-    if (loginButton) {
-      loginButton.style.display = 'none';
-      console.log('Login button hidden');
-    } else {
-      console.log('Login button not found');
-    }
-    if (snowReportForm) {
-      snowReportForm.style.display = 'block';
-      console.log('Snow report form shown');
-    } else {
-      console.log('Snow report form not found');
-    }
+  if (userData && userData.authenticated) {
+    loginButton.style.display = 'none';
+    snowReportForm.style.display = 'block';
   } else {
-    console.log('User is not logged in, showing login button');
-    if (loginButton) {
-      loginButton.style.display = 'block';
-      console.log('Login button shown');
-    } else {
-      console.log('Login button not found');
-    }
-    if (snowReportForm) {
-      snowReportForm.style.display = 'none';
-      console.log('Snow report form hidden');
-    } else {
-      console.log('Snow report form not found');
-    }
+    loginButton.style.display = 'block';
+    snowReportForm.style.display = 'none';
   }
 }
 
@@ -150,17 +123,18 @@ async function exchangeToken(code) {
       body: JSON.stringify({ code }),
     });
 
-    if (response.ok) {
-      const data = await response.json();
-      localStorage.setItem('userData', JSON.stringify(data));
-      console.log('Access token stored successfully');
-      console.log('User data:', data); // Add this debug line
-      updateUIBasedOnAuthState(); // Make sure this line is here
-    } else {
-      console.error('Failed to exchange token');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    const data = await response.json();
+    localStorage.setItem('userData', JSON.stringify({ authenticated: true }));
+    console.log('Authentication successful');
+    updateUIBasedOnAuthState();
   } catch (error) {
-    console.error('Error exchanging token:', error);
+    console.error('Failed to exchange token:', error);
+    localStorage.removeItem('userData');
+    updateUIBasedOnAuthState();
   }
 }
 
