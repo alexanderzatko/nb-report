@@ -15,8 +15,9 @@ const OAUTH_REDIRECT_URI = 'https://report.nabezky.sk/api/nblogin/';
 const OAUTH_PROVIDER_URL = 'https://nabezky.sk';
 
 app.post('/api/initiate-oauth', (req, res) => {
-  const { state, scopes } = req.body;
-  const authUrl = `${OAUTH_PROVIDER_URL}/oauth2/authorize?client_id=${OAUTH_CLIENT_ID}&redirect_uri=${OAUTH_REDIRECT_URI}&response_type=code&state=${state}`;
+  const { state } = req.body;
+  const scopes = req.body.scopes || ''; // Default to empty string if not provided
+  const authUrl = `${OAUTH_PROVIDER_URL}/oauth2/authorize?client_id=${OAUTH_CLIENT_ID}&redirect_uri=${OAUTH_REDIRECT_URI}&response_type=code&state=${state}&scope=${encodeURIComponent(scopes)}`;
   res.json({ authUrl });
 });
 
