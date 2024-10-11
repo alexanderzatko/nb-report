@@ -4,8 +4,8 @@ const regionData = {
   "Austria": ["The Alps"],
   "Germany": ["The Alps"],
   "Italy": ["The Alps"],
-  "Slovakia": ["Javorie"]
-  "Slovakia": ["Malé Karpaty"]
+  "Slovakia": ["Javorie"],
+  "Slovakia": ["Malé Karpaty"],
   "Czech": ["Javorníky"]
 };
 
