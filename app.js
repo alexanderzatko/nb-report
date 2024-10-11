@@ -193,7 +193,10 @@ document.getElementById('snow-report-form').addEventListener('submit', function(
 
 document.getElementById('oauth-login-button').addEventListener('click', initiateOAuth);
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
   updateUIBasedOnAuthState();
-  handleOAuthCallback();
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has('code')) {
+    handleOAuthCallback();
+  }
 });
