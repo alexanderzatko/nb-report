@@ -178,9 +178,14 @@ if ('serviceWorker' in navigator) {
   });
 }
 document.getElementById('country').addEventListener('change', updateRegions);
+
 document.getElementById('snow-report-form').addEventListener('submit', function(event) {
   event.preventDefault();
-  
+  const userData = getUserData();
+  if (!userData || !userData.authenticated) {
+    alert('Please log in to submit the report.');
+    return;
+  }
   const country = document.getElementById('country').value;
   const region = document.getElementById('region').value;
   const snowDepth = document.getElementById('snow-depth').value;
