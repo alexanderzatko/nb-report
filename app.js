@@ -98,33 +98,42 @@ async function initiateOAuth() {
 }
 
 function handleOAuthCallback() {
+  console.log('handleOAuthCallback called');
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get('code');
   const state = urlParams.get('state');
 
-  // Only perform the check if there's a state parameter in the URL
+  console.log('Code:', code, 'State:', state);
+
   if (state) {
     const storedState = localStorage.getItem('oauthState');
+    console.log('Stored state:', storedState);
     if (state !== storedState) {
       console.error('State mismatch. Possible CSRF attack.');
       return;
     }
-    // Proceed with OAuth logic here
+    console.log('State validation successful');
   } else {
-    // No state parameter, likely initial page load
     console.log('No OAuth state detected, skipping validation.');
   }
 
   if (code) {
+    console.log('Exchanging token');
     exchangeToken(code).then(() => {
+      console.log('Token exchanged successfully');
       updateUIBasedOnAuthState();
+    }).catch(error => {
+      console.error('Error exchanging token:', error);
     });
+  } else {
+    console.log('No code present, skipping token exchange');
   }
-  // Clear the stored state
-  localStorage.removeItem('oauthState');
 
-  // Clear the URL parameters
+  localStorage.removeItem('oauthState');
+  console.log('Cleared stored OAuth state');
+
   window.history.replaceState({}, document.title, "/");
+  console.log('Cleared URL parameters');
 }
 
 async function exchangeToken(code) {
