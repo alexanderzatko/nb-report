@@ -35,7 +35,7 @@ async function initiateOAuth() {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ state }),
+      body: JSON.stringify({ state, scopes: 'email rovas_apikeys' }),
     });
     const data = await response.json();
     if (data.authUrl) {
