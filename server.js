@@ -14,6 +14,25 @@ const OAUTH_CLIENT_SECRET = process.env.OAUTH_CLIENT_SECRET;
 const OAUTH_REDIRECT_URI = 'https://report.nabezky.sk/api/nblogin/';
 const OAUTH_PROVIDER_URL = 'https://nabezky.sk';
 
+const authenticateUser = (req, res, next) => {
+  const token = req.headers['authorization'];
+  if (!token) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  
+  // Here you would typically verify the token
+  // For now, we'll just check if it exists
+  next();
+};
+
+app.post('/api/submit-snow-report', authenticateUser, (req, res) => {
+  
+  // Process the snow report submission
+  
+  console.log('Snow report received:', req.body);
+  res.json({ message: 'Snow report submitted successfully' });
+});
+
 app.post('/api/initiate-oauth', (req, res) => {
   const { state } = req.body;
   const scopes = req.body.scopes || ''; // Default to empty string if not provided
