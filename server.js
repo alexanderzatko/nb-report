@@ -15,9 +15,8 @@ const OAUTH_REDIRECT_URI = 'https://report.nabezky.sk/api/nblogin/';
 const OAUTH_PROVIDER_URL = 'https://nabezky.sk';
 
 app.post('/api/initiate-oauth', (req, res) => {
-  const { state } = req.body;
+  const { state, scopes } = req.body;
   const authUrl = `${OAUTH_PROVIDER_URL}/oauth2/authorize?client_id=${OAUTH_CLIENT_ID}&redirect_uri=${OAUTH_REDIRECT_URI}&response_type=code&state=${state}`;
-//  res.json({ url: authUrl });
   res.json({ authUrl });
 });
 
@@ -33,14 +32,25 @@ app.get('/api/nblogin', (req, res) => {
 app.post('/api/exchange-token', async (req, res) => {
   const { code } = req.body;
   try {
-    const response = await axios.post(`${OAUTH_PROVIDER_URL}/oauth/token`, {
+    const response = await axios.post(`${OAUTH_PROVIDER_URL}/oauth2/token`, {
       grant_type: 'authorization_code',
       client_id: OAUTH_CLIENT_ID,
       client_secret: OAUTH_CLIENT_SECRET,
       code: code,
       redirect_uri: OAUTH_REDIRECT_URI
     });
-    res.json(response.data);
+
+    const { access_token } = response.data;
+
+    // Fetch additional data using the access token
+    const userDataResponse = await axios.get(`${OAUTH_PROVIDER_URL}/oauth2/userinfo', {
+      headers: { Authorization: `Bearer ${access_token}` },
+    });
+    const userData = userDataResponse.data;
+
+    // Send both the access token and user data to the client
+    res.json({ access_token, userData });
+    
   } catch (error) {
     res.status(500).json({ error: 'Failed to exchange token' });
   }
