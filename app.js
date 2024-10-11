@@ -34,16 +34,25 @@ function getUserData() {
   return userData;
 }
 
+function logout() {
+  localStorage.removeItem('userData');
+  updateUIBasedOnAuthState();
+  console.log('User logged out');
+}
+
 function updateUIBasedOnAuthState() {
   const userData = getUserData();
   const loginButton = document.getElementById('oauth-login-button');
+  const logoutButton = document.getElementById('logout-button');
   const snowReportForm = document.getElementById('snow-report-form');
 
   if (userData && userData.authenticated) {
     loginButton.style.display = 'none';
+    logoutButton.style.display = 'block';
     snowReportForm.style.display = 'block';
   } else {
     loginButton.style.display = 'block';
+    logoutButton.style.display = 'none';
     snowReportForm.style.display = 'none';
   }
 }
@@ -176,6 +185,8 @@ document.getElementById('snow-report-form').addEventListener('submit', function(
 });
 
 document.getElementById('oauth-login-button').addEventListener('click', initiateOAuth);
+
+document.getElementById('logout-button').addEventListener('click', logout);
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log('DOMContentLoaded event fired');
