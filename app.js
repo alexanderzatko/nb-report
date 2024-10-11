@@ -37,15 +37,37 @@ function updateUIBasedOnAuthState() {
   const loginButton = document.getElementById('oauth-login-button');
   const snowReportForm = document.getElementById('snow-report-form');
 
+  console.log('updateUIBasedOnAuthState called');
+  console.log('userData:', userData);
+
   if (userData && userData.accessToken) {
-    // User is logged in
-console.log('firing the show/hide logic');
-    if (loginButton) loginButton.style.display = 'none';
-    if (snowReportForm) snowReportForm.style.display = 'block';
+    console.log('User is logged in, hiding login button');
+    if (loginButton) {
+      loginButton.style.display = 'none';
+      console.log('Login button hidden');
+    } else {
+      console.log('Login button not found');
+    }
+    if (snowReportForm) {
+      snowReportForm.style.display = 'block';
+      console.log('Snow report form shown');
+    } else {
+      console.log('Snow report form not found');
+    }
   } else {
-    // User is not logged in
-    if (loginButton) loginButton.style.display = 'block';
-    if (snowReportForm) snowReportForm.style.display = 'none';
+    console.log('User is not logged in, showing login button');
+    if (loginButton) {
+      loginButton.style.display = 'block';
+      console.log('Login button shown');
+    } else {
+      console.log('Login button not found');
+    }
+    if (snowReportForm) {
+      snowReportForm.style.display = 'none';
+      console.log('Snow report form hidden');
+    } else {
+      console.log('Snow report form not found');
+    }
   }
 }
 
@@ -105,40 +127,6 @@ function handleOAuthCallback() {
   window.history.replaceState({}, document.title, "/");
 }
 
-async function handleOAuthCallback() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const code = urlParams.get('code');
-  const state = urlParams.get('state');
-  const storedState = localStorage.getItem('oauth_state');
-
-  if (state !== storedState) {
-    console.error('Invalid state parameter. Possible CSRF attack.');
-    return;
-  }
-
-  if (!code) {
-    console.error('No code parameter found in URL');
-    return;
-  }
-
-  try {
-    localStorage.removeItem('oauth_state');
-    await exchangeToken(code);
-    
-    // Remove the code and state from the URL
-    const newUrl = window.location.href.split('?')[0];
-    window.history.pushState({}, document.title, newUrl);
-
-    // Update UI to reflect logged-in state
-    exchangeToken(code).then(() => {
-      updateUIBasedOnAuthState();
-    });
-    
-  } catch (error) {
-    console.error('Error during token exchange:', error);
-  }
-}
-
 async function exchangeToken(code) {
   try {
     const response = await fetch('/api/exchange-token', {
@@ -148,12 +136,18 @@ async function exchangeToken(code) {
       },
       body: JSON.stringify({ code }),
     });
-    const data = await response.json();
-    localStorage.setItem('access_token', data.access_token);
-    localStorage.setItem('user_data', JSON.stringify(data.userData));
-    console.log('Token exchanged successfully');
+
+    if (response.ok) {
+      const data = await response.json();
+      localStorage.setItem('userData', JSON.stringify(data));
+      console.log('Access token stored successfully');
+      console.log('User data:', data); // Add this debug line
+      updateUIBasedOnAuthState(); // Make sure this line is here
+    } else {
+      console.error('Failed to exchange token');
+    }
   } catch (error) {
-    console.error('Failed to exchange token:', error);
+    console.error('Error exchanging token:', error);
   }
 }
 
