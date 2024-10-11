@@ -72,6 +72,36 @@ async function initiateOAuth() {
   }
 }
 
+function handleOAuthCallback() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const code = urlParams.get('code');
+  const state = urlParams.get('state');
+
+  // Only perform the check if there's a state parameter in the URL
+  if (state) {
+    const storedState = localStorage.getItem('oauthState');
+    if (state !== storedState) {
+      console.error('State mismatch. Possible CSRF attack.');
+      return;
+    }
+    // Proceed with OAuth logic here
+  } else {
+    // No state parameter, likely initial page load
+    console.log('No OAuth state detected, skipping validation.');
+  }
+
+  if (code) {
+    exchangeToken(code).then(() => {
+      updateUIBasedOnAuthState();
+    });
+  }
+  // Clear the stored state
+  localStorage.removeItem('oauthState');
+
+  // Clear the URL parameters
+  window.history.replaceState({}, document.title, "/");
+}
+
 async function handleOAuthCallback() {
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get('code');
