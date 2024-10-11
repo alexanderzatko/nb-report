@@ -58,6 +58,37 @@ async function initiateOAuth() {
   }
 }
 
+async function handleOAuthCallback() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const code = urlParams.get('code');
+  const state = urlParams.get('state');
+  const storedState = localStorage.getItem('oauth_state');
+
+  if (state !== storedState) {
+    console.error('Invalid state parameter. Possible CSRF attack.');
+    return;
+  }
+
+  if (!code) {
+    console.error('No code parameter found in URL');
+    return;
+  }
+
+  try {
+    localStorage.removeItem('oauth_state');
+    await exchangeToken(code);
+    
+    // Remove the code and state from the URL
+    const newUrl = window.location.href.split('?')[0];
+    window.history.pushState({}, document.title, newUrl);
+
+    // Update UI to reflect logged-in state
+    updateUIBasedOnAuthState();
+  } catch (error) {
+    console.error('Error during token exchange:', error);
+  }
+}
+
 async function exchangeToken(code) {
   try {
     const response = await fetch('/api/exchange-token', {
@@ -74,60 +105,6 @@ async function exchangeToken(code) {
   } catch (error) {
     console.error('Failed to exchange token:', error);
   }
-}
-
-function handleOAuthCallback() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const code = urlParams.get('code');
-  const state = urlParams.get('state');
-
-  // Only perform the check if there's a state parameter in the URL
-  if (state) {
-    const storedState = localStorage.getItem('oauthState');
-    if (state !== storedState) {
-      console.error('State mismatch. Possible CSRF attack.');
-      return;
-    }
-    // Proceed with OAuth logic here
-  } else {
-    // No state parameter, likely initial page load
-    console.log('No OAuth state detected, skipping validation.');
-  }
-
-  if (code) {
-    exchangeToken(code);
-  }
-
-  function handleOAuthCallback() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const code = urlParams.get('code');
-  const state = urlParams.get('state');
-
-  // Only perform the check if there's a state parameter in the URL
-  if (state) {
-    const storedState = localStorage.getItem('oauthState');
-    if (state !== storedState) {
-      console.error('State mismatch. Possible CSRF attack.');
-      return;
-    }
-    // Proceed with OAuth logic here (e.g., exchanging the code for a token)
-    if (code) {
-      exchangeToken(code);
-    }
-  } else {
-    // No state parameter, likely initial page load
-    console.log('No OAuth state detected, skipping validation.');
-  }
-
-  // Clear the stored state and remove URL parameters
-  localStorage.removeItem('oauthState');
-  window.history.replaceState({}, document.title, window.location.pathname);
-}
-  // Clear the stored state
-  localStorage.removeItem('oauthState');
-
-  // Clear the URL parameters
-  window.history.replaceState({}, document.title, "/");
 }
 
 if ('serviceWorker' in navigator) {
