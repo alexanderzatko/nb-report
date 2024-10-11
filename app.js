@@ -32,6 +32,20 @@ function getUserData() {
   }
 }
 
+function updateUIBasedOnAuthState() {
+  const userData = JSON.parse(localStorage.getItem('userData'));
+  const loginButton = document.getElementById('oauth-login-button');
+  const snowReportForm = document.getElementById('snow-report-form');
+  
+  if (userData && userData.accessToken) {
+    if (loginButton) loginButton.style.display = 'none';
+    if (snowReportForm) snowReportForm.style.display = 'block';
+  } else {
+    if (loginButton) loginButton.style.display = 'block';
+    if (snowReportForm) snowReportForm.style.display = 'none';
+  }
+}
+
 async function initiateOAuth() {
   try {
     // Generate a random state
@@ -83,7 +97,10 @@ async function handleOAuthCallback() {
     window.history.pushState({}, document.title, newUrl);
 
     // Update UI to reflect logged-in state
-    updateUIBasedOnAuthState();
+    exchangeToken(code).then(() => {
+      updateUIBasedOnAuthState();
+    });
+    
   } catch (error) {
     console.error('Error during token exchange:', error);
   }
@@ -146,6 +163,7 @@ document.getElementById('snow-report-form').addEventListener('submit', function(
 
 document.getElementById('oauth-login-button').addEventListener('click', initiateOAuth);
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function() {
+  updateUIBasedOnAuthState();
   handleOAuthCallback();
 });
