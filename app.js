@@ -36,11 +36,13 @@ function updateUIBasedOnAuthState() {
   const userData = JSON.parse(localStorage.getItem('userData'));
   const loginButton = document.getElementById('oauth-login-button');
   const snowReportForm = document.getElementById('snow-report-form');
-  
+
   if (userData && userData.accessToken) {
+    // User is logged in
     if (loginButton) loginButton.style.display = 'none';
     if (snowReportForm) snowReportForm.style.display = 'block';
   } else {
+    // User is not logged in
     if (loginButton) loginButton.style.display = 'block';
     if (snowReportForm) snowReportForm.style.display = 'none';
   }
