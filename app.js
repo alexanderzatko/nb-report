@@ -22,6 +22,16 @@ function updateRegions() {
   }
 }
 
+function getUserData() {
+  const userData = JSON.parse(localStorage.getItem('user_data'));
+  if (userData) {
+    console.log('User email:', userData.email);
+    console.log('Rovas API Key:', userData.rovas_api_key);
+    console.log('Rovas Token:', userData.rovas_token);
+    // Use the data as needed in your application
+  }
+}
+
 async function initiateOAuth() {
   try {
     // Generate a random state
@@ -59,6 +69,7 @@ async function exchangeToken(code) {
     });
     const data = await response.json();
     localStorage.setItem('access_token', data.access_token);
+    localStorage.setItem('user_data', JSON.stringify(data.userData));
     console.log('Token exchanged successfully');
   } catch (error) {
     console.error('Failed to exchange token:', error);
