@@ -37,9 +37,13 @@ function toggleAuth() {
 }
 
 function logout() {
-  localStorage.removeItem('userData');
-  updateUIBasedOnAuthState();
-  console.log('User logged out');
+  fetch('/api/logout', { method: 'POST' })
+    .then(() => {
+      localStorage.removeItem('sessionId');
+      updateUIBasedOnAuthState();
+      console.log('User logged out');
+    })
+    .catch(error => console.error('Logout error:', error));
 }
 
 function updateUIBasedOnAuthState() {
