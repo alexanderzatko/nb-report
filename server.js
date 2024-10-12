@@ -37,6 +37,17 @@ const authenticateUser = (req, res, next) => {
   next();
 };
 
+app.post('/api/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Error destroying session:', err);
+      return res.status(500).json({ message: 'Error logging out' });
+    }
+    res.clearCookie('connect.sid'); // Clear the session cookie
+    res.json({ message: 'Logged out successfully' });
+  });
+});
+
 // Session middleware
 app.use(session({
   secret: process.env.SESSION_SECRET, // Set in the .env file
