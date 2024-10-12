@@ -9,7 +9,6 @@ const options = {
     database: process.env.DB_NAME
 };
 const sessionStore = new MySQLStore(options);
-const app = express();
 const axios = require('axios');
 const cors = require('cors');
 require('dotenv').config();
