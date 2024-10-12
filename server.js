@@ -1,6 +1,14 @@
 const express = require('express');
 const session = require('express-session');
-const MongoStore = require('connect-mongo');
+const MySQLStore = require('express-mysql-session')(session);
+const options = {
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME
+};
+const sessionStore = new MySQLStore(options);
 const app = express();
 const axios = require('axios');
 const cors = require('cors');
@@ -30,13 +38,10 @@ const authenticateUser = (req, res, next) => {
 
 // Session middleware
 app.use(session({
-  secret: process.env.SESSION_SECRET, // Set this in your .env file
+  secret: process.env.SESSION_SECRET, // Set in the .env file
   resave: false,
   saveUninitialized: false,
-  store: MongoStore.create({
-    mongoUrl: process.env.MONGODB_URI, // Set this in your .env file
-    collectionName: 'sessions'
-  }),
+  store: sessionStore,
   cookie: {
     secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
     httpOnly: true,
