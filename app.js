@@ -38,13 +38,33 @@ function toggleAuth() {
 }
 
 function logout() {
-  fetch('/api/logout', { method: 'POST' })
+  const sessionId = localStorage.getItem('sessionId');
+  if (!sessionId) {
+    console.log('No active session to log out');
+    updateUIBasedOnAuthState();
+    return;
+  }
+
+  fetch('/api/logout', { 
+    method: 'POST',
+    headers: {
+      'Authorization': sessionId
+    }
+  })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Logout failed');
+      }
+      return response.json();
+    })
     .then(() => {
       localStorage.removeItem('sessionId');
       updateUIBasedOnAuthState();
-      console.log('User logged out');
+      console.log('User logged out successfully');
     })
-    .catch(error => console.error('Logout error:', error));
+    .catch(error => {
+      console.error('Logout error:', error);
+    });
 }
 
 function updateUIBasedOnAuthState() {
