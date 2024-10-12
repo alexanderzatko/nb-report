@@ -74,29 +74,24 @@ app.get('/api/nblogin', (req, res) => {
 
 app.post('/api/exchange-token', async (req, res) => {
   const { code } = req.body;
+  
   try {
-    const response = await axios.post(`${OAUTH_PROVIDER_URL}/oauth2/token`, {
-      grant_type: 'authorization_code',
+    const response = await axios.post(TOKEN_URL, {
       client_id: OAUTH_CLIENT_ID,
       client_secret: OAUTH_CLIENT_SECRET,
       code: code,
       redirect_uri: OAUTH_REDIRECT_URI
     });
-  
+    
     if (response.data && response.data.access_token) {
-      
-      // Instead of sending the token to the client, we store it in the session
-      req.session.accessToken = userData.access_token;
-      req.session.userData = userData;
-      
-      // Sending only a session identifier to the client
-      res.json({ sessionId: req.sessionID });
+      req.session.accessToken = response.data.access_token;
+      res.json(response.data);
     } else {
-      throw new Error('Failed to obtain access token');
+      res.status(400).json({ error: 'Failed to obtain access token' });
     }
   } catch (error) {
     console.error('Error exchanging token:', error);
-    res.status(500).json({ error: 'Failed to exchange token' });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
