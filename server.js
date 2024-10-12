@@ -78,6 +78,7 @@ app.post('/api/exchange-token', async (req, res) => {
   
   try {
     const response = await axios.post(TOKEN_URL, {
+      grant_type: 'authorization_code',
       client_id: OAUTH_CLIENT_ID,
       client_secret: OAUTH_CLIENT_SECRET,
       code: code,
