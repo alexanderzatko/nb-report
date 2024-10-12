@@ -1,4 +1,7 @@
 const express = require('express');
+const session = require('express-session');
+const MongoStore = require('connect-mongo');
+const app = express();
 const axios = require('axios');
 const cors = require('cors');
 require('dotenv').config();
@@ -24,6 +27,22 @@ const authenticateUser = (req, res, next) => {
   // For now, we'll just check if it exists
   next();
 };
+
+// Session middleware
+app.use(session({
+  secret: process.env.SESSION_SECRET, // Set this in your .env file
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGODB_URI, // Set this in your .env file
+    collectionName: 'sessions'
+  }),
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+    httpOnly: true,
+    maxAge: 1000 * 60 * 60 * 24 // 1 day
+  }
+}));
 
 app.post('/api/submit-snow-report', authenticateUser, (req, res) => {
   
@@ -59,15 +78,29 @@ app.post('/api/exchange-token', async (req, res) => {
       code: code,
       redirect_uri: OAUTH_REDIRECT_URI
     });
-
+  
     if (response.data && response.data.access_token) {
-      res.json({ authenticated: true });
+      
+      // Instead of sending the token to the client, we store it in the session
+      req.session.accessToken = userData.access_token;
+      req.session.userData = userData;
+      
+      // Sending only a session identifier to the client
+      res.json({ sessionId: req.sessionID });
     } else {
       throw new Error('Failed to obtain access token');
     }
   } catch (error) {
     console.error('Error exchanging token:', error);
     res.status(500).json({ error: 'Failed to exchange token' });
+  }
+});
+
+app.get('/api/user-data', (req, res) => {
+  if (req.session.userData) {
+    res.json(req.session.userData);
+  } else {
+    res.status(401).json({ error: 'Not authenticated' });
   }
 });
 
