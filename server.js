@@ -53,15 +53,16 @@ app.post('/api/logout', authenticateUser, (req, res) => {
 
 // Session middleware
 app.use(session({
-  secret: process.env.SESSION_SECRET, // Set in the .env file
-  resave: false,
-  saveUninitialized: false,
-  store: sessionStore,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
-    httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 24 // 1 day
-  }
+    key: 'session_cookie_name',
+    secret: process.env.SESSION_SECRET, // Set in the .env file
+    resave: false,
+    saveUninitialized: false,
+    store: sessionStore,
+    cookie: {
+        secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+        httpOnly: true,
+        maxAge: 1000 * 60 * 60 * 24 // 1 day
+        }
 }));
 
 app.post('/api/submit-snow-report', authenticateUser, (req, res) => {
