@@ -34,15 +34,21 @@ const authenticateUser = (req, res, next) => {
   next();
 };
 
-app.post('/api/logout', (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      console.error('Error destroying session:', err);
-      return res.status(500).json({ message: 'Error logging out' });
-    }
-    res.clearCookie('connect.sid'); // Clear the session cookie
-    res.json({ message: 'Logged out successfully' });
-  });
+app.post('/api/logout', authenticateUser, (req, res) => {
+  try {
+    // Destroy the session
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('Session destruction error:', err);
+        return res.status(500).json({ error: 'Failed to destroy session' });
+      }
+      res.clearCookie('connect.sid'); // Clear the session cookie
+      res.status(200).json({ message: 'Logged out successfully' });
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ error: 'Internal server error during logout' });
+  }
 });
 
 // Session middleware
