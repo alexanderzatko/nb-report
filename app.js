@@ -26,10 +26,11 @@ function updateRegions() {
   }
 }
 
-// authentication
 function toggleAuth() {
-  const userData = getUserData();
-  if (userData && userData.authenticated) {
+  console.log('toggleAuth called');
+  const sessionId = localStorage.getItem('sessionId');
+  console.log('Current sessionId:', sessionId);  // Add this line
+  if (sessionId) {
     logout();
   } else {
     initiateOAuth();
