@@ -27,13 +27,10 @@ const OAUTH_PROVIDER_URL = 'https://nabezky.sk';
 const TOKEN_URL = process.env.TOKEN_URL || 'https://nabezky.sk/oauth2/token';
 
 const authenticateUser = (req, res, next) => {
-  const token = req.headers['authorization'];
-  if (!token) {
-    return res.status(401).json({ error: 'Authentication required' });
+  const token = req.headers.authorization;
+  if (!token && (!req.session || !req.session.accessToken)) {
+    return res.status(401).json({ message: 'Unauthorized: No token provided' });
   }
-  
-  // Here you would typically verify the token
-  // For now, we'll just check if it exists
   next();
 };
 
