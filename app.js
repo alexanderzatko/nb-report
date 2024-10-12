@@ -26,14 +26,6 @@ function updateRegions() {
   }
 }
 
-function getUserData() {
-  const userData = JSON.parse(localStorage.getItem('userData'));
-  if (userData) {
-    console.log('User is authenticated');
-  }
-  return userData;
-}
-
 // authentication
 function toggleAuth() {
   const userData = getUserData();
@@ -51,11 +43,11 @@ function logout() {
 }
 
 function updateUIBasedOnAuthState() {
-  const userData = getUserData();
+  const sessionId = localStorage.getItem('sessionId');
   const authButton = document.getElementById('auth-button');
   const snowReportForm = document.getElementById('snow-report-form');
 
-  if (userData && userData.authenticated) {
+  if (sessionId) {
     authButton.textContent = 'Logout';
     snowReportForm.style.display = 'block';
   } else {
@@ -77,7 +69,7 @@ async function initiateOAuth() {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ state, scopes: 'email rovas_apikeys' }),
+      body: JSON.stringify({ state, scopes: 'email' }),
     });
     const data = await response.json();
     if (data.authUrl) {
@@ -140,17 +132,43 @@ async function exchangeToken(code) {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error('Failed to exchange token');
     }
 
     const data = await response.json();
-    localStorage.setItem('userData', JSON.stringify({ authenticated: true }));
-    console.log('Authentication successful');
+    
+    // Store only the session ID
+    localStorage.setItem('sessionId', data.sessionId);
+
+    // Update UI
     updateUIBasedOnAuthState();
+    console.log('Token exchange successful');
   } catch (error) {
-    console.error('Failed to exchange token:', error);
-    localStorage.removeItem('userData');
-    updateUIBasedOnAuthState();
+    console.error('Error exchanging token:', error);
+  }
+}
+
+async function getUserData() {
+  const sessionId = localStorage.getItem('sessionId');
+  if (!sessionId) {
+    return null;
+  }
+
+  try {
+    const response = await fetch('/api/user-data', {
+      headers: {
+        'Cookie': `connect.sid=${sessionId}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch user data');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    return null;
   }
 }
 
