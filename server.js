@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
@@ -11,7 +13,6 @@ const options = {
 const sessionStore = new MySQLStore(options);
 const axios = require('axios');
 const cors = require('cors');
-require('dotenv').config();
 
 const app = express();
 const port = 3000;
