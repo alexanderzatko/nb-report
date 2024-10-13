@@ -182,7 +182,7 @@ async function getUserData() {
   try {
     const response = await fetch('/api/user-data', {
       headers: {
-        'Cookie': `connect.sid=${sessionId}`
+        'Cookie': `session_cookie_name=${sessionId}`
       }
     });
 
