@@ -1,21 +1,8 @@
 require('dotenv').config();
+
 const express = require('express');
 const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
-const cors = require('cors');
-const axios = require('axios');
-
-const app = express();
-const port = process.env.PORT || 3000;
-
-app.use(cors({
-  origin: process.env.CLIENT_URL,
-  credentials: true
-}));
-
-app.use(express.json());
-
-// Database configuration
 const options = {
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
@@ -23,99 +10,114 @@ const options = {
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME
 };
-
 const sessionStore = new MySQLStore(options);
+const axios = require('axios');
+const cors = require('cors');
 
-// Session middleware setup
-app.use(session({
-    secret: process.env.SESSION_SECRET,
-    store: sessionStore,
-    resave: false,
-    saveUninitialized: false,
-    cookie: { 
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
-}));
+const app = express();
+const port = 3000;
+
+app.use(cors());
+app.use(express.json());
+
+const OAUTH_CLIENT_ID = process.env.OAUTH_CLIENT_ID;
+const OAUTH_CLIENT_SECRET = process.env.OAUTH_CLIENT_SECRET;
+const OAUTH_REDIRECT_URI = 'https://report.nabezky.sk/api/nblogin/';
+const OAUTH_PROVIDER_URL = 'https://nabezky.sk';
+const TOKEN_URL = process.env.TOKEN_URL || 'https://nabezky.sk/oauth2/token';
 
 const authenticateUser = (req, res, next) => {
-  const token = req.headers.authorization || (req.session && req.session.token);
-  if (!token) {
-    return res.status(401).json({ message: 'No token provided' });
+  const token = req.headers.authorization;
+  if (!token && (!req.session || !req.session.accessToken)) {
+    return res.status(401).json({ message: 'Unauthorized: No token provided' });
   }
   next();
 };
 
 app.post('/api/logout', authenticateUser, (req, res) => {
   try {
-    if (req.session) {
-      req.session.destroy((err) => {
-        if (err) {
-          console.error('Error destroying session:', err);
-          return res.status(500).json({ message: 'Error logging out' });
-        }
-        res.json({ message: 'Logged out successfully' });
-      });
-    } else {
-      res.json({ message: 'Logged out successfully' });
-    }
+    // Destroy the session
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('Session destruction error:', err);
+        return res.status(500).json({ error: 'Failed to destroy session' });
+      }
+      res.clearCookie('connect.sid'); // Clear the session cookie
+      res.status(200).json({ message: 'Logged out successfully' });
+    });
   } catch (error) {
     console.error('Logout error:', error);
-    res.status(500).json({ message: 'Error logging out' });
+    res.status(500).json({ error: 'Internal server error during logout' });
   }
 });
 
+// Session middleware
+app.use(session({
+    key: 'session_cookie_name',
+    secret: process.env.SESSION_SECRET, // Set in the .env file
+    resave: false,
+    saveUninitialized: false,
+    store: sessionStore,
+    cookie: {
+        secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+        httpOnly: true,
+        maxAge: 1000 * 60 * 60 * 24 // 1 day
+        }
+}));
+
 app.post('/api/submit-snow-report', authenticateUser, (req, res) => {
-  console.log('Received snow report:', req.body);
+  
+  // Process the snow report submission
+  
+  console.log('Snow report received:', req.body);
   res.json({ message: 'Snow report submitted successfully' });
 });
 
 app.post('/api/initiate-oauth', (req, res) => {
-  const { clientId, redirectUri, scope, state } = req.body;
-  const authorizationUrl = `https://auth.northernbasin.ca/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${state}`;
-  res.json({ url: authorizationUrl });
+  const { state } = req.body;
+  const scopes = req.body.scopes || ''; // Default to empty string if not provided
+  const authUrl = `${OAUTH_PROVIDER_URL}/oauth2/authorize?client_id=${OAUTH_CLIENT_ID}&redirect_uri=${OAUTH_REDIRECT_URI}&response_type=code&state=${state}&scope=${encodeURIComponent(scopes)}`;
+  res.json({ authUrl });
 });
 
 app.get('/api/nblogin', (req, res) => {
   const { code, state } = req.query;
-  if (!state) {
-    return res.status(400).send('State parameter is missing');
-  }
-  res.redirect(`${process.env.CLIENT_URL}/callback?code=${code}&state=${state}`);
+  
+  // code for validating the state here
+  
+  // Redirect to the frontend with the code
+  res.redirect(`/?code=${code}&state=${state}`);
 });
 
 app.post('/api/exchange-token', async (req, res) => {
-  const { code, redirectUri, clientId, clientSecret } = req.body;
+  const { code } = req.body;
+  
   try {
-    const response = await axios.post('https://auth.northernbasin.ca/oauth2/token', null, {
-      params: {
-        grant_type: 'authorization_code',
-        code,
-        redirect_uri: redirectUri,
-        client_id: clientId,
-        client_secret: clientSecret
-      },
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
+    const response = await axios.post(TOKEN_URL, {
+      grant_type: 'authorization_code',
+      client_id: OAUTH_CLIENT_ID,
+      client_secret: OAUTH_CLIENT_SECRET,
+      code: code,
+      redirect_uri: OAUTH_REDIRECT_URI
     });
     
-    if (req.session) {
-      req.session.token = response.data.access_token;
+    if (response.data && response.data.access_token) {
+      req.session.accessToken = response.data.access_token;
+      res.json(response.data);
+    } else {
+      res.status(400).json({ error: 'Failed to obtain access token' });
     }
-    
-    res.json(response.data);
   } catch (error) {
-    console.error('Token exchange error:', error.response ? error.response.data : error.message);
-    res.status(500).json({ message: 'Error exchanging token' });
+    console.error('Error exchanging token:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-app.get('/api/user-data', authenticateUser, (req, res) => {
-  if (req.session && req.session.token) {
-    res.json({ token: req.session.token });
+app.get('/api/user-data', (req, res) => {
+  if (req.session.userData) {
+    res.json(req.session.userData);
   } else {
-    res.status(401).json({ message: 'Not authenticated' });
+    res.status(401).json({ error: 'Not authenticated' });
   }
 });
 
