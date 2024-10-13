@@ -107,7 +107,7 @@ async function initiateOAuth() {
   }
 }
 
-function handleOAuthCallback() {
+async function handleOAuthCallback() {
   console.log('handleOAuthCallback called');
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get('code');
