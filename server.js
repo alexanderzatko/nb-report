@@ -115,11 +115,17 @@ app.get('/api/user-data', async (req, res) => {
   if (req.session.accessToken) {
     try {
       // Fetch user data from Drupal server using the access token
-      const response = await axios.get(`${OAUTH_PROVIDER_URL}/nabezky/rules/rules_retrieve_data_for_the_nb_report_app`, {
-        headers: {
-          'Authorization': `Bearer ${req.session.accessToken}`
+      const response = await axios.post(
+        `${OAUTH_PROVIDER_URL}/nabezky/rules/rules_retrieve_data_for_the_nb_report_app`,
+        {},
+        {
+          headers: {
+            'Authorization': `Bearer ${req.session.accessToken}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
         }
-      });
+      );
 
       // Send the user data back to the client
       res.json(response.data);
