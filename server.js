@@ -111,6 +111,27 @@ app.post('/api/exchange-token', async (req, res) => {
   }
 });
 
+app.get('/api/user-data', async (req, res) => {
+  if (req.session.accessToken) {
+    try {
+      // Fetch user data from Drupal server using the access token
+      const response = await axios.get(`${OAUTH_PROVIDER_URL}/nabezky/rules/rules_retrieve_data_for_the_nb_report_app`, {
+        headers: {
+          'Authorization': `Bearer ${req.session.accessToken}`
+        }
+      });
+
+      // Send the user data back to the client
+      res.json(response.data);
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      res.status(500).json({ error: 'Failed to fetch user data' });
+    }
+  } else {
+    res.status(401).json({ error: 'Not authenticated' });
+  }
+});
+
 app.get('/api/user-data', (req, res) => {
   if (req.session.accessToken) {
     
