@@ -180,16 +180,10 @@ async function getUserData() {
   }
 
   try {
-    const response = await fetch('/api/user-data', {
-      headers: {
-        'Cookie': `session_cookie_name=${sessionId}`
-      }
-    });
-
+    const response = await fetch('/api/user-data');
     if (!response.ok) {
       throw new Error('Failed to fetch user data');
     }
-
     return await response.json();
   } catch (error) {
     console.error('Error fetching user data:', error);
@@ -224,7 +218,7 @@ document.getElementById('country').addEventListener('change', updateRegions);
 
 document.getElementById('snow-report-form').addEventListener('submit', function(event) {
   event.preventDefault();
-  const userData = getUserData();
+  const userData = await getUserData();
   if (!userData || !userData.authenticated) {
     alert('Please log in to submit the report.');
     return;
