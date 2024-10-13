@@ -81,6 +81,17 @@ function updateUIBasedOnAuthState() {
   }
 }
 
+function updateUIWithUserData(userData) {
+
+  console.log(userData);
+  // Update UI elements with user data
+  // For example:
+//  const userInfoElement = document.getElementById('user-info');
+//  if (userInfoElement) {
+//    userInfoElement.textContent = `Welcome, ${userData.name} (${userData.role})`;
+//  }
+}
+
 async function initiateOAuth() {
   try {
     // Generate a random state
@@ -165,7 +176,13 @@ async function exchangeToken(code) {
     
     // Store only the session ID
     localStorage.setItem('sessionId', data.sessionId);
-
+    
+    // Fetch user data after successful token exchange
+    const userData = await getUserData();
+    if (userData) {
+      updateUIWithUserData(userData);
+    }
+    
     // Update UI
     updateUIBasedOnAuthState();
     console.log('Token exchange successful');
@@ -185,7 +202,9 @@ async function getUserData() {
     if (!response.ok) {
       throw new Error('Failed to fetch user data');
     }
-    return await response.json();
+    const userData = await response.json();
+    console.log('User data:', userData);
+    return userData;
   } catch (error) {
     console.error('Error fetching user data:', error);
     return null;
