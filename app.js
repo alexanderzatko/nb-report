@@ -129,12 +129,13 @@ async function handleOAuthCallback() {
 
   if (code) {
     console.log('Exchanging token');
-    exchangeToken(code).then(() => {
+    try {
+      await exchangeToken(code);
       console.log('Token exchanged successfully');
       updateUIBasedOnAuthState();
-    }).catch(error => {
+    } catch (error) {
       console.error('Error exchanging token:', error);
-    });
+    }
   } else {
     console.log('No code present, skipping token exchange');
   }
@@ -216,20 +217,25 @@ if ('serviceWorker' in navigator) {
 }
 document.getElementById('country').addEventListener('change', updateRegions);
 
-document.getElementById('snow-report-form').addEventListener('submit', function(event) {
+document.getElementById('snow-report-form').addEventListener('submit', async function(event) {
   event.preventDefault();
-  const userData = await getUserData();
-  if (!userData || !userData.authenticated) {
-    alert('Please log in to submit the report.');
-    return;
-  }
-  const country = document.getElementById('country').value;
-  const region = document.getElementById('region').value;
-  const snowDepth = document.getElementById('snow-depth').value;
-  const snowType = document.getElementById('snow-type').value;
+  try {
+    const userData = await getUserData();
+    if (!userData || !userData.authenticated) {
+      alert('Please log in to submit the report.');
+      return;
+    }
+    const country = document.getElementById('country').value;
+    const region = document.getElementById('region').value;
+    const snowDepth = document.getElementById('snow-depth').value;
+    const snowType = document.getElementById('snow-type').value;
 
-  console.log(`Country: ${country}, Region: ${region}, Snow Depth: ${snowDepth}, Snow Type: ${snowType}`);
-  alert("Report submitted successfully!");
+    console.log(`Country: ${country}, Region: ${region}, Snow Depth: ${snowDepth}, Snow Type: ${snowType}`);
+    alert("Report submitted successfully!");
+  } catch (error) {
+    console.error('Error submitting snow report:', error);
+    alert('An error occurred while submitting the report. Please try again.');
+  }
 });
 
 document.getElementById('auth-button').addEventListener('click', toggleAuth);
