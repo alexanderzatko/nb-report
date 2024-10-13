@@ -112,8 +112,11 @@ app.post('/api/exchange-token', async (req, res) => {
 });
 
 app.get('/api/user-data', (req, res) => {
-  if (req.session.userData) {
-    res.json(req.session.userData);
+  if (req.session.accessToken) {
+    
+      // insert code to fetch actual user data using the access token
+      
+    res.json({ authenticated: true });
   } else {
     res.status(401).json({ error: 'Not authenticated' });
   }
