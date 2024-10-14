@@ -174,18 +174,19 @@ async function exchangeToken(code) {
 
     const data = await response.json();
     
-    // Store only the session ID
-    localStorage.setItem('sessionId', data.sessionId);
-    
-    // Fetch user data after successful token exchange
-    const userData = await getUserData();
-    if (userData) {
-      updateUIWithUserData(userData);
+    if (data.success) {
+      // Fetch user data after successful token exchange
+      const userData = await getUserData();
+      if (userData) {
+        updateUIWithUserData(userData);
+      }
+      
+      // Update UI
+      updateUIBasedOnAuthState();
+      console.log('Token exchange successful');
+    } else {
+      throw new Error('Token exchange failed');
     }
-    
-    // Update UI
-    updateUIBasedOnAuthState();
-    console.log('Token exchange successful');
   } catch (error) {
     console.error('Error exchanging token:', error);
   }
@@ -223,26 +224,20 @@ async function getUserData() {
 }
 
 async function checkAndRefreshToken() {
-  const sessionId = localStorage.getItem('sessionId');
-  if (!sessionId) return;
-
   try {
     const response = await fetch('/api/refresh-token', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${sessionId}`
-      }
     });
 
     if (response.ok) {
       const data = await response.json();
-      if (data.newSessionId) {
-        localStorage.setItem('sessionId', data.newSessionId);
+      if (data.success) {
         console.log('Token refreshed successfully');
+      } else {
+        throw new Error('Failed to refresh token');
       }
     } else if (response.status === 401) {
       // Token is invalid or expired and couldn't be refreshed
-      localStorage.removeItem('sessionId');
       updateUIBasedOnAuthState();
       console.log('Session expired. Please log in again.');
     }
