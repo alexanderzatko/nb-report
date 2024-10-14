@@ -169,6 +169,7 @@ async function exchangeToken(code) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ code }),
+      credentials: 'include'
     });
 
     if (!response.ok) {
@@ -198,7 +199,9 @@ async function exchangeToken(code) {
 
 async function checkAuthStatus() {
   try {
-    const response = await fetch('/api/auth-status');
+    const response = await fetch('/api/auth-status', {
+      credentials: 'include' // Add this line
+    });
     const data = await response.json();
     console.log('Auth status response:', data);
     return data.isAuthenticated;
