@@ -107,10 +107,23 @@ app.post('/api/exchange-token', async (req, res) => {
     });
     
     if (response.data && response.data.access_token) {
-      req.session.accessToken = response.data.access_token;
-      res.json(response.data);
+        req.session.accessToken = response.data.access_token;
+        req.session.refreshToken = response.data.refresh_token;
+
+        // Generate a session ID to send to the client
+        const sessionId = generateNewSessionId();
+
+        // Store the session data
+        await sessionStore.set(sessionId, {
+            accessToken: response.data.access_token,
+            refreshToken: response.data.refresh_token
+        });
+
+        // Send the session ID to the client
+        res.json({ sessionId });
+
     } else {
-      res.status(400).json({ error: 'Failed to obtain access token' });
+        res.status(400).json({ error: 'Failed to obtain access token' });
     }
   } catch (error) {
     console.error('Error exchanging token:', error);
