@@ -222,7 +222,6 @@ async function getUserData() {
   }
 }
 
-// refresh the token function
 async function checkAndRefreshToken() {
   const sessionId = localStorage.getItem('sessionId');
   if (!sessionId) return;
@@ -239,11 +238,13 @@ async function checkAndRefreshToken() {
       const data = await response.json();
       if (data.newSessionId) {
         localStorage.setItem('sessionId', data.newSessionId);
+        console.log('Token refreshed successfully');
       }
     } else if (response.status === 401) {
       // Token is invalid or expired and couldn't be refreshed
       localStorage.removeItem('sessionId');
       updateUIBasedOnAuthState();
+      console.log('Session expired. Please log in again.');
     }
   } catch (error) {
     console.error('Error refreshing token:', error);
