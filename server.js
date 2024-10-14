@@ -19,7 +19,11 @@ const cors = require('cors');
 const app = express();
 const port = 3000;
 
-app.use(cors());
+app.use(cors({
+  origin: 'https://report.nabezky.sk', // Your frontend URL
+  credentials: true
+}));
+
 app.use(express.json());
 
 const OAUTH_CLIENT_ID = process.env.OAUTH_CLIENT_ID;
@@ -50,8 +54,21 @@ const logger = winston.createLogger({
 });
 
 app.post('/api/logout', (req, res) => {
-  logger.info('Logout request received', { sessionID: req.sessionID });
-  logger.debug('Session before logout:', req.session);
+  logger.info('Logout request received', { 
+    sessionID: req.sessionID,
+    headers: req.headers,
+    cookies: req.cookies
+  });
+  // ... rest of the route handler
+});
+
+app.post('/api/logout', (req, res) => {
+    logger.info('Logout request received', { 
+        sessionID: req.sessionID,
+        headers: req.headers,
+        cookies: req.cookies
+    });
+    logger.debug('Session before logout:', req.session);
   
   if (req.session) {
     req.session.destroy((err) => {
@@ -72,15 +89,16 @@ app.post('/api/logout', (req, res) => {
 // Session middleware
 app.use(session({
     key: 'session_cookie_name',
-    secret: process.env.SESSION_SECRET, // Set in the .env file
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     store: sessionStore,
     cookie: {
-        secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+        secure: process.env.COOKIE_SECURE === 'true', // Explicitly set in .env
         httpOnly: true,
+        sameSite: 'strict',
         maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
-        }
+    }
 }));
 
 app.get('/api/auth-status', (req, res) => {
