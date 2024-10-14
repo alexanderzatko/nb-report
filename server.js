@@ -19,6 +19,29 @@ const cors = require('cors');
 const app = express();
 const port = 3000;
 
+//logging all incoming requests
+app.use((req, res, next) => {
+  logger.info('Incoming request', {
+    method: req.method,
+    url: req.url,
+    headers: req.headers,
+    sessionID: req.sessionID
+  });
+  next();
+});
+
+//logging errors
+app.use((err, req, res, next) => {
+  logger.error('Unhandled error', {
+    error: err.message,
+    stack: err.stack,
+    url: req.url,
+    method: req.method,
+    sessionID: req.sessionID
+  });
+  res.status(500).json({ error: 'Internal server error' });
+});
+
 app.use(cors({
   origin: 'https://report.nabezky.sk', // Your frontend URL
   credentials: true
@@ -87,15 +110,21 @@ app.use(session({
     cookie: {
         secure: process.env.COOKIE_SECURE === 'true', // Explicitly set in .env
         httpOnly: true,
-        sameSite: 'strict',
+        sameSite: 'none',
         maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
     }
 }));
 
 app.get('/api/auth-status', (req, res) => {
-  console.log('Auth status checked. Session:', req.session);
   const isAuthenticated = !!req.session.accessToken;
-  console.log('Is authenticated:', isAuthenticated);
+  
+  logger.info('Auth status checked', { 
+    sessionID: req.sessionID,
+    session: JSON.stringify(req.session, null, 2),
+    isAuthenticated: isAuthenticated,
+    accessToken: req.session.accessToken ? 'present' : 'absent'
+  });
+  
   res.json({ isAuthenticated: isAuthenticated });
 });
 
@@ -140,20 +169,33 @@ app.post('/api/exchange-token', async (req, res) => {
     if (response.data && response.data.access_token) {
       req.session.accessToken = response.data.access_token;
       req.session.refreshToken = response.data.refresh_token;
-      // Set a flag to indicate that this is a new login
       req.session.isNewLogin = true;
-      res.json({ success: true });
+      
+      req.session.save((err) => {
+        if (err) {
+          logger.error('Session save error:', { error: err });
+          return res.status(500).json({ error: 'Failed to save session' });
+        }
+        logger.info('Session saved successfully', { sessionID: req.sessionID });
+        res.json({ success: true });
+      });
     } else {
+      logger.warn('Failed to obtain access token');
       res.status(400).json({ error: 'Failed to obtain access token' });
     }
   } catch (error) {
-    console.error('Error exchanging token:', error.response ? error.response.data : error.message);
+    logger.error('Error exchanging token:', { 
+      error: error.response ? error.response.data : error.message 
+    });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 app.post('/api/refresh-token', async (req, res) => {
+  logger.info('Token refresh attempt', { sessionID: req.sessionID });
+  
   if (!req.session.refreshToken) {
+    logger.warn('No refresh token available', { sessionID: req.sessionID });
     return res.status(401).json({ error: 'No refresh token available' });
   }
 
@@ -176,7 +218,8 @@ app.post('/api/refresh-token', async (req, res) => {
       if (response.data.refresh_token) {
         req.session.refreshToken = response.data.refresh_token;
       }
-      res.json({ success: true });
+        logger.info('Token refreshed successfully', { sessionID: req.sessionID });
+        res.json({ success: true });
     } else {
       throw new Error('Failed to refresh token');
     }
