@@ -222,6 +222,40 @@ async function getUserData() {
   }
 }
 
+// refresh the token function
+async function checkAndRefreshToken() {
+  const sessionId = localStorage.getItem('sessionId');
+  if (!sessionId) return;
+
+  try {
+    const response = await fetch('/api/refresh-token', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${sessionId}`
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.newSessionId) {
+        localStorage.setItem('sessionId', data.newSessionId);
+      }
+    } else if (response.status === 401) {
+      // Token is invalid or expired and couldn't be refreshed
+      localStorage.removeItem('sessionId');
+      updateUIBasedOnAuthState();
+    }
+  } catch (error) {
+    console.error('Error refreshing token:', error);
+  }
+}
+
+// refresh the token periodically
+setInterval(checkAndRefreshToken, 15 * 60 * 1000); // Check every 15 minutes
+
+// refresh the token when the page loads
+document.addEventListener('DOMContentLoaded', checkAndRefreshToken);
+
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
     navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
