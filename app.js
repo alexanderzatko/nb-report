@@ -175,6 +175,7 @@ async function exchangeToken(code) {
     const data = await response.json();
     
     if (data.success) {
+      console.log('Token exchange successful');
       // Fetch user data after successful token exchange
       const userData = await getUserData();
       if (userData) {
@@ -183,7 +184,6 @@ async function exchangeToken(code) {
       
       // Update UI
       updateUIBasedOnAuthState();
-      console.log('Token exchange successful');
     } else {
       throw new Error('Token exchange failed');
     }
@@ -246,8 +246,10 @@ async function checkAndRefreshToken() {
       }
     } else if (response.status === 401) {
       // Token is invalid or expired and couldn't be refreshed
-      updateUIBasedOnAuthState();
       console.log('Session expired. Please log in again.');
+      // Clear any stored session data
+      localStorage.removeItem('sessionId');
+      updateUIBasedOnAuthState();
     }
   } catch (error) {
     console.error('Error refreshing token:', error);
@@ -256,9 +258,6 @@ async function checkAndRefreshToken() {
 
 // refresh the token periodically
 setInterval(checkAndRefreshToken, 15 * 60 * 1000); // Check every 15 minutes
-
-// refresh the token when the page loads
-document.addEventListener('DOMContentLoaded', checkAndRefreshToken);
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
