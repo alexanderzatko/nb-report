@@ -191,6 +191,17 @@ async function exchangeToken(code) {
   }
 }
 
+async function checkAuthStatus() {
+  try {
+    const response = await fetch('/api/auth-status');
+    const data = await response.json();
+    return data.isAuthenticated;
+  } catch (error) {
+    console.error('Error checking auth status:', error);
+    return false;
+  }
+}
+
 async function getUserData() {
   const sessionId = localStorage.getItem('sessionId');
   if (!sessionId) {
@@ -238,22 +249,26 @@ document.getElementById('country').addEventListener('change', updateRegions);
 
 document.getElementById('snow-report-form').addEventListener('submit', async function(event) {
   event.preventDefault();
-  try {
-    const userData = await getUserData();
-    if (!userData || !userData.authenticated) {
-      alert('Please log in to submit the report.');
-      return;
-    }
-    const country = document.getElementById('country').value;
-    const region = document.getElementById('region').value;
-    const snowDepth = document.getElementById('snow-depth').value;
-    const snowType = document.getElementById('snow-type').value;
+  
+  // Check authentication status before submitting
+  const isAuthenticated = await checkAuthStatus();
+  
+  if (isAuthenticated) {
+    try {
+      const country = document.getElementById('country').value;
+      const region = document.getElementById('region').value;
+      const snowDepth = document.getElementById('snow-depth').value;
+      const snowType = document.getElementById('snow-type').value;
 
-    console.log(`Country: ${country}, Region: ${region}, Snow Depth: ${snowDepth}, Snow Type: ${snowType}`);
-    alert("Report submitted successfully!");
-  } catch (error) {
-    console.error('Error submitting snow report:', error);
-    alert('An error occurred while submitting the report. Please try again.');
+      console.log(`Country: ${country}, Region: ${region}, Snow Depth: ${snowDepth}, Snow Type: ${snowType}`);
+      alert("Report submitted successfully!");
+    } catch (error) {
+      console.error('Error submitting snow report:', error);
+      alert('An error occurred while submitting the report. Please try again.');
+    }
+  } else {
+    alert("Please log in to submit the report.");
+    // Optionally, you can redirect to the login page or trigger the login process here
   }
 });
 
