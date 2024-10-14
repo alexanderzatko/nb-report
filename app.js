@@ -67,17 +67,19 @@ function logout() {
     });
 }
 
-function updateUIBasedOnAuthState() {
-  const sessionId = localStorage.getItem('sessionId');
+async function updateUIBasedOnAuthState() {
+  const isAuthenticated = await checkAuthStatus();
   const authButton = document.getElementById('auth-button');
   const snowReportForm = document.getElementById('snow-report-form');
 
-  if (sessionId) {
+  if (isAuthenticated) {
     authButton.textContent = 'Logout';
     snowReportForm.style.display = 'block';
+    console.log('User is authenticated, showing form');
   } else {
     authButton.textContent = 'Login';
     snowReportForm.style.display = 'none';
+    console.log('User is not authenticated, hiding form');
   }
 }
 
@@ -143,7 +145,7 @@ async function handleOAuthCallback() {
     try {
       await exchangeToken(code);
       console.log('Token exchanged successfully');
-      updateUIBasedOnAuthState();
+      await updateUIBasedOnAuthState();
     } catch (error) {
       console.error('Error exchanging token:', error);
     }
@@ -183,7 +185,8 @@ async function exchangeToken(code) {
       }
       
       // Update UI
-      updateUIBasedOnAuthState();
+      await updateUIBasedOnAuthState();
+      console.log('UI updated after successful login');
     } else {
       throw new Error('Token exchange failed');
     }
@@ -311,15 +314,15 @@ document.getElementById('snow-report-form').addEventListener('submit', async fun
 
 document.getElementById('auth-button').addEventListener('click', toggleAuth);
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOMContentLoaded event fired');
-  updateUIBasedOnAuthState();
+  await updateUIBasedOnAuthState();
   
   const urlParams = new URLSearchParams(window.location.search);
   console.log('URL params:', urlParams.toString());
   if (urlParams.has('code')) {
     console.log('Code parameter found in URL');
-    handleOAuthCallback();
+    await handleOAuthCallback();
   } else {
     console.log('No code parameter in URL');
   }
