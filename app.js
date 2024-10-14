@@ -28,43 +28,34 @@ function updateRegions() {
 
 function toggleAuth() {
   console.log('toggleAuth called');
-  const sessionId = localStorage.getItem('sessionId');
-  console.log('Current sessionId:', sessionId);  // Add this line
-  if (sessionId) {
-    logout();
-  } else {
-    initiateOAuth();
-  }
+  checkAuthStatus().then(isAuthenticated => {
+    if (isAuthenticated) {
+      logout();
+    } else {
+      initiateOAuth();
+    }
+  });
 }
 
-function logout() {
-  const sessionId = localStorage.getItem('sessionId');
-  if (!sessionId) {
-    console.log('No active session to log out');
-    updateUIBasedOnAuthState();
-    return;
-  }
-
-  fetch('/api/logout', { 
-    method: 'POST',
-    headers: {
-      'Authorization': sessionId
-    }
-  })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Logout failed');
-      }
-      return response.json();
-    })
-    .then(() => {
-      localStorage.removeItem('sessionId');
-      updateUIBasedOnAuthState();
-      console.log('User logged out successfully');
-    })
-    .catch(error => {
-      console.error('Logout error:', error);
+async function logout() {
+  try {
+    const response = await fetch('/api/logout', { 
+      method: 'POST',
     });
+
+    if (!response.ok) {
+      throw new Error('Logout failed');
+    }
+
+    // Clear any client-side stored data
+    localStorage.removeItem('sessionId');
+
+    // Update UI
+    await updateUIBasedOnAuthState();
+    console.log('User logged out successfully');
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
 }
 
 async function updateUIBasedOnAuthState() {
