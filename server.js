@@ -109,12 +109,14 @@ app.post('/api/exchange-token', async (req, res) => {
     if (response.data && response.data.access_token) {
       req.session.accessToken = response.data.access_token;
       req.session.refreshToken = response.data.refresh_token;
+      // Set a flag to indicate that this is a new login
+      req.session.isNewLogin = true;
       res.json({ success: true });
     } else {
       res.status(400).json({ error: 'Failed to obtain access token' });
     }
   } catch (error) {
-    console.error('Error exchanging token:', error);
+    console.error('Error exchanging token:', error.response ? error.response.data : error.message);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -122,6 +124,12 @@ app.post('/api/exchange-token', async (req, res) => {
 app.post('/api/refresh-token', async (req, res) => {
   if (!req.session.refreshToken) {
     return res.status(401).json({ error: 'No refresh token available' });
+  }
+
+  // If this is a new login, skip the refresh
+  if (req.session.isNewLogin) {
+    req.session.isNewLogin = false;
+    return res.json({ success: true, message: 'New login, refresh not needed' });
   }
 
   try {
@@ -139,7 +147,7 @@ app.post('/api/refresh-token', async (req, res) => {
       }
       res.json({ success: true });
     } else {
-      res.status(400).json({ error: 'Failed to refresh token' });
+      throw new Error('Failed to refresh token');
     }
   } catch (error) {
     console.error('Error refreshing token:', error.response ? error.response.data : error.message);
