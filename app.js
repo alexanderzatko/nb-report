@@ -39,6 +39,7 @@ function toggleAuth() {
 
 async function logout() {
   try {
+    console.log('Logout function called');
     const response = await fetch('/api/logout', { 
       method: 'POST',
     });
@@ -47,15 +48,21 @@ async function logout() {
       throw new Error('Logout failed');
     }
 
+    const data = await response.json();
+    console.log('Logout response:', data);
+
     // Clear any client-side stored data
     localStorage.removeItem('sessionId');
 
     console.log('Logout successful, updating UI');
     await updateUIBasedOnAuthState();
-    console.log('User logged out successfully');
+    console.log('UI updated after logout');
 
-    // Force a page reload to ensure all state is reset
-    window.location.reload();
+    // Delay reload to allow console messages to be seen
+    setTimeout(() => {
+      console.log('Reloading page...');
+      window.location.reload();
+    }, 2000);
   } catch (error) {
     console.error('Logout error:', error);
   }
