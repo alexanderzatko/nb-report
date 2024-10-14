@@ -63,12 +63,19 @@ app.use(session({
         }
 }));
 
-app.post('/api/submit-snow-report', authenticateUser, (req, res) => {
-  
-  // Process the snow report submission
-  
-  console.log('Snow report received:', req.body);
-  res.json({ message: 'Snow report submitted successfully' });
+// Endpoint to check authentication status
+app.get('/api/auth-status', (req, res) => {
+  res.json({ isAuthenticated: !!req.session.accessToken });
+});
+
+app.post('/api/submit-snow-report', (req, res) => {
+  if (req.session.accessToken) {
+    // Process the snow report submission
+    console.log('Snow report received:', req.body);
+    res.json({ message: 'Snow report submitted successfully' });
+  } else {
+    res.status(401).json({ error: 'Not authenticated' });
+  }
 });
 
 app.post('/api/initiate-oauth', (req, res) => {
@@ -133,17 +140,6 @@ app.get('/api/user-data', async (req, res) => {
       console.error('Error fetching user data:', error);
       res.status(500).json({ error: 'Failed to fetch user data' });
     }
-  } else {
-    res.status(401).json({ error: 'Not authenticated' });
-  }
-});
-
-app.get('/api/user-data', (req, res) => {
-  if (req.session.accessToken) {
-    
-      // insert code to fetch actual user data using the access token
-      
-    res.json({ authenticated: true });
   } else {
     res.status(401).json({ error: 'Not authenticated' });
   }
