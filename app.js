@@ -53,6 +53,9 @@ async function logout() {
     console.log('Logout successful, updating UI');
     await updateUIBasedOnAuthState();
     console.log('User logged out successfully');
+
+    // Force a page reload to ensure all state is reset
+    window.location.reload();
   } catch (error) {
     console.error('Logout error:', error);
   }
