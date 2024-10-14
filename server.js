@@ -63,8 +63,8 @@ app.use(session({
         }
 }));
 
-// Endpoint to check authentication status
 app.get('/api/auth-status', (req, res) => {
+  console.log('Auth status checked. Session:', req.session);
   res.json({ isAuthenticated: !!req.session.accessToken });
 });
 
