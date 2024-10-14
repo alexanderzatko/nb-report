@@ -54,15 +54,6 @@ const logger = winston.createLogger({
 });
 
 app.post('/api/logout', (req, res) => {
-  logger.info('Logout request received', { 
-    sessionID: req.sessionID,
-    headers: req.headers,
-    cookies: req.cookies
-  });
-  // ... rest of the route handler
-});
-
-app.post('/api/logout', (req, res) => {
     logger.info('Logout request received', { 
         sessionID: req.sessionID,
         headers: req.headers,
