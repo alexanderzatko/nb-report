@@ -37,6 +37,10 @@ const authenticateUser = (req, res, next) => {
 app.post('/api/logout', (req, res) => {
   console.log('Logout request received');
   if (req.session) {
+    // Clear the access and refresh tokens
+    req.session.accessToken = null;
+    req.session.refreshToken = null;
+
     req.session.destroy((err) => {
       if (err) {
         console.error('Session destruction error:', err);
@@ -68,7 +72,9 @@ app.use(session({
 
 app.get('/api/auth-status', (req, res) => {
   console.log('Auth status checked. Session:', req.session);
-  res.json({ isAuthenticated: !!req.session.accessToken });
+  const isAuthenticated = !!req.session.accessToken;
+  console.log('Is authenticated:', isAuthenticated);
+  res.json({ isAuthenticated: isAuthenticated });
 });
 
 app.post('/api/submit-snow-report', (req, res) => {
