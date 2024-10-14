@@ -142,8 +142,18 @@ app.post('/api/refresh-token', async (req, res) => {
       res.status(400).json({ error: 'Failed to refresh token' });
     }
   } catch (error) {
-    console.error('Error refreshing token:', error);
-    res.status(500).json({ error: 'Failed to refresh token' });
+    console.error('Error refreshing token:', error.response ? error.response.data : error.message);
+    if (error.response && error.response.status === 400) {
+      // The refresh token might be invalid or expired
+      req.session.destroy((err) => {
+        if (err) {
+          console.error('Error destroying session:', err);
+        }
+        res.status(401).json({ error: 'Session expired. Please log in again.' });
+      });
+    } else {
+      res.status(500).json({ error: 'Failed to refresh token' });
+    }
   }
 });
 
