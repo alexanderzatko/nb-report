@@ -34,17 +34,20 @@ const authenticateUser = (req, res, next) => {
   next();
 };
 
-app.post('/api/logout', authenticateUser, (req, res) => {
+app.post('/api/logout', (req, res) => {
+  console.log('Logout request received');
   if (req.session) {
     req.session.destroy((err) => {
       if (err) {
         console.error('Session destruction error:', err);
         return res.status(500).json({ error: 'Failed to destroy session' });
       }
-      res.clearCookie('session_cookie_name'); // Use the custom cookie name
+      res.clearCookie('session_cookie_name'); // Make sure this matches your session cookie name
+      console.log('Session destroyed and cookie cleared');
       res.status(200).json({ message: 'Logged out successfully' });
     });
   } else {
+    console.log('No active session to logout');
     res.status(200).json({ message: 'No active session to logout' });
   }
 });
