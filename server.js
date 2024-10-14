@@ -36,18 +36,16 @@ const authenticateUser = (req, res, next) => {
 
 app.post('/api/logout', (req, res) => {
   console.log('Logout request received');
+  console.log('Session before logout:', req.session);
   if (req.session) {
-    // Clear the access and refresh tokens
-    req.session.accessToken = null;
-    req.session.refreshToken = null;
-
     req.session.destroy((err) => {
       if (err) {
         console.error('Session destruction error:', err);
         return res.status(500).json({ error: 'Failed to destroy session' });
       }
-      res.clearCookie('session_cookie_name'); // Make sure this matches your session cookie name
-      console.log('Session destroyed and cookie cleared');
+      console.log('Session destroyed successfully');
+      res.clearCookie('session_cookie_name'); // Ensure this matches your session cookie name
+      console.log('Session cookie cleared');
       res.status(200).json({ message: 'Logged out successfully' });
     });
   } else {
