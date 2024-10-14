@@ -118,6 +118,62 @@ app.post('/api/exchange-token', async (req, res) => {
   }
 });
 
+app.post('/api/refresh-token', async (req, res) => {
+  const currentSessionId = req.headers.authorization?.split(' ')[1];
+  
+  if (!currentSessionId) {
+    return res.status(401).json({ error: 'No session ID provided' });
+  }
+
+  try {
+    const session = await sessionStore.get(currentSessionId);
+    
+    if (!session || !session.refreshToken) {
+      return res.status(401).json({ error: 'Invalid or expired session' });
+    }
+
+    // Request a new access token from the OAuth2 server
+    const response = await axios.post(TOKEN_URL, 
+      new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: session.refreshToken,
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET
+      }), {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      }
+    );
+
+    if (response.data && response.data.access_token) {
+      // Update the session with the new tokens
+      session.accessToken = response.data.access_token;
+      if (response.data.refresh_token) {
+        session.refreshToken = response.data.refresh_token;
+      }
+
+      // Generate a new session ID
+      const newSessionId = generateNewSessionId();
+
+      // Update the session store
+      await sessionStore.set(newSessionId, session);
+      await sessionStore.destroy(currentSessionId);
+
+      res.json({ newSessionId });
+    } else {
+      throw new Error('Failed to refresh token');
+    }
+  } catch (error) {
+    console.error('Error refreshing token:', error);
+    res.status(500).json({ error: 'Failed to refresh token' });
+  }
+});
+
+function generateNewSessionId() {
+  return crypto.randomBytes(32).toString('hex');
+}
+
 app.get('/api/user-data', async (req, res) => {
   if (req.session.accessToken) {
     try {
