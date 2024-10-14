@@ -224,6 +224,14 @@ async function getUserData() {
 }
 
 async function checkAndRefreshToken() {
+  // First, check if the user is logged in
+  const isLoggedIn = await checkAuthStatus();
+  
+  if (!isLoggedIn) {
+    console.log('User is not logged in, skipping token refresh');
+    return;
+  }
+
   try {
     const response = await fetch('/api/refresh-token', {
       method: 'POST',
