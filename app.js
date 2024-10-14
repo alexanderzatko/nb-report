@@ -42,14 +42,16 @@ async function logout() {
     console.log('Logout function called');
     const response = await fetch('/api/logout', { 
       method: 'POST',
+      credentials: 'include', // This ensures cookies are sent with the request
     });
 
-    if (!response.ok) {
-      throw new Error('Logout failed');
-    }
-
+    console.log('Logout response status:', response.status);
     const data = await response.json();
     console.log('Logout response:', data);
+
+    if (!response.ok) {
+      throw new Error('Logout failed: ' + data.message);
+    }
 
     // Clear any client-side stored data
     localStorage.removeItem('sessionId');
@@ -58,11 +60,8 @@ async function logout() {
     await updateUIBasedOnAuthState();
     console.log('UI updated after logout');
 
-    // Delay reload to allow console messages to be seen
-    setTimeout(() => {
-      console.log('Reloading page...');
-      window.location.reload();
-    }, 2000);
+    // Force a hard reload to ensure all state is reset
+    window.location.href = window.location.origin;
   } catch (error) {
     console.error('Logout error:', error);
   }
