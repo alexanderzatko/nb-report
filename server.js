@@ -59,7 +59,7 @@ app.use(session({
     cookie: {
         secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
         httpOnly: true,
-        maxAge: 1000 * 60 * 60 * 24 // 1 day
+        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
         }
 }));
 
@@ -107,23 +107,11 @@ app.post('/api/exchange-token', async (req, res) => {
     });
     
     if (response.data && response.data.access_token) {
-        req.session.accessToken = response.data.access_token;
-        req.session.refreshToken = response.data.refresh_token;
-
-        // Generate a session ID to send to the client
-        const sessionId = generateNewSessionId();
-
-        // Store the session data
-        await sessionStore.set(sessionId, {
-            accessToken: response.data.access_token,
-            refreshToken: response.data.refresh_token
-        });
-
-        // Send the session ID to the client
-        res.json({ sessionId });
-
+      req.session.accessToken = response.data.access_token;
+      req.session.refreshToken = response.data.refresh_token;
+      res.json({ success: true });
     } else {
-        res.status(400).json({ error: 'Failed to obtain access token' });
+      res.status(400).json({ error: 'Failed to obtain access token' });
     }
   } catch (error) {
     console.error('Error exchanging token:', error);
@@ -132,60 +120,32 @@ app.post('/api/exchange-token', async (req, res) => {
 });
 
 app.post('/api/refresh-token', async (req, res) => {
-  const currentSessionId = req.headers.authorization?.split(' ')[1];
-  
-  if (!currentSessionId) {
-    return res.status(401).json({ error: 'No session ID provided' });
+  if (!req.session.refreshToken) {
+    return res.status(401).json({ error: 'No refresh token available' });
   }
 
   try {
-    const session = await sessionStore.get(currentSessionId);
-    
-    if (!session || !session.refreshToken) {
-      return res.status(401).json({ error: 'Invalid or expired session' });
-    }
-
-    // Request a new access token from the OAuth2 server
-    const response = await axios.post(TOKEN_URL, 
-      new URLSearchParams({
-        grant_type: 'refresh_token',
-        refresh_token: session.refreshToken,
-        client_id: CLIENT_ID,
-        client_secret: CLIENT_SECRET
-      }), {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
-      }
-    );
+    const response = await axios.post(TOKEN_URL, {
+      grant_type: 'refresh_token',
+      client_id: OAUTH_CLIENT_ID,
+      client_secret: OAUTH_CLIENT_SECRET,
+      refresh_token: req.session.refreshToken
+    });
 
     if (response.data && response.data.access_token) {
-      // Update the session with the new tokens
-      session.accessToken = response.data.access_token;
+      req.session.accessToken = response.data.access_token;
       if (response.data.refresh_token) {
-        session.refreshToken = response.data.refresh_token;
+        req.session.refreshToken = response.data.refresh_token;
       }
-
-      // Generate a new session ID
-      const newSessionId = generateNewSessionId();
-
-      // Update the session store
-      await sessionStore.set(newSessionId, session);
-      await sessionStore.destroy(currentSessionId);
-
-      res.json({ newSessionId });
+      res.json({ success: true });
     } else {
-      throw new Error('Failed to refresh token');
+      res.status(400).json({ error: 'Failed to refresh token' });
     }
   } catch (error) {
     console.error('Error refreshing token:', error);
     res.status(500).json({ error: 'Failed to refresh token' });
   }
 });
-
-function generateNewSessionId() {
-  return crypto.randomBytes(32).toString('hex');
-}
 
 app.get('/api/user-data', async (req, res) => {
   if (req.session.accessToken) {
