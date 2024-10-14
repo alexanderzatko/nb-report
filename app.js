@@ -50,7 +50,7 @@ async function logout() {
     // Clear any client-side stored data
     localStorage.removeItem('sessionId');
 
-    // Update UI
+    console.log('Logout successful, updating UI');
     await updateUIBasedOnAuthState();
     console.log('User logged out successfully');
   } catch (error) {
@@ -60,6 +60,7 @@ async function logout() {
 
 async function updateUIBasedOnAuthState() {
   const isAuthenticated = await checkAuthStatus();
+  console.log('Authentication status:', isAuthenticated);
   const authButton = document.getElementById('auth-button');
   const snowReportForm = document.getElementById('snow-report-form');
 
@@ -190,6 +191,7 @@ async function checkAuthStatus() {
   try {
     const response = await fetch('/api/auth-status');
     const data = await response.json();
+    console.log('Auth status response:', data);
     return data.isAuthenticated;
   } catch (error) {
     console.error('Error checking auth status:', error);
