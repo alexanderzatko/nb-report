@@ -3,6 +3,8 @@ require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
+const winston = require('winston');
+
 const options = {
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
@@ -34,22 +36,35 @@ const authenticateUser = (req, res, next) => {
   next();
 };
 
+// Configure Winston logger
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.File({ filename: 'server-error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'server-combined.log' })
+  ]
+});
+
 app.post('/api/logout', (req, res) => {
-  console.log('Logout request received');
-  console.log('Session before logout:', req.session);
+  logger.info('Logout request received', { sessionID: req.sessionID });
+  logger.debug('Session before logout:', req.session);
+  
   if (req.session) {
     req.session.destroy((err) => {
       if (err) {
-        console.error('Session destruction error:', err);
+        logger.error('Session destruction error:', err);
         return res.status(500).json({ error: 'Failed to destroy session' });
       }
-      console.log('Session destroyed successfully');
       res.clearCookie('session_cookie_name'); // Ensure this matches your session cookie name
-      console.log('Session cookie cleared');
+      logger.info('Session destroyed and cookie cleared');
       res.status(200).json({ message: 'Logged out successfully' });
     });
   } else {
-    console.log('No active session to logout');
+    logger.info('No active session found');
     res.status(200).json({ message: 'No active session to logout' });
   }
 });
