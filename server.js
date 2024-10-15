@@ -243,6 +243,7 @@ app.post('/api/refresh-token', async (req, res) => {
 });
 
 app.get('/api/user-data', async (req, res) => {
+  logger.info('Retrieving user data', { session: req.session });
   if (req.session.accessToken) {
     try {
       // Fetch user data from Drupal server using the access token
