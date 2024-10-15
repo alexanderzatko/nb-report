@@ -14,7 +14,7 @@ const options = {
 };
 const sessionStore = new MySQLStore(options);
 const axios = require('axios');
-const cors = require('cors');
+//const cors = require('cors');
 
 const app = express();
 const port = 3000;
@@ -42,11 +42,13 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
+/*
 app.use(cors({
   origin: 'https://report.nabezky.sk', // Your frontend URL
   credentials: true
 }));
-
+*/
+    
 app.use(express.json());
 
 const OAUTH_CLIENT_ID = process.env.OAUTH_CLIENT_ID;
