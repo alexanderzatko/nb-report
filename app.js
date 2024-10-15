@@ -199,7 +199,7 @@ async function exchangeToken(code) {
 async function checkAuthStatus() {
   try {
     const response = await fetch('/api/auth-status', {
-      credentials: 'include' // Add this line
+      credentials: 'include'
     });
     const data = await response.json();
     console.log('Auth status response:', data);
