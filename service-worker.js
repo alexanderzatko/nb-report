@@ -1,4 +1,4 @@
-const CACHE_NAME = 'snow-report-cache-v44';
+const CACHE_NAME = 'snow-report-cache-v45';
 const urlsToCache = [
   '/',
   '/index.html',
