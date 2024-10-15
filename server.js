@@ -178,41 +178,6 @@ app.post('/api/exchange-token', async (req, res) => {
     sessionID: req.sessionID,
     hasSession: !!req.session
   });
-
-  // ... existing code ...
-
-  if (response.data && response.data.access_token) {
-    req.session.accessToken = response.data.access_token;
-    req.session.refreshToken = response.data.refresh_token;
-    req.session.isNewLogin = true;
-    
-    logger.info('Session data set', { 
-      sessionID: req.sessionID,
-      sessionContent: req.session
-    });
-
-    req.session.save((err) => {
-      if (err) {
-        logger.error('Session save error:', { error: err });
-        return res.status(500).json({ error: 'Failed to save session' });
-      }
-      logger.info('Session saved successfully', { 
-        sessionID: req.sessionID,
-        sessionContent: req.session
-      });
-      res.json({ success: true, sessionId: req.sessionID });
-    });
-  } else {
-    // ... existing error handling ...
-  }
-});
-
-
-app.post('/api/exchange-token', async (req, res) => {
-  logger.info('Token exchange request received', { 
-    sessionID: req.sessionID,
-    hasSession: !!req.session
-  });
   const { code } = req.body;
   
   try {
