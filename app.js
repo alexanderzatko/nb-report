@@ -179,6 +179,13 @@ async function exchangeToken(code) {
     
     if (data.success) {
       console.log('Token exchange successful');
+      
+      // Store the session ID in localStorage
+      if (data.sessionId) {
+        localStorage.setItem('sessionId', data.sessionId);
+        console.log('Session ID stored in localStorage');
+      }
+
       // Fetch user data after successful token exchange
       const userData = await getUserData();
       if (userData) {
