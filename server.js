@@ -44,6 +44,21 @@ app.use((req, res, next) => {
   next();
 });
 
+//logging outgoing response headers
+app.use((req, res, next) => {
+  const oldWriteHead = res.writeHead;
+  res.writeHead = function(statusCode, headers) {
+    logger.info('Response headers', {
+      url: req.url,
+      method: req.method,
+      statusCode,
+      headers: this.getHeaders()
+    });
+    oldWriteHead.apply(this, arguments);
+  };
+  next();
+});
+
 //logging errors
 app.use((err, req, res, next) => {
   logger.error('Unhandled error', {
@@ -87,8 +102,9 @@ app.use(session({
     saveUninitialized: false,
     store: sessionStore,
     cookie: {
-      secure: process.env.COOKIE_SECURE === 'true', // Explicitly set in .env
-      httpOnly: false,
+//      secure: process.env.COOKIE_SECURE === 'true', // Explicitly set in .env
+      secure: true,
+      httpOnly: true,
       sameSite: 'none',
       maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
       }
@@ -158,6 +174,45 @@ app.get('/api/nblogin', (req, res) => {
 });
 
 app.post('/api/exchange-token', async (req, res) => {
+  logger.info('Token exchange request received', { 
+    sessionID: req.sessionID,
+    hasSession: !!req.session
+  });
+
+  // ... existing code ...
+
+  if (response.data && response.data.access_token) {
+    req.session.accessToken = response.data.access_token;
+    req.session.refreshToken = response.data.refresh_token;
+    req.session.isNewLogin = true;
+    
+    logger.info('Session data set', { 
+      sessionID: req.sessionID,
+      sessionContent: req.session
+    });
+
+    req.session.save((err) => {
+      if (err) {
+        logger.error('Session save error:', { error: err });
+        return res.status(500).json({ error: 'Failed to save session' });
+      }
+      logger.info('Session saved successfully', { 
+        sessionID: req.sessionID,
+        sessionContent: req.session
+      });
+      res.json({ success: true, sessionId: req.sessionID });
+    });
+  } else {
+    // ... existing error handling ...
+  }
+});
+
+
+app.post('/api/exchange-token', async (req, res) => {
+  logger.info('Token exchange request received', { 
+    sessionID: req.sessionID,
+    hasSession: !!req.session
+  });
   const { code } = req.body;
   
   try {
@@ -179,7 +234,10 @@ app.post('/api/exchange-token', async (req, res) => {
           logger.error('Session save error:', { error: err });
           return res.status(500).json({ error: 'Failed to save session' });
         }
-        logger.info('Session saved successfully', { sessionID: req.sessionID });
+        logger.info('Session saved successfully', {
+          sessionID: req.sessionID,
+          sessionContent: req.session
+          });
         res.json({ success: true, sessionId: req.sessionID });
       });
     } else {
