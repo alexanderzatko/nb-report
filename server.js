@@ -87,8 +87,7 @@ app.use(session({
     saveUninitialized: false,
     store: sessionStore,
     cookie: {
-//        secure: process.env.COOKIE_SECURE === 'true', // Explicitly set in .env
-      secure: false,
+      secure: process.env.COOKIE_SECURE === 'true', // Explicitly set in .env
       httpOnly: false,
       sameSite: 'none',
       maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
