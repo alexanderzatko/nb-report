@@ -44,21 +44,6 @@ app.use((req, res, next) => {
   next();
 });
 
-//logging outgoing response headers
-app.use((req, res, next) => {
-  const oldWriteHead = res.writeHead;
-  res.writeHead = function(statusCode, headers) {
-    logger.info('Response headers', {
-      url: req.url,
-      method: req.method,
-      statusCode,
-      headers: this.getHeaders()
-    });
-    oldWriteHead.apply(this, arguments);
-  };
-  next();
-});
-
 //logging errors
 app.use((err, req, res, next) => {
   logger.error('Unhandled error', {
