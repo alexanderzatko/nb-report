@@ -2,9 +2,22 @@ require('dotenv').config();
 
 const express = require('express');
 const session = require('express-session');
-const MySQLStore = require('express-mysql-session')(session);
-const winston = require('winston');
 
+const winston = require('winston');
+// Configure Winston logger
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.File({ filename: 'server-error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'server-combined.log' })
+  ]
+});
+
+const MySQLStore = require('express-mysql-session')(session);
 const options = {
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
@@ -13,6 +26,7 @@ const options = {
     database: process.env.DB_NAME
 };
 const sessionStore = new MySQLStore(options);
+
 const axios = require('axios');
 //const cors = require('cors');
 
@@ -64,19 +78,6 @@ const authenticateUser = (req, res, next) => {
   }
   next();
 };
-
-// Configure Winston logger
-const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
-  transports: [
-    new winston.transports.File({ filename: 'server-error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'server-combined.log' })
-  ]
-});
 
 app.post('/api/logout', (req, res) => {
     logger.info('Logout request received', { 
