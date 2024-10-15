@@ -79,6 +79,21 @@ const authenticateUser = (req, res, next) => {
   next();
 };
 
+// Session middleware
+app.use(session({
+    key: 'nb_report_cookie',
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    store: sessionStore,
+    cookie: {
+        secure: process.env.COOKIE_SECURE === 'true', // Explicitly set in .env
+        httpOnly: false,
+        sameSite: 'none',
+        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+    }
+}));
+
 app.post('/api/logout', (req, res) => {
     logger.info('Logout request received', { 
         sessionID: req.sessionID,
@@ -93,7 +108,7 @@ app.post('/api/logout', (req, res) => {
         logger.error('Session destruction error:', err);
         return res.status(500).json({ error: 'Failed to destroy session' });
       }
-      res.clearCookie('session_cookie_name'); // Ensure this matches your session cookie name
+      res.clearCookie('nb_report_cookie'); 
       logger.info('Session destroyed and cookie cleared');
       res.status(200).json({ message: 'Logged out successfully' });
     });
@@ -102,21 +117,6 @@ app.post('/api/logout', (req, res) => {
     res.status(200).json({ message: 'No active session to logout' });
   }
 });
-
-// Session middleware
-app.use(session({
-    key: 'session_cookie_name',
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    store: sessionStore,
-    cookie: {
-        secure: process.env.COOKIE_SECURE === 'true', // Explicitly set in .env
-        httpOnly: true,
-        sameSite: 'none',
-        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
-    }
-}));
 
 app.get('/api/auth-status', (req, res) => {
   const isAuthenticated = !!req.session.accessToken;
