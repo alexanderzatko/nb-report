@@ -180,7 +180,7 @@ app.post('/api/exchange-token', async (req, res) => {
           return res.status(500).json({ error: 'Failed to save session' });
         }
         logger.info('Session saved successfully', { sessionID: req.sessionID });
-        res.json({ success: true });
+        res.json({ success: true, sessionId: req.sessionID });
       });
     } else {
       logger.warn('Failed to obtain access token');
