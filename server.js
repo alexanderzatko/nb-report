@@ -44,6 +44,22 @@ app.use((req, res, next) => {
   next();
 });
 
+/*
+/logging outgoing response headers
+app.use((req, res, next) => {
+  const oldWriteHead = res.writeHead;
+  res.writeHead = function(statusCode, headers) {
+    logger.info('Response headers', {
+      url: req.url,
+      method: req.method,
+      statusCode,
+      headers: this.getHeaders()
+    });
+    oldWriteHead.apply(this, arguments);
+  };
+  next();
+});
+*/
 //logging errors
 app.use((err, req, res, next) => {
   logger.error('Unhandled error', {
@@ -88,8 +104,8 @@ app.use(session({
     store: sessionStore,
     cookie: {
 //      secure: process.env.COOKIE_SECURE === 'true', // Explicitly set in .env
-      secure: true,
-      httpOnly: true,
+      secure: false,
+      httpOnly: false,
       sameSite: 'none',
       maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
       }
