@@ -28,10 +28,42 @@ const options = {
 const sessionStore = new MySQLStore(options);
 
 const axios = require('axios');
-//const cors = require('cors');
-
 const app = express();
 const port = 3000;
+
+//This tells Express that it's behind a proxy and to trust the X-Forwarded-* headers
+app.set('trust proxy', 1);
+
+// Session middleware
+app.use(session({
+  key: 'nb_report_cookie',
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  store: sessionStore,
+  cookie: {
+//secure: process.env.COOKIE_SECURE === 'true', // Explicitly set in .env
+    secure: true,
+    httpOnly: true,
+    sameSite: 'none',
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    domain: 'nabezky.sk'  // Add this line
+}
+}));
+
+/*
+const cors = require('cors');
+app.use(cors({
+  origin: 'https://report.nabezky.sk',
+  credentials: true
+}));
+*/
+
+//log all cookies
+app.use((req, res, next) => {
+  logger.info('Incoming request cookies:', req.cookies);
+  next();
+});
 
 //logging all incoming requests
 app.use((req, res, next) => {
@@ -71,12 +103,19 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-/*
-app.use(cors({
-  origin: 'https://report.nabezky.sk', // Your frontend URL
-  credentials: true
-}));
-*/
+//for checking the session by making a call to this endpoint
+app.get('/api/check-session', (req, res) => {
+  logger.info('Checking session', {
+    sessionID: req.sessionID,
+    hasSession: !!req.session,
+    sessionContent: req.session
+  });
+  res.json({
+    sessionID: req.sessionID,
+    hasSession: !!req.session,
+    hasAccessToken: !!req.session.accessToken
+  });
+});
     
 app.use(express.json());
 
@@ -93,22 +132,6 @@ const authenticateUser = (req, res, next) => {
   }
   next();
 };
-
-// Session middleware
-app.use(session({
-    key: 'nb_report_cookie',
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    store: sessionStore,
-    cookie: {
-//      secure: process.env.COOKIE_SECURE === 'true', // Explicitly set in .env
-      secure: true,
-      httpOnly: true,
-      sameSite: 'none',
-      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
-      }
-}));
 
 app.post('/api/logout', (req, res) => {
     logger.info('Logout request received', { 
@@ -174,9 +197,12 @@ app.get('/api/nblogin', (req, res) => {
 });
 
 app.post('/api/exchange-token', async (req, res) => {
-  logger.info('Token exchange request received', { 
+  logger.info('Token exchange request received', {
     sessionID: req.sessionID,
     hasSession: !!req.session
+  });
+  sessionID: req.sessionID,
+  hasSession: !!req.session
   });
   const { code } = req.body;
   
@@ -193,6 +219,11 @@ app.post('/api/exchange-token', async (req, res) => {
       req.session.accessToken = response.data.access_token;
       req.session.refreshToken = response.data.refresh_token;
       req.session.isNewLogin = true;
+
+    logger.info('Session before save:', {
+      sessionID: req.sessionID,
+      session: req.session
+    });
       
       req.session.save((err) => {
         if (err) {
