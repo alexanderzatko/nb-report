@@ -146,7 +146,6 @@ async function handleOAuthCallback() {
     try {
       await exchangeToken(code);
       console.log('Token exchanged successfully');
-      await updateUIBasedOnAuthState();
     } catch (error) {
       console.error('Error exchanging token:', error);
     }
@@ -321,7 +320,6 @@ document.getElementById('auth-button').addEventListener('click', toggleAuth);
 
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOMContentLoaded event fired');
-  await updateUIBasedOnAuthState();
   
   const urlParams = new URLSearchParams(window.location.search);
   console.log('URL params:', urlParams.toString());
@@ -331,4 +329,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   } else {
     console.log('No code parameter in URL');
   }
+  await updateUIBasedOnAuthState();
 });
