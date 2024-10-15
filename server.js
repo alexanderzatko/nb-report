@@ -201,9 +201,7 @@ app.post('/api/exchange-token', async (req, res) => {
     sessionID: req.sessionID,
     hasSession: !!req.session
   });
-  sessionID: req.sessionID,
-  hasSession: !!req.session
-  });
+
   const { code } = req.body;
   
   try {
