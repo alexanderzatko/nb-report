@@ -1,0 +1,26 @@
+{
+  "app": {
+    "title": "Report Snow Conditions",
+    "header": "Report Snow Conditions"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout"
+  },
+  "form": {
+    "country": "Country:",
+    "selectCountry": "Select a country",
+    "region": "Region:",
+    "selectRegion": "Select a region",
+    "snowDepth": "Snow Depth (cm):",
+    "snowType": "Snow Type:",
+    "snowType": {
+      "powder": "Powder",
+      "packed": "Packed",
+      "crusty": "Crusty",
+      "icy": "Icy"
+    },
+    "submit": "Submit Report"
+  },
+  "welcome": "Welcome, {{name}} ({{role}})"
+}
