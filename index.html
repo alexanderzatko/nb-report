@@ -2,49 +2,47 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <title data-i18n="app.title">Report Snow Conditions</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Collect snow information from skiers">
-  <title>Snow Report</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header>
-    <h1>Report Snow Conditions</h1>
+    <h1 data-i18n="app.header">Report Snow Conditions</h1>
   </header>
 
-  <main>
-    <button id="auth-button">Login</button>
-    <form id="snow-report-form" style="display: none;">
-      <label for="location">Location:</label>
-
-      <label for="country">Country:</label>
-      <select id="country" name="country" required>
-        <option value="">Select a country</option>
-        <option value="Austria">Austria</option>
-        <option value="Germany">Germany</option>
-        <option value="Italy">Italy</option>
-        <option value="Slovakia">Slovakia</option>
+    <main>
+      <button id="auth-button" data-i18n="auth.login">Login</button>
+      <form id="snow-report-form">
+        <label for="country" data-i18n="form.country">Country:</label>
+        <select id="country">
+          <option value="" data-i18n="form.selectCountry">Select a country</option>
+        <option value="at" data-i18n="form.selectCountryAT">Austria</option>
+        <option value="de" data-i18n="form.selectCountryDE">Germany</option>
+        <option value="it" data-i18n="form.selectCountryIT">Italy</option>
+        <option value="sk" data-i18n="form.selectCountrySK">Slovakia</option>
       </select>
-      <label for="region">Region:</label>
-      <select id="region" name="region" required>
-        <option value="">Select a region</option>
-      </select>
+        <label for="region" data-i18n="form.region">Region:</label>
+        <select id="region">
+          <option value="" data-i18n="form.selectRegion">Select a region</option>
+        </select>
       
-      <label for="snow-depth">Snow Depth (cm):</label>
-      <input type="number" id="snow-depth" name="snow-depth" required placeholder="Enter snow depth">
+            <label for="snow-depth" data-i18n="form.snowDepth">Snow Depth (cm):</label>
+            <input type="number" id="snow-depth" required>
 
-      <label for="snow-type">Snow Type:</label>
-      <select id="snow-type" name="snow-type" required>
-        <option value="powder">Powder</option>
-        <option value="packed">Packed</option>
-        <option value="crusty">Crusty</option>
-        <option value="icy">Icy</option>
-      </select>
+            <label for="snow-type" data-i18n="form.snowType">Snow Type:</label>
+            <select id="snow-type">
+                <option value="powder" data-i18n="form.snowType.powder">Powder</option>
+                <option value="packed" data-i18n="form.snowType.packed">Packed</option>
+                <option value="crusty" data-i18n="form.snowType.crusty">Crusty</option>
+                <option value="icy" data-i18n="form.snowType.icy">Icy</option>
+            </select>
 
-      <button type="submit">Submit Report</button>
-    </form>
-  </main>
+            <button type="submit" data-i18n="form.submit">Submit Report</button>
+        </form>
+    </main>
 
   <script src="app.js"></script>
 </body>
