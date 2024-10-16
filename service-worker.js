@@ -1,13 +1,16 @@
-const CACHE_NAME = 'snow-report-cache-v65';
+const CACHE_NAME = 'snow-report-cache-v66';
 const urlsToCache = [
   '/',
   '/index.html',
   '/styles.css',
   '/app.js',
   '/i18n.js',
-  '/manifest.json?v=3',
+  '/manifest.json?v=4',
   '/locales/en/translation.json',
-  '/locales/sk/translation.json'
+  '/locales/sk/translation.json',
+  '/node_modules/i18next/dist/esm/i18next.js',
+  '/node_modules/i18next-http-backend/esm/index.js',
+  '/node_modules/i18next-browser-languagedetector/dist/esm/i18nextBrowserLanguageDetector.js'
 ];
 
 self.addEventListener('activate', function(event) {
