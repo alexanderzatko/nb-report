@@ -33,7 +33,7 @@ const port = 3000;
 
 // Middleware to serve JavaScript files with the correct MIME type
 app.use((req, res, next) => {
-  if (req.url.endsWith('.js')) {
+  if (req.url.endsWith('.js') || req.url.endsWith('.cjs')) {
     res.type('application/javascript');
   }
   next();
