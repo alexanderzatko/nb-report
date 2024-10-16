@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const express = require('express');
 const session = require('express-session');
+const path = require('path');
 
 const winston = require('winston');
 // Configure Winston logger
@@ -351,6 +352,10 @@ app.get('/api/check-session', (req, res) => {
   } else {
     res.status(401).json({ valid: false, error: 'Invalid or expired session' });
   }
+});
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(port, () => {
