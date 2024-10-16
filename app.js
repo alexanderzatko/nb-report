@@ -135,6 +135,7 @@ async function handleOAuthCallback() {
     console.log('Stored state:', storedState);
     if (state !== storedState) {
       console.error('State mismatch. Possible CSRF attack.');
+      updateUIBasedOnAuthState(false);
       return;
     }
     console.log('State validation successful');
@@ -145,13 +146,20 @@ async function handleOAuthCallback() {
   if (code) {
     console.log('Exchanging token');
     try {
-      await exchangeToken(code);
+      const success = await exchangeToken(code);
       console.log('Token exchanged successfully');
+      if (success) {
+        await refreshUserData();
+      } else {
+        updateUIBasedOnAuthState(false);
+      }
     } catch (error) {
       console.error('Error exchanging token:', error);
+      updateUIBasedOnAuthState(false);
     }
   } else {
     console.log('No code present, skipping token exchange');
+    updateUIBasedOnAuthState(false);
   }
 
   localStorage.removeItem('oauthState');
@@ -186,21 +194,14 @@ async function exchangeToken(code) {
         localStorage.setItem('sessionId', data.sessionId);
         console.log('Session ID stored in localStorage');
       }
-
-      // Fetch user data after successful token exchange
-      const userData = await getUserData();
-      if (userData) {
-        updateUIWithUserData(userData);
-      }
       
-      // Update UI
-      await updateUIBasedOnAuthState();
-      console.log('UI updated after successful login');
+      return true;
     } else {
       throw new Error('Token exchange failed');
     }
   } catch (error) {
     console.error('Error exchanging token:', error);
+    return false;
   }
 }
 
@@ -251,13 +252,6 @@ async function getUserData() {
 // Function to refresh user data
 async function refreshUserData() {
   try {
-    const isAuthenticated = await checkAuthStatus();
-    if (!isAuthenticated) {
-      console.log('User is not authenticated, skipping user data refresh');
-      updateUIBasedOnAuthState(false);
-      return;
-    }
-
     const userData = await getUserData();
     if (userData) {
       updateUIWithUserData(userData);
@@ -270,6 +264,7 @@ async function refreshUserData() {
     await handleInvalidSession();
   }
 }
+
 
 // Function to handle invalid sessions
 async function handleInvalidSession() {
