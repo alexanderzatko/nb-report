@@ -158,16 +158,25 @@ app.post('/api/logout', (req, res) => {
 });
 
 app.get('/api/auth-status', (req, res) => {
-  const isAuthenticated = !!req.session.accessToken;
-  
-  logger.info('Auth status checked', { 
+  logger.info('Auth status check request received', { 
     sessionID: req.sessionID,
-    session: JSON.stringify(req.session, null, 2),
-    isAuthenticated: isAuthenticated,
-    accessToken: req.session.accessToken ? 'present' : 'absent'
+    hasSession: !!req.session,
+    hasAccessToken: req.session && !!req.session.accessToken
   });
+
+  const isAuthenticated = !!(req.session && req.session.accessToken);
   
-  res.json({ isAuthenticated: isAuthenticated });
+  res.json({ 
+    isAuthenticated: isAuthenticated,
+    sessionID: req.sessionID,
+    // Be cautious about what information you send back to the client
+    // Only include non-sensitive data
+    userInfo: isAuthenticated ? {
+      // Include any non-sensitive user info here, e.g.:
+      // username: req.session.username,
+      // role: req.session.userRole,
+    } : null
+  });
 });
 
 app.post('/api/submit-snow-report', (req, res) => {
