@@ -1,10 +1,15 @@
-require('dotenv').config();
+import 'dotenv/config';
+import express from 'express';
+import session from 'express-session';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import winston from 'winston';
+import MySQLStore from 'express-mysql-session';
+import axios from 'axios';
 
-const express = require('express');
-const session = require('express-session');
-const path = require('path');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const winston = require('winston');
 // Configure Winston logger
 const logger = winston.createLogger({
   level: 'info',
@@ -18,7 +23,6 @@ const logger = winston.createLogger({
   ]
 });
 
-const MySQLStore = require('express-mysql-session')(session);
 const options = {
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
@@ -26,27 +30,21 @@ const options = {
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME
 };
-const sessionStore = new MySQLStore(options);
 
-const axios = require('axios');
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
-// Middleware to serve JavaScript files with the correct MIME type
-app.use('/api', (req, res, next) => {
-  if (req.url.endsWith('.js')) {
-    res.type('application/javascript');
-  }
-  next();
-});
-
-// Serve service-worker.js from the root
-app.get('/service-worker.js', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'service-worker.js'));
-});
+// Manually create SessionStore
+const sessionStore = new (MySQLStore(session))(options);
 
 // Serve static files from the 'public' directory
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders: (res, file) => {
+    if (file.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    }
+  }
+}));
 
 //This tells Express that it's behind a proxy and to trust the X-Forwarded-* headers
 app.set('trust proxy', 1);
@@ -59,13 +57,12 @@ app.use(session({
   saveUninitialized: false,
   store: sessionStore,
   cookie: {
-//secure: process.env.COOKIE_SECURE === 'true', // Explicitly set in .env
     secure: true,
     httpOnly: true,
     sameSite: 'none',
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-    domain: 'nabezky.sk'  // Add this line
-}
+    domain: 'nabezky.sk'
+  }
 }));
 
 /*
@@ -366,6 +363,6 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server running at http://0.0.0.0:${port}`);
 });
