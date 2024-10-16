@@ -239,6 +239,48 @@ async function getUserData() {
   }
 }
 
+// Function to refresh user data
+async function refreshUserData() {
+  try {
+    const userData = await getUserData();
+    if (userData) {
+      updateUIWithUserData(userData);
+      await updateUIBasedOnAuthState();
+    } else {
+      // If getUserData returns null, the session might be invalid
+      await handleInvalidSession();
+    }
+  } catch (error) {
+    console.error('Error refreshing user data:', error);
+    await handleInvalidSession();
+  }
+}
+
+// Function to handle invalid sessions
+async function handleInvalidSession() {
+  console.log('Session appears to be invalid, attempting to refresh...');
+  try {
+    const response = await fetch('/api/refresh-token', {
+      method: 'POST',
+      credentials: 'include'
+    });
+    if (response.ok) {
+      console.log('Token refreshed successfully');
+      await refreshUserData();
+    } else {
+      console.log('Failed to refresh token, redirecting to login');
+      // Clear any stored session data
+      localStorage.removeItem('sessionId');
+      await updateUIBasedOnAuthState();
+    }
+  } catch (error) {
+    console.error('Error refreshing token:', error);
+    // Clear any stored session data
+    localStorage.removeItem('sessionId');
+    await updateUIBasedOnAuthState();
+  }
+}
+
 async function checkAndRefreshToken() {
   // First, check if the user is logged in
   const isLoggedIn = await checkAuthStatus();
@@ -272,6 +314,12 @@ async function checkAndRefreshToken() {
   }
 }
 
+// refresh the token and user data periodically
+setInterval(async () => {
+  await checkAndRefreshToken();
+  await refreshUserData();
+}, 15 * 60 * 1000); // Every 15 minutes
+
 // refresh the token periodically
 setInterval(checkAndRefreshToken, 15 * 60 * 1000); // Check every 15 minutes
 
@@ -298,6 +346,7 @@ if ('serviceWorker' in navigator) {
     };
   });
 }
+
 document.getElementById('country').addEventListener('change', updateRegions);
 
 document.getElementById('snow-report-form').addEventListener('submit', async function(event) {
@@ -337,6 +386,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     await handleOAuthCallback();
   } else {
     console.log('No code parameter in URL');
+    await refreshUserData();
   }
-  await updateUIBasedOnAuthState();
 });
+
+// Event listeners for visibility changes and focus
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    refreshUserData();
+  }
+});
+
+window.addEventListener('focus', refreshUserData);
