@@ -1,0 +1,26 @@
+{
+  "app": {
+    "title": "Report — Snehové podmienky",
+    "header": "Report — Snehové podmienky"
+  },
+  "auth": {
+    "login": "Prihlásiť",
+    "logout": "Odjlásiť"
+  },
+  "form": {
+    "country": "Country:",
+    "selectCountry": "Select a country",
+    "region": "Region:",
+    "selectRegion": "Select a region",
+    "snowDepth": "Snow Depth (cm):",
+    "snowType": "Snow Type:",
+    "snowType": {
+      "powder": "Powder",
+      "packed": "Packed",
+      "crusty": "Crusty",
+      "icy": "Icy"
+    },
+    "submit": "Submit Report"
+  },
+  "welcome": "Welcome, {{name}} ({{role}})"
+}
