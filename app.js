@@ -1,3 +1,5 @@
+import i18next from './i18n.js';
+
 console.log('app.js loaded');
 
 const regionData = {
@@ -84,14 +86,26 @@ function updateUIBasedOnAuthState(isAuthenticated) {
 }
 
 function updateUIWithUserData(userData) {
-
   console.log(userData);
   // Update UI elements with user data
   // For example:
-//  const userInfoElement = document.getElementById('user-info');
-//  if (userInfoElement) {
-//    userInfoElement.textContent = `Welcome, ${userData.name} (${userData.role})`;
-//  }
+  // const userInfoElement = document.getElementById('user-info');
+  // if (userInfoElement) {
+  //   userInfoElement.textContent = i18next.t('welcome', { name: userData.name, role: userData.role });
+  // }
+  
+  // Set the language based on user data
+  if (userData.language) {
+    i18next.changeLanguage(userData.language);
+  }
+}
+
+// Update all translatable elements
+function updatePageContent() {
+  document.querySelectorAll('[data-i18n]').forEach(element => {
+    const key = element.getAttribute('data-i18n');
+    element.textContent = i18next.t(key);
+  });
 }
 
 async function initiateOAuth() {
@@ -241,6 +255,7 @@ async function refreshUserData() {
     if (userData) {
       updateUIWithUserData(userData);
       updateUIBasedOnAuthState(true);
+      updatePageContent(); // Update translations after changing language
     } else {
       throw new Error('Failed to fetch user data');
     }
@@ -343,6 +358,10 @@ if ('serviceWorker' in navigator) {
     };
   });
 }
+
+i18next.on('languageChanged', () => {
+  updatePageContent();
+});
 
 document.getElementById('country').addEventListener('change', updateRegions);
 
