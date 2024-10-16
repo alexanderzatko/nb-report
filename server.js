@@ -169,12 +169,9 @@ app.get('/api/auth-status', (req, res) => {
   res.json({ 
     isAuthenticated: isAuthenticated,
     sessionID: req.sessionID,
-    // Be cautious about what information you send back to the client
-    // Only include non-sensitive data
+    // Only include non-sensitive user info here
     userInfo: isAuthenticated ? {
-      // Include any non-sensitive user info here, e.g.:
-      // username: req.session.username,
-      // role: req.session.userRole,
+      // e.g., username: req.session.username,
     } : null
   });
 });
@@ -258,17 +255,19 @@ app.post('/api/exchange-token', async (req, res) => {
 app.post('/api/refresh-token', async (req, res) => {
   logger.info('Token refresh attempt', { sessionID: req.sessionID });
   
-  if (!req.session.refreshToken) {
+  if (!req.session || !req.session.refreshToken) {
     logger.warn('No refresh token available', { sessionID: req.sessionID });
     return res.status(401).json({ error: 'No refresh token available' });
   }
 
   // If this is a new login, skip the refresh
+/*
   if (req.session.isNewLogin) {
     req.session.isNewLogin = false;
     return res.json({ success: true, message: 'New login, refresh not needed' });
-  }
-  
+  }  
+*/
+
   try {
     const response = await axios.post(TOKEN_URL, {
       grant_type: 'refresh_token',
@@ -285,16 +284,14 @@ app.post('/api/refresh-token', async (req, res) => {
       logger.info('Token refreshed successfully', { sessionID: req.sessionID });
       res.json({ success: true });
     } else {
-      throw new Error('Failed to refresh token');
+      throw new Error('Failed to refresh token: No access token in response');
     }
   } catch (error) {
     logger.error('Error refreshing token:', error.response ? error.response.data : error.message);
     if (error.response && error.response.status === 400) {
       // The refresh token might be invalid or expired
       req.session.destroy((err) => {
-        if (err) {
-          logger.error('Error destroying session:', err);
-        }
+        if (err) logger.error('Error destroying session:', err);
         res.status(401).json({ error: 'Session expired. Please log in again.' });
       });
     } else {
@@ -304,40 +301,40 @@ app.post('/api/refresh-token', async (req, res) => {
 });
 
 app.get('/api/user-data', async (req, res) => {
-  logger.info('Retrieving user data', { session: req.session });
-  if (req.session.accessToken) {
-    try {
-      // Fetch user data from Drupal server using the access token
-      const response = await axios.post(
-        `${OAUTH_PROVIDER_URL}/nabezky/rules/rules_retrieve_data_for_the_nb_report_app`,
-        {},
-        {
-          headers: {
-            'Authorization': `Bearer ${req.session.accessToken}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          }
-        }
-      );
+  logger.info('User data request received', { sessionID: req.sessionID });
+  
+  if (!req.session || !req.session.accessToken) {
+    logger.warn('Unauthorized user data request', { sessionID: req.sessionID });
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
 
-      // Update the session with the latest user data
-      req.session.userData = response.data;
-      req.session.save((err) => {
-        if (err) {
-          logger.error('Error saving session:', err);
+  try {
+    // Fetch user data from Drupal server using the access token
+    const response = await axios.post(
+      `${OAUTH_PROVIDER_URL}/nabezky/rules/rules_retrieve_data_for_the_nb_report_app`,
+      {},
+      {
+        headers: {
+          'Authorization': `Bearer ${req.session.accessToken}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         }
-      });
-      
-      // Send the user data back to the client
-      res.json(response.data);
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-      res.status(500).json({ error: 'Failed to fetch user data' });
-    }
-  } else {
-    res.status(401).json({ error: 'Not authenticated' });
+      }
+    );
+
+    // Update the session with the latest user data
+    req.session.userData = response.data;
+    req.session.save((err) => {
+      if (err) logger.error('Error saving session:', err);
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    logger.error('Error fetching user data:', error);
+    res.status(500).json({ error: 'Failed to fetch user data' });
   }
 });
+
 
 // Endpoint to check session validity
 app.get('/api/check-session', (req, res) => {
