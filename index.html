@@ -7,6 +7,7 @@
   <meta name="description" content="Collect snow information from skiers">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
 </head>
 <body>
   <header>
@@ -15,7 +16,7 @@
 
     <main>
       <button id="auth-button" data-i18n="auth.login">Login</button>
-      <form id="snow-report-form">
+      <form id="snow-report-form" style="display:none;">
         <label for="country" data-i18n="form.country">Country:</label>
         <select id="country">
           <option value="" data-i18n="form.selectCountry">Select a country</option>
