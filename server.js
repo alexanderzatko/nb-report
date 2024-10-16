@@ -259,7 +259,7 @@ app.post('/api/refresh-token', async (req, res) => {
     req.session.isNewLogin = false;
     return res.json({ success: true, message: 'New login, refresh not needed' });
   }
-
+  
   try {
     const response = await axios.post(TOKEN_URL, {
       grant_type: 'refresh_token',
@@ -273,18 +273,18 @@ app.post('/api/refresh-token', async (req, res) => {
       if (response.data.refresh_token) {
         req.session.refreshToken = response.data.refresh_token;
       }
-        logger.info('Token refreshed successfully', { sessionID: req.sessionID });
-        res.json({ success: true });
+      logger.info('Token refreshed successfully', { sessionID: req.sessionID });
+      res.json({ success: true });
     } else {
       throw new Error('Failed to refresh token');
     }
   } catch (error) {
-    console.error('Error refreshing token:', error.response ? error.response.data : error.message);
+    logger.error('Error refreshing token:', error.response ? error.response.data : error.message);
     if (error.response && error.response.status === 400) {
       // The refresh token might be invalid or expired
       req.session.destroy((err) => {
         if (err) {
-          console.error('Error destroying session:', err);
+          logger.error('Error destroying session:', err);
         }
         res.status(401).json({ error: 'Session expired. Please log in again.' });
       });
@@ -311,6 +311,14 @@ app.get('/api/user-data', async (req, res) => {
         }
       );
 
+      // Update the session with the latest user data
+      req.session.userData = response.data;
+      req.session.save((err) => {
+        if (err) {
+          logger.error('Error saving session:', err);
+        }
+      });
+      
       // Send the user data back to the client
       res.json(response.data);
     } catch (error) {
@@ -319,6 +327,15 @@ app.get('/api/user-data', async (req, res) => {
     }
   } else {
     res.status(401).json({ error: 'Not authenticated' });
+  }
+});
+
+// Endpoint to check session validity
+app.get('/api/check-session', (req, res) => {
+  if (req.session && req.session.accessToken) {
+    res.json({ valid: true });
+  } else {
+    res.status(401).json({ valid: false, error: 'Invalid or expired session' });
   }
 });
 
