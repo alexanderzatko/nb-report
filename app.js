@@ -204,13 +204,26 @@ async function exchangeToken(code) {
   }
 }
 
+let lastAuthCheck = null;
+let lastAuthStatus = false;
+
 async function checkAuthStatus() {
+  const now = Date.now();
+  if (lastAuthCheck && now - lastAuthCheck < 5000) {
+    // If last check was less than 5 seconds ago, return cached result
+    return lastAuthStatus;
+  }
+
   try {
     const response = await fetch('/api/auth-status', {
       credentials: 'include'
     });
     const data = await response.json();
     console.log('Auth status response:', data);
+    
+    lastAuthCheck = now;
+    lastAuthStatus = data.isAuthenticated;
+    
     return data.isAuthenticated;
   } catch (error) {
     console.error('Error checking auth status:', error);
@@ -238,9 +251,17 @@ async function getUserData() {
 // Function to refresh user data
 async function refreshUserData() {
   try {
+    const isAuthenticated = await checkAuthStatus();
+    if (!isAuthenticated) {
+      console.log('User is not authenticated, skipping user data refresh');
+      updateUIBasedOnAuthState(false);
+      return;
+    }
+
     const userData = await getUserData();
     if (userData) {
       updateUIWithUserData(userData);
+      updateUIBasedOnAuthState(true);
     } else {
       throw new Error('Failed to fetch user data');
     }
@@ -310,21 +331,15 @@ async function checkAndRefreshToken() {
   }
 }
 
-// refresh the token and user data periodically
-setInterval(async () => {
-  await checkAndRefreshToken();
-  await refreshUserData();
-}, 15 * 60 * 1000); // Every 15 minutes
-
 setInterval(async () => {
   const isAuthenticated = await checkAuthStatus();
   if (isAuthenticated) {
     await refreshUserData();
+    await checkAndRefreshToken();
+  } else {
+    updateUIBasedOnAuthState(false);
   }
 }, 15 * 60 * 1000); // Every 15 minutes
-
-// refresh the token periodically
-setInterval(checkAndRefreshToken, 15 * 60 * 1000); // Check every 15 minutes
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
@@ -400,9 +415,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Event listeners for visibility changes and focus
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) {
-    refreshUserData();
+    checkAuthStatus().then(isAuthenticated => {
+      if (isAuthenticated) {
+        refreshUserData();
+      } else {
+        updateUIBasedOnAuthState(false);
+      }
+    });
   }
 });
 
-window.addEventListener('focus', refreshUserData);
-
+window.addEventListener('focus', () => {
+  checkAuthStatus().then(isAuthenticated => {
+    if (isAuthenticated) {
+      refreshUserData();
+    } else {
+      updateUIBasedOnAuthState(false);
+    }
+  });
+});
