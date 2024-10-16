@@ -26,15 +26,14 @@ function updateRegions() {
   }
 }
 
-function toggleAuth() {
+async function toggleAuth() {
   console.log('toggleAuth called');
-  checkAuthStatus().then(isAuthenticated => {
-    if (isAuthenticated) {
-      logout();
-    } else {
-      initiateOAuth();
-    }
-  });
+  const isAuthenticated = await checkAuthStatus();
+  if (isAuthenticated) {
+    await logout();
+  } else {
+    initiateOAuth();
+  }
 }
 
 async function logout() {
@@ -42,7 +41,7 @@ async function logout() {
     console.log('Logout function called');
     const response = await fetch('/api/logout', { 
       method: 'POST',
-      credentials: 'include', // This ensures cookies are sent with the request
+      credentials: 'include',
     });
 
     console.log('Logout response status:', response.status);
@@ -53,23 +52,25 @@ async function logout() {
       throw new Error('Logout failed: ' + data.message);
     }
 
-    // Clear any client-side stored data
-    localStorage.removeItem('sessionId');
-
     console.log('Logout successful, updating UI');
-    await updateUIBasedOnAuthState();
-    console.log('UI updated after logout');
+    await handleLogout();
 
     // Force a hard reload to ensure all state is reset
     window.location.href = window.location.origin;
   } catch (error) {
     console.error('Logout error:', error);
+    // Even if the server-side logout fails, we should still clear client-side data
+    await handleLogout();
   }
 }
 
-async function updateUIBasedOnAuthState() {
-  const isAuthenticated = await checkAuthStatus();
-  console.log('Authentication status:', isAuthenticated);
+async function handleLogout() {
+  localStorage.removeItem('sessionId');
+  updateUIBasedOnAuthState(false);
+}
+
+function updateUIBasedOnAuthState(isAuthenticated) {
+  console.log('Updating UI based on auth state:', isAuthenticated);
   const authButton = document.getElementById('auth-button');
   const snowReportForm = document.getElementById('snow-report-form');
 
@@ -218,11 +219,6 @@ async function checkAuthStatus() {
 }
 
 async function getUserData() {
-  const sessionId = localStorage.getItem('sessionId');
-  if (!sessionId) {
-    return null;
-  }
-
   try {
     const response = await fetch('/api/user-data', {
       credentials: 'include' // This ensures cookies are sent with the request
@@ -242,19 +238,11 @@ async function getUserData() {
 // Function to refresh user data
 async function refreshUserData() {
   try {
-    const isAuthenticated = await checkAuthStatus();
-    if (!isAuthenticated) {
-      console.log('User is not authenticated');
-      await updateUIBasedOnAuthState();
-      return;
-    }
-
     const userData = await getUserData();
     if (userData) {
       updateUIWithUserData(userData);
-      await updateUIBasedOnAuthState();
     } else {
-      await handleInvalidSession();
+      throw new Error('Failed to fetch user data');
     }
   } catch (error) {
     console.error('Error refreshing user data:', error);
@@ -264,16 +252,7 @@ async function refreshUserData() {
 
 // Function to handle invalid sessions
 async function handleInvalidSession() {
-  console.log('Session appears to be invalid, checking authentication status...');
-  const isAuthenticated = await checkAuthStatus();
-  if (!isAuthenticated) {
-    console.log('User is not authenticated, updating UI for logged out state');
-    localStorage.removeItem('sessionId');
-    await updateUIBasedOnAuthState();
-    return;
-  }
-
-  console.log('User is authenticated but session may be invalid, attempting to refresh...');
+  console.log('Session appears to be invalid, attempting to refresh token...');
   try {
     const response = await fetch('/api/refresh-token', {
       method: 'POST',
@@ -288,15 +267,13 @@ async function handleInvalidSession() {
       console.log('Token refreshed successfully');
       await refreshUserData();
     } else {
-      console.log('Failed to refresh token, redirecting to login');
+      console.log('Failed to refresh token, updating UI for logged out state');
       console.log('Error details:', data.error || 'No error details provided');
-      localStorage.removeItem('sessionId');
-      await updateUIBasedOnAuthState();
+      await handleLogout();
     }
   } catch (error) {
     console.error('Error refreshing token:', error);
-    localStorage.removeItem('sessionId');
-    await updateUIBasedOnAuthState();
+    await handleLogout();
   }
 }
 
@@ -337,6 +314,13 @@ async function checkAndRefreshToken() {
 setInterval(async () => {
   await checkAndRefreshToken();
   await refreshUserData();
+}, 15 * 60 * 1000); // Every 15 minutes
+
+setInterval(async () => {
+  const isAuthenticated = await checkAuthStatus();
+  if (isAuthenticated) {
+    await refreshUserData();
+  }
 }, 15 * 60 * 1000); // Every 15 minutes
 
 // refresh the token periodically
@@ -405,7 +389,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     await handleOAuthCallback();
   } else {
     console.log('No code parameter in URL');
-    await refreshUserData();
+    const isAuthenticated = await checkAuthStatus();
+    updateUIBasedOnAuthState(isAuthenticated);
+    if (isAuthenticated) {
+      await refreshUserData();
+    }
   }
 });
 
@@ -417,3 +405,4 @@ document.addEventListener('visibilitychange', () => {
 });
 
 window.addEventListener('focus', refreshUserData);
+
