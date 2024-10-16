@@ -40,6 +40,14 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
+// Serve service-worker.js from the root
+app.get('/service-worker.js', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'service-worker.js'));
+});
+
+// Serve static files from the 'public' directory
+app.use(express.static(path.join(__dirname, 'public')));
+
 //This tells Express that it's behind a proxy and to trust the X-Forwarded-* headers
 app.set('trust proxy', 1);
 
