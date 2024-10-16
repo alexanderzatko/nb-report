@@ -242,12 +242,18 @@ async function getUserData() {
 // Function to refresh user data
 async function refreshUserData() {
   try {
+    const isAuthenticated = await checkAuthStatus();
+    if (!isAuthenticated) {
+      console.log('User is not authenticated');
+      await updateUIBasedOnAuthState();
+      return;
+    }
+
     const userData = await getUserData();
     if (userData) {
       updateUIWithUserData(userData);
       await updateUIBasedOnAuthState();
     } else {
-      // If getUserData returns null, the session might be invalid
       await handleInvalidSession();
     }
   } catch (error) {
@@ -258,24 +264,37 @@ async function refreshUserData() {
 
 // Function to handle invalid sessions
 async function handleInvalidSession() {
-  console.log('Session appears to be invalid, attempting to refresh...');
+  console.log('Session appears to be invalid, checking authentication status...');
+  const isAuthenticated = await checkAuthStatus();
+  if (!isAuthenticated) {
+    console.log('User is not authenticated, updating UI for logged out state');
+    localStorage.removeItem('sessionId');
+    await updateUIBasedOnAuthState();
+    return;
+  }
+
+  console.log('User is authenticated but session may be invalid, attempting to refresh...');
   try {
     const response = await fetch('/api/refresh-token', {
       method: 'POST',
       credentials: 'include'
     });
+    
+    console.log('Refresh token response status:', response.status);
+    const data = await response.json();
+    console.log('Refresh token response:', data);
+
     if (response.ok) {
       console.log('Token refreshed successfully');
       await refreshUserData();
     } else {
       console.log('Failed to refresh token, redirecting to login');
-      // Clear any stored session data
+      console.log('Error details:', data.error || 'No error details provided');
       localStorage.removeItem('sessionId');
       await updateUIBasedOnAuthState();
     }
   } catch (error) {
     console.error('Error refreshing token:', error);
-    // Clear any stored session data
     localStorage.removeItem('sessionId');
     await updateUIBasedOnAuthState();
   }
