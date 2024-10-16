@@ -4,7 +4,10 @@ const urlsToCache = [
   '/index.html',
   '/styles.css',
   '/app.js',
-  '/manifest.json?v=2',
+  '/i18n.js',
+  '/manifest.json?v=3',
+  '/locales/en/translation.json',
+  '/locales/sk/translation.json'
 ];
 
 self.addEventListener('activate', function(event) {
