@@ -55,8 +55,6 @@ async function logout() {
     console.log('Logout successful, updating UI');
     await handleLogout();
 
-    // Force a hard reload to ensure all state is reset
-    window.location.href = window.location.origin;
   } catch (error) {
     console.error('Logout error:', error);
     // Even if the server-side logout fails, we should still clear client-side data
@@ -66,7 +64,7 @@ async function logout() {
 
 async function handleLogout() {
   localStorage.removeItem('sessionId');
-  updateUIBasedOnAuthState(false);
+  await updateUIBasedOnAuthState(false);
 }
 
 function updateUIBasedOnAuthState(isAuthenticated) {
@@ -205,26 +203,13 @@ async function exchangeToken(code) {
   }
 }
 
-let lastAuthCheck = null;
-let lastAuthStatus = false;
-
 async function checkAuthStatus() {
-  const now = Date.now();
-  if (lastAuthCheck && now - lastAuthCheck < 5000) {
-    // If last check was less than 5 seconds ago, return cached result
-    return lastAuthStatus;
-  }
-
   try {
     const response = await fetch('/api/auth-status', {
       credentials: 'include'
     });
     const data = await response.json();
     console.log('Auth status response:', data);
-    
-    lastAuthCheck = now;
-    lastAuthStatus = data.isAuthenticated;
-    
     return data.isAuthenticated;
   } catch (error) {
     console.error('Error checking auth status:', error);
@@ -235,7 +220,7 @@ async function checkAuthStatus() {
 async function getUserData() {
   try {
     const response = await fetch('/api/user-data', {
-      credentials: 'include' // This ensures cookies are sent with the request
+      credentials: 'include'
     });
     if (!response.ok) {
       throw new Error('Failed to fetch user data');
@@ -264,7 +249,6 @@ async function refreshUserData() {
     await handleInvalidSession();
   }
 }
-
 
 // Function to handle invalid sessions
 async function handleInvalidSession() {
@@ -405,27 +389,4 @@ document.addEventListener('DOMContentLoaded', async () => {
       await refreshUserData();
     }
   }
-});
-
-// Event listeners for visibility changes and focus
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) {
-    checkAuthStatus().then(isAuthenticated => {
-      if (isAuthenticated) {
-        refreshUserData();
-      } else {
-        updateUIBasedOnAuthState(false);
-      }
-    });
-  }
-});
-
-window.addEventListener('focus', () => {
-  checkAuthStatus().then(isAuthenticated => {
-    if (isAuthenticated) {
-      refreshUserData();
-    } else {
-      updateUIBasedOnAuthState(false);
-    }
-  });
 });
