@@ -32,21 +32,12 @@ const app = express();
 const port = 3000;
 
 // Middleware to serve JavaScript files with the correct MIME type
-app.use((req, res, next) => {
-  if (req.url.endsWith('.js') || req.url.endsWith('.cjs')) {
+app.use('/api', (req, res, next) => {
+  if (req.url.endsWith('.js')) {
     res.type('application/javascript');
   }
   next();
 });
-
-// Serve static files from the root directory
-app.use(express.static(path.join(__dirname, ''), {
-  setHeaders: (res, path, stat) => {
-    if (path.endsWith('.js')) {
-      res.set('Content-Type', 'application/javascript');
-    }
-  }
-}));
 
 //This tells Express that it's behind a proxy and to trust the X-Forwarded-* headers
 app.set('trust proxy', 1);
