@@ -336,26 +336,24 @@ setInterval(async () => {
 }, 15 * 60 * 1000); // Every 15 minutes
 
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
+  window.addEventListener('load', function() {
     navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
       console.log('ServiceWorker registration successful with scope: ', registration.scope);
-    }, function(err) {
+      
+      registration.onupdatefound = () => {
+        const installingWorker = registration.installing;
+        installingWorker.onstatechange = () => {
+          if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // New content is available, prompt user to refresh
+            if (confirm('New version available! Click OK to refresh.')) {
+              window.location.reload();
+            }
+          }
+        };
+      };
+    }).catch(function(err) {
       console.log('ServiceWorker registration failed: ', err);
     });
-  });
-
-  navigator.serviceWorker.register('/service-worker.js').then(reg => {
-    reg.onupdatefound = () => {
-      const installingWorker = reg.installing;
-      installingWorker.onstatechange = () => {
-        if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-          // New content is available, prompt user to refresh
-          if (confirm('New version available! Click OK to refresh.')) {
-            window.location.reload();
-          }
-        }
-      };
-    };
   });
 }
 
