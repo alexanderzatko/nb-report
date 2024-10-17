@@ -420,7 +420,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadCountriesData();
     console.log('Countries data loaded');
     
-    updatePageContent();
+    await updatePageContent();
     populateCountryDropdown();
     updateRegions();
     
