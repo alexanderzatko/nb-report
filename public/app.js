@@ -112,12 +112,15 @@ function updateUIWithUserData(userData) {
 }
 
 // Update all translatable elements
-function updatePageContent() {
+async function updatePageContent() {
   console.log('Updating page content with translations');
   document.querySelectorAll('[data-i18n]').forEach(element => {
     const key = element.getAttribute('data-i18n');
-    element.textContent = i18next.t(key);
+    const translation = i18next.t(key);
+    console.log(`Translating key: ${key}, result: ${translation}`);
+    element.textContent = translation;
   });
+  
   populateCountryDropdown();
   updateRegions();
 }
