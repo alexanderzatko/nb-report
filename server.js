@@ -41,7 +41,7 @@ const sessionStore = new (MySQLStore(session))(options);
 const setCorrectMimeType = (res, path) => {
   if (path.endsWith('.js')) {
     res.set('Content-Type', 'application/javascript');
-  } else if (path.endsWith('.mjs')) {
+  } else if (path.endsWith('.cjs')) {
     res.set('Content-Type', 'application/javascript');
   }
 };
