@@ -46,6 +46,9 @@ app.use(express.static(path.join(__dirname, 'public'), {
   }
 }));
 
+// Serve necessary files from node_modules
+app.use('/node_modules', express.static(path.join(__dirname, 'node_modules')));
+
 // Serve service-worker.js with the correct MIME type
 app.get('/service-worker.js', (req, res) => {
   res.setHeader('Content-Type', 'application/javascript');
