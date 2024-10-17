@@ -14,6 +14,7 @@ i18next
       'en-US': 'en'
     },
     debug: true,
+    returnObjects: true,
     backend: {
       loadPath: '/locales/{{lng}}/{{ns}}.json'
     },
