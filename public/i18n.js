@@ -7,6 +7,12 @@ i18next
   .use(LanguageDetector)
   .init({
     fallbackLng: 'en',
+    load: 'languageOnly',
+    languageMapping: {
+      'en': 'en',
+      'en-GB': 'en',
+      'en-US': 'en'
+    },
     debug: true,
     backend: {
       loadPath: '/locales/{{lng}}/{{ns}}.json'
