@@ -2,27 +2,38 @@ import { i18next, initI18next } from './i18n.js';
 
 console.log('app.js loaded');
 
-const regionData = {
-  "Austria": ["The Alps"],
-  "Germany": ["The Alps"],
-  "Italy": ["The Alps"],
-  "Slovakia": ["Javorie"],
-  "Slovakia": ["Malé Karpaty"],
-  "Czech": ["Javorníky"]
-};
+let countriesData;
+
+async function loadCountriesData() {
+  const response = await fetch('/countries-regions.json');
+  countriesData = await response.json();
+}
+
+function populateCountryDropdown() {
+  const countrySelect = document.getElementById('country');
+  countrySelect.innerHTML = '<option value="">' + i18next.t('form.selectCountry') + '</option>';
+  
+  countriesData.countries.forEach(country => {
+    const option = document.createElement('option');
+    option.value = country.code;
+    option.textContent = i18next.t(country.nameKey);
+    countrySelect.appendChild(option);
+  });
+}
 
 function updateRegions() {
   const countrySelect = document.getElementById('country');
   const regionSelect = document.getElementById('region');
   const selectedCountry = countrySelect.value;
   
-  regionSelect.innerHTML = '<option value="">Select a region</option>';
+  regionSelect.innerHTML = '<option value="">' + i18next.t('form.selectRegion') + '</option>';
 
-  if (selectedCountry in regionData) {
-    regionData[selectedCountry].forEach(region => {
+  const country = countriesData.countries.find(c => c.code === selectedCountry);
+  if (country) {
+    country.regions.forEach(regionKey => {
       const option = document.createElement('option');
-      option.value = region;
-      option.textContent = region;
+      option.value = regionKey;
+      option.textContent = i18next.t(regionKey);
       regionSelect.appendChild(option);
     });
   }
@@ -105,10 +116,10 @@ function updatePageContent() {
   console.log('Updating page content with translations');
   document.querySelectorAll('[data-i18n]').forEach(element => {
     const key = element.getAttribute('data-i18n');
-    const translation = i18next.t(key);
-    console.log(`Translating key: ${key}, result: ${translation}`);
-    element.textContent = translation;
+    element.textContent = i18next.t(key);
   });
+  populateCountryDropdown();
+  updateRegions();
 }
 
 async function initiateOAuth() {
@@ -397,7 +408,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOMContentLoaded event fired');
   
   await initI18next();  // Wait for i18next to initialize
+  await loadCountriesData();
 
+  populateCountryDropdown();
+  updateRegions();
+  updatePageContent();
+  
   // Apply translations immediately after initialization
   updatePageContent();
   
