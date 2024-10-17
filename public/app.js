@@ -393,6 +393,8 @@ document.getElementById('auth-button').addEventListener('click', toggleAuth);
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOMContentLoaded event fired');
   
+  await i18next.init();  // Wait for i18next to initialize
+  
   const urlParams = new URLSearchParams(window.location.search);
   console.log('URL params:', urlParams.toString());
   if (urlParams.has('code')) {
@@ -406,4 +408,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       await refreshUserData();
     }
   }
+  
+  updatePageContent();  // Move this here, after i18next has initialized
 });
