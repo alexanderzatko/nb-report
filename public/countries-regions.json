@@ -1,0 +1,29 @@
+{
+  "countries": [
+    {
+      "code": "AT",
+      "nameKey": "countries.austria",
+      "regions": ["regions.alps"]
+    },
+    {
+      "code": "DE",
+      "nameKey": "countries.germany",
+      "regions": ["regions.alps"]
+    },
+    {
+      "code": "IT",
+      "nameKey": "countries.italy",
+      "regions": ["regions.alps"]
+    },
+    {
+      "code": "SK",
+      "nameKey": "countries.slovakia",
+      "regions": ["regions.javorie", "regions.javorniky", "regions.maleKarpaty"]
+    },
+    {
+      "code": "CZ",
+      "nameKey": "countries.czech",
+      "regions": ["regions.javorniky"]
+    }
+  ]
+}
