@@ -12,6 +12,10 @@
     "selectCountry": "Select a country",
     "region": "Region:",
     "selectRegion": "Select a region",
+    "selectCountryAT": "Rakúsko",
+    "selectCountryDE": "Nemecko",
+    "selectCountryIT": "Taliansko",
+    "selectCountrySK": "Slovensko"
     "snowDepth": "Snow Depth (cm):",
     "snowType": "Snow Type:",
     "snowType": {
