@@ -10,6 +10,10 @@ async function loadCountriesData() {
 }
 
 function populateCountryDropdown() {
+  if (!countriesData || !countriesData.countries) {
+    console.warn('Countries data not loaded yet');
+    return;
+  }
   const countrySelect = document.getElementById('country');
   countrySelect.innerHTML = '<option value="">' + i18next.t('form.selectCountry') + '</option>';
   
@@ -416,7 +420,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadCountriesData();
     console.log('Countries data loaded');
     
-    // Move these function calls here, after i18next and countriesData are initialized
     updatePageContent();
     populateCountryDropdown();
     updateRegions();
