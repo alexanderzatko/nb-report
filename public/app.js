@@ -379,7 +379,7 @@ if ('serviceWorker' in navigator) {
 }
 
 i18next.on('languageChanged', () => {
-  updatePageContent();
+  await updatePageContent();
 });
 
 document.getElementById('country').addEventListener('change', updateRegions);
