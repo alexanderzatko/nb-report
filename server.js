@@ -37,17 +37,24 @@ const port = process.env.PORT || 3000;
 // Manually create SessionStore
 const sessionStore = new (MySQLStore(session))(options);
 
+// Function to set correct MIME types
+const setCorrectMimeType = (res, path) => {
+  if (path.endsWith('.js')) {
+    res.set('Content-Type', 'application/javascript');
+  } else if (path.endsWith('.mjs')) {
+    res.set('Content-Type', 'application/javascript');
+  }
+};
+
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public'), {
-  setHeaders: (res, file) => {
-    if (file.endsWith('.js')) {
-      res.setHeader('Content-Type', 'application/javascript');
-    }
-  }
+  setHeaders: setCorrectMimeType
 }));
 
-// Serve necessary files from node_modules
-app.use('/node_modules', express.static(path.join(__dirname, 'node_modules')));
+// Serve necessary files from node_modules with correct MIME type
+app.use('/node_modules', express.static(path.join(__dirname, 'node_modules'), {
+  setHeaders: setCorrectMimeType
+}));
 
 // Serve service-worker.js with the correct MIME type
 app.get('/service-worker.js', (req, res) => {
