@@ -125,8 +125,8 @@ async function updatePageContent() {
     element.textContent = translation;
   });
   
-  populateCountryDropdown();
-  updateRegions();
+  await populateCountryDropdown();
+  await updateRegions();
 }
 
 async function initiateOAuth() {
@@ -406,6 +406,8 @@ document.getElementById('snow-report-form').addEventListener('submit', async fun
 });
 
 document.getElementById('auth-button').addEventListener('click', toggleAuth);
+
+window.addEventListener('languageChanged', updatePageContent);
 
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOMContentLoaded event fired');
