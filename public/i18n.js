@@ -29,6 +29,9 @@ const initI18next = () => {
           lookupLocalStorage: 'i18nextLng',
           caches: ['localStorage', 'cookie'],
         }
+      }).then(() => {
+        console.log('i18next initialized, current language:', i18next.language);
+        console.log('Loaded translations:', i18next.getResourceBundle(i18next.language, 'translation'));
       });
   }
   return initPromise;
