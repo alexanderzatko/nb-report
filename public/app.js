@@ -410,27 +410,31 @@ document.getElementById('auth-button').addEventListener('click', toggleAuth);
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOMContentLoaded event fired');
   
-  await initI18next();  // Wait for i18next to initialize
-  await loadCountriesData();
-
-  populateCountryDropdown();
-  updateRegions();
-  updatePageContent();
-  
-  // Apply translations immediately after initialization
-  updatePageContent();
-  
-  const urlParams = new URLSearchParams(window.location.search);
-  console.log('URL params:', urlParams.toString());
-  if (urlParams.has('code')) {
-    console.log('Code parameter found in URL');
-    await handleOAuthCallback();
-  } else {
-    console.log('No code parameter in URL');
-    const isAuthenticated = await checkAuthStatus();
-    updateUIBasedOnAuthState(isAuthenticated);
-    if (isAuthenticated) {
-      await refreshUserData();
+  try {
+    await initI18next();
+    console.log('i18next initialized');
+    await loadCountriesData();
+    console.log('Countries data loaded');
+    
+    // Move these function calls here, after i18next and countriesData are initialized
+    updatePageContent();
+    populateCountryDropdown();
+    updateRegions();
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    console.log('URL params:', urlParams.toString());
+    if (urlParams.has('code')) {
+      console.log('Code parameter found in URL');
+      await handleOAuthCallback();
+    } else {
+      console.log('No code parameter in URL');
+      const isAuthenticated = await checkAuthStatus();
+      updateUIBasedOnAuthState(isAuthenticated);
+      if (isAuthenticated) {
+        await refreshUserData();
+      }
     }
+  } catch (error) {
+    console.error('Error during initialization:', error);
   }
 });
