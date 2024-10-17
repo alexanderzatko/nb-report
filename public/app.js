@@ -378,10 +378,6 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-i18next.on('languageChanged', () => {
-  updatePageContent();
-});
-
 document.getElementById('country').addEventListener('change', updateRegions);
 
 document.getElementById('snow-report-form').addEventListener('submit', async function(event) {
