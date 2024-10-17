@@ -8,23 +8,32 @@
     "logout": "Odjlásiť"
   },
   "form": {
-    "country": "Country:",
-    "selectCountry": "Select a country",
-    "region": "Region:",
-    "selectRegion": "Select a region",
-    "selectCountryAT": "Rakúsko",
-    "selectCountryDE": "Nemecko",
-    "selectCountryIT": "Taliansko",
-    "selectCountrySK": "Slovensko",
+    "country": "Krajina:",
+    "selectCountry": "Vyberte krajinu",
+    "region": "Oblasť:",
+    "selectRegion": "Vyberte oblasť",
     "snowDepth": "Snow Depth (cm):",
     "snowType": "Snow Type:",
     "snowType": {
       "powder": "Powder",
       "packed": "Packed",
       "crusty": "Crusty",
-      "icy": "Icy"
+      "icy": "Ľad"
     },
     "submit": "Submit Report"
+  },
+  "countries": {
+    "austria": "Rakúsko",
+    "germany": "Nemecko",
+    "italy": "Taliansko",
+    "slovakia": "Slovensko",
+    "czech": "Česko"
+  },
+  "regions": {
+    "alps": "Alpy",
+    "javorie": "Javorie",
+    "maleKarpaty": "Malé Karpaty",
+    "javorniky": "Javorníky"
   },
   "welcome": "Welcome, {{name}} ({{role}})"
 }
