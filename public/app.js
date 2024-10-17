@@ -1,4 +1,4 @@
-import i18next from './i18n.js';
+import { i18next, initI18next } from './i18n.js';
 
 console.log('app.js loaded');
 
