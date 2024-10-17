@@ -46,6 +46,12 @@ app.use(express.static(path.join(__dirname, 'public'), {
   }
 }));
 
+// Serve service-worker.js with the correct MIME type
+app.get('/service-worker.js', (req, res) => {
+  res.setHeader('Content-Type', 'application/javascript');
+  res.sendFile(path.join(__dirname, 'service-worker.js'));
+});
+
 //This tells Express that it's behind a proxy and to trust the X-Forwarded-* headers
 app.set('trust proxy', 1);
 
