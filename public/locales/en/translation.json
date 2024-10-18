@@ -24,10 +24,11 @@
   },
   "countries": {
     "austria": "Austria",
-    "germany": "Germany",
+    "czech": "Czech Republic",
+    "hungary": "Hungary",
     "italy": "Italy",
-    "slovakia": "Slovakia",
-    "czech": "Czech Republic"
+    "poland": "Poland",
+    "slovakia": "Slovakia"
   },
   "regions": {
     "alpy": "Alps",
