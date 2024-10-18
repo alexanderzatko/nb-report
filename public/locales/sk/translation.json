@@ -24,10 +24,11 @@
   },
   "countries": {
     "austria": "Rakúsko",
-    "germany": "Nemecko",
+    "czech": "Česko",
+    "hungary": "Maďarsko",
     "italy": "Taliansko",
-    "slovakia": "Slovensko",
-    "czech": "Česko"
+    "poland": "Poľsko",
+    "slovakia": "Slovensko"
   },
   "regions": {
     "alpy": "Alpy",
