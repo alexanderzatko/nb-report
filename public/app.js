@@ -33,10 +33,10 @@ function updateRegions() {
   regionSelect.innerHTML = '<option value="">' + i18next.t('form.selectRegion') + '</option>';
 
   const country = countriesData.countries.find(c => c.code === selectedCountry);
-  if (country) {
-    country.regions.forEach(regionKey => {
+  if (country && country.regions) {
+    Object.entries(country.regions).forEach(([regionId, regionKey]) => {
       const option = document.createElement('option');
-      option.value = regionKey;
+      option.value = regionId;
       option.textContent = i18next.t(regionKey);
       regionSelect.appendChild(option);
     });
