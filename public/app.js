@@ -416,8 +416,6 @@ document.getElementById('snow-report-form').addEventListener('submit', async fun
   }
 });
 
-//document.getElementById('auth-button').addEventListener('click', toggleAuth);
-
 window.addEventListener('languageChanged', updatePageContent);
 
 document.addEventListener('DOMContentLoaded', async () => {
