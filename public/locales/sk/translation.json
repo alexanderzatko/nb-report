@@ -5,7 +5,7 @@
   },
   "auth": {
     "login": "Prihlásiť",
-    "logout": "Odjlásiť"
+    "logout": "Odhlásiť"
   },
   "form": {
     "country": "Krajina:",
