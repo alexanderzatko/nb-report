@@ -23,7 +23,12 @@
 
     <main>
       <div id="auth-container">
-        <button id="login-button" class="auth-button login" data-i18n="auth.login">Login</button>
+        <div id="login-container">
+          <button id="login-button" class="auth-button login">
+            <img src="/icon/login-icon.png" alt="Login" class="login-icon">
+          </button>
+          <p id="login-text" data-i18n="auth.loginText">Click to login using your nabezky.sk account</p>
+        </div>
         <button id="logout-button" class="auth-button logout" data-i18n="auth.logout">Logout</button>
       </div>
       <form id="snow-report-form" style="display:none;">
