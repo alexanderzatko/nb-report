@@ -95,6 +95,14 @@ input, select {
   color: #555;
 }
 
+#login-container {
+  display: none;
+}
+
+#login-container.visible {
+  display: flex;
+}
+
 /* Login - Logout button STOP */
 
 label {
