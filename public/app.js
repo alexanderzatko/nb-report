@@ -94,20 +94,24 @@ async function handleLogout() {
 
 function updateUIBasedOnAuthState(isAuthenticated) {
   console.log('Updating UI based on auth state:', isAuthenticated);
-  const loginButton = document.getElementById('login-button');
+  const loginContainer = document.getElementById('login-container');
+  const loginText = document.getElementById('login-text');
   const logoutButton = document.getElementById('logout-button');
   const snowReportForm = document.getElementById('snow-report-form');
 
   if (isAuthenticated) {
-    loginButton.style.display = 'none';
-    logoutButton.style.display = 'block';
+    loginContainer.style.display = 'none';
+    logoutButton.style.display = 'inline-block';
     snowReportForm.style.display = 'block';
     console.log('User is authenticated, showing logout button and form');
   } else {
-    loginButton.style.display = 'block';
+    loginContainer.style.display = 'flex';
     logoutButton.style.display = 'none';
     snowReportForm.style.display = 'none';
     console.log('User is not authenticated, showing login button and hiding form');
+    
+    // Set the login text with HTML content
+    loginText.innerHTML = i18next.t('auth.loginText', { interpolation: { escapeValue: false } });
   }
 }
 
@@ -131,11 +135,14 @@ async function updatePageContent() {
   console.log('Updating page content with translations');
   document.querySelectorAll('[data-i18n]').forEach(element => {
     const key = element.getAttribute('data-i18n');
-    const translation = i18next.t(key);
+    const translation = i18next.t(key, { interpolation: { escapeValue: false } });
     console.log(`Translating key: ${key}, result: ${translation}`);
-    element.textContent = translation;
-  });
-  
+    if (element.tagName.toLowerCase() === 'input' && element.type === 'submit') {
+      element.value = translation;
+    } else {
+      element.innerHTML = translation;
+    }
+  });  
   await populateCountryDropdown();
   await updateRegions();
 }
