@@ -4,6 +4,7 @@
     "header": "Report Snow Conditions"
   },
   "auth": {
+    "loginText": "Log in through your account on the <a href="https://nabezky.sk/user">nabezky.sk</a> site. <br>If you don't have an account yet, create one there",
     "login": "Login",
     "logout": "Logout"
   },
