@@ -38,38 +38,64 @@ input, select {
   border-radius: 4px;
 }
 
+/* Login - Logout button START */
+
 #auth-container {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   margin: 20px 0;
 }
 
+#login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .auth-button {
-  padding: 10px 20px;
+  padding: 10px;
   font-size: 16px;
   cursor: pointer;
   border: none;
-  border-radius: 4px;
+  border-radius: 50%;
   transition: background-color 0.3s;
+  display: none; /* Hide both buttons by default */
 }
 
 .auth-button.login {
-  background-color: #4CAF50;
-  color: white;
-}
-
-.auth-button.login:hover {
-  background-color: #45a049;
+  background-color: transparent;
 }
 
 .auth-button.logout {
   background-color: #f44336;
   color: white;
+  border-radius: 4px;
+  padding: 10px 20px;
 }
 
 .auth-button.logout:hover {
   background-color: #da190b;
 }
+
+.login-icon {
+  width: 50px;
+  height: 50px;
+  transition: transform 0.3s;
+}
+
+.auth-button.login:hover .login-icon {
+  transform: scale(1.1);
+}
+
+#login-text {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 14px;
+  color: #555;
+}
+
+/* Login - Logout button STOP */
 
 label {
   margin-bottom: 5px;
