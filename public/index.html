@@ -22,7 +22,10 @@
   </header>
 
     <main>
-      <button id="auth-button" data-i18n="auth.login">Login</button>
+      <div id="auth-container">
+        <button id="login-button" class="auth-button login" data-i18n="auth.login">Login</button>
+        <button id="logout-button" class="auth-button logout" data-i18n="auth.logout">Logout</button>
+      </div>
       <form id="snow-report-form" style="display:none;">
         <label for="country" data-i18n="form.country">Country:</label>
         <select id="country" name="country">
