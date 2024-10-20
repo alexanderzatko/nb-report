@@ -142,7 +142,14 @@ async function updatePageContent() {
     } else {
       element.innerHTML = translation;
     }
-  });  
+  });
+  
+  // Update login text separately
+  const loginText = document.getElementById('login-text');
+  if (loginText) {
+    loginText.innerHTML = i18next.t('auth.loginText', { interpolation: { escapeValue: false } });
+  }
+  
   await populateCountryDropdown();
   await updateRegions();
 }
