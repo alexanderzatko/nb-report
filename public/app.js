@@ -94,17 +94,20 @@ async function handleLogout() {
 
 function updateUIBasedOnAuthState(isAuthenticated) {
   console.log('Updating UI based on auth state:', isAuthenticated);
-  const authButton = document.getElementById('auth-button');
+  const loginButton = document.getElementById('login-button');
+  const logoutButton = document.getElementById('logout-button');
   const snowReportForm = document.getElementById('snow-report-form');
 
   if (isAuthenticated) {
-    authButton.textContent = 'Logout';
+    loginButton.style.display = 'none';
+    logoutButton.style.display = 'block';
     snowReportForm.style.display = 'block';
-    console.log('User is authenticated, showing form');
+    console.log('User is authenticated, showing logout button and form');
   } else {
-    authButton.textContent = 'Login';
+    loginButton.style.display = 'block';
+    logoutButton.style.display = 'none';
     snowReportForm.style.display = 'none';
-    console.log('User is not authenticated, hiding form');
+    console.log('User is not authenticated, showing login button and hiding form');
   }
 }
 
@@ -419,7 +422,10 @@ window.addEventListener('languageChanged', updatePageContent);
 
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOMContentLoaded event fired');
-  
+
+  document.getElementById('login-button').addEventListener('click', initiateOAuth);
+  document.getElementById('logout-button').addEventListener('click', logout);
+
   try {
     await initI18next();
     console.log('i18next initialized');
