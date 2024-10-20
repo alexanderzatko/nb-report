@@ -60,7 +60,6 @@ input, select {
   border: none;
   border-radius: 50%;
   transition: background-color 0.3s;
-  display: none; /* Hide both buttons by default */
 }
 
 .auth-button.login {
