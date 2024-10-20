@@ -34,10 +34,18 @@ function updateRegions() {
 
   const country = countriesData.countries.find(c => c.code === selectedCountry);
   if (country && country.regions) {
-    Object.entries(country.regions).forEach(([regionId, regionKey]) => {
+    const sortedRegions = Object.entries(country.regions)
+      .map(([regionId, regionKey]) => ({
+        id: regionId,
+        key: regionKey,
+        name: i18next.t(regionKey)
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    sortedRegions.forEach(region => {
       const option = document.createElement('option');
-      option.value = regionId;
-      option.textContent = i18next.t(regionKey);
+      option.value = region.id;
+      option.textContent = region.name;
       regionSelect.appendChild(option);
     });
   }
