@@ -18,5 +18,16 @@
     {"code": "4", "name": "no tracks"},
     {"code": "5", "name": "patches of snow"},
     {"code": "6", "name": "unsuitable"}
+  ],
+  "snowAge": [
+    {"code": "0", "name": "unknown"},
+    {"code": "1", "name": "old"},
+    {"code": "2", "name": "new"}
+  ],
+  "wetness": [
+    {"code": "0", "name": "unknown"},
+    {"code": "1", "name": "dry"},
+    {"code": "2", "name": "moist"},
+    {"code": "3", "name": "wet"}
   ]
 }
