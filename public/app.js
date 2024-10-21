@@ -476,7 +476,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await initI18next();
     console.log('i18next initialized');
 //    await loadCountriesData();
-    console.log('Countries data loaded');
+//    console.log('Countries data loaded');
     
     await updatePageContent();
 //    populateCountryDropdown();
