@@ -14,12 +14,17 @@
     "region": "Oblast:",
     "selectRegion": "Vyberte oblast",
     "snowDepth": "Snow Depth (cm):",
-    "snowType": "Snow Type:",
-    "snowType": {
-      "powder": "Powder",
-      "packed": "Packed",
-      "crusty": "Crusty",
-      "icy": "Ľad"
+    "snowType": "Typ sněhu:",
+    "snowTypes": {
+      "0": "Neznámý typ",
+      "PDR": "Prašan",
+      "PP": "Utlačenej prašan",
+      "LSGR": "Sypkej granulovanej",
+      "WBLN": "Navátej sníh",
+      "HP": "Tvrdej sníh",
+      "ICE": "Led",
+      "WET": "Mokrej sníh",
+      "VC": "Proměnlivé podmínky"
     },
     "submit": "Submit Report"
   },
