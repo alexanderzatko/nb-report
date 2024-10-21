@@ -156,10 +156,7 @@ async function updatePageContent() {
 
 async function initiateOAuth() {
   try {
-    // Generate a random state
     const state = Math.random().toString(36).substring(2, 15);
-    
-    // Store the state in localStorage
     localStorage.setItem('oauthState', state);
 
     const response = await fetch('/api/initiate-oauth', {
@@ -167,10 +164,15 @@ async function initiateOAuth() {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ state, scopes: 'email' }),
+      body: JSON.stringify({ 
+        state, 
+        scopes: 'email',
+        forceReauth: true  // Add this flag
+      }),
     });
     const data = await response.json();
     if (data.authUrl) {
+      console.log('Redirecting to auth URL:', data.authUrl);
       window.location.href = data.authUrl;
     } else {
       console.error('No auth URL received');
