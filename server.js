@@ -222,7 +222,7 @@ app.post('/api/initiate-oauth', (req, res) => {
   
   // Add force re-authentication parameter if requested
   if (forceReauth) {
-    authUrl += '&prompt=login';
+    authUrl += '&prompt=login&max_auth_age=0';
   }
   
   res.json({ authUrl });
