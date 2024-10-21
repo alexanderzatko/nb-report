@@ -183,8 +183,8 @@ async function updatePageContent() {
     loginText.innerHTML = i18next.t('auth.loginText', { interpolation: { escapeValue: false } });
   }
   
-  await populateCountryDropdown();
-  await updateRegions();
+//  await populateCountryDropdown();
+//  await updateRegions();
 }
 
 async function initiateOAuth() {
