@@ -31,16 +31,21 @@ function populateCountryDropdown(defaultCountry = null) {
   const countrySelect = document.getElementById('country');
   countrySelect.innerHTML = '<option value="">' + i18next.t('form.selectCountry') + '</option>';
   
+  let defaultOption = null;
   countriesData.countries.forEach(country => {
     const option = document.createElement('option');
     option.value = country.code;
     option.textContent = i18next.t(country.nameKey);
     if (defaultCountry && country.code === defaultCountry) {
-      option.selected = true;
-      console.log(`Setting ${country.code} as selected`);
+      defaultOption = option;
     }
     countrySelect.appendChild(option);
   });
+
+  if (defaultOption) {
+    defaultOption.selected = true;
+    console.log(`Setting ${defaultOption.value} as selected`);
+  }
 
   console.log('Country dropdown populated. Selected value:', countrySelect.value);
 
@@ -140,7 +145,6 @@ function updateUIBasedOnAuthState(isAuthenticated) {
 
 function updateUIWithUserData(userData) {
   console.log('updateUIWithUserData called with:', userData);
-  // Update UI elements with user data
   
   // Set the language based on user data
   if (userData.language) {
@@ -151,6 +155,7 @@ function updateUIWithUserData(userData) {
     populateCountryDropdown(inferredCountry);
   } else {
     console.log('No language data in userData');
+    populateCountryDropdown();
   }
 }
 
@@ -173,9 +178,11 @@ async function updatePageContent() {
   if (loginText) {
     loginText.innerHTML = i18next.t('auth.loginText', { interpolation: { escapeValue: false } });
   }
-  
-  await populateCountryDropdown();
-  await updateRegions();
+}
+
+function updateCountryAndRegions(defaultCountry = null) {
+  populateCountryDropdown(defaultCountry);
+  updateRegions();
 }
 
 async function initiateOAuth() {
@@ -328,7 +335,6 @@ async function refreshUserData() {
     if (userData) {
       updateUIWithUserData(userData);
       updateUIBasedOnAuthState(true);
-      updatePageContent(); // Update translations after changing language
     } else {
       throw new Error('Failed to fetch user data');
     }
@@ -472,8 +478,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('Countries data loaded');
     
     await updatePageContent();
-    populateCountryDropdown(); // Initially populate without a default
-    updateRegions();
+    updateCountryAndRegions(); // Initially populate without a default
     
     const urlParams = new URLSearchParams(window.location.search);
     console.log('URL params:', urlParams.toString());
@@ -486,14 +491,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       updateUIBasedOnAuthState(isAuthenticated);
       if (isAuthenticated) {
         await refreshUserData();
-      } else {
-        // If not authenticated, set default country based on browser language
-        const browserLanguage = navigator.language.split('-')[0];
-        const defaultCountry = inferCountryFromLanguage(browserLanguage);
-        populateCountryDropdown(defaultCountry);
       }
     }
   } catch (error) {
     console.error('Error during initialization:', error);
   }
+});
+
+i18next.on('languageChanged', (lang) => {
+  console.log('Language changed to:', lang);
+  updatePageContent();
+  const inferredCountry = inferCountryFromLanguage(lang);
+  updateCountryAndRegions(inferredCountry);
 });
