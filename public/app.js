@@ -475,12 +475,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     await initI18next();
     console.log('i18next initialized');
-    await loadCountriesData();
+//    await loadCountriesData();
     console.log('Countries data loaded');
     
     await updatePageContent();
-    populateCountryDropdown();
-    updateRegions();
+//    populateCountryDropdown();
+//    updateRegions();
     
     const urlParams = new URLSearchParams(window.location.search);
     console.log('URL params:', urlParams.toString());
