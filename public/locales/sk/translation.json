@@ -13,20 +13,20 @@
     "selectCountry": "Vyberte krajinu",
     "region": "Oblasť:",
     "selectRegion": "Vyberte oblasť",
-    "snowDepth": "Snow Depth (cm):",
-    "snowType": "Snow Type:",
+    "snowDepth": "Hĺbka snehu (cm):",
+    "snowType": "Typ snehu:",
     "snowTypes": {
       "0": "Neznámy typ",
-      "PDR": "Prachový sneh",
-      "PP": "Utlačený prachový sneh",
-      "LSGR": "Sypký granulovaný sneh",
-      "WBLN": "Naviatý sneh",
-      "HP": "Tvrdý sneh",
+      "PDR": "Prašan",
+      "PP": "Utlačený prašan",
+      "LSGR": "Sypký granulovaný",
+      "WBLN": "Vetrom naviaty",
+      "HP": "Tvrdý",
       "ICE": "Ľad",
-      "WET": "Mokrý sneh",
+      "WET": "Mokrý",
       "VC": "Premenlivé podmienky"
     },
-    "submit": "Submit Report"
+    "submit": "Odoslať správu"
   },
   "countries": {
     "austria": "Rakúsko",
