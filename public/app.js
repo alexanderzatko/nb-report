@@ -9,7 +9,20 @@ async function loadCountriesData() {
   countriesData = await response.json();
 }
 
-function populateCountryDropdown() {
+function inferCountryFromLanguage(language) {
+  const languageToCountry = {
+    'sk': 'SK',
+    'cs': 'CZ',
+    'de': 'AT',
+    'it': 'IT',
+    'pl': 'PL',
+    'hu': 'HU',
+    'en': 'SK' // Default to Slovakia if language is English
+  };
+  return languageToCountry[language] || 'SK'; // Default to Slovakia if language not found
+}
+
+function populateCountryDropdown(defaultCountry = null) {
   if (!countriesData || !countriesData.countries) {
     console.warn('Countries data not loaded yet');
     return;
@@ -21,8 +34,14 @@ function populateCountryDropdown() {
     const option = document.createElement('option');
     option.value = country.code;
     option.textContent = i18next.t(country.nameKey);
+    if (defaultCountry && country.code === defaultCountry) {
+      option.selected = true;
+    }
     countrySelect.appendChild(option);
   });
+
+  // Trigger the change event to update regions
+  countrySelect.dispatchEvent(new Event('change'));
 }
 
 function updateRegions() {
@@ -127,6 +146,8 @@ function updateUIWithUserData(userData) {
   // Set the language based on user data
   if (userData.language) {
     i18next.changeLanguage(userData.language);
+    const inferredCountry = inferCountryFromLanguage(userData.language);
+    populateCountryDropdown(inferredCountry);
   }
 }
 
@@ -446,7 +467,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('Countries data loaded');
     
     await updatePageContent();
-    populateCountryDropdown();
+    populateCountryDropdown(); // Initially populate without a default
     updateRegions();
     
     const urlParams = new URLSearchParams(window.location.search);
@@ -460,6 +481,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       updateUIBasedOnAuthState(isAuthenticated);
       if (isAuthenticated) {
         await refreshUserData();
+      } else {
+        // If not authenticated, set default country based on browser language
+        const browserLanguage = navigator.language.split('-')[0];
+        const defaultCountry = inferCountryFromLanguage(browserLanguage);
+        populateCountryDropdown(defaultCountry);
       }
     }
   } catch (error) {
