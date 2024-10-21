@@ -9,21 +9,7 @@ async function loadCountriesData() {
   countriesData = await response.json();
 }
 
-function inferCountryFromLanguage(language) {
-  const languageToCountry = {
-    'sk': 'SK',
-    'cs': 'CZ',
-    'de': 'AT',
-    'it': 'IT',
-    'pl': 'PL',
-    'hu': 'HU',
-    'en': 'SK' // Default to Slovakia if language is English
-  };
-  return languageToCountry[language] || 'SK'; // Default to Slovakia if language not found
-}
-
-function populateCountryDropdown(defaultCountry = null) {
-  console.log('populateCountryDropdown called with defaultCountry:', defaultCountry);
+function populateCountryDropdown() {
   if (!countriesData || !countriesData.countries) {
     console.warn('Countries data not loaded yet');
     return;
@@ -31,26 +17,12 @@ function populateCountryDropdown(defaultCountry = null) {
   const countrySelect = document.getElementById('country');
   countrySelect.innerHTML = '<option value="">' + i18next.t('form.selectCountry') + '</option>';
   
-  let defaultOption = null;
   countriesData.countries.forEach(country => {
     const option = document.createElement('option');
     option.value = country.code;
     option.textContent = i18next.t(country.nameKey);
-    if (defaultCountry && country.code === defaultCountry) {
-      defaultOption = option;
-    }
     countrySelect.appendChild(option);
   });
-
-  if (defaultOption) {
-    defaultOption.selected = true;
-    console.log(`Setting ${defaultOption.value} as selected`);
-  }
-
-  console.log('Country dropdown populated. Selected value:', countrySelect.value);
-
-  // Trigger the change event to update regions
-  countrySelect.dispatchEvent(new Event('change'));
 }
 
 function updateRegions() {
@@ -126,43 +98,35 @@ function updateUIBasedOnAuthState(isAuthenticated) {
   const loginText = document.getElementById('login-text');
   const logoutButton = document.getElementById('logout-button');
   const snowReportForm = document.getElementById('snow-report-form');
-  const countrySelect = document.getElementById('country');
-  const regionSelect = document.getElementById('region');
 
   if (isAuthenticated) {
     loginContainer.style.display = 'none';
     logoutButton.style.display = 'inline-block';
     snowReportForm.style.display = 'block';
     console.log('User is authenticated, showing logout button and form');
-    countrySelect.style.display = 'block';
-    regionSelect.style.display = 'block';
   } else {
     loginContainer.style.display = 'flex';
     logoutButton.style.display = 'none';
     snowReportForm.style.display = 'none';
     console.log('User is not authenticated, showing login button and hiding form');
-
-    countrySelect.style.display = 'none';
-    regionSelect.style.display = 'none';
-
+    
     // Set the login text with HTML content
     loginText.innerHTML = i18next.t('auth.loginText', { interpolation: { escapeValue: false } });
   }
 }
 
 function updateUIWithUserData(userData) {
-  console.log('updateUIWithUserData called with:', userData);
+  console.log(userData);
+  // Update UI elements with user data
+  // For example:
+  // const userInfoElement = document.getElementById('user-info');
+  // if (userInfoElement) {
+  //   userInfoElement.textContent = i18next.t('welcome', { name: userData.name, role: userData.role });
+  // }
   
   // Set the language based on user data
   if (userData.language) {
-    console.log('Changing language to:', userData.language);
     i18next.changeLanguage(userData.language);
-    const inferredCountry = inferCountryFromLanguage(userData.language);
-    console.log('Inferred country:', inferredCountry);
-    populateCountryDropdown(inferredCountry);
-  } else {
-    console.log('No language data in userData');
-    populateCountryDropdown();
   }
 }
 
@@ -185,11 +149,9 @@ async function updatePageContent() {
   if (loginText) {
     loginText.innerHTML = i18next.t('auth.loginText', { interpolation: { escapeValue: false } });
   }
-}
-
-function updateCountryAndRegions(defaultCountry = null) {
-  populateCountryDropdown(defaultCountry);
-  updateRegions();
+  
+  await populateCountryDropdown();
+  await updateRegions();
 }
 
 async function initiateOAuth() {
@@ -335,15 +297,12 @@ async function getUserData() {
 
 // Function to refresh user data
 async function refreshUserData() {
-  console.log('refreshUserData called');
   try {
     const userData = await getUserData();
-    console.log('User data received:', userData);
     if (userData) {
-      await loadCountriesData();
       updateUIWithUserData(userData);
       updateUIBasedOnAuthState(true);
-      updateCountryAndRegions();
+      updatePageContent(); // Update translations after changing language
     } else {
       throw new Error('Failed to fetch user data');
     }
@@ -483,7 +442,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     await initI18next();
     console.log('i18next initialized');
+    await loadCountriesData();
+    console.log('Countries data loaded');
+    
     await updatePageContent();
+    populateCountryDropdown();
+    updateRegions();
     
     const urlParams = new URLSearchParams(window.location.search);
     console.log('URL params:', urlParams.toString());
@@ -501,11 +465,4 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (error) {
     console.error('Error during initialization:', error);
   }
-});
-
-i18next.on('languageChanged', (lang) => {
-  console.log('Language changed to:', lang);
-  updatePageContent();
-  const inferredCountry = inferCountryFromLanguage(lang);
-  updateCountryAndRegions(inferredCountry);
 });
