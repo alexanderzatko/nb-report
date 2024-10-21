@@ -37,6 +37,19 @@
       "5": "Patches of snow",
       "6": "unsuitable"
     },
+    "snowAge": "Age:",
+    "snowAgeOptions": {
+      "0": "Unknown",
+      "1": "Old",
+      "2": "New"
+    },
+    "wetness": "Moisture:",
+    "wetnessOptions": {
+      "0": "Unknown",
+      "1": "Dry",
+      "2": "Moist",
+      "3": "Wet"
+    },
     "submit": "Submit Report"
   },
   "countries": {
