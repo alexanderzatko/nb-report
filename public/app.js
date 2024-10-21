@@ -10,7 +10,7 @@ async function loadCountriesData() {
 
 let snowTypesData;
 async function loadSnowTypesData() {
-  const response = await fetch('/snow-types.json');
+  const response = await fetch('/xc_dropdowns.json');
   snowTypesData = await response.json();
 }
 
@@ -89,16 +89,37 @@ function updateRegions() {
   }
 }
 
-function updateSnowTypes() {
+function updateXcDropdowns() {
   const snowTypeSelect = document.getElementById('snow-type');
+  const classicStyleSelect = document.getElementById('classic-style');
+  const freeStyleSelect = document.getElementById('free-style');
+  
   snowTypeSelect.innerHTML = '';
+  classicStyleSelect.innerHTML = '';
+  freeStyleSelect.innerHTML = '';
 
-  if (snowTypesData && snowTypesData.snowTypes) {
-    snowTypesData.snowTypes.forEach(type => {
+  if (xc_Data && xc_Data.snowTypes) {
+    xc_Data.snowTypes.forEach(type => {
       const option = document.createElement('option');
       option.value = type.code;
-      option.textContent = i18next.t(`snowTypes.${type.code}`, type.name);
+      option.textContent = i18next.t(`form.snowTypes.${type.code}`, type.name);
       snowTypeSelect.appendChild(option);
+    });
+  }
+
+  if (xc_Data && xc_Data.trackConditions) {
+    xc_Data.trackConditions.forEach(condition => {
+      const classicOption = document.createElement('option');
+      const freeOption = document.createElement('option');
+      
+      classicOption.value = condition.code;
+      freeOption.value = condition.code;
+      
+      classicOption.textContent = i18next.t(`form.trackConditions.${condition.code}`, condition.name);
+      freeOption.textContent = i18next.t(`form.trackConditions.${condition.code}`, condition.name);
+      
+      classicStyleSelect.appendChild(classicOption);
+      freeStyleSelect.appendChild(freeOption);
     });
   }
 }
@@ -353,7 +374,7 @@ async function refreshUserData() {
       await loadCountriesData();
       populateCountryDropdown();
       updateRegions();
-      updateSnowTypes();
+      updateXcDropdowns();
       console.log('Countries data loaded, Country, snow types dropdowns populated, regions updated');
 
       updateUIWithUserData(userData);
@@ -489,8 +510,10 @@ document.getElementById('snow-report-form').addEventListener('submit', async fun
       const region = document.getElementById('region').value;
       const snowDepth = document.getElementById('snow-depth').value;
       const snowType = document.getElementById('snow-type').value;
+      const classicStyle = document.getElementById('classic-style').value;
+      const freeStyle = document.getElementById('free-style').value;
 
-      console.log(`Country: ${country}, Region: ${region}, Snow Depth: ${snowDepth}, Snow Type: ${snowType}`);
+      console.log(`Country: ${country}, Region: ${region}, Snow Depth: ${snowDepth}, Snow Type: ${snowType}, Classic Style: ${classicStyle}, Free Style: ${freeStyle}`);
       alert("Report submitted successfully!");
     } catch (error) {
       console.error('Error submitting snow report:', error);
