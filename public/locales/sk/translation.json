@@ -26,6 +26,17 @@
       "WET": "Mokrý",
       "VC": "Premenlivé podmienky"
     },
+    "classicStyle": "Klasický štýl:",
+    "freeStyle": "Voľný štýl:",
+    "trackConditions": {
+      "0": "Neznáme",
+      "1": "Výborné",
+      "2": "Dobré",
+      "3": "Obmedzené",
+      "4": "Žiadne stopy",
+      "5": "Snehové škvrny",
+      "6": "Nevhodné"
+    },
     "submit": "Odoslať správu"
   },
   "countries": {
