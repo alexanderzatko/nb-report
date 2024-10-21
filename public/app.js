@@ -3,10 +3,15 @@ import { i18next, initI18next } from './i18n.js';
 console.log('app.js loaded');
 
 let countriesData;
-
 async function loadCountriesData() {
   const response = await fetch('/countries-regions.json');
   countriesData = await response.json();
+}
+
+let snowTypesData;
+async function loadSnowTypesData() {
+  const response = await fetch('/snow-types.json');
+  snowTypesData = await response.json();
 }
 
 function inferCountryFromLanguage(language = null) {
@@ -84,6 +89,20 @@ function updateRegions() {
   }
 }
 
+function updateSnowTypes() {
+  const snowTypeSelect = document.getElementById('snow-type');
+  snowTypeSelect.innerHTML = '';
+
+  if (snowTypesData && snowTypesData.snowTypes) {
+    snowTypesData.snowTypes.forEach(type => {
+      const option = document.createElement('option');
+      option.value = type.code;
+      option.textContent = i18next.t(`snowTypes.${type.code}`, type.name);
+      snowTypeSelect.appendChild(option);
+    });
+  }
+}
+
 async function toggleAuth() {
   console.log('toggleAuth called');
   const isAuthenticated = await checkAuthStatus();
@@ -153,12 +172,26 @@ async function updatePageContent() {
   console.log('Updating page content with translations');
   document.querySelectorAll('[data-i18n]').forEach(element => {
     const key = element.getAttribute('data-i18n');
-    const translation = i18next.t(key, { interpolation: { escapeValue: false } });
-    console.log(`Translating key: ${key}, result: ${translation}`);
-    if (element.tagName.toLowerCase() === 'input' && element.type === 'submit') {
-      element.value = translation;
+    const translation = i18next.t(key, { returnObjects: true, interpolation: { escapeValue: false } });
+    console.log(`Translating key: ${key}, result:`, translation);
+    
+    if (typeof translation === 'object') {
+      // Handle nested translations (like snow type options)
+      if (element.tagName.toLowerCase() === 'select') {
+        element.innerHTML = '';
+        Object.entries(translation).forEach(([value, text]) => {
+          const option = document.createElement('option');
+          option.value = value;
+          option.textContent = text;
+          element.appendChild(option);
+        });
+      }
     } else {
-      element.innerHTML = translation;
+      if (element.tagName.toLowerCase() === 'input' && element.type === 'submit') {
+        element.value = translation;
+      } else {
+        element.innerHTML = translation;
+      }
     }
   });
   
@@ -167,9 +200,6 @@ async function updatePageContent() {
   if (loginText) {
     loginText.innerHTML = i18next.t('auth.loginText', { interpolation: { escapeValue: false } });
   }
-  
-//  await populateCountryDropdown();
-//  await updateRegions();
 }
 
 async function initiateOAuth() {
@@ -323,7 +353,8 @@ async function refreshUserData() {
       await loadCountriesData();
       populateCountryDropdown();
       updateRegions();
-      console.log('Countries data loaded, Country drop-down populated, regions updated');
+      updateSnowTypes();
+      console.log('Countries data loaded, Country, snow types dropdowns populated, regions updated');
 
       updateUIWithUserData(userData);
       updateUIBasedOnAuthState(true);
@@ -482,12 +513,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     await initI18next();
     console.log('i18next initialized');
-//    await loadCountriesData();
-//    console.log('Countries data loaded');
-    
     await updatePageContent();
-//    populateCountryDropdown();
-//    updateRegions();
     
     const urlParams = new URLSearchParams(window.location.search);
     console.log('URL params:', urlParams.toString());
