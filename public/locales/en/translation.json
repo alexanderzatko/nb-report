@@ -26,6 +26,17 @@
       "WET": "Wet",
       "VC": "Variable conditions"
     },
+    "classicStyle": "Classic Style:",
+    "freeStyle": "Free Style:",
+    "trackConditions": {
+      "0": "Unknown",
+      "1": "Excellent",
+      "2": "Good",
+      "3": "Limited",
+      "4": "No tracks",
+      "5": "Patches of snow",
+      "6": "unsuitable"
+    },
     "submit": "Submit Report"
   },
   "countries": {
