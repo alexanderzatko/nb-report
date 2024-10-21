@@ -1,0 +1,13 @@
+{
+  "snowTypes": [
+    {"code": "0", "name": "unknown type"},
+    {"code": "PDR", "name": "powder"},
+    {"code": "PP", "name": "packed powder"},
+    {"code": "LSGR", "name": "loose granular"},
+    {"code": "WBLN", "name": "windblown"},
+    {"code": "HP", "name": "hard pack"},
+    {"code": "ICE", "name": "icy"},
+    {"code": "WET", "name": "wet"},
+    {"code": "VC", "name": "variable conditions"}
+  ]
+}
