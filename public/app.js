@@ -8,7 +8,7 @@ async function loadCountriesData() {
   countriesData = await response.json();
 }
 
-let snowTypesData;
+let xc_Data;
 async function loadSnowTypesData() {
   const response = await fetch('/xc_dropdowns.json');
   snowTypesData = await response.json();
