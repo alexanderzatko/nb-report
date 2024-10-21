@@ -26,6 +26,17 @@
       "WET": "Mokrej sníh",
       "VC": "Proměnlivé podmínky"
     },
+    "classicStyle": "Klasický styl:",
+    "freeStyle": "Volný styl:",
+    "trackConditions": {
+      "0": "Neznámé",
+      "1": "Výborné",
+      "2": "Dobré",
+      "3": "Omedzené",
+      "4": "Žádná stopa",
+      "5": "Sjízdné jen některé úseky",
+      "6": "Nevhodné"
+    },
     "submit": "Submit Report"
   },
   "countries": {
