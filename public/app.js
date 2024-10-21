@@ -45,6 +45,7 @@ function populateCountryDropdown() {
     const option = document.createElement('option');
     option.value = country.code;
     option.textContent = i18next.t(country.nameKey);
+    console.log(country.code + '==' + inferredCountry);
     if (country.code === inferredCountry) {
       option.selected = true;
     }
