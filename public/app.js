@@ -126,18 +126,25 @@ function updateUIBasedOnAuthState(isAuthenticated) {
   const loginText = document.getElementById('login-text');
   const logoutButton = document.getElementById('logout-button');
   const snowReportForm = document.getElementById('snow-report-form');
+  const countrySelect = document.getElementById('country');
+  const regionSelect = document.getElementById('region');
 
   if (isAuthenticated) {
     loginContainer.style.display = 'none';
     logoutButton.style.display = 'inline-block';
     snowReportForm.style.display = 'block';
     console.log('User is authenticated, showing logout button and form');
+    countrySelect.style.display = 'block';
+    regionSelect.style.display = 'block';
   } else {
     loginContainer.style.display = 'flex';
     logoutButton.style.display = 'none';
     snowReportForm.style.display = 'none';
     console.log('User is not authenticated, showing login button and hiding form');
-    
+
+    countrySelect.style.display = 'none';
+    regionSelect.style.display = 'none';
+
     // Set the login text with HTML content
     loginText.innerHTML = i18next.t('auth.loginText', { interpolation: { escapeValue: false } });
   }
@@ -333,8 +340,10 @@ async function refreshUserData() {
     const userData = await getUserData();
     console.log('User data received:', userData);
     if (userData) {
+      await loadCountriesData();
       updateUIWithUserData(userData);
       updateUIBasedOnAuthState(true);
+      updateCountryAndRegions();
     } else {
       throw new Error('Failed to fetch user data');
     }
@@ -474,11 +483,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     await initI18next();
     console.log('i18next initialized');
-    await loadCountriesData();
-    console.log('Countries data loaded');
-    
     await updatePageContent();
-    updateCountryAndRegions(); // Initially populate without a default
     
     const urlParams = new URLSearchParams(window.location.search);
     console.log('URL params:', urlParams.toString());
