@@ -1,7 +1,7 @@
 {
     "countries": [
         {
-            "code": "Sk",
+            "code": "SK",
             "nameKey": "countries.slovakia",
             "regions": {
                 "941": "regions.bachuren",
