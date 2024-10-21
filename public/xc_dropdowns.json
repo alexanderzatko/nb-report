@@ -9,5 +9,14 @@
     {"code": "ICE", "name": "icy"},
     {"code": "WET", "name": "wet"},
     {"code": "VC", "name": "variable conditions"}
+  ],
+  "trackConditions": [
+    {"code": "0", "name": "unknown"},
+    {"code": "1", "name": "excellent"},
+    {"code": "2", "name": "good"},
+    {"code": "3", "name": "limited"},
+    {"code": "4", "name": "no tracks"},
+    {"code": "5", "name": "patches of snow"},
+    {"code": "6", "name": "unsuitable"}
   ]
 }
