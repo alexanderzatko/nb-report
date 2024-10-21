@@ -166,8 +166,7 @@ async function initiateOAuth() {
       },
       body: JSON.stringify({ 
         state, 
-        scopes: 'email',
-        forceReauth: true  // Add this flag
+        scopes: 'email'
       }),
     });
     const data = await response.json();
