@@ -37,6 +37,19 @@
       "5": "Sjízdné jen některé úseky",
       "6": "Nevhodné"
     },
+    "snowAge": "Věk:",
+    "snowAgeOptions": {
+      "0": "Neznámý",
+      "1": "Starý",
+      "2": "Nový"
+    },
+    "wetness": "Vlhkost:",
+    "wetnessOptions": {
+      "0": "Neznámá",
+      "1": "Suchý",
+      "2": "Vlhký",
+      "3": "Mokrý"
+    },
     "submit": "Submit Report"
   },
   "countries": {
