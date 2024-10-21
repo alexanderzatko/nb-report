@@ -23,6 +23,7 @@ function inferCountryFromLanguage(language) {
 }
 
 function populateCountryDropdown(defaultCountry = null) {
+  console.log('populateCountryDropdown called with defaultCountry:', defaultCountry);
   if (!countriesData || !countriesData.countries) {
     console.warn('Countries data not loaded yet');
     return;
@@ -36,9 +37,12 @@ function populateCountryDropdown(defaultCountry = null) {
     option.textContent = i18next.t(country.nameKey);
     if (defaultCountry && country.code === defaultCountry) {
       option.selected = true;
+      console.log(`Setting ${country.code} as selected`);
     }
     countrySelect.appendChild(option);
   });
+
+  console.log('Country dropdown populated. Selected value:', countrySelect.value);
 
   // Trigger the change event to update regions
   countrySelect.dispatchEvent(new Event('change'));
@@ -135,19 +139,18 @@ function updateUIBasedOnAuthState(isAuthenticated) {
 }
 
 function updateUIWithUserData(userData) {
-  console.log(userData);
+  console.log('updateUIWithUserData called with:', userData);
   // Update UI elements with user data
-  // For example:
-  // const userInfoElement = document.getElementById('user-info');
-  // if (userInfoElement) {
-  //   userInfoElement.textContent = i18next.t('welcome', { name: userData.name, role: userData.role });
-  // }
   
   // Set the language based on user data
   if (userData.language) {
+    console.log('Changing language to:', userData.language);
     i18next.changeLanguage(userData.language);
     const inferredCountry = inferCountryFromLanguage(userData.language);
+    console.log('Inferred country:', inferredCountry);
     populateCountryDropdown(inferredCountry);
+  } else {
+    console.log('No language data in userData');
   }
 }
 
@@ -318,8 +321,10 @@ async function getUserData() {
 
 // Function to refresh user data
 async function refreshUserData() {
+  console.log('refreshUserData called');
   try {
     const userData = await getUserData();
+    console.log('User data received:', userData);
     if (userData) {
       updateUIWithUserData(userData);
       updateUIBasedOnAuthState(true);
