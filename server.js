@@ -217,9 +217,14 @@ app.post('/api/submit-snow-report', (req, res) => {
 });
 
 app.post('/api/initiate-oauth', (req, res) => {
-  const { state } = req.body;
-  const scopes = req.body.scopes || ''; // Default to empty string if not provided
-  const authUrl = `${OAUTH_PROVIDER_URL}/oauth2/authorize?client_id=${OAUTH_CLIENT_ID}&redirect_uri=${OAUTH_REDIRECT_URI}&response_type=code&state=${state}&scope=${encodeURIComponent(scopes)}`;
+  const { state, scopes, forceReauth } = req.body;
+  let authUrl = `${OAUTH_PROVIDER_URL}/oauth2/authorize?client_id=${OAUTH_CLIENT_ID}&redirect_uri=${OAUTH_REDIRECT_URI}&response_type=code&state=${state}&scope=${encodeURIComponent(scopes || '')}`;
+  
+  // Add force re-authentication parameter if requested
+  if (forceReauth) {
+    authUrl += '&prompt=login';
+  }
+  
   res.json({ authUrl });
 });
 
