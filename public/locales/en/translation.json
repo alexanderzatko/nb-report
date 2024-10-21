@@ -15,11 +15,16 @@
     "selectRegion": "Select a region",
     "snowDepth": "Snow Depth (cm):",
     "snowType": "Snow Type:",
-    "snowType": {
-      "powder": "Powder",
-      "packed": "Packed",
-      "crusty": "Crusty",
-      "icy": "Icy"
+    "snowTypes": {
+      "0": "Unknown type",
+      "PDR": "Powder",
+      "PP": "Packed powder",
+      "LSGR": "Loose granular",
+      "WBLN": "Windblown",
+      "HP": "Hard pack",
+      "ICE": "Icy",
+      "WET": "Wet",
+      "VC": "Variable conditions"
     },
     "submit": "Submit Report"
   },
