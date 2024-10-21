@@ -9,7 +9,7 @@ async function loadCountriesData() {
   countriesData = await response.json();
 }
 
-function inferCountryFromLanguage(language) {
+function inferCountryFromLanguage(language = null) {
   const languageToCountry = {
     'sk': 'SK',
     'cs': 'CZ',
@@ -19,10 +19,18 @@ function inferCountryFromLanguage(language) {
     'hu': 'HU',
     'en': 'SK' // Default to Slovakia if language is English
   };
-  return languageToCountry[language] || 'SK'; // Default to Slovakia if language not found
+  
+  // If language is null, use the current i18next language
+  const currentLanguage = language || i18next.language;
+  
+  // Get the two-letter language code (in case the language string includes country code)
+  const languageCode = currentLanguage.split('-')[0].toLowerCase();
+  
+  return languageToCountry[languageCode] || 'SK'; // Default to Slovakia if language not found
 }
 
 function populateCountryDropdown() {
+  console.log('populateCountryDropdown called');
   if (!countriesData || !countriesData.countries) {
     console.warn('Countries data not loaded yet');
     return;
@@ -30,12 +38,23 @@ function populateCountryDropdown() {
   const countrySelect = document.getElementById('country');
   countrySelect.innerHTML = '<option value="">' + i18next.t('form.selectCountry') + '</option>';
   
+  const inferredCountry = inferCountryFromLanguage();
+  console.log('Inferred country:', inferredCountry);
+  
   countriesData.countries.forEach(country => {
     const option = document.createElement('option');
     option.value = country.code;
     option.textContent = i18next.t(country.nameKey);
+    if (country.code === inferredCountry) {
+      option.selected = true;
+    }
     countrySelect.appendChild(option);
   });
+
+  console.log('Country dropdown populated. Selected value:', countrySelect.value);
+
+  // Trigger the change event to update regions
+  countrySelect.dispatchEvent(new Event('change'));
 }
 
 function updateRegions() {
