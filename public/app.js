@@ -148,21 +148,6 @@ function updateUIBasedOnAuthState(isAuthenticated) {
   }
 }
 
-function updateUIWithUserData(userData) {
-  console.log(userData);
-  // Update UI elements with user data
-  // For example:
-  // const userInfoElement = document.getElementById('user-info');
-  // if (userInfoElement) {
-  //   userInfoElement.textContent = i18next.t('welcome', { name: userData.name, role: userData.role });
-  // }
-  
-  // Set the language based on user data
-  if (userData.language) {
-    i18next.changeLanguage(userData.language);
-  }
-}
-
 // Update all translatable elements
 async function updatePageContent() {
   console.log('Updating page content with translations');
@@ -239,10 +224,11 @@ async function handleOAuthCallback() {
     console.log('Exchanging token');
     try {
       const success = await exchangeToken(code);
-      console.log('Token exchanged successfully');
       if (success) {
+        console.log('Token exchanged successfully');
         await refreshUserData();
       } else {
+        console.log('Token exchange failed');
         updateUIBasedOnAuthState(false);
       }
     } catch (error) {
@@ -333,6 +319,12 @@ async function refreshUserData() {
   try {
     const userData = await getUserData();
     if (userData) {
+
+      await loadCountriesData();
+      populateCountryDropdown();
+      updateRegions();
+      console.log('Countries data loaded, Country drop-down populated, regions updated');
+
       updateUIWithUserData(userData);
       updateUIBasedOnAuthState(true);
       updatePageContent(); // Update translations after changing language
@@ -342,6 +334,21 @@ async function refreshUserData() {
   } catch (error) {
     console.error('Error refreshing user data:', error);
     await handleInvalidSession();
+  }
+}
+
+function updateUIWithUserData(userData) {
+  console.log(userData);
+  // Update UI elements with user data
+  // For example:
+  // const userInfoElement = document.getElementById('user-info');
+  // if (userInfoElement) {
+  //   userInfoElement.textContent = i18next.t('welcome', { name: userData.name, role: userData.role });
+  // }
+  
+  // Set the language based on user data
+  if (userData.language) {
+    i18next.changeLanguage(userData.language);
   }
 }
 
