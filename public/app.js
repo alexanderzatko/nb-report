@@ -9,7 +9,7 @@ async function loadCountriesData() {
 }
 
 let xc_Data;
-async function loadSnowTypesData() {
+async function loadXcData() {
   const response = await fetch('/xc_dropdowns.json');
   snowTypesData = await response.json();
 }
@@ -93,10 +93,14 @@ function updateXcDropdowns() {
   const snowTypeSelect = document.getElementById('snow-type');
   const classicStyleSelect = document.getElementById('classic-style');
   const freeStyleSelect = document.getElementById('free-style');
+  const snowAgeSelect = document.getElementById('snow-age');
+  const wetnessSelect = document.getElementById('wetness');
   
   snowTypeSelect.innerHTML = '';
   classicStyleSelect.innerHTML = '';
   freeStyleSelect.innerHTML = '';
+  snowAgeSelect.innerHTML = '';
+  wetnessSelect.innerHTML = '';
 
   if (xc_Data && xc_Data.snowTypes) {
     xc_Data.snowTypes.forEach(type => {
@@ -120,6 +124,24 @@ function updateXcDropdowns() {
       
       classicStyleSelect.appendChild(classicOption);
       freeStyleSelect.appendChild(freeOption);
+    });
+  }
+
+  if (xc_Data && xc_Data.snowAge) {
+    xc_Data.snowAge.forEach(age => {
+      const option = document.createElement('option');
+      option.value = age.code;
+      option.textContent = i18next.t(`form.snowAge.${age.code}`, age.name);
+      snowAgeSelect.appendChild(option);
+    });
+  }
+
+  if (xc_Data && xc_Data.wetness) {
+    xc_Data.wetness.forEach(wet => {
+      const option = document.createElement('option');
+      option.value = wet.code;
+      option.textContent = i18next.t(`form.wetness.${wet.code}`, wet.name);
+      wetnessSelect.appendChild(option);
     });
   }
 }
@@ -512,8 +534,10 @@ document.getElementById('snow-report-form').addEventListener('submit', async fun
       const snowType = document.getElementById('snow-type').value;
       const classicStyle = document.getElementById('classic-style').value;
       const freeStyle = document.getElementById('free-style').value;
+      const snowAge = document.getElementById('snow-age').value;
+      const wetness = document.getElementById('wetness').value;
 
-      console.log(`Country: ${country}, Region: ${region}, Snow Depth: ${snowDepth}, Snow Type: ${snowType}, Classic Style: ${classicStyle}, Free Style: ${freeStyle}`);
+      console.log(`Country: ${country}, Region: ${region}, Snow Depth: ${snowDepth}, Snow Type: ${snowType}, Classic Style: ${classicStyle}, Free Style: ${freeStyle}, Snow Age: ${snowAge}, Wetness: ${wetness}`);
       alert("Report submitted successfully!");
     } catch (error) {
       console.error('Error submitting snow report:', error);
