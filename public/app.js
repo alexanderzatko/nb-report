@@ -9,6 +9,19 @@ async function loadCountriesData() {
   countriesData = await response.json();
 }
 
+function inferCountryFromLanguage(language) {
+  const languageToCountry = {
+    'sk': 'SK',
+    'cs': 'CZ',
+    'de': 'AT',
+    'it': 'IT',
+    'pl': 'PL',
+    'hu': 'HU',
+    'en': 'SK' // Default to Slovakia if language is English
+  };
+  return languageToCountry[language] || 'SK'; // Default to Slovakia if language not found
+}
+
 function populateCountryDropdown() {
   if (!countriesData || !countriesData.countries) {
     console.warn('Countries data not loaded yet');
