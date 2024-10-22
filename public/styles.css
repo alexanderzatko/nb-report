@@ -285,13 +285,40 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .time-elapsed {
-  margin-bottom: 20px;
-  font-size: 14px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-#elapsed-time {
-  font-weight: bold;
-  margin-left: 5px;
+.time-display {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.time-unit {
+    font-family: monospace;
+    font-weight: bold;
+}
+
+.time-unit.hours, time-label.hours {
+    color: #4299e1;
+}
+
+.time-unit.minutes, time-label.minutes {
+    color: #2c5282;
+    font-size: 1.1em;
+}
+
+.time-unit.seconds, time-label.seconds {
+    color: #4299e1;
+}
+
+.time-label {
+    color: #666;
+    font-size: 0.9em;
 }
 
 .input-with-units {
