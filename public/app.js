@@ -1,7 +1,8 @@
 import { i18next, initI18next } from './i18n.js';
-import PhotoUploadWidget from './components/PhotoUploadWidget.js';
 
 console.log('app.js loaded');
+
+let photos = [];
 
 let countriesData;
 async function loadCountriesData() {
@@ -164,6 +165,93 @@ function initializeDatePicker() {
     dateInput.min = lastWeek.toISOString().split('T')[0];
     */
   }
+}
+
+function initializePhotoUpload() {
+    const selectPhotosBtn = document.getElementById('select-photos');
+    const takePhotoBtn = document.getElementById('take-photo');
+    const fileInput = document.getElementById('photo-file-input');
+    const cameraInput = document.getElementById('camera-input');
+    const previewContainer = document.getElementById('photo-preview-container');
+
+    async function resizeImage(file) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                
+                // Calculate new dimensions
+                if (width > 1900 || height > 1900) {
+                    if (width > height) {
+                        height = Math.round((height * 1900) / width);
+                        width = 1900;
+                    } else {
+                        width = Math.round((width * 1900) / height);
+                        height = 1900;
+                    }
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                canvas.toBlob((blob) => {
+                    resolve(new File([blob], file.name, {
+                        type: 'image/jpeg',
+                        lastModified: Date.now()
+                    }));
+                }, 'image/jpeg', 0.9);
+            };
+            img.src = URL.createObjectURL(file);
+        });
+    }
+
+    function addPhotoPreview(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'photo-preview';
+            
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-photo';
+            removeBtn.innerHTML = '×';
+            removeBtn.onclick = function() {
+                const index = photos.indexOf(file);
+                if (index > -1) {
+                    photos.splice(index, 1);
+                    wrapper.remove();
+                }
+            };
+            
+            wrapper.appendChild(img);
+            wrapper.appendChild(removeBtn);
+            previewContainer.appendChild(wrapper);
+        };
+        reader.readAsDataURL(file);
+    }
+
+    async function handleFiles(fileList) {
+        for (const file of fileList) {
+            if (file.type.startsWith('image/')) {
+                const resizedFile = await resizeImage(file);
+                photos.push(resizedFile);
+                addPhotoPreview(resizedFile);
+            }
+        }
+    }
+
+    selectPhotosBtn.addEventListener('click', () => fileInput.click());
+    takePhotoBtn.addEventListener('click', () => cameraInput.click());
+    
+    fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+    cameraInput.addEventListener('change', (e) => handleFiles(e.target.files));
 }
 
 async function toggleAuth() {
@@ -593,8 +681,12 @@ document.getElementById('snow-report-form').addEventListener('submit', async fun
         snowAge: document.getElementById('snow-age').value,
         wetness: document.getElementById('wetness').value
       };
+      
+      photos.forEach((photo, index) => {
+        formData.append(`photo_${index}`, photo);
+      });
 
-      console.log('Submitting report with date:', formData);
+      console.log('Submitting report:', formData);
       alert("Report submitted successfully!");
     } catch (error) {
       console.error('Error submitting snow report:', error);
@@ -620,12 +712,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     await updatePageContent();
     
     initializeDatePicker();
+    initializePhotoUpload();
 
-  const photoUploadContainer = document.getElementById('photo-upload-container');
-  if (photoUploadContainer) {
-    const root = ReactDOM.createRoot(photoUploadContainer);
-    root.render(React.createElement(PhotoUploadWidget));
-  }
     const urlParams = new URLSearchParams(window.location.search);
     console.log('URL params:', urlParams.toString());
     if (urlParams.has('code')) {
