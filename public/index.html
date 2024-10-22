@@ -28,23 +28,23 @@
         <button id="logout-button" class="auth-button logout" data-i18n="auth.logout">Logout</button>
       </div>
       <form id="snow-report-form" style="display:none;">
+
+        <label for="report-title" data-i18n="form.reportTitle"></label>
+        <input type="text" id="report-title" required/>
+        
         <label for="country" data-i18n="form.country">Country:</label>
         <select id="country" name="country">
           <!-- Options will be populated dynamically -->
         </select>
+
         <label for="region" data-i18n="form.region">Region:</label>
         <select id="region" name="region">
           <!-- Options will be populated dynamically -->
         </select>
       
-        <label for="snow-depth" data-i18n="form.snowDepth">Snow Depth (cm):</label>
-        <input type="number" id="snow-depth" required>
-
-        <label for="snow-type" data-i18n="form.snowType">Snow Type:</label>
-        <select id="snow-type" data-i18n="form.snowTypes">
-          <!-- Options populated dynamically -->
-        </select>
-
+        <label for="report-date" data-i18n="form.reportDate"></label>
+        <input type="text" id="report-date" required/>
+        
         <label for="classic-style" data-i18n="form.classicStyle">Classic Style:</label>
         <select id="classic-style" data-i18n="form.trackConditions">
           <!-- Options populated dynamically -->
@@ -55,8 +55,8 @@
           <!-- Options populated dynamically -->
         </select>
 
-        <label for="wetness" data-i18n="form.wetness">Moisture:</label>
-        <select id="wetness" data-i18n="form.wetnessOptions">
+        <label for="snow-type" data-i18n="form.snowType">Snow Type:</label>
+        <select id="snow-type" data-i18n="form.snowTypes">
           <!-- Options populated dynamically -->
         </select>
 
@@ -65,6 +65,30 @@
           <!-- Options populated dynamically -->
         </select>
 
+        <label for="wetness" data-i18n="form.wetness">Moisture:</label>
+        <select id="wetness" data-i18n="form.wetnessOptions">
+          <!-- Options populated dynamically -->
+        </select>
+
+        <label for="snow-depth250" data-i18n="form.snowDepth250">Snow in 250 m (cm):</label>
+        <input class="snow-depth" type="number" id="snow-depth250" required>
+
+        <label for="snow-depth500" data-i18n="form.snowDepth500">Snow in 500 m (cm):</label>
+        <input class="snow-depth" type="number" id="snow-depth500" required>
+
+        <label for="snow-depth750" data-i18n="form.snowDepth750">Snow in 750 m (cm):</label>
+        <input class="snow-depth" type="number" id="snow-depth750" required>
+
+        <label for="snow-depth1000" data-i18n="form.snowDepth1000">Snow above 1000 m (cm):</label>
+        <input class="snow-depth" type="number" id="snow-depth1000" required>
+
+        <label for="report-note" data-i18n="form.reportNote">Report</label>
+        <textarea id="report-note"></textarea>
+
+        <!-- place gpx file upload here -->
+        
+        <!-- place image upload here -->
+        
         <button type="submit" data-i18n="form.submit">Submit Report</button>
         </form>
     </main>
