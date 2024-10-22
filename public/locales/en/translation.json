@@ -56,6 +56,9 @@
       "3": "Wet"
     },
     "reportNote": "Report",
+    "photos": "Photos:",
+    "selectPhotos": "Select photos",
+    "takePhoto": "Take Photo",
     "submit": "Submit Report"
   },
   "countries": {
