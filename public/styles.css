@@ -193,13 +193,46 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .photo-preview {
     position: relative;
     aspect-ratio: 1;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    overflow: hidden;
 }
 
 .photo-preview img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 4px;
+    transition: transform 0.3s ease;
+}
+
+.photo-controls {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    display: flex;
+    gap: 5px;
+}
+
+.photo-controls button {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: none;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.3s;
+}
+
+.photo-controls button:hover {
+    opacity: 1;
+}
+
+.rotate-photo {
+    background-color: rgba(0, 120, 212, 0.8);
 }
 
 .remove-photo {
