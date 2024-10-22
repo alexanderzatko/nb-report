@@ -27,15 +27,19 @@ form {
   align-items: center;
   gap: 15px;
   width: 100%;
-  max-width: 300px;
+  max-width: 600px;
   margin: 0 auto;
 }
 
 input, select {
-  width: 100%;
+  width: fit-content;
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
+}
+
+input#report-date {
+    width: fit-content;
 }
 
 /* Login - Logout button START */
