@@ -183,8 +183,21 @@ async function logout() {
 }
 
 async function handleLogout() {
-  localStorage.removeItem('sessionId');
-  await updateUIBasedOnAuthState(false);
+  try {
+    // Clear client-side storage
+    localStorage.removeItem('sessionId');
+    localStorage.removeItem('oauthState');
+    
+    // Update UI
+    await updateUIBasedOnAuthState(false);
+    
+    // Redirect to home page if needed
+    if (window.location.pathname !== '/') {
+      window.location.href = '/';
+    }
+  } catch (error) {
+    console.error('Error during logout:', error);
+  }
 }
 
 function updateUIBasedOnAuthState(isAuthenticated) {
@@ -465,6 +478,10 @@ async function checkAndRefreshToken() {
   try {
     const response = await fetch('/api/refresh-token', {
       method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      }
     });
 
     if (response.ok) {
@@ -486,15 +503,22 @@ async function checkAndRefreshToken() {
   }
 }
 
+const REFRESH_INTERVAL = 10 * 60 * 1000; // 10 minutes
+
 setInterval(async () => {
-  const isAuthenticated = await checkAuthStatus();
-  if (isAuthenticated) {
-    await refreshUserData();
-    await checkAndRefreshToken();
-  } else {
-    updateUIBasedOnAuthState(false);
+  try {
+    const isAuthenticated = await checkAuthStatus();
+    if (isAuthenticated) {
+      await checkAndRefreshToken();
+      await refreshUserData();
+    } else {
+      await updateUIBasedOnAuthState(false);
+    }
+  } catch (error) {
+    console.error('Error in refresh interval:', error);
+    await handleLogout();
   }
-}, 15 * 60 * 1000); // Every 15 minutes
+}, REFRESH_INTERVAL);
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
