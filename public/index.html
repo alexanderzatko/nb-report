@@ -103,8 +103,34 @@
         <input type="file" id="photo-file-input" accept="image/*" multiple style="display: none;">
         <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
         
+        <div id="rewards-section" class="rewards-section" style="display: none;">
+          <h3 data-i18n="form.rewards.sectionTitle">Rewards</h3>
+          <div class="time-elapsed">
+            <span data-i18n="form.rewards.timeElapsed">Time since opening this form:</span>
+            <span id="elapsed-time">00 hrs. 00 min. 00 sec.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="labor-time" data-i18n="form.rewards.laborTime">Labor time</label>
+            <div class="input-with-units">
+              <input type="number" id="labor-time" name="labor-time" min="0">
+              <span data-i18n="form.rewards.laborTimeUnits">minutes</span>
+            </div>
+            <p class="help-text" data-i18n="form.rewards.laborTimeHelp"></p>
+          </div>
+
+          <div class="form-group">
+            <label for="reward-requested" data-i18n="form.rewards.rewardRequested">Reward requested</label>
+            <div class="input-with-units">
+              <input type="number" id="reward-requested" name="reward-requested" min="0">
+              <span data-i18n="form.rewards.rewardRequestedUnits">Merits</span>
+            </div>
+            <p class="help-text" data-i18n="form.rewards.rewardRequestedHelp"></p>
+          </div>
+        </div>
+        
         <button type="submit" data-i18n="form.submit">Submit Report</button>
-        </form>
+      </form>
     </main>
 
     <script type="module" src="/i18n.js"></script>
