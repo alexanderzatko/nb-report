@@ -678,7 +678,7 @@ document.getElementById('snow-report-form').addEventListener('submit', async fun
         formData.append(`photo_${index}`, photo);
       });
 
-      console.log('Submitting report:', formData);
+      logFormData(formData);
       alert("Report submitted successfully!");
     } catch (error) {
       console.error('Error submitting snow report:', error);
@@ -723,3 +723,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('Error during initialization:', error);
   }
 });
+
+//helper function for enhanced logging
+function logFormData(formData) {
+    console.log('Form data contents:');
+    for (let pair of formData.entries()) {
+        if (pair[1] instanceof File) {
+            console.log(pair[0] + ':', {
+                name: pair[1].name,
+                type: pair[1].type,
+                size: pair[1].size + ' bytes'
+            });
+        } else {
+            console.log(pair[0] + ':', pair[1]);
+        }
+    }
+}
