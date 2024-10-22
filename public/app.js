@@ -663,7 +663,7 @@ document.getElementById('snow-report-form').addEventListener('submit', async fun
       const formData = {
         country: document.getElementById('country').value,
         region: document.getElementById('region').value,
-        reportDate: reportDate,
+        reportDate: document.getElementById('report-date').value,
         snowDepth250: document.getElementById('snow-depth250').value,
         snowDepth500: document.getElementById('snow-depth500').value,
         snowDepth750: document.getElementById('snow-depth750').value,
