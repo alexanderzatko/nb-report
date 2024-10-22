@@ -303,16 +303,16 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     font-weight: bold;
 }
 
-.time-unit.hours, time-label.hours {
+.time-unit.hours, .time-label.hours {
     color: #b8b8b8;
 }
 
-.time-unit.minutes, time-label.minutes {
+.time-unit.minutes, .time-label.minutes {
     color: black;
     font-size: 1.1em;
 }
 
-.time-unit.seconds, time-label.seconds {
+.time-unit.seconds, .time-label.seconds {
     color: #b8b8b8;
 }
 
