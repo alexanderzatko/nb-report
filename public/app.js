@@ -857,16 +857,17 @@ function logFormData(formData) {
 
 //the timer function for the Rewards section
 function updateElapsedTime() {
-  if (!formStartTime) return;
-  
-  const now = new Date();
-  const diff = Math.floor((now - formStartTime) / 1000); // difference in seconds
-  
-  const hours = Math.floor(diff / 3600);
-  const minutes = Math.floor((diff % 3600) / 60);
-  const seconds = diff % 60;
-  
-  const timeString = `${String(hours).padStart(2, '0')} hrs. ${String(minutes).padStart(2, '0')} min. ${String(seconds).padStart(2, '0')} sec.`;
-  
-  document.getElementById('elapsed-time').textContent = timeString;
+    if (!formStartTime) return;
+    
+    const now = new Date();
+    const diff = Math.floor((now - formStartTime) / 1000); // difference in seconds
+    
+    const hours = Math.floor(diff / 3600);
+    const minutes = Math.floor((diff % 3600) / 60);
+    const seconds = diff % 60;
+    
+    // Update each span separately
+    document.getElementById('elapsed-hours').textContent = String(hours).padStart(2, '0');
+    document.getElementById('elapsed-minutes').textContent = String(minutes).padStart(2, '0');
+    document.getElementById('elapsed-seconds').textContent = String(seconds).padStart(2, '0');
 }
