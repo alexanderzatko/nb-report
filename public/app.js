@@ -660,21 +660,14 @@ document.getElementById('snow-report-form').addEventListener('submit', async fun
   
   if (isAuthenticated) {
     try {
-      const country = document.getElementById('country').value;
-      const region = document.getElementById('region').value;
-      const snowDepth = document.getElementById('snow-depth').value;
-      const snowType = document.getElementById('snow-type').value;
-      const classicStyle = document.getElementById('classic-style').value;
-      const freeStyle = document.getElementById('free-style').value;
-      const snowAge = document.getElementById('snow-age').value;
-      const wetness = document.getElementById('wetness').value;
-      const reportDate = document.getElementById('report-date').value;
-
       const formData = {
         country: document.getElementById('country').value,
         region: document.getElementById('region').value,
-        reportDate: reportDate, // Add this line
-        snowDepth: document.getElementById('snow-depth').value,
+        reportDate: reportDate,
+        snowDepth250: document.getElementById('snow-depth250').value,
+        snowDepth500: document.getElementById('snow-depth500').value,
+        snowDepth750: document.getElementById('snow-depth750').value,
+        snowDepth1000: document.getElementById('snow-depth1000').value,
         snowType: document.getElementById('snow-type').value,
         classicStyle: document.getElementById('classic-style').value,
         freeStyle: document.getElementById('free-style').value,
