@@ -8,6 +8,16 @@
     "login": "Login",
     "logout": "Logout"
   },
+  "rewards": {
+    "sectionTitle": "Rewards",
+    "timeElapsed": "Time since opening this form:",
+    "laborTime": "Labor time",
+    "laborTimeUnits": "minutes",
+    "laborTimeHelp": "If you want to get Chron reward for creating this post, enter the time it took to create it. After two people approve the reported time, you will receive 1 Chron for every 6 minutes of your work. You will have to verify two reports submitted by others.",
+    "rewardRequested": "Reward requested",
+    "rewardRequestedUnits": "Merits",
+    "rewardRequestedHelp": "Leave empty for free access. Users will still be able to voluntarily reward you with Merits.\n...or set the number to 0. Users will have to pay any amount of their choosing, greater than 0,\n...or enter another number the visitors must pay to see this content."
+  },
   "form": {
     "reportTitle": "Title:",
     "country": "Country:",
