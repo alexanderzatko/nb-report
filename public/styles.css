@@ -165,14 +165,57 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /* Photos upload START */
 
-#photo-upload-container {
-    margin: 20px 0;
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.photo-button {
+    padding: 10px 20px;
+    background-color: #0078d4;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.photo-button:hover {
+    background-color: #005bb5;
+}
+
+#photo-preview-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.photo-preview {
+    position: relative;
+    aspect-ratio: 1;
+}
+
+.photo-preview img {
     width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 4px;
 }
 
-#photo-upload-container .form-group-label {
-    margin-bottom: 10px;
-    font-weight: bold;
+.remove-photo {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(255, 0, 0, 0.7);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-
 /* Photos upload STOP */
