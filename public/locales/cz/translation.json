@@ -9,6 +9,14 @@
     "logout": "Odhlásit"
   },
   "form": {
+    "validation": {
+      "required": "Prosím, vyplňte toto pole",
+      "numberMin": "Hodnota musí být větší nebo rovna {{min}}",
+      "numberMax": "Hodnota musí být menší nebo rovna {{max}}",
+      "submitSuccess": "Zpráva byla úspěšně odeslána!",
+      "submitError": "Při odesílání zprávy došlo k chybě. Zkuste to prosím znovu.",
+      "loginRequired": "Pro odeslání zprávy se prosím přihlaste."
+    },
     "reportTitle": "Název:",
     "country": "Krajina:",
     "selectCountry": "Vyberte krajinu",
