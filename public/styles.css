@@ -31,6 +31,10 @@ form {
   margin: 0 auto;
 }
 
+input#report-title {
+    width: 100%;
+}
+
 input, select {
   width: fit-content;
   padding: 10px;
