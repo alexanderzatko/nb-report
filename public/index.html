@@ -109,7 +109,14 @@
           <h3 data-i18n="form.rewards.sectionTitle">Rewards</h3>
           <div class="time-elapsed">
             <span data-i18n="form.rewards.timeElapsed">Time since opening this form:</span>
-            <span id="elapsed-time">00 hrs. 00 min. 00 sec.</span>
+            <span id="elapsed-time" class="time-display">
+              <span id="elapsed-hours" class="time-unit hours">00</span>
+              <span class="time-label hours">hrs.</span>
+              <span id="elapsed-minutes" class="time-unit minutes">00</span>
+              <span class="time-label minutes">min.</span>
+              <span id="elapsed-seconds" class="time-unit seconds">00</span>
+              <span class="time-label seconds">sec.</span>
+            </span>
           </div>
 
           <div class="form-group">
