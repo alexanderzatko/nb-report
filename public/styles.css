@@ -304,21 +304,16 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .time-unit.hours, time-label.hours {
-    color: #4299e1;
+    color: #b8b8b8;
 }
 
 .time-unit.minutes, time-label.minutes {
-    color: #2c5282;
+    color: black;
     font-size: 1.1em;
 }
 
 .time-unit.seconds, time-label.seconds {
-    color: #4299e1;
-}
-
-.time-label {
-    color: #666;
-    font-size: 0.9em;
+    color: #b8b8b8;
 }
 
 .input-with-units {
