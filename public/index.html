@@ -102,6 +102,8 @@
         <button type="button" id="take-photo" class="photo-button" data-i18n="form.takePhoto">Take Photo</button>
         <input type="file" id="photo-file-input" accept="image/*" multiple style="display: none;">
         <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
+
+        <!-- the rewards section -->
         
         <div id="rewards-section" class="rewards-section" style="display: none;">
           <h3 data-i18n="form.rewards.sectionTitle">Rewards</h3>
@@ -122,7 +124,7 @@
           <div class="form-group">
             <label for="reward-requested" data-i18n="form.rewards.rewardRequested">Reward requested</label>
             <div class="input-with-units">
-              <input type="number" id="reward-requested" name="reward-requested" min="0">
+              <input type="number" id="reward-requested" name="reward-requested" value="0" min="0">
               <span data-i18n="form.rewards.rewardRequestedUnits">Merits</span>
             </div>
             <p class="help-text" data-i18n="form.rewards.rewardRequestedHelp"></p>
