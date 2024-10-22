@@ -242,6 +242,9 @@ function initializePhotoUpload() {
 			img.src = e.target.result;
 			img.dataset.rotation = '0';
 			
+			// Store the index when the preview is created
+			const photoIndex = photos.indexOf(file);
+			
 			const controlsDiv = document.createElement('div');
 			controlsDiv.className = 'photo-controls';
 			
@@ -258,10 +261,8 @@ function initializePhotoUpload() {
 				img.dataset.rotation = newRotation;
 				
 				rotateImage(file, newRotation).then(rotatedFile => {
-					const index = photos.indexOf(file);
-					if (index > -1) {
-						photos[index] = rotatedFile;
-					}
+					// Update the file in the photos array using the stored index
+					photos[photoIndex] = rotatedFile;
 				});
 			};
 			
@@ -271,15 +272,13 @@ function initializePhotoUpload() {
 			removeBtn.onclick = function(event) {
 				event.preventDefault();
 				event.stopPropagation();
-				const index = photos.indexOf(file);
-				if (index > -1) {
-					photos.splice(index, 1);
-					wrapper.remove();
-					
-					// Clear both file inputs
-					document.getElementById('photo-file-input').value = '';
-					document.getElementById('camera-input').value = '';
-				}
+				// Use the stored index to remove the photo
+				photos.splice(photoIndex, 1);
+				wrapper.remove();
+				
+				// Clear both file inputs
+				document.getElementById('photo-file-input').value = '';
+				document.getElementById('camera-input').value = '';
 			};
 			
 			controlsDiv.appendChild(rotateBtn);
