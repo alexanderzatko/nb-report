@@ -250,6 +250,7 @@ function initializePhotoUpload() {
 			rotateBtn.innerHTML = '↻';
 			rotateBtn.title = 'Rotate 90° clockwise';
 			rotateBtn.onclick = function(event) {
+				event.preventDefault();
 				event.stopPropagation();
 				const currentRotation = parseInt(img.dataset.rotation) || 0;
 				const newRotation = (currentRotation + 90) % 360;
