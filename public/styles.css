@@ -163,3 +163,16 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /* date picker STOP */
 
+/* Photos upload START */
+
+#photo-upload-container {
+    margin: 20px 0;
+    width: 100%;
+}
+
+#photo-upload-container .form-group-label {
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+/* Photos upload STOP */
