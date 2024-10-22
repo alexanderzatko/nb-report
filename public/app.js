@@ -1,4 +1,5 @@
 import { i18next, initI18next } from './i18n.js';
+import PhotoUploadWidget from './components/PhotoUploadWidget.js';
 
 console.log('app.js loaded');
 
@@ -620,6 +621,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     initializeDatePicker();
 
+  const photoUploadContainer = document.getElementById('photo-upload-container');
+  if (photoUploadContainer) {
+    const root = ReactDOM.createRoot(photoUploadContainer);
+    root.render(React.createElement(PhotoUploadWidget));
+  }
     const urlParams = new URLSearchParams(window.location.search);
     console.log('URL params:', urlParams.toString());
     if (urlParams.has('code')) {
