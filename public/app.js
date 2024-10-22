@@ -240,7 +240,7 @@ function initializePhotoUpload() {
 			
 			const img = document.createElement('img');
 			img.src = e.target.result;
-			img.dataset.rotation = '0'; // Track rotation state
+			img.dataset.rotation = '0';
 			
 			const controlsDiv = document.createElement('div');
 			controlsDiv.className = 'photo-controls';
@@ -257,7 +257,6 @@ function initializePhotoUpload() {
 				img.style.transform = `rotate(${newRotation}deg)`;
 				img.dataset.rotation = newRotation;
 				
-				// Create new rotated version of the file
 				rotateImage(file, newRotation).then(rotatedFile => {
 					const index = photos.indexOf(file);
 					if (index > -1) {
@@ -276,6 +275,10 @@ function initializePhotoUpload() {
 				if (index > -1) {
 					photos.splice(index, 1);
 					wrapper.remove();
+					
+					// Clear both file inputs
+					document.getElementById('photo-file-input').value = '';
+					document.getElementById('camera-input').value = '';
 				}
 			};
 			
@@ -288,16 +291,19 @@ function initializePhotoUpload() {
 		reader.readAsDataURL(file);
 	}
 
-    async function handleFiles(fileList) {
-        for (const file of fileList) {
-            if (file.type.startsWith('image/')) {
-                const resizedFile = await resizeImage(file);
-                photos.push(resizedFile);
-                addPhotoPreview(resizedFile);
-            }
-        }
-    }
-
+	async function handleFiles(fileList) {
+		for (const file of fileList) {
+			if (file.type.startsWith('image/')) {
+				const resizedFile = await resizeImage(file);
+				photos.push(resizedFile);
+				addPhotoPreview(resizedFile);
+			}
+		}
+		// Clear both file inputs after handling files
+		document.getElementById('photo-file-input').value = '';
+		document.getElementById('camera-input').value = '';
+	}
+	
     selectPhotosBtn.addEventListener('click', () => fileInput.click());
     takePhotoBtn.addEventListener('click', () => cameraInput.click());
     
