@@ -9,6 +9,14 @@
     "logout": "Logout"
   },
   "form": {
+    "validation": {
+      "required": "Please fill out this field",
+      "numberMin": "Value must be greater than or equal to {{min}}",
+      "numberMax": "Value must be less than or equal to {{max}}",
+      "submitSuccess": "Report submitted successfully!",
+      "submitError": "An error occurred while submitting the report. Please try again.",
+      "loginRequired": "Please log in to submit the report."
+    },
     "reportTitle": "Title:",
     "country": "Country:",
     "selectCountry": "Select a country",
