@@ -42,8 +42,16 @@
           <!-- Options will be populated dynamically -->
         </select>
       
-        <label for="report-date" data-i18n="form.reportDate"></label>
-        <input type="text" id="report-date" required/>
+        <div class="form-group">
+          <label for="report-date" data-i18n="form.reportDate">Report Date:</label>
+          <input 
+            type="date" 
+            id="report-date"
+            name="report-date"
+            required
+            class="form-control"
+            >
+          </div>
         
         <label for="classic-style" data-i18n="form.classicStyle">Classic Style:</label>
         <select id="classic-style" data-i18n="form.trackConditions">
