@@ -56,6 +56,9 @@
       "3": "Mokrý"
     },
     "reportNote": "Zpráva",
+    "photos": "Fotografie:",
+    "selectPhotos": "Vybrat fotografie",
+    "takePhoto": "Nafotit",
     "submit": "Submit Report"
   },
   "countries": {
