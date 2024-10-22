@@ -18,6 +18,47 @@ async function loadXcData() {
   snowTypesData = await response.json();
 }
 
+//for the form alert messages
+function initializeFormValidation() {
+  // Override default validation messages
+  const inputs = document.querySelectorAll('input[data-i18n-validate]');
+  
+  inputs.forEach(input => {
+    // Set custom validation message
+    input.addEventListener('invalid', function(e) {
+      e.preventDefault();
+      
+      if (!this.value) {
+        // Required field validation
+        const requiredMsg = i18next.t(this.dataset.i18nValidate);
+        this.setCustomValidity(requiredMsg);
+      } else if (this.type === 'number') {
+        // Number range validation
+        const value = Number(this.value);
+        const min = Number(this.min);
+        const max = Number(this.max);
+        
+        if (value < min) {
+          const minMsg = i18next.t(this.dataset.i18nValidateMin, { min: min });
+          this.setCustomValidity(minMsg);
+        } else if (value > max) {
+          const maxMsg = i18next.t(this.dataset.i18nValidateMax, { max: max });
+          this.setCustomValidity(maxMsg);
+        } else {
+          this.setCustomValidity('');
+        }
+      } else {
+        this.setCustomValidity('');
+      }
+    });
+    
+    // Clear custom validation message on input
+    input.addEventListener('input', function() {
+      this.setCustomValidity('');
+    });
+  });
+}
+
 function inferCountryFromLanguage(language = null) {
   const languageToCountry = {
     'sk': 'SK',
@@ -765,23 +806,23 @@ document.getElementById('snow-report-form').addEventListener('submit', async fun
   
   if (isAuthenticated) {
     try {
-      const formData = new FormData();  // Create FormData instance
-      formData.append('country', document.getElementById('country').value);
-      formData.append('region', document.getElementById('region').value);
-      formData.append('reportDate', document.getElementById('report-date').value);
-      formData.append('snowDepth250', document.getElementById('snow-depth250').value);
-      formData.append('snowDepth500', document.getElementById('snow-depth500').value);
-      formData.append('snowDepth750', document.getElementById('snow-depth750').value);
-      formData.append('snowDepth1000', document.getElementById('snow-depth1000').value);
-      formData.append('snowType', document.getElementById('snow-type').value);
-      formData.append('classicStyle', document.getElementById('classic-style').value);
-      formData.append('freeStyle', document.getElementById('free-style').value);
-      formData.append('snowAge', document.getElementById('snow-age').value);
-      formData.append('wetness', document.getElementById('wetness').value);
+	const formData = new FormData();  // Create FormData instance
+	formData.append('country', document.getElementById('country').value);
+	formData.append('region', document.getElementById('region').value);
+	formData.append('reportDate', document.getElementById('report-date').value);
+	formData.append('snowDepth250', document.getElementById('snow-depth250').value);
+	formData.append('snowDepth500', document.getElementById('snow-depth500').value);
+	formData.append('snowDepth750', document.getElementById('snow-depth750').value);
+	formData.append('snowDepth1000', document.getElementById('snow-depth1000').value);
+	formData.append('snowType', document.getElementById('snow-type').value);
+	formData.append('classicStyle', document.getElementById('classic-style').value);
+	formData.append('freeStyle', document.getElementById('free-style').value);
+	formData.append('snowAge', document.getElementById('snow-age').value);
+	formData.append('wetness', document.getElementById('wetness').value);
       
-      photos.forEach((photo, index) => {
-        formData.append(`photo_${index}`, photo);
-      });
+	photos.forEach((photo, index) => {
+		formData.append(`photo_${index}`, photo);
+	});
 
       const laborTime = document.getElementById('labor-time');
       const rewardRequested = document.getElementById('reward-requested');
@@ -794,14 +835,14 @@ document.getElementById('snow-report-form').addEventListener('submit', async fun
       }
 
       logFormData(formData);
-      alert("Report submitted successfully!");
+      alert(i18next.t('form.validation.submitSuccess'));
     } catch (error) {
       console.error('Error submitting snow report:', error);
-      alert('An error occurred while submitting the report. Please try again.');
+      alert(i18next.t('form.validation.submitError'));
     }
   } else {
-    alert("Please log in to submit the report.");
-    // Optionally, you can redirect to the login page or trigger the login process here
+    alert(i18next.t('form.validation.loginRequired'));
+    // Optionally, redirect to the login page or trigger the login process here
   }
 });
 
@@ -814,6 +855,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('logout-button').addEventListener('click', logout);
 
   try {
+    initializeFormValidation();
     await initI18next();
     console.log('i18next initialized');
     await updatePageContent();
@@ -870,4 +912,28 @@ function updateElapsedTime() {
     document.getElementById('elapsed-hours').textContent = String(hours).padStart(2, '0');
     document.getElementById('elapsed-minutes').textContent = String(minutes).padStart(2, '0');
     document.getElementById('elapsed-seconds').textContent = String(seconds).padStart(2, '0');
+}
+
+// A helper function for custom validation
+function validateField(input) {
+  const validity = input.validity;
+  
+  if (validity.valueMissing) {
+    return i18next.t(input.dataset.i18nValidate);
+  }
+  
+  if (input.type === 'number') {
+    const value = Number(input.value);
+    const min = Number(input.min);
+    const max = Number(input.max);
+    
+    if (value < min) {
+      return i18next.t(input.dataset.i18nValidateMin, { min: min });
+    }
+    if (value > max) {
+      return i18next.t(input.dataset.i18nValidateMax, { max: max });
+    }
+  }
+  
+  return '';
 }
