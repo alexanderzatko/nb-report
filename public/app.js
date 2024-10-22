@@ -663,16 +663,16 @@ document.getElementById('snow-report-form').addEventListener('submit', async fun
       const formData = new FormData();  // Create FormData instance
       formData.append('country', document.getElementById('country').value);
       formData.append('region', document.getElementById('region').value);
-      formData.append('reportDate', document.getElementById('report-date').value;
-      formData.append('snowDepth250', document.getElementById('snow-depth250').value;
-      formData.append('snowDepth500', document.getElementById('snow-depth500').value;
-      formData.append('snowDepth750', document.getElementById('snow-depth750').value;
-      formData.append('snowDepth1000', document.getElementById('snow-depth1000').value;
-      formData.append('snowType', document.getElementById('snow-type').value;
-      formData.append('classicStyle', document.getElementById('classic-style').value;
-      formData.append('freeStyle', document.getElementById('free-style').value;
-      formData.append('snowAge', document.getElementById('snow-age').value;
-      formData.append('wetness', document.getElementById('wetness').value;
+      formData.append('reportDate', document.getElementById('report-date').value);
+      formData.append('snowDepth250', document.getElementById('snow-depth250').value);
+      formData.append('snowDepth500', document.getElementById('snow-depth500').value);
+      formData.append('snowDepth750', document.getElementById('snow-depth750').value);
+      formData.append('snowDepth1000', document.getElementById('snow-depth1000').value);
+      formData.append('snowType', document.getElementById('snow-type').value);
+      formData.append('classicStyle', document.getElementById('classic-style').value);
+      formData.append('freeStyle', document.getElementById('free-style').value);
+      formData.append('snowAge', document.getElementById('snow-age').value);
+      formData.append('wetness', document.getElementById('wetness').value);
       
       photos.forEach((photo, index) => {
         formData.append(`photo_${index}`, photo);
