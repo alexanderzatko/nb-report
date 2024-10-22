@@ -1,4 +1,4 @@
-const CACHE_NAME = 'snow-report-cache-v83';
+const CACHE_NAME = 'snow-report-cache-v84';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -8,6 +8,7 @@ const urlsToCache = [
   '/manifest.json?v=4',
   '/locales/en/translation.json',
   '/locales/sk/translation.json',
+  '/vendor/exif.js',
   '/node_modules/i18next/dist/esm/i18next.js',
   '/node_modules/i18next-http-backend/esm/index.js',
   '/node_modules/i18next-browser-languagedetector/dist/esm/i18nextBrowserLanguageDetector.js',
