@@ -111,3 +111,32 @@ label {
 button:hover {
   background-color: #005bb5;
 }
+
+/* date picker START */
+
+input[type="date"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: Arial, sans-serif;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  padding: 5px;
+}
+
+/* Improve touch targets on mobile */
+@media (max-width: 768px) {
+  input[type="date"] {
+    padding: 12px;
+  }
+  
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    padding: 8px;
+  }
+}
+
+/* date picker STOP */
+
