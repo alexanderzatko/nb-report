@@ -67,7 +67,7 @@
       "laborTimeHelp": "Pokud chcete získat Chrony za vytvoření tohoto příspěvku, zadejte čas potřebný k jeho vytvoření. Po schválení nahlášeného času dvěma uživateli obdržíte 1 Chron za každých 6 minut vaší práce. Tím vám zároveň vzniká povinnost ověřit časy dvou dalších uživatelů.",
       "rewardRequested": "Požadovaná odměna",
       "rewardRequestedUnits": "Merity",
-      "rewardRequestedHelp": "Pro volný přístup nechte pole prázdné. Uživatelé vás budou moci dobrovolně odměnit Merity.\n... nebo zadejte číslo 0. Uživatelé budou muset zaplatit libovolnou částku větší než 0,\n... nebo zadejte jinou částku, kterou musí návštěvníci zaplatit, aby viděli tento obsah."
+      "rewardRequestedHelp": "Pro volný přístup nechte pole prázdné. Uživatelé vás budou moci dobrovolně odměnit Merity.\n... nebo zadejte číslo 0. Uživatelé budou muset zaplatit libovolnou částku větší než 0,\n... nebo zadejte jinou částku, kterou musí návštěvníci zaplatit, aby viděli tuto zprávu."
     },
     "submit": "Submit Report"
   },
