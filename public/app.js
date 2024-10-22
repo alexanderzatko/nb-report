@@ -270,6 +270,7 @@ function initializePhotoUpload() {
 			removeBtn.className = 'remove-photo';
 			removeBtn.innerHTML = '×';
 			removeBtn.onclick = function(event) {
+				event.preventDefault();
 				event.stopPropagation();
 				const index = photos.indexOf(file);
 				if (index > -1) {
