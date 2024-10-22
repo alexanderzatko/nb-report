@@ -3,8 +3,10 @@ import { i18next, initI18next } from './i18n.js';
 console.log('app.js loaded');
 
 let photos = [];
-
+let formStartTime = null;
+let elapsedTimeInterval = null;
 let countriesData;
+
 async function loadCountriesData() {
   const response = await fetch('/countries-regions.json');
   countriesData = await response.json();
@@ -382,7 +384,13 @@ async function handleLogout() {
     
     // Update UI
     await updateUIBasedOnAuthState(false);
-    
+
+  if (elapsedTimeInterval) {
+    clearInterval(elapsedTimeInterval);
+    elapsedTimeInterval = null;
+  }
+  formStartTime = null;
+
     // Redirect to home page if needed
     if (window.location.pathname !== '/') {
       window.location.href = '/';
@@ -629,6 +637,19 @@ function updateUIWithUserData(userData) {
   if (userData.language) {
     i18next.changeLanguage(userData.language);
   }
+	
+  const rewardsSection = document.getElementById('rewards-section');
+  if (rewardsSection) {
+    if (userData.rovas_uid && !isNaN(userData.rovas_uid)) {
+      rewardsSection.style.display = 'block';
+      if (!formStartTime) {
+        formStartTime = new Date();
+        elapsedTimeInterval = setInterval(updateElapsedTime, 1000);
+      }
+    } else {
+      rewardsSection.style.display = 'none';
+    }
+  }
 }
 
 // Function to handle invalid sessions
@@ -762,6 +783,16 @@ document.getElementById('snow-report-form').addEventListener('submit', async fun
         formData.append(`photo_${index}`, photo);
       });
 
+      const laborTime = document.getElementById('labor-time');
+      const rewardRequested = document.getElementById('reward-requested');
+      
+      if (laborTime) {
+        formData.append('laborTime', laborTime.value);
+      }
+      if (rewardRequested) {
+        formData.append('rewardRequested', rewardRequested.value);
+      }
+
       logFormData(formData);
       alert("Report submitted successfully!");
     } catch (error) {
@@ -822,4 +853,20 @@ function logFormData(formData) {
             console.log(pair[0] + ':', pair[1]);
         }
     }
+}
+
+//the timer function for the Rewards section
+function updateElapsedTime() {
+  if (!formStartTime) return;
+  
+  const now = new Date();
+  const diff = Math.floor((now - formStartTime) / 1000); // difference in seconds
+  
+  const hours = Math.floor(diff / 3600);
+  const minutes = Math.floor((diff % 3600) / 60);
+  const seconds = diff % 60;
+  
+  const timeString = `${String(hours).padStart(2, '0')} hrs. ${String(minutes).padStart(2, '0')} min. ${String(seconds).padStart(2, '0')} sec.`;
+  
+  document.getElementById('elapsed-time').textContent = timeString;
 }
