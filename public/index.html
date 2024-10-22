@@ -31,7 +31,7 @@
       <form id="snow-report-form" style="display:none;">
 
         <label for="report-title" data-i18n="form.reportTitle"></label>
-        <input type="text" id="report-title" required/>
+        <input type="text" id="report-title" required data-i18n-validate="form.validation.required"/>
         
         <label for="country" data-i18n="form.country">Country:</label>
         <select id="country" name="country">
@@ -92,7 +92,7 @@
         <input class="snow-depth" type="number" id="snow-depth1000">
 
         <label for="report-note" data-i18n="form.reportNote">Report</label>
-        <textarea id="report-note"></textarea>
+        <textarea id="report-note" required name="report_note" data-i18n-validate="form.validation.required"></textarea>
 
         <!-- place gpx file upload here -->
         
