@@ -9,11 +9,16 @@
     "logout": "Odhlásit"
   },
   "form": {
+    "reportTitle": "Název:",
     "country": "Krajina:",
     "selectCountry": "Vyberte krajinu",
     "region": "Oblast:",
+    "reportDate": "Datum:"
     "selectRegion": "Vyberte oblast",
-    "snowDepth": "Snow Depth (cm):",
+    "snowDepth250": "Hloubka sněhu v 250 m.n.m. (cm):",
+    "snowDepth500": "Hloubka sněhu v 500 m.n.m. (cm):",
+    "snowDepth750": "Hloubka sněhu v 750 m.n.m. (cm):",
+    "snowDepth1000": "Hloubka sněhu nad 1000 m.n.m. (cm):",
     "snowType": "Typ sněhu:",
     "snowTypes": {
       "0": "Neznámý typ",
@@ -50,6 +55,7 @@
       "2": "Vlhký",
       "3": "Mokrý"
     },
+    "reportNote": "Zpráva",
     "submit": "Submit Report"
   },
   "countries": {
