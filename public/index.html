@@ -95,10 +95,11 @@
 
         <!-- place gpx file upload here -->
         
-        <!-- The photo upload container -->
-        <div id="photo-upload-container" class="form-group">
-          <label data-i18n="form.photos">Photos:</label>
-        </div>
+        <!-- Photos upload -->
+        <button type="button" id="select-photos" class="photo-button">Select Photos</button>
+        <button type="button" id="take-photo" class="photo-button">Take Photo</button>
+        <input type="file" id="photo-file-input" accept="image/*" multiple style="display: none;">
+        <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
         
         <button type="submit" data-i18n="form.submit">Submit Report</button>
         </form>
