@@ -146,6 +146,25 @@ function updateXcDropdowns() {
   }
 }
 
+function initializeDatePicker() {
+  const dateInput = document.getElementById('report-date');
+  if (dateInput) {
+    // Set default value to today's date
+    const today = new Date();
+    const formattedDate = today.toISOString().split('T')[0];
+    dateInput.value = formattedDate;
+    
+    // Set max date to today (prevent future dates)
+    dateInput.max = formattedDate;
+    
+    /* Set min date to 7 days ago (or adjust as needed)
+    const lastWeek = new Date();
+    lastWeek.setDate(lastWeek.getDate() - 7);
+    dateInput.min = lastWeek.toISOString().split('T')[0];
+    */
+  }
+}
+
 async function toggleAuth() {
   console.log('toggleAuth called');
   const isAuthenticated = await checkAuthStatus();
@@ -560,8 +579,21 @@ document.getElementById('snow-report-form').addEventListener('submit', async fun
       const freeStyle = document.getElementById('free-style').value;
       const snowAge = document.getElementById('snow-age').value;
       const wetness = document.getElementById('wetness').value;
+      const reportDate = document.getElementById('report-date').value;
 
-      console.log(`Country: ${country}, Region: ${region}, Snow Depth: ${snowDepth}, Snow Type: ${snowType}, Classic Style: ${classicStyle}, Free Style: ${freeStyle}, Snow Age: ${snowAge}, Wetness: ${wetness}`);
+      const formData = {
+        country: document.getElementById('country').value,
+        region: document.getElementById('region').value,
+        reportDate: reportDate, // Add this line
+        snowDepth: document.getElementById('snow-depth').value,
+        snowType: document.getElementById('snow-type').value,
+        classicStyle: document.getElementById('classic-style').value,
+        freeStyle: document.getElementById('free-style').value,
+        snowAge: document.getElementById('snow-age').value,
+        wetness: document.getElementById('wetness').value
+      };
+
+      console.log('Submitting report with date:', formData);
       alert("Report submitted successfully!");
     } catch (error) {
       console.error('Error submitting snow report:', error);
@@ -586,6 +618,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('i18next initialized');
     await updatePageContent();
     
+    initializeDatePicker();
+
     const urlParams = new URLSearchParams(window.location.search);
     console.log('URL params:', urlParams.toString());
     if (urlParams.has('code')) {
