@@ -168,74 +168,123 @@ function initializeDatePicker() {
 }
 
 function initializePhotoUpload() {
-    const selectPhotosBtn = document.getElementById('select-photos');
-    const takePhotoBtn = document.getElementById('take-photo');
-    const fileInput = document.getElementById('photo-file-input');
-    const cameraInput = document.getElementById('camera-input');
-    const previewContainer = document.getElementById('photo-preview-container');
+  const selectPhotosBtn = document.getElementById('select-photos');
+  const takePhotoBtn = document.getElementById('take-photo');
+  const fileInput = document.getElementById('photo-file-input');
+  const cameraInput = document.getElementById('camera-input');
+  const previewContainer = document.getElementById('photo-preview-container');
 
-    async function resizeImage(file) {
-        return new Promise((resolve) => {
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
-                
-                // Calculate new dimensions
-                if (width > 1900 || height > 1900) {
-                    if (width > height) {
-                        height = Math.round((height * 1900) / width);
-                        width = 1900;
-                    } else {
-                        width = Math.round((width * 1900) / height);
-                        height = 1900;
-                    }
-                }
-                
-                canvas.width = width;
-                canvas.height = height;
-                
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-                
-                canvas.toBlob((blob) => {
-                    resolve(new File([blob], file.name, {
-                        type: 'image/jpeg',
-                        lastModified: Date.now()
-                    }));
-                }, 'image/jpeg', 0.9);
-            };
-            img.src = URL.createObjectURL(file);
-        });
-    }
+  async function resizeImage(file) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        // Get EXIF data
+        EXIF.getData(img, function() {
+				const canvas = document.createElement('canvas');
+				let width = img.width;
+				let height = img.height;
+          
+          // Calculate new dimensions
+          if (width > 1900 || height > 1900) {
+            if (width > height) {
+							height = Math.round((height * 1900) / width);
+							width = 1900;
+						} else {
+							width = Math.round((width * 1900) / height);
+							height = 1900;
+						}
+					}
+					
+					// Set proper canvas dimensions based on EXIF orientation
+					const orientation = EXIF.getTag(this, 'Orientation') || 1;
+					if (orientation > 4) {
+						canvas.width = height;
+						canvas.height = width;
+					} else {
+						canvas.width = width;
+						canvas.height = height;
+					}
+					
+					const ctx = canvas.getContext('2d');
+					
+					// Transform context based on EXIF orientation
+					switch (orientation) {
+						case 2: ctx.transform(-1, 0, 0, 1, width, 0); break;
+						case 3: ctx.transform(-1, 0, 0, -1, width, height); break;
+						case 4: ctx.transform(1, 0, 0, -1, 0, height); break;
+						case 5: ctx.transform(0, 1, 1, 0, 0, 0); break;
+						case 6: ctx.transform(0, 1, -1, 0, height, 0); break;
+						case 7: ctx.transform(0, -1, -1, 0, height, width); break;
+						case 8: ctx.transform(0, -1, 1, 0, 0, width); break;
+					}
+					
+					ctx.drawImage(img, 0, 0, width, height);
+					
+					canvas.toBlob((blob) => {
+						resolve(new File([blob], file.name, {
+							type: 'image/jpeg',
+							lastModified: Date.now()
+						}));
+					}, 'image/jpeg', 0.9);
+				});
+			};
+			img.src = URL.createObjectURL(file);
+		});
+	}
 
-    function addPhotoPreview(file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'photo-preview';
-            
-            const img = document.createElement('img');
-            img.src = e.target.result;
-            
-            const removeBtn = document.createElement('button');
-            removeBtn.className = 'remove-photo';
-            removeBtn.innerHTML = '×';
-            removeBtn.onclick = function() {
-                const index = photos.indexOf(file);
-                if (index > -1) {
-                    photos.splice(index, 1);
-                    wrapper.remove();
-                }
-            };
-            
-            wrapper.appendChild(img);
-            wrapper.appendChild(removeBtn);
-            previewContainer.appendChild(wrapper);
-        };
-        reader.readAsDataURL(file);
-    }
+	function addPhotoPreview(file) {
+		const reader = new FileReader();
+		reader.onload = function(e) {
+			const wrapper = document.createElement('div');
+			wrapper.className = 'photo-preview';
+			
+			const img = document.createElement('img');
+			img.src = e.target.result;
+			img.dataset.rotation = '0'; // Track rotation state
+			
+			const controlsDiv = document.createElement('div');
+			controlsDiv.className = 'photo-controls';
+			
+			const rotateBtn = document.createElement('button');
+			rotateBtn.className = 'rotate-photo';
+			rotateBtn.innerHTML = '↻';
+			rotateBtn.title = 'Rotate 90° clockwise';
+			rotateBtn.onclick = function(event) {
+				event.stopPropagation();
+				const currentRotation = parseInt(img.dataset.rotation) || 0;
+				const newRotation = (currentRotation + 90) % 360;
+				img.style.transform = `rotate(${newRotation}deg)`;
+				img.dataset.rotation = newRotation;
+				
+				// Create new rotated version of the file
+				rotateImage(file, newRotation).then(rotatedFile => {
+					const index = photos.indexOf(file);
+					if (index > -1) {
+						photos[index] = rotatedFile;
+					}
+				});
+			};
+			
+			const removeBtn = document.createElement('button');
+			removeBtn.className = 'remove-photo';
+			removeBtn.innerHTML = '×';
+			removeBtn.onclick = function(event) {
+				event.stopPropagation();
+				const index = photos.indexOf(file);
+				if (index > -1) {
+					photos.splice(index, 1);
+					wrapper.remove();
+				}
+			};
+			
+			controlsDiv.appendChild(rotateBtn);
+			controlsDiv.appendChild(removeBtn);
+			wrapper.appendChild(img);
+			wrapper.appendChild(controlsDiv);
+			previewContainer.appendChild(wrapper);
+		};
+		reader.readAsDataURL(file);
+	}
 
     async function handleFiles(fileList) {
         for (const file of fileList) {
@@ -252,6 +301,34 @@ function initializePhotoUpload() {
     
     fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
     cameraInput.addEventListener('change', (e) => handleFiles(e.target.files));
+}
+
+async function rotateImage(file, degrees) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            
+            // Swap width and height if rotating 90 or 270 degrees
+            const rotation = ((degrees % 360) + 360) % 360;
+            const swap = rotation === 90 || rotation === 270;
+            canvas.width = swap ? img.height : img.width;
+            canvas.height = swap ? img.width : img.height;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate((degrees * Math.PI) / 180);
+            ctx.drawImage(img, -img.width / 2, -img.height / 2);
+            
+            canvas.toBlob((blob) => {
+                resolve(new File([blob], file.name, {
+                    type: 'image/jpeg',
+                    lastModified: Date.now()
+                }));
+            }, 'image/jpeg', 0.9);
+        };
+        img.src = URL.createObjectURL(file);
+    });
 }
 
 async function toggleAuth() {
