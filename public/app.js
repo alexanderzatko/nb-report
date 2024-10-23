@@ -31,7 +31,10 @@ function initializeFormValidation() {
       if (!this.value) {
         // Required field validation
         const requiredMsg = i18next.t(this.dataset.i18nValidate);
-        this.setCustomValidity(requiredMsg);
+
+	this.setCustomValidity(requiredMsg);
+        this.closest('.form-group').classList.add('show-validation');
+
       } else if (this.type === 'number') {
         // Number range validation
         const value = Number(this.value);
@@ -55,6 +58,7 @@ function initializeFormValidation() {
     // Clear custom validation message on input
     input.addEventListener('input', function() {
       this.setCustomValidity('');
+      this.closest('.form-group').classList.remove('show-validation');
     });
   });
 }
