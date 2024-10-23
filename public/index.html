@@ -30,11 +30,11 @@
       </div>
       <form id="snow-report-form" novalidate style="display:none;">
 
-        <div class="form-group">
-          <label for="report-title" data-i18n="form.reportTitle"></label>
-          <input type="text" id="report-title" required data-i18n-validate="form.validation.required"/>
-          <div class="validation-message"></div>
-        </div>
+      <div class="form-group">
+        <label for="report-title" class="required-field" data-i18n="form.reportTitle"></label>
+        <input type="text" id="report-title" required data-i18n-validate="form.validation.required"/>
+        <div class="validation-message"></div>
+      </div>
         
         <label for="country" data-i18n="form.country">Country:</label>
         <select id="country" name="country">
@@ -95,7 +95,7 @@
         <input class="snow-depth" type="number" id="snow-depth1000">
 
         <div class="form-group">
-          <label for="report-note" data-i18n="form.reportNote">Report</label>
+          <label for="report-note" class="required-field" data-i18n="form.reportNote">Report</label>
           <textarea id="report-note" required name="report_note" data-i18n-validate="form.validation.required"></textarea>
           <div class="validation-message"></div>
         </div>
