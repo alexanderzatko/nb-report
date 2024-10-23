@@ -829,8 +829,6 @@ document.getElementById('snow-report-form').addEventListener('submit', async fun
     if (!element.checkValidity()) {
       isValid = false;
       console.log('Dispatching invalid event for:', element.id);
-      // Trigger invalid event to show custom message
-      element.dispatchEvent(new Event('invalid', { bubbles: true }));
     }
   });
 
