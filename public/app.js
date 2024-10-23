@@ -803,8 +803,28 @@ document.getElementById('snow-report-form').addEventListener('submit', async fun
   
   // Check authentication status before submitting
   const isAuthenticated = await checkAuthStatus();
+
+  if (!isAuthenticated) {
+    alert(i18next.t('form.validation.loginRequired'));
+    return;
+  }
+
+  // Manual validation
+  const formElements = this.querySelectorAll('[data-i18n-validate]');
+  let isValid = true;
   
-  if (isAuthenticated) {
+  formElements.forEach(element => {
+    if (!element.checkValidity()) {
+      isValid = false;
+      // Trigger invalid event to show custom message
+      element.dispatchEvent(new Event('invalid', { bubbles: true }));
+    }
+  });
+
+  if (!isValid) {
+    return;
+  }
+
     try {
 	const formData = new FormData();  // Create FormData instance
 	formData.append('country', document.getElementById('country').value);
@@ -840,10 +860,6 @@ document.getElementById('snow-report-form').addEventListener('submit', async fun
       console.error('Error submitting snow report:', error);
       alert(i18next.t('form.validation.submitError'));
     }
-  } else {
-    alert(i18next.t('form.validation.loginRequired'));
-    // Optionally, redirect to the login page or trigger the login process here
-  }
 });
 
 window.addEventListener('languageChanged', updatePageContent);
