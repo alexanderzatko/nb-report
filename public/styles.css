@@ -340,10 +340,21 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 /* Rewards section STOP */
 
 /* Alert messages START */
-  input:invalid {
-    border-color: #dc3545;
-  }
-  
+
+.required-field::after {
+  content: "*";
+  color: #dc3545;
+  margin-left: 4px;
+}
+
+.field-invalid {
+  border-color: #dc3545 !important;
+}
+
+textarea.field-invalid {
+  border-color: #dc3545 !important;
+}
+
   input:invalid:focus {
     border-color: #dc3545;
     box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
