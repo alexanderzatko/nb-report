@@ -20,45 +20,50 @@ async function loadXcData() {
 
 //for the form alert messages
 function initializeFormValidation() {
-  // Override default validation messages
-  const inputs = document.querySelectorAll('input[data-i18n-validate]');
+  console.log('Initializing form validation');
+  const inputs = document.querySelectorAll('[data-i18n-validate]');
+  console.log('Found elements to validate:', inputs.length);
   
   inputs.forEach(input => {
+    console.log('Setting up validation for:', input.id);
+    
     // Set custom validation message
     input.addEventListener('invalid', function(e) {
+      console.log('Invalid event triggered for:', this.id);
       e.preventDefault();
+      
+      const formGroup = this.closest('.form-group');
+      console.log('Found form group:', !!formGroup);
       
       if (!this.value) {
         // Required field validation
         const requiredMsg = i18next.t(this.dataset.i18nValidate);
-
-	this.setCustomValidity(requiredMsg);
-        this.closest('.form-group').classList.add('show-validation');
-
-      } else if (this.type === 'number') {
-        // Number range validation
-        const value = Number(this.value);
-        const min = Number(this.min);
-        const max = Number(this.max);
+        console.log('Setting validation message:', requiredMsg);
         
-        if (value < min) {
-          const minMsg = i18next.t(this.dataset.i18nValidateMin, { min: min });
-          this.setCustomValidity(minMsg);
-        } else if (value > max) {
-          const maxMsg = i18next.t(this.dataset.i18nValidateMax, { max: max });
-          this.setCustomValidity(maxMsg);
-        } else {
-          this.setCustomValidity('');
+        this.setCustomValidity(requiredMsg);
+        
+        // Update the validation message text
+        const validationMessage = formGroup.querySelector('.validation-message');
+        if (validationMessage) {
+          validationMessage.textContent = requiredMsg;
+          console.log('Updated validation message text');
         }
-      } else {
-        this.setCustomValidity('');
+        
+        // Add class to show validation
+        formGroup.classList.add('show-validation');
+        console.log('Added show-validation class');
       }
     });
     
-    // Clear custom validation message on input
+    // Clear custom validation on input
     input.addEventListener('input', function() {
+      console.log('Input event for:', this.id);
       this.setCustomValidity('');
-      this.closest('.form-group').classList.remove('show-validation');
+      const formGroup = this.closest('.form-group');
+      if (formGroup) {
+        formGroup.classList.remove('show-validation');
+        console.log('Removed show-validation class');
+      }
     });
   });
 }
