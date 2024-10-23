@@ -804,9 +804,11 @@ document.getElementById('country').addEventListener('change', updateRegions);
 
 document.getElementById('snow-report-form').addEventListener('submit', async function(event) {
   event.preventDefault();
-  
+  console.log('Form submission started');
+
   // Check authentication status before submitting
   const isAuthenticated = await checkAuthStatus();
+  console.log('Authentication status:', isAuthenticated);
 
   if (!isAuthenticated) {
     alert(i18next.t('form.validation.loginRequired'));
@@ -815,16 +817,19 @@ document.getElementById('snow-report-form').addEventListener('submit', async fun
 
   // Manual validation
   const formElements = this.querySelectorAll('[data-i18n-validate]');
+  console.log('Found form elements to validate:', formElements.length);
   let isValid = true;
   
   formElements.forEach(element => {
     if (!element.checkValidity()) {
       isValid = false;
+      console.log('Dispatching invalid event for:', element.id);
       // Trigger invalid event to show custom message
       element.dispatchEvent(new Event('invalid', { bubbles: true }));
     }
   });
 
+  console.log('Form validation result:', isValid);
   if (!isValid) {
     return;
   }
@@ -875,7 +880,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('logout-button').addEventListener('click', logout);
 
   try {
+    console.log('Initializing form validation');
     initializeFormValidation();
+
+    // For debugging: Check if handlers were attached
+    const validatableElements = document.querySelectorAll('[data-i18n-validate]');
+    console.log('Found validatable elements:', validatableElements.length);
+    validatableElements.forEach(el => {
+      console.log('Element:', el.id, 'Required:', el.required);
+    });
+
     await initI18next();
     console.log('i18next initialized');
     await updatePageContent();
