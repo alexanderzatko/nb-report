@@ -360,6 +360,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   display: block;
 }
 
+.form-group {
+  margin-bottom: 1rem;
+  position: relative;
+}
+
 input:invalid + .validation-message,
 textarea:invalid + .validation-message {
   display: block;
