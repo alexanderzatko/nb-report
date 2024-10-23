@@ -355,7 +355,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     margin-top: 4px;
     display: none;
   }
-  
+
+.form-group.show-validation .validation-message {
+  display: block;
+}
+
 input:invalid + .validation-message,
 textarea:invalid + .validation-message {
   display: block;
