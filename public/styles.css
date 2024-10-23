@@ -356,8 +356,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     display: none;
   }
   
-  input:invalid + .validation-message {
-    display: block;
-  }
+input:invalid + .validation-message,
+textarea:invalid + .validation-message {
+  display: block;
+}
 
 /* Alert messages STOP */
