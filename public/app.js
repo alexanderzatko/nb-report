@@ -22,47 +22,47 @@ async function loadXcData() {
 function initializeFormValidation() {
   console.log('Initializing form validation');
   const inputs = document.querySelectorAll('[data-i18n-validate]');
-  console.log('Found elements to validate:', inputs.length);
   
-  inputs.forEach(input => {
-    console.log('Setting up validation for:', input.id);
-    
+  inputs.forEach(input => {    
     // Set custom validation message
     input.addEventListener('invalid', function(e) {
-      console.log('Invalid event triggered for:', this.id);
       e.preventDefault();
       
       const formGroup = this.closest('.form-group');
-      console.log('Found form group:', !!formGroup);
       
       if (!this.value) {
         // Required field validation
         const requiredMsg = i18next.t(this.dataset.i18nValidate);
-        console.log('Setting validation message:', requiredMsg);
-        
         this.setCustomValidity(requiredMsg);
         
         // Update the validation message text
         const validationMessage = formGroup.querySelector('.validation-message');
         if (validationMessage) {
           validationMessage.textContent = requiredMsg;
-          console.log('Updated validation message text');
         }
         
         // Add class to show validation
         formGroup.classList.add('show-validation');
-        console.log('Added show-validation class');
       }
     });
     
     // Clear custom validation on input
     input.addEventListener('input', function() {
-      console.log('Input event for:', this.id);
       this.setCustomValidity('');
       const formGroup = this.closest('.form-group');
       if (formGroup) {
         formGroup.classList.remove('show-validation');
-        console.log('Removed show-validation class');
+        this.classList.remove('field-invalid');
+      }
+    });
+    // handle blur event to remove invalid state when field becomes valid
+    input.addEventListener('blur', function() {
+      if (this.checkValidity()) {
+        this.classList.remove('field-invalid');
+        const formGroup = this.closest('.form-group');
+        if (formGroup) {
+          formGroup.classList.remove('show-validation');
+        }
       }
     });
   });
@@ -824,16 +824,24 @@ document.getElementById('snow-report-form').addEventListener('submit', async fun
   const formElements = this.querySelectorAll('[data-i18n-validate]');
   console.log('Found form elements to validate:', formElements.length);
   let isValid = true;
+  let firstInvalidElement = null;
   
   formElements.forEach(element => {
     if (!element.checkValidity()) {
       isValid = false;
-      console.log('Dispatching invalid event for:', element.id);
+      element.classList.add('field-invalid');
+      if (!firstInvalidElement) {
+        firstInvalidElement = element;
+      }
+    } else {
+      element.classList.remove('field-invalid');
     }
   });
 
   console.log('Form validation result:', isValid);
-  if (!isValid) {
+  if (!isValid && firstInvalidElement) {
+    // Scroll to the first invalid element
+    firstInvalidElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
 
