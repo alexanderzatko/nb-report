@@ -3,6 +3,17 @@
     "title": "Report — Sněhové podmínky",
     "header": "Report — Sněhové podmínky"
   },
+  {
+    "dashboard": {
+      "title": "Na bežky! reportér",
+      "newReport": "Nová zpráva",
+      "newReportDesc": "Vytvořiť a odeslat novou zprávu z terénu",
+      "recordGps": "Nový GPS záznam",
+      "recordGpsDesc": "Spustit GPS záznam vaší túry (plánovaná funkce)",
+      "preferences": "Nastavení",
+      "preferencesDesc": "Správa nastavení aplikace (plánovaná funkce)"
+    }
+  }
   "auth": {
     "loginText": "Přihlaste se přes váš nabezky.sk účet. <br>Pokud účet ještě nemáte, tak si ho tam <a href='https://nabezky.sk/en/user/register'>vytvořte</a>",
     "login": "Přihlásit",
