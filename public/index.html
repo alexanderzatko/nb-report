@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<head>
+<html>
+  <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Collect snow information from skiers">
@@ -64,83 +65,137 @@
 
       <form id="snow-report-form" novalidate style="display:none;">
 
-      <div class="form-group">
-        <label for="report-title" class="required-field" data-i18n="form.reportTitle"></label>
-        <input type="text" id="report-title" required data-i18n-validate="form.validation.required"/>
-        <div class="validation-message"></div>
-      </div>
-        
-        <label for="country" data-i18n="form.country">Country:</label>
-        <select id="country" name="country">
-          <!-- Options will be populated dynamically -->
-        </select>
+        <!-- Regular User Section -->
+        <div id="regular-user-section" class="form-section">
 
-        <label for="region" data-i18n="form.region">Region:</label>
-        <select id="region" name="region">
-          <!-- Options will be populated dynamically -->
-        </select>
-      
-        <div class="form-group">
-          <label for="report-date" data-i18n="form.reportDate">Report Date:</label>
-          <input 
-            type="date" 
-            id="report-date"
-            name="report-date"
-            required
-            class="form-control"
-            >
+          <div class="form-group">
+            <label for="report-title" class="required-field" data-i18n="form.reportTitle"></label>
+            <input type="text" id="report-title" required data-i18n-validate="form.validation.required"/>
+            <div class="validation-message"></div>
+          </div>
+            
+          <div class="form-group">
+            <label for="country" data-i18n="form.country">Country:</label>
+            <select id="country" name="country">
+              <!-- Options will be populated dynamically -->
+            </select>
+          </div>
+  
+          <div class="form-group">
+            <label for="region" data-i18n="form.region">Region:</label>
+            <select id="region" name="region">
+              <!-- Options will be populated dynamically -->
+            </select>
           </div>
         
-        <label for="classic-style" data-i18n="form.classicStyle">Classic Style:</label>
-        <select id="classic-style" data-i18n="form.trackConditions">
-          <!-- Options populated dynamically -->
-        </select>
+          <div class="form-group">
+            <label for="report-date" data-i18n="form.reportDate">Report Date:</label>
+            <input 
+              type="date" 
+              id="report-date"
+              name="report-date"
+              required
+              class="form-control"
+              >
+          </div>
+            
+          <div class="form-group">
+            <label for="classic-style" data-i18n="form.classicStyle">Classic Style:</label>
+            <select id="classic-style" data-i18n="form.trackConditions">
+              <!-- Options populated dynamically -->
+            </select>
+          </div>
 
-        <label for="free-style" data-i18n="form.freeStyle">Free Style:</label>
-        <select id="free-style" data-i18n="form.trackConditions">
-          <!-- Options populated dynamically -->
-        </select>
+          <div class="form-group">
+            <label for="free-style" data-i18n="form.freeStyle">Free Style:</label>
+            <select id="free-style" data-i18n="form.trackConditions">
+              <!-- Options populated dynamically -->
+            </select>
+          </div>
 
-        <label for="snow-type" data-i18n="form.snowType">Snow Type:</label>
-        <select id="snow-type" data-i18n="form.snowTypes">
-          <!-- Options populated dynamically -->
-        </select>
+            <!-- <h3 data-i18n="form.snowDepthInfo">Informácie o snehu</h3> -->
+        	
+          <div class="form-group">
+            <label for="snow-depth250" data-i18n="form.snowDepth250">Hĺbka snehu v 250 m.n.m. (cm):</label>
+            <input type="number" id="snow-depth250" name="snowDepth250" min="0" />
+          </div>
+          
+          <div class="form-group">
+            <label for="snow-depth500" data-i18n="form.snowDepth500">Hĺbka snehu v 500 m.n.m. (cm):</label>
+            <input type="number" id="snow-depth500" name="snowDepth500" min="0" />
+          </div>
+          
+          <div class="form-group">
+            <label for="snow-depth750" data-i18n="form.snowDepth750">Hĺbka snehu v 750 m.n.m. (cm):</label>
+            <input type="number" id="snow-depth750" name="snowDepth750" min="0" />
+          </div>
+          
+          <div class="form-group">
+            <label for="snow-depth1000" data-i18n="form.snowDepth1000">Hĺbka snehu nad 1000 m.n.m. (cm):</label>
+            <input type="number" id="snow-depth1000" name="snowDepth1000" min="0" />
+          </div>
 
-        <label for="snow-age" data-i18n="form.snowAge">Age:</label>
-        <select id="snow-age" data-i18n="form.snowAgeOptions">
-          <!-- Options populated dynamically -->
-        </select>
+          <label for="snow-age" data-i18n="form.snowAge">Age:</label>
+          <select id="snow-age" data-i18n="form.snowAgeOptions">
+            <!-- Options populated dynamically -->
+          </select>
+  
+          <label for="wetness" data-i18n="form.wetness">Moisture:</label>
+          <select id="wetness" data-i18n="form.wetnessOptions">
+            <!-- Options populated dynamically -->
+          </select>
 
-        <label for="wetness" data-i18n="form.wetness">Moisture:</label>
-        <select id="wetness" data-i18n="form.wetnessOptions">
-          <!-- Options populated dynamically -->
-        </select>
+        </div>
 
-        <label for="snow-depth250" data-i18n="form.snowDepth250">Snow in 250 m (cm):</label>
-        <input class="snow-depth" type="number" id="snow-depth250">
+        <!-- Admin Section -->
+        <div id="admin-section" class="form-section" style="display: none;">
+            <h3 data-i18n="form.adminInfo">Informácie správcu strediska</h3>
+            
+            <div class="form-group">
+                <label for="snow-depth-total" class="required-field" data-i18n="form.snowDepthTotal">Celková výška snehu (cm):</label>
+                <input type="number" id="snow-depth-total" name="snowDepthTotal" min="0" data-i18n-validate="form.validation.required" />
+                <div class="validation-message"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="snow-depth-new" class="required-field" data-i18n="form.snowDepthNew">Nový sneh (cm):</label>
+                <input type="number" id="snow-depth-new" name="snowDepthNew" min="0" data-i18n-validate="form.validation.required" />
+                <div class="validation-message"></div>
+            </div>
+        </div>
 
-        <label for="snow-depth500" data-i18n="form.snowDepth500">Snow in 500 m (cm):</label>
-        <input class="snow-depth" type="number" id="snow-depth500">
+        <!-- Trails Section (for admins) -->
+        <div id="trails-section" class="form-section" style="display: none;">
+            <h3 data-i18n="form.trailsSection">Bežkárske trate</h3>
+            <div id="trails-container">
+                <!-- Trail items will be added here dynamically -->
+            </div>
+        </div>
 
-        <label for="snow-depth750" data-i18n="form.snowDepth750">Snow in 750 m (cm):</label>
-        <input class="snow-depth" type="number" id="snow-depth750">
-
-        <label for="snow-depth1000" data-i18n="form.snowDepth1000">Snow above 1000 m (cm):</label>
-        <input class="snow-depth" type="number" id="snow-depth1000">
+        <div class="form-group">
+        	<label for="snow-type" data-i18n="form.snowType">Typ snehu:</label>
+        	<select id="snow-type" name="snowType" data-i18n-validate="form.validation.required">
+            <!-- Options populated dynamically -->
+        	</select>
+        	<div class="validation-message"></div>
+        </div>
 
         <div class="form-group">
           <label for="report-note" class="required-field" data-i18n="form.reportNote">Report</label>
           <textarea id="report-note" required name="report_note" data-i18n-validate="form.validation.required"></textarea>
           <div class="validation-message"></div>
         </div>
+
         <!-- place gpx file upload here -->
         
         <!-- Photos upload -->
-        <div id="photo-preview-container"></div>
-        <button type="button" id="select-photos" class="photo-button" data-i18n="form.selectPhotos">Select Photos</button>
-        <button type="button" id="take-photo" class="photo-button" data-i18n="form.takePhoto">Take Photo</button>
-        <input type="file" id="photo-file-input" accept="image/*" multiple style="display: none;">
-        <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
+        <div class="form-section">
+          <div id="photo-preview-container"></div>
+          <button type="button" id="select-photos" class="photo-button" data-i18n="form.selectPhotos">Select Photos</button>
+          <button type="button" id="take-photo" class="photo-button" data-i18n="form.takePhoto">Take Photo</button>
+          <input type="file" id="photo-file-input" accept="image/*" multiple style="display: none;">
+          <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
+        </div>
 
         <!-- the rewards section -->
         
