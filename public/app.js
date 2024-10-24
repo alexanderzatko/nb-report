@@ -15,8 +15,18 @@ async function loadCountriesData() {
 
 let xc_Data;
 async function loadXcData() {
-  const response = await fetch('/xc_dropdowns.json');
-  snowTypesData = await response.json();
+  console.log('Loading XC data...');
+  try {
+    const response = await fetch('/xc_dropdowns.json');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    xc_Data = await response.json();
+    console.log('XC data loaded:', xc_Data);
+  } catch (error) {
+    console.error('Error loading XC data:', error);
+    xc_Data = null;
+  }
 }
 
 //for the form alert messages
