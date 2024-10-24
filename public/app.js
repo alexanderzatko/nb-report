@@ -658,7 +658,11 @@ async function refreshUserData() {
 
       initializeForm(userData);
 
-      await loadCountriesData();
+      await Promise.all([
+        loadCountriesData(),
+        loadXcData()
+      ]);
+
       populateCountryDropdown();
       updateRegions();
       updateXcDropdowns();
