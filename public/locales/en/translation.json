@@ -26,6 +26,8 @@
       "submitError": "An error occurred while submitting the report. Please try again.",
       "loginRequired": "Please log in to submit the report."
     },
+    "formTitleRegular": "Create Report",
+    "formTitleAdmin": "Create Report",
     "reportTitle": "Title:",
     "country": "Country:",
     "selectCountry": "Select a country",
