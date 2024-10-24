@@ -30,6 +30,12 @@ form {
   margin: 0 auto;
 }
 
+.form-title {
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
 input#report-title {
     width: calc(100% - 20px);
 }
