@@ -528,7 +528,6 @@ textarea:invalid + .validation-message {
 /* Form Section Styles */
 .form-section {
   margin-bottom: 30px;
-  padding: 20px;
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
