@@ -48,6 +48,10 @@
       "WET": "Wet",
       "VC": "Variable conditions"
     },
+    "trailsSection": "Trails in the ski center",
+    "snowDepthTotal": "Total snow height (cm)",
+    "snowDepthNew": "New snow (cm)",
+    "nextMaintenance": "Next maintenance",
     "classicStyle": "Classic Style:",
     "freeStyle": "Free Style:",
     "trackConditions": {
