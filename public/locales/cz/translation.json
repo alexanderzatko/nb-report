@@ -13,7 +13,7 @@
     "preferencesDesc": "Správa nastavení aplikace (plánovaná funkce)"
   },
   "auth": {
-    "loginText": "Přihlaste se přes váš nabezky.sk účet. <br>Pokud účet ještě nemáte, tak si ho tam <a href='https://nabezky.sk/en/user/register'>vytvořte</a>",
+    "loginText": "Přihlásit se do aplikace",
     "login": "Přihlásit",
     "logout": "Odhlásit"
   },
