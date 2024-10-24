@@ -48,6 +48,10 @@
       "WET": "Mokrý",
       "VC": "Premenlivé podmienky"
     },
+    "trailsSection": "Trate v stredisku",
+    "snowDepthTotal": "Celková výška snehu (cm)",
+    "snowDepthNew": "Nový sneh (cm)",
+    "nextMaintenance": "Najbližšia úprava",
     "classicStyle": "Klasický štýl:",
     "freeStyle": "Voľný štýl:",
     "trackConditions": {
