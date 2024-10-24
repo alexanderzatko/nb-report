@@ -6,6 +6,7 @@ let photos = [];
 let formStartTime = null;
 let elapsedTimeInterval = null;
 let countriesData;
+let trailConditions = {};
 
 async function loadCountriesData() {
   const response = await fetch('/countries-regions.json');
@@ -655,6 +656,8 @@ async function refreshUserData() {
     const userData = await getUserData();
     if (userData) {
 
+      initializeForm(userData);
+
       await loadCountriesData();
       populateCountryDropdown();
       updateRegions();
@@ -765,6 +768,142 @@ async function checkAndRefreshToken() {
   }
 }
 
+// Add or update the initializeForm function
+function initializeForm(userData) {
+  const isAdmin = userData?.ski_center_admin === "1";
+  const regularUserSection = document.getElementById('regular-user-section');
+  const adminSection = document.getElementById('admin-section');
+  const trailsSection = document.getElementById('trails-section');
+
+  // Show/hide sections based on user role
+  regularUserSection.style.display = isAdmin ? 'none' : 'block';
+  adminSection.style.display = isAdmin ? 'block' : 'none';
+  trailsSection.style.display = isAdmin ? 'block' : 'none';
+
+  if (isAdmin && userData.trails) {
+    initializeTrailsSection(userData.trails);
+  }
+}
+
+// Add these new functions for trails handling
+function initializeTrailsSection(trails) {
+  const container = document.getElementById('trails-container');
+  container.innerHTML = ''; // Clear existing content
+  
+  trails.forEach(([trailId, trailName]) => {
+    const trailElement = createTrailElement(trailId, trailName);
+    container.appendChild(trailElement);
+  });
+}
+
+function createTrailElement(trailId, trailName) {
+  const trailDiv = document.createElement('div');
+  trailDiv.className = 'trail-item';
+  trailDiv.dataset.trailId = trailId;
+
+  const nameHeading = document.createElement('h4');
+  nameHeading.className = 'trail-name';
+  nameHeading.textContent = trailName;
+  trailDiv.appendChild(nameHeading);
+
+  // Add Free Style condition group
+  const freeStyleGroup = createConditionGroup(
+    'freeStyle',
+    i18next.t('form.freeStyle'),
+    [
+      { value: '0', symbol: '?', title: 'neznáme' },
+      { value: '1', symbol: '❄❄❄', title: 'výborné' },
+      { value: '2', symbol: '❄❄', title: 'dobré' },
+      { value: '3', symbol: '❄', title: 'obmedzené' },
+      { value: '4', symbol: '✕', title: 'nevhodné' }
+    ]
+  );
+  trailDiv.appendChild(freeStyleGroup);
+
+  // Add Classic Style condition group
+  const classicStyleGroup = createConditionGroup(
+    'classicStyle',
+    i18next.t('form.classicStyle'),
+    [
+      { value: '0', symbol: '?', title: 'neznáme' },
+      { value: '1', symbol: '❄❄❄', title: 'výborné' },
+      { value: '2', symbol: '❄❄', title: 'dobré' },
+      { value: '3', symbol: '❄', title: 'obmedzené' },
+      { value: '4', symbol: '⋮', title: 'zjazdné len niektoré úseky' },
+      { value: '5', symbol: '✕', title: 'nevhodné' }
+    ]
+  );
+  trailDiv.appendChild(classicStyleGroup);
+
+  // Add Next Maintenance condition group
+  const maintenanceGroup = createConditionGroup(
+    'maintenance',
+    i18next.t('form.nextMaintenance'),
+    [
+      { value: '0', symbol: '?', title: 'neurčené' },
+      { value: '1', symbol: '1', title: 'dnes' },
+      { value: '2', symbol: '2', title: 'zajtra' },
+      { value: '3', symbol: '3+', title: 'o 3+ dni' },
+      { value: '4', symbol: 'Ps', title: 'v piatok alebo v sobotu ráno' },
+      { value: '5', symbol: '❄+', title: 'po najbližšom snežení' }
+    ]
+  );
+  trailDiv.appendChild(maintenanceGroup);
+
+  return trailDiv;
+}
+
+function createConditionGroup(type, label, conditions) {
+  const group = document.createElement('div');
+  group.className = 'condition-group';
+
+  const labelElem = document.createElement('p');
+  labelElem.className = 'condition-label';
+  labelElem.textContent = label;
+  group.appendChild(labelElem);
+
+  const buttonsDiv = document.createElement('div');
+  buttonsDiv.className = 'condition-buttons';
+
+  conditions.forEach(condition => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'condition-btn';
+    button.dataset.value = condition.value;
+    button.title = condition.title;
+    button.textContent = condition.symbol;
+    
+    button.addEventListener('click', function() {
+      const trailId = this.closest('.trail-item').dataset.trailId;
+      handleConditionSelection(trailId, type, condition.value, buttonsDiv);
+    });
+
+    buttonsDiv.appendChild(button);
+  });
+
+  group.appendChild(buttonsDiv);
+  return group;
+}
+
+function handleConditionSelection(trailId, type, value, buttonGroup) {
+  // Remove selection from all buttons in the group
+  buttonGroup.querySelectorAll('.condition-btn').forEach(btn => {
+    btn.classList.remove('selected');
+  });
+
+  // Select the clicked button
+  const selectedButton = buttonGroup.querySelector(`[data-value="${value}"]`);
+  if (selectedButton) {
+    selectedButton.classList.add('selected');
+  }
+
+  // Store the selection
+  if (!trailConditions[trailId]) {
+    trailConditions[trailId] = {};
+  }
+  trailConditions[trailId][type] = value;
+}
+
 const REFRESH_INTERVAL = 10 * 60 * 1000; // 10 minutes
 
 setInterval(async () => {
@@ -846,6 +985,23 @@ document.getElementById('snow-report-form').addEventListener('submit', async fun
 
     try {
 	const formData = new FormData();  // Create FormData instance
+	formData.append('snowType', document.getElementById('snow-type').value);
+	formData.append('note', document.getElementById('report-note').value);
+      
+	const userData = await getUserData();
+	const isAdmin = userData?.ski_center_admin === "1";
+
+	if (isAdmin) {
+	  // Add admin-specific fields
+	  formData.append('snowDepthTotal', document.getElementById('snow-depth-total').value);
+	  formData.append('snowDepthNew', document.getElementById('snow-depth-new').value);
+	  formData.append('trailConditions', JSON.stringify(trailConditions));
+	} else {
+	// Add regular user fields
+	formData.append('classicStyle', document.getElementById('classic-style').value);
+	formData.append('freeStyle', document.getElementById('free-style').value);
+	formData.append('snowAge', document.getElementById('snow-age').value);
+	formData.append('wetness', document.getElementById('wetness').value);
 	formData.append('country', document.getElementById('country').value);
 	formData.append('region', document.getElementById('region').value);
 	formData.append('reportDate', document.getElementById('report-date').value);
@@ -853,18 +1009,14 @@ document.getElementById('snow-report-form').addEventListener('submit', async fun
 	formData.append('snowDepth500', document.getElementById('snow-depth500').value);
 	formData.append('snowDepth750', document.getElementById('snow-depth750').value);
 	formData.append('snowDepth1000', document.getElementById('snow-depth1000').value);
-	formData.append('snowType', document.getElementById('snow-type').value);
-	formData.append('classicStyle', document.getElementById('classic-style').value);
-	formData.append('freeStyle', document.getElementById('free-style').value);
-	formData.append('snowAge', document.getElementById('snow-age').value);
-	formData.append('wetness', document.getElementById('wetness').value);
-      
+	}
+
 	photos.forEach((photo, index) => {
 		formData.append(`photo_${index}`, photo);
 	});
 
-      const laborTime = document.getElementById('labor-time');
-      const rewardRequested = document.getElementById('reward-requested');
+	const laborTime = document.getElementById('labor-time');
+	const rewardRequested = document.getElementById('reward-requested');
       
       if (laborTime) {
         formData.append('laborTime', laborTime.value);
@@ -874,6 +1026,13 @@ document.getElementById('snow-report-form').addEventListener('submit', async fun
       }
 
       logFormData(formData);
+
+    // actual form submission code here
+    // const response = await fetch('/api/submit-snow-report', {
+    //   method: 'POST',
+    //   body: formData
+    // });
+
       alert(i18next.t('form.validation.submitSuccess'));
     } catch (error) {
       console.error('Error submitting snow report:', error);
