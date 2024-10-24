@@ -26,10 +26,13 @@
           </button>
           <p id="login-text"></p>
         </div>
-        <button id="logout-button" class="auth-button logout" data-i18n="auth.logout">Logout</button>
       </div>
 
       <div id="dashboard-container" style="display: none;">
+          <div class="dashboard-header">
+              <h2 data-i18n="app.header">Report — Snow Conditions</h2>
+              <button id="logout-button" class="auth-button logout" data-i18n="auth.logout">Logout</button>
+          </div>
           <div class="dashboard-grid">
               <a href="#" class="dashboard-card" id="snow-report-link">
                   <div class="card-icon">
@@ -174,7 +177,10 @@
           </div>
         </div>
         
-        <button type="submit" data-i18n="form.submit">Submit Report</button>
+        <div class="form-buttons">
+            <button type="button" id="cancel-button" class="cancel-button">Cancel</button>
+            <button type="submit" data-i18n="form.submit">Submit Report</button>
+        </div>
       </form>
     </main>
 
