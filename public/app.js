@@ -460,12 +460,10 @@ function updateUIBasedOnAuthState(isAuthenticated) {
 
   if (isAuthenticated) {
     loginContainer.style.display = 'none';
-    logoutButton.style.display = 'inline-block';
-    snowReportForm.style.display = 'none';
     dashboardContainer.style.display = 'block';
+    snowReportForm.style.display = 'none';
   } else {
     loginContainer.style.display = 'flex';
-    logoutButton.style.display = 'none';
     dashboardContainer.style.display = 'none';
     snowReportForm.style.display = 'none';
     
@@ -890,6 +888,31 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('login-button').addEventListener('click', initiateOAuth);
   document.getElementById('logout-button').addEventListener('click', logout);
+
+  document.getElementById('cancel-button').addEventListener('click', function() {
+    // Reset form
+    document.getElementById('snow-report-form').reset();
+    
+    // Reset any file inputs and photo previews
+    const photoPreviewContainer = document.getElementById('photo-preview-container');
+    if (photoPreviewContainer) {
+        photoPreviewContainer.innerHTML = '';
+    }
+    photos = []; // Clear the photos array
+    
+    // Reset elapsed time if it's being tracked
+    if (formStartTime) {
+        formStartTime = null;
+        if (elapsedTimeInterval) {
+            clearInterval(elapsedTimeInterval);
+            elapsedTimeInterval = null;
+        }
+    }
+    
+    // Show dashboard, hide form
+    document.getElementById('dashboard-container').style.display = 'block';
+    document.getElementById('snow-report-form').style.display = 'none';
+  });
 
   try {
     console.log('Initializing form validation');
