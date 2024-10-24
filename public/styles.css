@@ -139,6 +139,7 @@ button[type=submit] {
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  font-size: 16px;
 }
 
 /* date picker START */
@@ -407,6 +408,7 @@ textarea:invalid + .validation-message {
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    font-size: 16px;
 }
 
 .cancel-button:hover {
