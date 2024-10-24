@@ -401,6 +401,7 @@ textarea:invalid + .validation-message {
 }
 
 .cancel-button {
+    margin-top: 50px;
     padding: 10px 20px;
     background-color: #6c757d;
     color: white;
