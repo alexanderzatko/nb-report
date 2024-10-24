@@ -455,18 +455,19 @@ function updateUIBasedOnAuthState(isAuthenticated) {
   const loginContainer = document.getElementById('login-container');
   const loginText = document.getElementById('login-text');
   const logoutButton = document.getElementById('logout-button');
+  const dashboardContainer = document.getElementById('dashboard-container');
   const snowReportForm = document.getElementById('snow-report-form');
 
   if (isAuthenticated) {
     loginContainer.style.display = 'none';
     logoutButton.style.display = 'inline-block';
-    snowReportForm.style.display = 'block';
-    console.log('User is authenticated, showing logout button and form');
+    snowReportForm.style.display = 'none';
+    dashboardContainer.style.display = 'block';
   } else {
     loginContainer.style.display = 'flex';
     logoutButton.style.display = 'none';
+    dashboardContainer.style.display = 'none';
     snowReportForm.style.display = 'none';
-    console.log('User is not authenticated, showing login button and hiding form');
     
     // Set the login text with HTML content
     loginText.innerHTML = i18next.t('auth.loginText', { interpolation: { escapeValue: false } });
@@ -924,6 +925,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (error) {
     console.error('Error during initialization:', error);
   }
+    const snowReportLink = document.getElementById('snow-report-link');
+    snowReportLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        document.getElementById('dashboard-container').style.display = 'none';
+        document.getElementById('snow-report-form').style.display = 'block';
+    });
 });
 
 //helper function for enhanced logging
