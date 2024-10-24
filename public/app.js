@@ -785,18 +785,34 @@ async function checkAndRefreshToken() {
 // Add or update the initializeForm function
 function initializeForm(userData) {
   const isAdmin = userData?.ski_center_admin === "1";
+  const hasTrails = userData?.trails && Array.isArray(userData.trails) && userData.trails.length > 0;
+  
   const regularUserSection = document.getElementById('regular-user-section');
   const adminSection = document.getElementById('admin-section');
   const trailsSection = document.getElementById('trails-section');
 
-  // Show/hide sections based on user role
+  // Update visibility of main sections
   regularUserSection.style.display = isAdmin ? 'none' : 'block';
   adminSection.style.display = isAdmin ? 'block' : 'none';
-  trailsSection.style.display = isAdmin ? 'block' : 'none';
-
-  if (isAdmin && userData.trails) {
+  
+  // Only show trails section if user is admin AND has trails
+  trailsSection.style.display = 'none'; // Hide by default
+  if (isAdmin && hasTrails) {
+    trailsSection.style.display = 'block';
     initializeTrailsSection(userData.trails);
+  } else {
+    // Clear trails container if it exists
+    const trailsContainer = document.getElementById('trails-container');
+    if (trailsContainer) {
+      trailsContainer.innerHTML = '';
+    }
   }
+  console.log('Form initialization:', {
+    isAdmin,
+    hasTrails,
+    trails: userData?.trails,
+    trailsSectionDisplay: trailsSection?.style.display
+  });
 }
 
 // Add these new functions for trails handling
