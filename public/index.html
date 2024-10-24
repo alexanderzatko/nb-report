@@ -168,6 +168,15 @@
         	<div class="validation-message"></div>
         </div>
 
+        <!-- Photos upload -->
+        <div class="form-section">
+          <div id="photo-preview-container"></div>
+          <button type="button" id="select-photos" class="photo-button" data-i18n="form.selectPhotos">Select Photos</button>
+          <button type="button" id="take-photo" class="photo-button" data-i18n="form.takePhoto">Take Photo</button>
+          <input type="file" id="photo-file-input" accept="image/*" multiple style="display: none;">
+          <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
+        </div>
+
         <div class="form-group">
           <label for="report-note" class="required-field" data-i18n="form.reportNote">Report</label>
           <textarea id="report-note" required name="report_note" data-i18n-validate="form.validation.required"></textarea>
@@ -184,17 +193,7 @@
         
         <!-- place gpx file upload here -->
         
-        <!-- Photos upload -->
-        <div class="form-section">
-          <div id="photo-preview-container"></div>
-          <button type="button" id="select-photos" class="photo-button" data-i18n="form.selectPhotos">Select Photos</button>
-          <button type="button" id="take-photo" class="photo-button" data-i18n="form.takePhoto">Take Photo</button>
-          <input type="file" id="photo-file-input" accept="image/*" multiple style="display: none;">
-          <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
-        </div>
-
-        <!-- the rewards section -->
-        
+        <!-- the rewards section -->        
         <div id="rewards-section" class="rewards-section" style="display: none;">
           <h3 data-i18n="form.rewards.sectionTitle">Rewards</h3>
           <div class="time-elapsed">
