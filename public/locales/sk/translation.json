@@ -12,7 +12,6 @@
       "recordGpsDesc": "Spustiť GPS záznam vašej túry (Už čoskoro)",
       "preferences": "Nastavenia",
       "preferencesDesc": "Správa nastavení aplikácie (Už čoskoro)"
-    }
   },
   "auth": {
     "loginText": "Prihlásiť sa cez váš nabezky.sk účet. <br>Ak účet ešte nemáte, tak si ho tam <a href='https://nabezky.sk/en/user/register'>vytvorte</a>",
