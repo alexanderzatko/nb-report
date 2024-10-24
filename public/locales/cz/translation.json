@@ -26,6 +26,8 @@
       "submitError": "Při odesílání zprávy došlo k chybě. Zkuste to prosím znovu.",
       "loginRequired": "Pro odeslání zprávy se prosím přihlaste."
     },
+    "formTitleRegular": "Vytvořiť zprávu",
+    "formTitleAdmin": "Vytvořiť zprávu",
     "reportTitle": "Název:",
     "country": "Krajina:",
     "selectCountry": "Vyberte krajinu",
