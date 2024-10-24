@@ -28,6 +28,37 @@
         </div>
         <button id="logout-button" class="auth-button logout" data-i18n="auth.logout">Logout</button>
       </div>
+
+      <div id="dashboard-container" style="display: none;">
+          <div class="dashboard-grid">
+              <a href="#" class="dashboard-card" id="snow-report-link">
+                  <div class="card-icon">
+                    <i class="glyphicon glyphicon-list-alt"></i>
+                      <!-- <img src="/icon/report-icon.svg" alt="New Report"> -->
+                  </div>
+                  <h3 data-i18n="dashboard.newReport">New Report</h3>
+                  <p data-i18n="dashboard.newReportDesc">Submit a new snow condition report</p>
+              </a>
+              
+              <div class="dashboard-card disabled">
+                  <div class="card-icon">
+                    <i class="glyphicon glyphicon-map-marker"></i>
+                      <!-- <img src="/icon/reports-icon.svg" alt="My Reports"> -->
+                  </div>
+                  <h3 data-i18n="dashboard.recordGps">Record GPS</h3>
+                  <p data-i18n="dashboard.recordGpsDesc">Start GPS recording (Coming soon)</p>
+              </div>
+              
+              <div class="dashboard-card disabled">
+                  <div class="card-icon">
+                      <!-- <img src="/icon/profile-icon.svg" alt="Preferences"> -->
+                  </div>
+                  <h3 data-i18n="dashboard.preferences">Preferences</h3>
+                  <p data-i18n="dashboard.preferencesDesc">Manage your preferences (Coming soon)</p>
+              </div>
+          </div>
+      </div>
+
       <form id="snow-report-form" novalidate style="display:none;">
 
       <div class="form-group">
