@@ -86,7 +86,7 @@
       "rewardRequestedUnits": "Merity",
       "rewardRequestedHelp": "Pro volný přístup nechte pole prázdné. Uživatelé vás budou moci dobrovolně odměnit Merity.\n... nebo zadejte číslo 0. Uživatelé budou muset zaplatit libovolnou částku větší než 0,\n... nebo zadejte jinou částku, kterou musí návštěvníci zaplatit, aby viděli tuto zprávu."
     },
-    "cancel": "Cancel",
+    "cancel": "Zrušit",
     "submit": "Submit Report"
   },
   "countries": {
