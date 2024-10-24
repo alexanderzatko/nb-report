@@ -26,6 +26,8 @@
       "submitError": "Pri odosielaní správy došlo k chybe. Skúste to znova neskôr.",
       "loginRequired": "Pred odoslaním správy musíte byť prihlásení."
     },
+    "formTitleRegular": "Vytvoriť správu",
+    "formTitleAdmin": "Vytvoriť správu",
     "reportTitle": "Názov:",
     "country": "Krajina:",
     "selectCountry": "Vyberte krajinu",
