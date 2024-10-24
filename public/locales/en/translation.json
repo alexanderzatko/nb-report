@@ -4,15 +4,14 @@
     "header": "Report Snow Conditions"
   },
   {
-    "dashboard": {
-      "title": "Dashboard",
-      "newReport": "New Report",
-      "newReportDesc": "Submit a new report",
-      "recordGps": "New GPS Record",
-      "recordGpsDesc": "Make a GPS recording of your trip (Coming soon)",
-      "preferences": "Preferences",
-      "preferencesDesc": "Manage your preferences (Coming soon)"
-    }
+  "dashboard": {
+    "title": "Dashboard",
+    "newReport": "New Report",
+    "newReportDesc": "Submit a new report",
+    "recordGps": "New GPS Record",
+    "recordGpsDesc": "Make a GPS recording of your trip (Coming soon)",
+    "preferences": "Preferences",
+    "preferencesDesc": "Manage your preferences (Coming soon)"
   },
   "auth": {
     "loginText": "Log in through your nabezky.sk account. <br>If you don't have an account yet, <a href='https://nabezky.sk/en/user/register'>create one there</a>",
