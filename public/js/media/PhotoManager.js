@@ -46,41 +46,56 @@ class PhotoManager {
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
-        EXIF.getData(img, function() {
-          const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
-          
-          if (width > 1900 || height > 1900) {
-            if (width > height) {
-              height = Math.round((height * 1900) / width);
-              width = 1900;
-            } else {
-              width = Math.round((width * 1900) / height);
-              height = 1900;
-            }
-          }
-          
-          const orientation = EXIF.getTag(this, 'Orientation') || 1;
-          if (orientation > 4) {
-            canvas.width = height;
-            canvas.height = width;
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > 1900 || height > 1900) {
+          if (width > height) {
+            height = Math.round((height * 1900) / width);
+            width = 1900;
           } else {
-            canvas.width = width;
-            canvas.height = height;
+            width = Math.round((width * 1900) / height);
+            height = 1900;
           }
-          
-          const ctx = canvas.getContext('2d');
-          this.applyOrientation(ctx, orientation, width, height);
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+
+        // Handle EXIF orientation if available
+        try {
+          EXIF.getData(img, () => {
+            const orientation = EXIF.getTag(img, 'Orientation') || 1;
+            if (orientation > 4) {
+              canvas.width = height;
+              canvas.height = width;
+            }
+            
+            ctx.save();
+            this.applyOrientation(ctx, orientation, width, height);
+            ctx.drawImage(img, 0, 0, width, height);
+            ctx.restore();
+            
+            canvas.toBlob((blob) => {
+              resolve(new File([blob], file.name, {
+                type: 'image/jpeg',
+                lastModified: Date.now()
+              }));
+            }, 'image/jpeg', 0.9);
+          });
+        } catch (error) {
+          // Fallback if EXIF handling fails
+          console.warn('EXIF handling failed, using basic resize:', error);
           ctx.drawImage(img, 0, 0, width, height);
-          
           canvas.toBlob((blob) => {
             resolve(new File([blob], file.name, {
               type: 'image/jpeg',
               lastModified: Date.now()
             }));
           }, 'image/jpeg', 0.9);
-        });
+        }
       };
       img.src = URL.createObjectURL(file);
     });
