@@ -175,25 +175,27 @@ class App {
 
   async checkForURLParameters() {
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('code')) {
-      const success = await this.managers.auth.handleOAuthCallback(
-        urlParams.get('code'),
-        urlParams.get('state')
-      );
-      // Clean URL parameters
-      window.history.replaceState({}, document.title, '/');
-      
-      // prevent double initialization
-      if (success) {
-        // Update UI directly here
-        await this.managers.ui.updateUIBasedOnAuthState(true);
-        await this.refreshUserData();
-        return true;
+    if (urlParams.has('code') && !this.processingAuth) {
+      this.processingAuth = true;
+      try {
+        const success = await this.managers.auth.handleOAuthCallback(
+          urlParams.get('code'),
+          urlParams.get('state')
+        );
+        // Clean URL parameters
+        window.history.replaceState({}, document.title, '/');
+        
+        if (success) {
+          await this.managers.ui.updateUIBasedOnAuthState(true);
+          await this.refreshUserData();
+          return true;
+        }
+      } finally {
+        this.processingAuth = false;
       }
     }
     return false;
   }
-
   handleInitializationError(error) {
     this.logger.error('Initialization error:', error);
     if (this.managers?.ui) {
