@@ -1,5 +1,7 @@
 // utils/ErrorBoundary.js
 
+import Logger from '../utils/Logger.js';
+
 class ErrorBoundary {
   constructor() {
     this.logger = Logger.getInstance();
