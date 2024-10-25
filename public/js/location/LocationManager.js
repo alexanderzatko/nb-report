@@ -1,10 +1,24 @@
 // location/LocationManager.js
 
 class LocationManager {
+  static instance = null;
+
   constructor(i18next) {
+    if (LocationManager.instance) {
+      return LocationManager.instance;
+    }
     this.i18next = i18next;
     this.countriesData = null;
     this.setupEventListeners();
+    
+    LocationManager.instance = this;
+  }
+
+  static getInstance() {
+    if (!LocationManager.instance) {
+      LocationManager.instance = new LocationManager();
+    }
+    return LocationManager.instance;
   }
 
   setupEventListeners() {
