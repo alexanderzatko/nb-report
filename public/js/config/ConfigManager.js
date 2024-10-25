@@ -1,5 +1,7 @@
 // config/ConfigManager.js
 
+import Logger from '../utils/Logger.js';
+
 class ConfigManager {
   static instance = null;
 
@@ -13,9 +15,9 @@ class ConfigManager {
       app: {
         name: 'Snow Report',
         version: '1.0.0',
-        environment: process.env.NODE_ENV || 'development',
+        environment: this.detectEnvironment(),
         baseUrl: window.location.origin,
-        debugMode: process.env.NODE_ENV === 'development'
+        debugMode: this.isDebugMode()
       },
 
       api: {
@@ -142,6 +144,22 @@ class ConfigManager {
     };
 
     ConfigManager.instance = this;
+  }
+
+ // helper methods for environment detection
+  detectEnvironment() {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'development';
+    }
+    if (hostname.includes('staging') || hostname.includes('test')) {
+      return 'staging';
+    }
+    return 'production';
+  }
+
+  isDebugMode() {
+    return this.detectEnvironment() === 'development';
   }
 
   static getInstance() {
