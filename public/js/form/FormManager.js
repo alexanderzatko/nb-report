@@ -1,7 +1,12 @@
 // form/FormManager.js
 
 class FormManager {
+  static instance = null;
+
   constructor(i18next) {
+    if (FormManager.instance) {
+      return FormManager.instance;
+    }
     this.i18next = i18next;
     this.trailConditions = {};
     this.formStartTime = null;
@@ -9,6 +14,15 @@ class FormManager {
     
     this.initialize();
     this.setupEventListeners();
+    
+    FormManager.instance = this;
+  }
+
+  static getInstance() {
+    if (!FormManager.instance) {
+      FormManager.instance = new FormManager();
+    }
+    return FormManager.instance;
   }
 
   initialize() {
