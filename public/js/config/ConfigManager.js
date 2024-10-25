@@ -46,12 +46,6 @@ class ConfigManager {
       },
 
       auth: {
-        oauth: {
-          clientId: process.env.OAUTH_CLIENT_ID,
-          provider: 'https://nabezky.sk',
-          redirectUri: 'https://report.nabezky.sk/api/nblogin/',
-          scope: 'email'
-        },
         sessionCookie: 'nb_report_cookie',
         tokenRefreshInterval: 10 * 60 * 1000 // 10 minutes
       },
