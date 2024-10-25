@@ -9,6 +9,7 @@ class AuthManager {
     }
 
     this.initPromise = null;
+    this.exchangingToken = false;
     AuthManager.instance = this;
   }
 
@@ -34,35 +35,46 @@ class AuthManager {
   }
 
   async handleOAuthCallback(code, state) {
+    if (this.exchangingToken) {
+      console.log('Token exchange already in progress');
+      return false;
+    }
+
+    this.exchangingToken = true;  // Set flag
     console.log('handleOAuthCallback called');
     console.log('Code:', code, 'State:', state);
 
-    if (state) {
-      const storedState = localStorage.getItem('oauthState');
-      console.log('Stored state:', storedState);
-      if (state !== storedState) {
-        console.error('State mismatch. Possible CSRF attack.');
-        return false;
-      }
-      console.log('State validation successful');
-    }
-
-    if (code) {
-      console.log('Exchanging token');
-      try {
-        const success = await this.exchangeToken(code);
-        if (success) {
-          console.log('Token exchanged successfully');
-          return true;
+    try {
+      if (state) {
+        const storedState = localStorage.getItem('oauthState');
+        console.log('Stored state:', storedState);
+        if (state !== storedState) {
+          console.error('State mismatch. Possible CSRF attack.');
+          return false;
         }
-      } catch (error) {
-        console.error('Error exchanging token:', error);
+        console.log('State validation successful');
       }
-    }
 
-    localStorage.removeItem('oauthState');
-    console.log('Cleared stored OAuth state');
-    return false;
+      if (code) {
+        console.log('Exchanging token');
+        try {
+          const success = await this.exchangeToken(code);
+          if (success) {
+            console.log('Token exchanged successfully');
+            await this.checkAuthStatus();
+            return true;
+          }
+        } catch (error) {
+          console.error('Error exchanging token:', error);
+        }
+      }
+
+      return false;
+    } finally {
+      this.exchangingToken = false;  // Reset flag
+      localStorage.removeItem('oauthState');
+      console.log('Cleared stored OAuth state');
+    }
   }
 
   async initiateOAuth() {
