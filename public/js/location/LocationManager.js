@@ -1,5 +1,7 @@
 // location/LocationManager.js
 
+import i18next from '/node_modules/i18next/dist/esm/i18next.js';
+
 class LocationManager {
   static instance = null;
 
