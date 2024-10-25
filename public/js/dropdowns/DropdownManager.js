@@ -1,5 +1,7 @@
 // dropdowns/DropdownManager.js
 
+import i18next from '/node_modules/i18next/dist/esm/i18next.js';
+
 class DropdownManager {
   static instance = null;
 
