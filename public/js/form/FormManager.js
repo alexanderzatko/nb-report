@@ -217,6 +217,7 @@ class FormManager {
     try {
       const formData = this.collectFormData();
       await this.submitFormData(formData);
+      this.stopTrackingFormTime();
       alert(this.i18next.t('form.validation.submitSuccess'));
       this.resetForm();
     } catch (error) {
@@ -280,30 +281,40 @@ class FormManager {
   }
 
   handleCancel() {
+    this.stopTrackingFormTime();
     this.resetForm();
     document.getElementById('dashboard-container').style.display = 'block';
     document.getElementById('snow-report-form').style.display = 'none';
   }
 
   resetForm() {
-    const form = document.getElementById('snow-report-form');
-    if (form) {
-      form.reset();
-      this.trailConditions = {};
-      
-      // Reset photo previews
-      const photoPreviewContainer = document.getElementById('photo-preview-container');
-      if (photoPreviewContainer) {
-        photoPreviewContainer.innerHTML = '';
+      const form = document.getElementById('snow-report-form');
+      if (form) {
+          form.reset();
+          this.trailConditions = {};
+          
+          // Reset photo previews
+          const photoPreviewContainer = document.getElementById('photo-preview-container');
+          if (photoPreviewContainer) {
+              photoPreviewContainer.innerHTML = '';
+          }
+          
+          // Reset elapsed time and stop tracking
+          this.stopTrackingFormTime();
+          this.formStartTime = null;  // Add this to ensure clean reset
+          
+          // Reset time display
+          const hoursElement = document.getElementById('elapsed-hours');
+          const minutesElement = document.getElementById('elapsed-minutes');
+          const secondsElement = document.getElementById('elapsed-seconds');
+          if (hoursElement) hoursElement.textContent = '00';
+          if (minutesElement) minutesElement.textContent = '00';
+          if (secondsElement) secondsElement.textContent = '00';
+          
+          // Reset trail conditions UI
+          const selectedButtons = document.querySelectorAll('.condition-btn.selected');
+          selectedButtons.forEach(button => button.classList.remove('selected'));
       }
-      
-      // Reset elapsed time
-      this.stopTrackingFormTime();
-      
-      // Reset trail conditions UI
-      const selectedButtons = document.querySelectorAll('.condition-btn.selected');
-      selectedButtons.forEach(button => button.classList.remove('selected'));
-    }
   }
 
   handleConditionSelection(trailId, type, value, buttonGroup) {
