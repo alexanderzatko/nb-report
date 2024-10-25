@@ -147,6 +147,7 @@ class UIManager {
         interpolation: { escapeValue: false }
       });
     }
+  }
   
   showSnowReportForm() {
     document.getElementById('dashboard-container').style.display = 'none';
