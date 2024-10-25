@@ -1,6 +1,8 @@
 // validation/ValidationManager.js
 
+import i18next from '/node_modules/i18next/dist/esm/i18next.js';
 import Logger from '../utils/Logger.js';
+import ConfigManager from '../config/ConfigManager.js';
 
 class ValidationManager {
   static instance = null;
@@ -11,7 +13,6 @@ class ValidationManager {
     }
 
     this.logger = Logger.getInstance();
-    this.i18next = i18next;
     this.configManager = ConfigManager.getInstance();
     this.validationRules = this.configManager.getValidationRules();
     
