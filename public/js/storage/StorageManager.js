@@ -1,5 +1,7 @@
 // storage/StorageManager.js
 
+import Logger from '../utils/Logger.js';
+
 class StorageManager {
   static instance = null;
 
