@@ -24,7 +24,6 @@ class UIManager {
 
   setupEventListeners() {
     const snowReportLink = document.getElementById('snow-report-link');
-    const snowReportLink = document.getElementById('snow-report-link');
     if (snowReportLink) {
       snowReportLink.addEventListener('click', (e) => {
         e.preventDefault();
