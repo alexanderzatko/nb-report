@@ -34,10 +34,13 @@ class UIManager {
 
     // Add login container click handler
     const loginContainer = document.getElementById('login-container');
+    console.log('Login container found:', !!loginContainer);
     if (loginContainer) {
       loginContainer.addEventListener('click', async () => {
+        console.log('Login container clicked');
         try {
           const authManager = AuthManager.getInstance();
+          console.log('Initiating OAuth...');
           await authManager.initiateOAuth();
         } catch (error) {
           console.error('Failed to initiate login:', error);
