@@ -14,7 +14,7 @@ class DropdownManager {
   async loadXcData() {
     console.log('Loading XC data...');
     try {
-      const response = await fetch('/xc_dropdowns.json');
+      const response = await fetch('/data/xc_dropdowns.json');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
