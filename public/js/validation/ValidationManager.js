@@ -1,5 +1,7 @@
 // validation/ValidationManager.js
 
+import Logger from '../utils/Logger.js';
+
 class ValidationManager {
   static instance = null;
 
