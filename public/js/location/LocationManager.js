@@ -31,8 +31,48 @@ class LocationManager {
   }
 
   async initialize() {
-    await this.loadCountriesData();
-    this.populateCountryDropdown();
+    try {
+      await this.loadCountriesData();
+      await this.populateCountryDropdown();
+      return true;
+    } catch (error) {
+      console.error('Error initializing LocationManager:', error);
+      return false;
+    }
+  }
+
+  async populateCountryDropdown() {
+    if (!this.countriesData) {
+      console.log('Waiting for countries data to load...');
+      await this.loadCountriesData();
+    }
+
+    console.log('populateCountryDropdown called');
+    if (!this.countriesData || !this.countriesData.countries) {
+      console.warn('Countries data still not available');
+      return;
+    }
+
+    const countrySelect = document.getElementById('country');
+    if (!countrySelect) return;
+
+    countrySelect.innerHTML = `<option value="">${this.i18next.t('form.selectCountry')}</option>`;
+    
+    const inferredCountry = this.inferCountryFromLanguage();
+    console.log('Inferred country:', inferredCountry);
+    
+    this.countriesData.countries.forEach(country => {
+      const option = document.createElement('option');
+      option.value = country.code;
+      option.textContent = this.i18next.t(country.nameKey);
+      if (country.code === inferredCountry) {
+        option.selected = true;
+      }
+      countrySelect.appendChild(option);
+    });
+
+    console.log('Country dropdown populated. Selected value:', countrySelect.value);
+    this.updateRegions();
   }
 
   async loadCountriesData() {
