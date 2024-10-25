@@ -199,7 +199,16 @@ class StorageManager {
   getLocalStorage(key, defaultValue = null) {
     try {
       const item = localStorage.getItem(key);
-      return item ? JSON.parse(item) : defaultValue;
+      if (item === null) {
+        return defaultValue;
+      }
+      // Try to parse as JSON, if it fails return the raw value
+      try {
+        return JSON.parse(item);
+      } catch (e) {
+        // If it's not valid JSON, return the raw string
+        return item;
+      }
     } catch (error) {
       this.logger.error('Error getting localStorage:', error);
       return defaultValue;
