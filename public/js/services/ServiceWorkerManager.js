@@ -1,11 +1,26 @@
 // services/ServiceWorkerManager.js
 
 class ServiceWorkerManager {
+  static instance = null;
+
   constructor() {
+    if (ServiceWorkerManager.instance) {
+      return ServiceWorkerManager.instance;
+    }
+    
     this.registration = null;
     this.updateFound = false;
+    
+    ServiceWorkerManager.instance = this;
   }
 
+  static getInstance() {
+    if (!ServiceWorkerManager.instance) {
+      ServiceWorkerManager.instance = new ServiceWorkerManager();
+    }
+    return ServiceWorkerManager.instance;
+  }
+  
   async initialize() {
     if (!('serviceWorker' in navigator)) {
       console.log('Service Worker is not supported in this browser');
