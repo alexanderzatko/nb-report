@@ -14,7 +14,7 @@ class FormManager {
     this.formStartTime = null;
     this.elapsedTimeInterval = null;
     this.dropdownManager = new DropdownManager(i18next);
-    this.photoManager = PhotoManager.getInstance();
+    this.photoManager = new PhotoManager();
 
     this.initialize();
     this.setupEventListeners();
@@ -177,6 +177,12 @@ class FormManager {
       }
   }
 
+    const cancelButton = document.getElementById('cancel-button');
+    if (cancelButton) {
+      cancelButton.addEventListener('click', () => this.handleCancel());
+    }
+  }
+
   startTrackingFormTime() {
     if (!this.formStartTime) {
       this.formStartTime = new Date();
@@ -275,12 +281,6 @@ class FormManager {
       formData.append('snowDepth1000', document.getElementById('snow-depth1000').value);
     }
 
-    // Add photos to form data
-    const photos = this.photoManager.getPhotos();
-    photos.forEach((photo, index) => {
-        formData.append(`photo${index}`, photo);
-    });
-
     // Rewards section fields
     const laborTime = document.getElementById('labor-time');
     const rewardRequested = document.getElementById('reward-requested');
@@ -321,11 +321,23 @@ class FormManager {
           form.reset();
           this.trailConditions = {};
           
-          // Reset photos using PhotoManager
-          this.photoManager.clearPhotos();
+          // Reset photo previews
+          const photoPreviewContainer = document.getElementById('photo-preview-container');
+          if (photoPreviewContainer) {
+              photoPreviewContainer.innerHTML = '';
+          }
           
-          // Reset elapsed time
+          // Reset elapsed time and stop tracking
           this.stopTrackingFormTime();
+          this.formStartTime = null;  // Add this to ensure clean reset
+          
+          // Reset time display
+          const hoursElement = document.getElementById('elapsed-hours');
+          const minutesElement = document.getElementById('elapsed-minutes');
+          const secondsElement = document.getElementById('elapsed-seconds');
+          if (hoursElement) hoursElement.textContent = '00';
+          if (minutesElement) minutesElement.textContent = '00';
+          if (secondsElement) secondsElement.textContent = '00';
           
           // Reset trail conditions UI
           const selectedButtons = document.querySelectorAll('.condition-btn.selected');
