@@ -121,6 +121,33 @@ class UIManager {
     }
   }
 
+  showLoginPrompt() {
+    // Hide other containers
+    const dashboardContainer = document.getElementById('dashboard-container');
+    const snowReportForm = document.getElementById('snow-report-form');
+    if (dashboardContainer) {
+      dashboardContainer.style.display = 'none';
+    }
+    if (snowReportForm) {
+      snowReportForm.style.display = 'none';
+    }
+
+    // Show login container
+    const loginContainer = document.getElementById('login-container');
+    if (loginContainer) {
+      loginContainer.classList.add('visible');
+      loginContainer.style.display = 'flex';
+    }
+
+    // Optionally show a message to the user
+    const loginText = document.getElementById('login-text');
+    if (loginText) {
+      loginText.innerHTML = this.i18next.t('auth.loginRequired', {
+        defaultValue: 'Please log in to continue',
+        interpolation: { escapeValue: false }
+      });
+    }
+  
   showSnowReportForm() {
     document.getElementById('dashboard-container').style.display = 'none';
     document.getElementById('snow-report-form').style.display = 'block';
