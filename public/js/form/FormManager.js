@@ -147,34 +147,34 @@ class FormManager {
   }
 
   setupEventListeners() {
-    const form = document.getElementById('snow-report-form');
-    if (form) {
-      form.addEventListener('submit', (event) => this.handleFormSubmit(event));
-    }
-  
-    const cancelButton = document.getElementById('cancel-button');
-    if (cancelButton) {
-      cancelButton.addEventListener('click', () => this.handleCancel());
-    }
-  
-    // Initialize photo upload listeners
-    const selectPhotosBtn = document.getElementById('select-photos');
-    const takePhotoBtn = document.getElementById('take-photo');
-    const fileInput = document.getElementById('photo-file-input');
-    const cameraInput = document.getElementById('camera-input');
-  
-    if (selectPhotosBtn && fileInput) {
-      selectPhotosBtn.addEventListener('click', () => fileInput.click());
-    }
-    if (takePhotoBtn && cameraInput) {
-      takePhotoBtn.addEventListener('click', () => cameraInput.click());
-    }
-    if (fileInput) {
-      fileInput.addEventListener('change', (e) => this.photoManager.handleFiles(e.target.files));
-    }
-    if (cameraInput) {
-      cameraInput.addEventListener('change', (e) => this.photoManager.handleFiles(e.target.files));
-    }
+      const form = document.getElementById('snow-report-form');
+      if (form) {
+          form.addEventListener('submit', (event) => this.handleFormSubmit(event));
+      }
+
+      const cancelButton = document.getElementById('cancel-button');
+      if (cancelButton) {
+          cancelButton.addEventListener('click', () => this.handleCancel());
+      }
+
+      // Initialize photo upload listeners
+      const selectPhotosBtn = document.getElementById('select-photos');
+      const takePhotoBtn = document.getElementById('take-photo');
+      const fileInput = document.getElementById('photo-file-input');
+      const cameraInput = document.getElementById('camera-input');
+
+      if (selectPhotosBtn && fileInput) {
+          selectPhotosBtn.addEventListener('click', () => fileInput.click());
+      }
+      if (takePhotoBtn && cameraInput) {
+          takePhotoBtn.addEventListener('click', () => cameraInput.click());
+      }
+      if (fileInput) {
+          fileInput.addEventListener('change', (e) => this.photoManager.handleFiles(e.target.files));
+      }
+      if (cameraInput) {
+          cameraInput.addEventListener('change', (e) => this.photoManager.handleFiles(e.target.files));
+      }
   }
 
   startTrackingFormTime() {
