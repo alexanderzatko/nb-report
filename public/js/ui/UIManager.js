@@ -48,6 +48,26 @@ class UIManager {
       });
     }
 
+    const logoutButton = document.getElementById('logout-button');
+    if (logoutButton) {
+      logoutButton.addEventListener('click', async () => {
+        try {
+          const authManager = AuthManager.getInstance();
+          const success = await authManager.logout();
+          if (success) {
+            // Clear any stored session data
+            localStorage.removeItem('sessionId');
+            // Update UI to show login screen
+            this.updateUIBasedOnAuthState(false);
+          } else {
+            console.error('Logout failed');
+          }
+        } catch (error) {
+          console.error('Error during logout:', error);
+        }
+      });
+    }
+
     window.addEventListener('languageChanged', () => this.updatePageContent());
   }
 
