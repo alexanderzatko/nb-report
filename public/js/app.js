@@ -1,5 +1,6 @@
 // app.js
 
+import i18next from '/node_modules/i18next/dist/esm/i18next.js';
 import Logger from './utils/Logger.js';
 import AuthManager from './auth/AuthManager.js';
 import UIManager from './ui/UIManager.js';
