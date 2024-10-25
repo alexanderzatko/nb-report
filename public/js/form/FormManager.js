@@ -32,6 +32,61 @@ class FormManager {
     this.initializeDatePicker();
   }
 
+  initializeForm(userData) {
+    console.log('Initializing form with user data:', userData);
+    const isAdmin = userData?.ski_center_admin === "1";
+    const hasTrails = userData?.trails && Array.isArray(userData.trails) && userData.trails.length > 0;
+    
+    const regularUserSection = document.getElementById('regular-user-section');
+    const adminSection = document.getElementById('admin-section');
+    const trailsSection = document.getElementById('trails-section');
+
+    if (regularUserSection) {
+      regularUserSection.style.display = isAdmin ? 'none' : 'block';
+    }
+    if (adminSection) {
+      adminSection.style.display = isAdmin ? 'block' : 'none';
+    }
+    
+    if (trailsSection) {
+      trailsSection.style.display = 'none';
+      if (isAdmin && hasTrails) {
+        trailsSection.style.display = 'block';
+        this.initializeTrailsSection(userData.trails);
+      }
+    }
+    
+    console.log('Form initialization complete:', {
+      isAdmin,
+      hasTrails,
+      trails: userData?.trails
+    });
+  }
+
+  initializeTrailsSection(trails) {
+    const container = document.getElementById('trails-container');
+    if (!container) return;
+
+    container.innerHTML = '';
+    
+    trails.forEach(([trailId, trailName]) => {
+      const trailElement = this.createTrailElement(trailId, trailName);
+      container.appendChild(trailElement);
+    });
+  }
+
+  createTrailElement(trailId, trailName) {
+    const div = document.createElement('div');
+    div.className = 'trail-item';
+    div.dataset.trailId = trailId;
+    
+    const nameDiv = document.createElement('div');
+    nameDiv.className = 'trail-name';
+    nameDiv.textContent = trailName;
+    div.appendChild(nameDiv);
+    
+    return div;
+  }
   initializeFormValidation() {
     console.log('Initializing form validation');
     const inputs = document.querySelectorAll('[data-i18n-validate]');
