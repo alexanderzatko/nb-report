@@ -1,5 +1,7 @@
 // state/StateManager.js
 
+import Logger from '../utils/Logger.js';
+
 class StateManager {
   static instance = null;
 
