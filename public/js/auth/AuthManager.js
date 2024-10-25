@@ -65,32 +65,36 @@ class AuthManager {
     return false;
   }
 
-  async initiateOAuth() {
-    try {
-      const state = Math.random().toString(36).substring(2, 15);
-      localStorage.setItem('oauthState', state);
+async initiateOAuth() {
+  console.log('InitiateOAuth called');
+  try {
+    const state = Math.random().toString(36).substring(2, 15);
+    console.log('Generated state:', state);
+    localStorage.setItem('oauthState', state);
 
-      const response = await fetch('/api/initiate-oauth', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          state, 
-          scopes: 'email'
-        }),
-      });
-      const data = await response.json();
-      if (data.authUrl) {
-        console.log('Redirecting to auth URL:', data.authUrl);
-        window.location.href = data.authUrl;
-      } else {
-        console.error('No auth URL received');
-      }
-    } catch (error) {
-      console.error('Error initiating OAuth:', error);
+    const response = await fetch('/api/initiate-oauth', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        state, 
+        scopes: 'email'
+      }),
+    });
+    console.log('OAuth initiation response:', response);
+    const data = await response.json();
+    console.log('OAuth initiation data:', data);
+    if (data.authUrl) {
+      console.log('Redirecting to:', data.authUrl);
+      window.location.href = data.authUrl;
+    } else {
+      console.error('No auth URL received');
     }
+  } catch (error) {
+    console.error('Error initiating OAuth:', error);
   }
+}
 
   async exchangeToken(code) {
     try {
