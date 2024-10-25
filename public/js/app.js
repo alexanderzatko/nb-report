@@ -130,30 +130,33 @@ class App {
   }
 
   async initializeAppState() {
-    this.managers.event.emit('APP_INIT_START');
-
-    // Check for stored session
-    const sessionId = this.managers.storage.getLocalStorage('sessionId');
-    console.log('Stored sessionId:', sessionId);
-
-    const didAuth = await this.checkForURLParameters();
-    if (!didAuth && sessionId) {
-      try {
-        const isValid = await this.managers.auth.checkAuthStatus();
-        console.log('Auth status check result:', isValid);
-        if (isValid) {
-          await this.refreshUserData();
-          await this.managers.ui.updateUIBasedOnAuthState(true);
-        } else {
-          await this.handleInvalidSession();
-        }
-      } catch (error) {
-        console.error('Error checking session:', error);
-        await this.handleInvalidSession();
+      this.managers.event.emit('APP_INIT_START');
+  
+      // Check for stored session
+      const sessionId = this.managers.storage.getLocalStorage('sessionId');
+      console.log('Stored sessionId:', sessionId);
+  
+      const didAuth = await this.checkForURLParameters();
+      if (!didAuth && sessionId) {
+          try {
+              const isValid = await this.managers.auth.checkAuthStatus();
+              console.log('Auth status check result:', isValid);
+              if (isValid) {
+                  await this.refreshUserData();
+                  await this.managers.ui.updateUIBasedOnAuthState(true);
+              } else {
+                  await this.handleInvalidSession();
+              }
+          } catch (error) {
+              console.error('Error checking session:', error);
+              await this.handleInvalidSession();
+          }
+      } else if (!didAuth) {
+          // Explicitly set initial unauthenticated state if no auth occurred
+          await this.managers.ui.updateUIBasedOnAuthState(false);
       }
-    }
-    
-    await this.managers.location.initialize();
+      
+      await this.managers.location.initialize();
   }
 
   async refreshUserData() {
