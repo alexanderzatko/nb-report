@@ -1,23 +1,23 @@
 // user/UserManager.js
 
 class UserManager {
-  async getUserData() {
-    try {
-      const response = await fetch('/api/user-data', {
-        credentials: 'include'
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch user data');
-      }
-      const userData = await response.json();
-      console.log('User data:', userData);
-      return userData;
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-      return null;
+  static instance = null;
+
+  constructor() {
+    if (UserManager.instance) {
+      return UserManager.instance;
     }
+    
+    UserManager.instance = this;
   }
 
+  static getInstance() {
+    if (!UserManager.instance) {
+      UserManager.instance = new UserManager();
+    }
+    return UserManager.instance;
+  }
+  
   async refreshUserData() {
     try {
       const userData = await this.getUserData();
