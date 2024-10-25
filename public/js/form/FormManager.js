@@ -33,12 +33,15 @@ class FormManager {
 
   async initialize() {
       console.log('Initializing FormManager');
+      console.log('Current i18next language:', this.i18next.language);
+      console.log('i18next initialized:', this.i18next.isInitialized);
+      
       this.initializeFormValidation();
       this.initializeDatePicker();
-      await this.dropdownManager.initialize(); // Initialize dropdowns
+      await this.dropdownManager.initialize();
       console.log('FormManager initialization complete');
   }
-
+  
   initializeForm(userData) {
     console.log('Initializing form with user data:', userData);
     const isAdmin = userData?.ski_center_admin === "1";
