@@ -1,5 +1,7 @@
 // events/EventManager.js
 
+import Logger from '../utils/Logger.js';
+
 class EventManager {
   static instance = null;
 
