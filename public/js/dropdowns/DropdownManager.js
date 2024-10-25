@@ -64,7 +64,7 @@ class DropdownManager {
       this.xcData.snowTypes.forEach(type => {
         const option = document.createElement('option');
         option.value = type.code;
-        option.textContent = this.i18next.t(`form.snowTypes.${type.code}`, type.name);
+        option.textContent = this.i18next.t(`form.snowTypes.${type.code}`, { defaultValue: type.name });
         snowTypeSelect.appendChild(option);
       });
     }
