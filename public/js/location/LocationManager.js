@@ -11,6 +11,7 @@ class LocationManager {
     }
     this.i18next = i18next;
     this.countriesData = null;
+    this.dataLoadingPromise = null;
     this.setupEventListeners();
     
     LocationManager.instance = this;
@@ -33,7 +34,6 @@ class LocationManager {
   async initialize() {
     try {
       await this.loadCountriesData();
-      await this.populateCountryDropdown();
       return true;
     } catch (error) {
       console.error('Error initializing LocationManager:', error);
@@ -41,20 +41,49 @@ class LocationManager {
     }
   }
 
-  async populateCountryDropdown() {
-    if (!this.countriesData) {
-      console.log('Waiting for countries data to load...');
-      await this.loadCountriesData();
+  async loadCountriesData() {
+    if (this.dataLoadingPromise) {
+      return this.dataLoadingPromise;
     }
 
+    this.dataLoadingPromise = (async () => {
+      try {
+        const response = await fetch('/data/countries-regions.json');
+        this.countriesData = await response.json();
+        console.log('Countries data loaded successfully');
+        return this.countriesData;
+      } catch (error) {
+        console.error('Error loading countries data:', error);
+        throw error;
+      }
+    })();
+
+    return this.dataLoadingPromise;
+  }
+
+  async populateCountryDropdown() {
     console.log('populateCountryDropdown called');
+    
+    if (!this.countriesData) {
+      console.log('Waiting for countries data to load...');
+      try {
+        await this.loadCountriesData();
+      } catch (error) {
+        console.error('Failed to load countries data:', error);
+        return;
+      }
+    }
+
     if (!this.countriesData || !this.countriesData.countries) {
       console.warn('Countries data still not available');
       return;
     }
 
     const countrySelect = document.getElementById('country');
-    if (!countrySelect) return;
+    if (!countrySelect) {
+      console.warn('Country select element not found');
+      return;
+    }
 
     countrySelect.innerHTML = `<option value="">${this.i18next.t('form.selectCountry')}</option>`;
     
@@ -72,19 +101,9 @@ class LocationManager {
     });
 
     console.log('Country dropdown populated. Selected value:', countrySelect.value);
-    this.updateRegions();
+    await this.updateRegions();
   }
-
-  async loadCountriesData() {
-    try {
-      const response = await fetch('/data/countries-regions.json');
-      this.countriesData = await response.json();
-    } catch (error) {
-      console.error('Error loading countries data:', error);
-      throw error;
-    }
-  }
-
+  
   inferCountryFromLanguage(language = null) {
     const languageToCountry = {
       'sk': 'SK',
