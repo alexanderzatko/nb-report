@@ -177,13 +177,6 @@ class FormManager {
     }
   }
 
-
-    const cancelButton = document.getElementById('cancel-button');
-    if (cancelButton) {
-      cancelButton.addEventListener('click', () => this.handleCancel());
-    }
-  }
-
   startTrackingFormTime() {
     if (!this.formStartTime) {
       this.formStartTime = new Date();
