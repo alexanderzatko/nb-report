@@ -1,9 +1,23 @@
 // media/PhotoManager.js
 
 class PhotoManager {
+  static instance = null;
+
   constructor() {
+    if (PhotoManager.instance) {
+      return PhotoManager.instance;
+    }
     this.photos = [];
     this.initializePhotoUpload();
+    
+    PhotoManager.instance = this;
+  }
+
+  static getInstance() {
+    if (!PhotoManager.instance) {
+      PhotoManager.instance = new PhotoManager();
+    }
+    return PhotoManager.instance;
   }
 
   initializePhotoUpload() {
