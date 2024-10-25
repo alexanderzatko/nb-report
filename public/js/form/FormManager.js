@@ -8,21 +8,20 @@ class FormManager {
   static instance = null;
 
   constructor() {
-    if (FormManager.instance) {
-      return FormManager.instance;
-    }
-        this.i18next = i18next;
-        this.trailConditions = {};
-        this.formStartTime = null;
-        this.elapsedTimeInterval = null;
-        this.dropdownManager = new DropdownManager(i18next);
-        this.photoManager = PhotoManager.getInstance();
+      if (FormManager.instance) {
+          return FormManager.instance;
+      }
+      this.i18next = i18next;
+      this.trailConditions = {};
+      this.formStartTime = null;
+      this.elapsedTimeInterval = null;
+      this.dropdownManager = new DropdownManager(i18next);
+      this.photoManager = PhotoManager.getInstance();
 
-        this.initialize();
-        this.setupEventListeners();
-    
-    FormManager.instance = this;
+      // Don't initialize immediately
+      FormManager.instance = this;
   }
+
 
   static getInstance() {
       if (!FormManager.instance) {
@@ -33,15 +32,31 @@ class FormManager {
 
   async initialize() {
       console.log('Initializing FormManager');
-      console.log('Current i18next language:', this.i18next.language);
-      console.log('i18next initialized:', this.i18next.isInitialized);
+      
+      // Wait for i18next to be initialized
+      if (!this.i18next.isInitialized) {
+          console.log('Waiting for i18next to initialize...');
+          await new Promise(resolve => {
+              this.i18next.on('initialized', resolve);
+          });
+      }
+      
+      console.log('i18next is ready, current language:', this.i18next.language);
       
       this.initializeFormValidation();
       this.initializeDatePicker();
       await this.dropdownManager.initialize();
+      
+      // Set up language change listener
+      this.i18next.on('languageChanged', () => {
+          console.log('Language changed, updating dropdowns');
+          this.dropdownManager.updateXcDropdowns();
+      });
+
+      this.setupEventListeners();
       console.log('FormManager initialization complete');
   }
-  
+
   initializeForm(userData) {
     console.log('Initializing form with user data:', userData);
     const isAdmin = userData?.ski_center_admin === "1";
