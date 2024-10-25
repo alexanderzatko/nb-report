@@ -5,7 +5,7 @@ import i18next from '/node_modules/i18next/dist/esm/i18next.js';
 class UIManager {
   static instance = null;
 
-  constructor(i18next) {
+  constructor() {
     if (UIManager.instance) {
       return UIManager.instance;
     }
