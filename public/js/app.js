@@ -17,12 +17,25 @@ import { initI18next } from './i18n.js';
 
 class App {
   constructor() {
-    // Initialize logger first before any other operations
+    if (App.instance) {
+      return App.instance;
+    }
+    
     this.logger = Logger.getInstance();
     this.initialized = false;
-    this.initializeApp().catch(error => {
+    App.instance = this;
+  }
+
+  async start() {
+    if (this.initialized) {
+      return;
+    }
+    
+    try {
+      await this.initializeApp();
+    } catch (error) {
       this.logger.error('Initialization failed:', error);
-    });
+    }
   }
 
   async initializeApp() {
