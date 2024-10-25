@@ -1,14 +1,16 @@
-const CACHE_NAME = 'snow-report-cache-v85';
+const CACHE_NAME = 'snow-report-cache-v86';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/styles.css',
-  '/app.js',
-  '/i18n.js',
-  '/manifest.json?v=4',
+  '/styles/styles.css',
+  '/js/app.js',
+  '/js/i18n.js',
+  '/manifest.json',
   '/locales/en/translation.json',
   '/locales/sk/translation.json',
-  '/vendor/exif.js',
+  '/data/xc_dropdowns.json',
+  '/data/countries-regions.json',
+  '/assets/vendor/exif.js',
   '/node_modules/i18next/dist/esm/i18next.js',
   '/node_modules/i18next-http-backend/esm/index.js',
   '/node_modules/i18next-browser-languagedetector/dist/esm/i18nextBrowserLanguageDetector.js',
