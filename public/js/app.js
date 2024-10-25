@@ -1,5 +1,6 @@
 // app.js
 
+import Logger from './utils/Logger.js';
 import AuthManager from './auth/AuthManager.js';
 import UIManager from './ui/UIManager.js';
 import FormManager from './form/FormManager.js';
@@ -11,33 +12,35 @@ import NetworkManager from './network/NetworkManager.js';
 import ConfigManager from './config/ConfigManager.js';
 import EventManager from './events/EventManager.js';
 import ServiceWorkerManager from './services/ServiceWorkerManager.js';
-import Logger from './utils/Logger.js';
+import { initI18next } from './i18n.js';
 
 class App {
   constructor() {
+    // Initialize logger first before any other operations
+    this.logger = Logger.getInstance();
     this.initialized = false;
-    this.initializeApp();
+    this.initializeApp().catch(error => {
+      this.logger.error('Initialization failed:', error);
+    });
   }
 
   async initializeApp() {
     try {
-      // Initialize core services first
-      this.logger = Logger.getInstance();
+      // Initialize core services
       this.logger.info('Initializing application...');
 
-      this.configManager = ConfigManager.getInstance();
-      this.eventManager = EventManager.getInstance();
-      
-      // Initialize managers
+      // Initialize managers in order of dependency
       this.managers = {
+        config: ConfigManager.getInstance(),
+        event: EventManager.getInstance(),
+        network: NetworkManager.getInstance(),
+        storage: StorageManager.getInstance(),
         auth: AuthManager.getInstance(),
         ui: UIManager.getInstance(),
         form: FormManager.getInstance(),
         photo: PhotoManager.getInstance(),
         location: LocationManager.getInstance(),
         validation: ValidationManager.getInstance(),
-        storage: StorageManager.getInstance(),
-        network: NetworkManager.getInstance(),
         serviceWorker: ServiceWorkerManager.getInstance()
       };
 
@@ -51,12 +54,13 @@ class App {
       await this.initializeAppState();
       
       this.initialized = true;
-      this.eventManager.emit(this.eventManager.EVENT_TYPES.APP_INIT_COMPLETE);
+      this.managers.event.emit('APP_INIT_COMPLETE');
       
       this.logger.info('Application initialized successfully');
     } catch (error) {
       this.logger.error('Failed to initialize application:', error);
       this.handleInitializationError(error);
+      throw error; // Re-throw to be caught by the constructor
     }
   }
 
@@ -65,7 +69,7 @@ class App {
       await initI18next();
       const userLang = this.managers.storage.getLocalStorage('userLanguage') 
         || navigator.language 
-        || this.configManager.get('defaultLocale');
+        || this.managers.config.get('defaultLocale');
       await i18next.changeLanguage(userLang);
       this.logger.info('i18n initialized with language:', userLang);
     } catch (error) {
@@ -76,40 +80,40 @@ class App {
 
   setupEventListeners() {
     // Auth events
-    this.eventManager.on(this.eventManager.EVENT_TYPES.AUTH_LOGIN_SUCCESS, async (userData) => {
+    this.managers.event.on('AUTH_LOGIN_SUCCESS', async (userData) => {
       await this.managers.storage.setLocalStorage('sessionId', userData.sessionId);
       await this.managers.ui.updateUIBasedOnAuthState(true);
       await this.refreshUserData();
     });
 
-    this.eventManager.on(this.eventManager.EVENT_TYPES.AUTH_LOGOUT, async () => {
+    this.managers.event.on('AUTH_LOGOUT', async () => {
       await this.managers.storage.removeLocalStorage('sessionId');
       await this.managers.ui.updateUIBasedOnAuthState(false);
     });
 
     // Form events
-    this.eventManager.on(this.eventManager.EVENT_TYPES.FORM_SUBMIT_START, () => {
+    this.managers.event.on('FORM_SUBMIT_START', () => {
       this.managers.ui.showLoading();
     });
 
-    this.eventManager.on(this.eventManager.EVENT_TYPES.FORM_SUBMIT_SUCCESS, () => {
+    this.managers.event.on('FORM_SUBMIT_SUCCESS', () => {
       this.managers.ui.hideLoading();
       this.managers.form.resetForm();
     });
 
     // Network events
-    this.eventManager.on(this.eventManager.EVENT_TYPES.NETWORK_OFFLINE, () => {
+    this.managers.event.on('NETWORK_OFFLINE', () => {
       this.managers.ui.showOfflineWarning();
     });
 
     // App update events
-    this.eventManager.on(this.eventManager.EVENT_TYPES.APP_UPDATE_AVAILABLE, () => {
+    this.managers.event.on('APP_UPDATE_AVAILABLE', () => {
       this.managers.ui.showUpdatePrompt();
     });
   }
 
   async initializeAppState() {
-    this.eventManager.emit(this.eventManager.EVENT_TYPES.APP_INIT_START);
+    this.managers.event.emit('APP_INIT_START');
 
     // Check for stored session
     const sessionId = this.managers.storage.getLocalStorage('sessionId');
@@ -171,10 +175,12 @@ class App {
 
   handleInitializationError(error) {
     this.logger.error('Initialization error:', error);
-    this.managers.ui.showErrorMessage(
-      this.i18next.t('errors.initializationFailed'),
-      error
-    );
+    if (this.managers?.ui) {
+      this.managers.ui.showErrorMessage(
+        'Application initialization failed. Please refresh the page.',
+        error
+      );
+    }
   }
 
   // Public methods for external interactions
