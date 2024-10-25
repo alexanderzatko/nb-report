@@ -74,25 +74,27 @@ class UIManager {
   updateUIBasedOnAuthState(isAuthenticated) {
     console.log('Updating UI based on auth state:', isAuthenticated);
     const loginContainer = document.getElementById('login-container');
-    const loginText = document.getElementById('login-text');
-    const logoutButton = document.getElementById('logout-button');
     const dashboardContainer = document.getElementById('dashboard-container');
     const snowReportForm = document.getElementById('snow-report-form');
-
+    const logoutButton = document.getElementById('logout-button');
+  
     if (isAuthenticated) {
-      loginContainer.style.display = 'none';
-      dashboardContainer.style.display = 'block';
-      snowReportForm.style.display = 'none';
-    } else {
-      loginContainer.style.display = 'flex';
-      dashboardContainer.style.display = 'none';
-      snowReportForm.style.display = 'none';
-      
-      if (loginText) {
-        loginText.innerHTML = this.i18next.t('auth.loginText', { 
-          interpolation: { escapeValue: false } 
-        });
+      console.log('Showing dashboard for authenticated user');
+      if (loginContainer) loginContainer.style.display = 'none';
+      if (dashboardContainer) {
+        dashboardContainer.style.display = 'block';
+        console.log('Dashboard container display set to block');
+      } else {
+        console.error('Dashboard container not found');
       }
+      if (snowReportForm) snowReportForm.style.display = 'none';
+      if (logoutButton) logoutButton.style.display = 'block';
+    } else {
+      console.log('Showing login for unauthenticated user');
+      if (loginContainer) loginContainer.style.display = 'flex';
+      if (dashboardContainer) dashboardContainer.style.display = 'none';
+      if (snowReportForm) snowReportForm.style.display = 'none';
+      if (logoutButton) logoutButton.style.display = 'none';
     }
   }
 
