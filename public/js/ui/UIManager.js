@@ -24,10 +24,24 @@ class UIManager {
 
   setupEventListeners() {
     const snowReportLink = document.getElementById('snow-report-link');
+    const snowReportLink = document.getElementById('snow-report-link');
     if (snowReportLink) {
       snowReportLink.addEventListener('click', (e) => {
         e.preventDefault();
         this.showSnowReportForm();
+      });
+    }
+
+    // Add login container click handler
+    const loginContainer = document.getElementById('login-container');
+    if (loginContainer) {
+      loginContainer.addEventListener('click', async () => {
+        try {
+          const authManager = AuthManager.getInstance();
+          await authManager.initiateOAuth();
+        } catch (error) {
+          console.error('Failed to initiate login:', error);
+        }
       });
     }
 
