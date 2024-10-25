@@ -1,7 +1,5 @@
 // dropdowns/DropdownManager.js
 
-import i18next from '/node_modules/i18next/dist/esm/i18next.js';
-
 class DropdownManager {
   constructor(i18next) {
     this.i18next = i18next;
@@ -43,15 +41,23 @@ class DropdownManager {
 
   updateSnowTypeDropdown() {
     const snowTypeSelect = document.getElementById('snow-type');
-    if (!snowTypeSelect) return;
+    if (!snowTypeSelect) {
+      console.log('Snow type select not found');
+      return;
+    }
 
+    console.log('Updating snow type dropdown');
     snowTypeSelect.innerHTML = '';
+    
     if (this.xcData.snowTypes) {
       this.xcData.snowTypes.forEach(type => {
         const option = document.createElement('option');
         option.value = type.code;
-        option.textContent = this.i18next.t(`form.snowTypes.${type.code}`, { defaultValue: type.name });
+        const translationKey = `form.snowTypes.${type.code}`;
+        const translation = this.i18next.t(translationKey);
+        option.textContent = translation || type.name;
         snowTypeSelect.appendChild(option);
+        console.log(`Added snow type option: ${type.code} - ${option.textContent}`);
       });
     }
   }
@@ -73,8 +79,11 @@ class DropdownManager {
         classicOption.value = condition.code;
         freeOption.value = condition.code;
         
-        classicOption.textContent = this.i18next.t(`form.trackConditions.${condition.code}`, condition.name);
-        freeOption.textContent = this.i18next.t(`form.trackConditions.${condition.code}`, condition.name);
+        const translationKey = `form.trackConditions.${condition.code}`;
+        const translation = this.i18next.t(translationKey);
+        
+        classicOption.textContent = translation || condition.name;
+        freeOption.textContent = translation || condition.name;
         
         classicStyleSelect.appendChild(classicOption);
         freeStyleSelect.appendChild(freeOption);
@@ -91,7 +100,9 @@ class DropdownManager {
       this.xcData.snowAge.forEach(age => {
         const option = document.createElement('option');
         option.value = age.code;
-        option.textContent = this.i18next.t(`form.snowAge.${age.code}`, age.name);
+        const translationKey = `form.snowAgeOptions.${age.code}`;
+        const translation = this.i18next.t(translationKey);
+        option.textContent = translation || age.name;
         snowAgeSelect.appendChild(option);
       });
     }
@@ -106,7 +117,9 @@ class DropdownManager {
       this.xcData.wetness.forEach(wet => {
         const option = document.createElement('option');
         option.value = wet.code;
-        option.textContent = this.i18next.t(`form.wetness.${wet.code}`, wet.name);
+        const translationKey = `form.wetnessOptions.${wet.code}`;
+        const translation = this.i18next.t(translationKey);
+        option.textContent = translation || wet.name;
         wetnessSelect.appendChild(option);
       });
     }
