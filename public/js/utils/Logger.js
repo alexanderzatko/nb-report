@@ -8,7 +8,9 @@ class Logger {
       return Logger.instance;
     }
     
-    this.debugMode = process.env.NODE_ENV === 'development';
+    this.debugMode = window.location.hostname === 'localhost' || 
+                     window.location.hostname === '127.0.0.1' ||
+                     window.location.hostname.includes('development');
     this.logLevel = this.getLogLevel();
     this.logHistory = [];
     this.maxHistorySize = 1000;
