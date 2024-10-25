@@ -1,5 +1,8 @@
 // network/NetworkManager.js
 
+import Logger from '../utils/Logger.js';
+import EventManager from '../events/EventManager.js';
+
 class NetworkManager {
   static instance = null;
 
