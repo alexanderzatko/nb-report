@@ -47,12 +47,12 @@ const setCorrectMimeType = (res, path) => {
 };
 
 // Serve static files from the 'public' directory
-app.use(express.static(path.join(__dirname, 'public'), {
+app.use(express.static(path.join(__dirname, '../public'), {
   setHeaders: setCorrectMimeType
 }));
 
 // Serve necessary files from node_modules with correct MIME type
-app.use('/node_modules', express.static(path.join(__dirname, 'node_modules'), {
+app.use('/node_modules', express.static(path.join(__dirname, '../node_modules'), {
   setHeaders: setCorrectMimeType
 }));
 
