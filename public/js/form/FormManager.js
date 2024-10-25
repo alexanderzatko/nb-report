@@ -5,6 +5,8 @@ import DropdownManager from '../dropdowns/DropdownManager.js';
 import PhotoManager from '../media/PhotoManager.js';
 
 class FormManager {
+  static instance = null;
+
   constructor() {
     if (FormManager.instance) {
       return FormManager.instance;
@@ -20,6 +22,13 @@ class FormManager {
         this.setupEventListeners();
     
     FormManager.instance = this;
+  }
+
+  static getInstance() {
+      if (!FormManager.instance) {
+          FormManager.instance = new FormManager();
+      }
+      return FormManager.instance;
   }
 
   async initialize() {
