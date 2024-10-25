@@ -58,6 +58,9 @@ class App {
         serviceWorker: ServiceWorkerManager.getInstance()
       };
 
+      // Initialize location manager first since it's needed by other components
+      await this.managers.location.initialize();
+
       // Initialize i18n
       await this.initializeI18n();
       
@@ -74,7 +77,7 @@ class App {
     } catch (error) {
       this.logger.error('Failed to initialize application:', error);
       this.handleInitializationError(error);
-      throw error; // Re-throw to be caught by the constructor
+      throw error;
     }
   }
 
