@@ -15,8 +15,10 @@ class EventManager {
     this.logger = Logger.getInstance();
     this.recentEvents = [];
     this.maxRecentEvents = 100;
-    this.debugMode = process.env.NODE_ENV === 'development';
-
+    this.debugMode = window.location.hostname === 'localhost' || 
+                 window.location.hostname === '127.0.0.1' ||
+                 window.location.hostname.includes('development');
+    
     // Pre-defined event types for type safety
     this.EVENT_TYPES = {
       // Auth events
