@@ -65,53 +65,64 @@ class AuthManager {
     return false;
   }
 
-async initiateOAuth() {
-  console.log('InitiateOAuth called');
-  try {
-    const state = Math.random().toString(36).substring(2, 15);
-    console.log('Generated state:', state);
-    localStorage.setItem('oauthState', state);
-
-    const response = await fetch('/api/initiate-oauth', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        state, 
-        scopes: 'email'
-      }),
-    });
-    console.log('OAuth initiation response:', response);
-    const data = await response.json();
-    console.log('OAuth initiation data:', data);
-    if (data.authUrl) {
-      console.log('Redirecting to:', data.authUrl);
-      window.location.href = data.authUrl;
-    } else {
-      console.error('No auth URL received');
+  async initiateOAuth() {
+    console.log('InitiateOAuth called');
+    try {
+      const state = Math.random().toString(36).substring(2, 15);
+      console.log('Generated state:', state);
+      localStorage.setItem('oauthState', state);
+  
+      const response = await fetch('/api/initiate-oauth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          state, 
+          scopes: 'email'
+        }),
+      });
+      console.log('OAuth initiation response:', response);
+      const data = await response.json();
+      console.log('OAuth initiation data:', data);
+      if (data.authUrl) {
+        console.log('Redirecting to:', data.authUrl);
+        window.location.href = data.authUrl;
+      } else {
+        console.error('No auth URL received');
+      }
+    } catch (error) {
+      console.error('Error initiating OAuth:', error);
     }
-  } catch (error) {
-    console.error('Error initiating OAuth:', error);
   }
-}
-
+  
   async exchangeToken(code) {
+    console.log('Attempting to exchange token with code:', code);
     try {
       const response = await fetch('/api/exchange-token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ 
+          code,
+          // Add any other required parameters
+          redirect_uri: window.location.origin + '/api/nblogin/',  // Add this if required
+          grant_type: 'authorization_code'  // Add this if required
+        }),
         credentials: 'include'
       });
-
+  
+      console.log('Exchange token response status:', response.status);
+      
       if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Server error response:', errorData);
         throw new Error('Failed to exchange token');
       }
-
+  
       const data = await response.json();
+      console.log('Exchange token response:', data);
       
       if (data.success) {
         console.log('Token exchange successful');
