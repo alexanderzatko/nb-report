@@ -1,7 +1,8 @@
 // ui/UIManager.js
 
 import i18next from '/node_modules/i18next/dist/esm/i18next.js';
-import AuthManager from '../auth/AuthManager.js';  // Add this import
+import AuthManager from '../auth/AuthManager.js';
+import FormManager from '../form/FormManager.js';
 
 class UIManager {
   static instance = null;
@@ -11,6 +12,7 @@ class UIManager {
       return UIManager.instance;
     }
     this.i18next = i18next;
+    this.formManager = FormManager.getInstance();
     this.setupEventListeners();
     
     UIManager.instance = this;
@@ -174,6 +176,7 @@ class UIManager {
   showSnowReportForm() {
     document.getElementById('dashboard-container').style.display = 'none';
     document.getElementById('snow-report-form').style.display = 'block';
+    this.formManager.startTrackingFormTime();
   }
 
   showDashboard() {
