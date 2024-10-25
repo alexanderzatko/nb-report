@@ -1,8 +1,22 @@
 // auth/AuthManager.js
 
 class AuthManager {
+  static instance = null;
+
   constructor() {
+    if (AuthManager.instance) {
+      return AuthManager.instance;
+    }
+
     this.initPromise = null;
+    AuthManager.instance = this;
+  }
+
+  static getInstance() {
+    if (!AuthManager.instance) {
+      AuthManager.instance = new AuthManager();
+    }
+    return AuthManager.instance;
   }
 
   async checkAuthStatus() {
