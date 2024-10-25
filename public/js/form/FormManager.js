@@ -5,36 +5,29 @@ import DropdownManager from '../dropdowns/DropdownManager.js';
 import PhotoManager from '../media/PhotoManager.js';
 
 class FormManager {
-  static instance = null;
-
   constructor() {
     if (FormManager.instance) {
       return FormManager.instance;
     }
-    this.i18next = i18next;
-    this.trailConditions = {};
-    this.formStartTime = null;
-    this.elapsedTimeInterval = null;
-    this.dropdownManager = new DropdownManager(i18next);
-    this.photoManager = new PhotoManager();
+        this.i18next = i18next;
+        this.trailConditions = {};
+        this.formStartTime = null;
+        this.elapsedTimeInterval = null;
+        this.dropdownManager = new DropdownManager(i18next);
+        this.photoManager = PhotoManager.getInstance();
 
-    this.initialize();
-    this.setupEventListeners();
+        this.initialize();
+        this.setupEventListeners();
     
     FormManager.instance = this;
   }
 
-  static getInstance() {
-    if (!FormManager.instance) {
-      FormManager.instance = new FormManager();
-    }
-    return FormManager.instance;
-  }
-
   async initialize() {
-    this.initializeFormValidation();
-    this.initializeDatePicker();
-    await this.dropdownManager.initialize(); // Initialize dropdowns
+      console.log('Initializing FormManager');
+      this.initializeFormValidation();
+      this.initializeDatePicker();
+      await this.dropdownManager.initialize(); // Initialize dropdowns
+      console.log('FormManager initialization complete');
   }
 
   initializeForm(userData) {
