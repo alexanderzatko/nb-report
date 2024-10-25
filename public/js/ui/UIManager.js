@@ -106,7 +106,7 @@ class UIManager {
         returnObjects: true, 
         interpolation: { escapeValue: false } 
       });
-      console.log(`Translating key: ${key}, result:`, translation);
+      //console.log(`Translating key: ${key}, result:`, translation);
       
       this.updateElementTranslation(element, translation);
     });
