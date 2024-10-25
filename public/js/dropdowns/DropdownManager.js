@@ -7,6 +7,7 @@ class DropdownManager {
   }
 
   async initialize() {
+    console.log('Initializing DropdownManager');
     await this.loadXcData();
     this.updateXcDropdowns();
   }
@@ -53,11 +54,13 @@ class DropdownManager {
       this.xcData.snowTypes.forEach(type => {
         const option = document.createElement('option');
         option.value = type.code;
+        // Use the translation key directly
         const translationKey = `form.snowTypes.${type.code}`;
+        console.log(`Looking up translation for key: ${translationKey}`);
         const translation = this.i18next.t(translationKey);
-        option.textContent = translation || type.name;
+        console.log(`Got translation: ${translation}`);
+        option.textContent = translation;
         snowTypeSelect.appendChild(option);
-        console.log(`Added snow type option: ${type.code} - ${option.textContent}`);
       });
     }
   }
@@ -82,8 +85,8 @@ class DropdownManager {
         const translationKey = `form.trackConditions.${condition.code}`;
         const translation = this.i18next.t(translationKey);
         
-        classicOption.textContent = translation || condition.name;
-        freeOption.textContent = translation || condition.name;
+        classicOption.textContent = translation;
+        freeOption.textContent = translation;
         
         classicStyleSelect.appendChild(classicOption);
         freeStyleSelect.appendChild(freeOption);
@@ -102,7 +105,7 @@ class DropdownManager {
         option.value = age.code;
         const translationKey = `form.snowAgeOptions.${age.code}`;
         const translation = this.i18next.t(translationKey);
-        option.textContent = translation || age.name;
+        option.textContent = translation;
         snowAgeSelect.appendChild(option);
       });
     }
@@ -119,7 +122,7 @@ class DropdownManager {
         option.value = wet.code;
         const translationKey = `form.wetnessOptions.${wet.code}`;
         const translation = this.i18next.t(translationKey);
-        option.textContent = translation || wet.name;
+        option.textContent = translation;
         wetnessSelect.appendChild(option);
       });
     }
