@@ -1,9 +1,23 @@
 // ui/UIManager.js
 
 class UIManager {
+  static instance = null;
+
   constructor(i18next) {
+    if (UIManager.instance) {
+      return UIManager.instance;
+    }
     this.i18next = i18next;
     this.setupEventListeners();
+    
+    UIManager.instance = this;
+  }
+
+  static getInstance() {
+    if (!UIManager.instance) {
+      UIManager.instance = new UIManager();
+    }
+    return UIManager.instance;
   }
 
   setupEventListeners() {
