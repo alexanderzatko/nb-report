@@ -1,9 +1,23 @@
 // dropdowns/DropdownManager.js
 
 class DropdownManager {
+  static instance = null;
+
   constructor(i18next) {
+    if (DropdownManager.instance) {
+      return DropdownManager.instance;
+    }
     this.i18next = i18next;
     this.xcData = null;
+    
+    DropdownManager.instance = this;
+  }
+
+  static getInstance() {
+    if (!DropdownManager.instance) {
+      DropdownManager.instance = new DropdownManager();
+    }
+    return DropdownManager.instance;
   }
 
   async initialize() {
