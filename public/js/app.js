@@ -40,7 +40,6 @@ class App {
 
   async initializeApp() {
     try {
-      // Initialize core services
       this.logger.info('Initializing application...');
 
       // Initialize managers in order of dependency
@@ -58,11 +57,14 @@ class App {
         serviceWorker: ServiceWorkerManager.getInstance()
       };
 
-      // Initialize location manager first since it's needed by other components
-      await this.managers.location.initialize();
-
       // Initialize i18n
       await this.initializeI18n();
+      
+      // Initialize location manager
+      await this.managers.location.initialize();
+
+      // Initialize form manager (needs i18n)
+      await this.managers.form.initialize();
       
       // Setup event listeners
       this.setupEventListeners();
