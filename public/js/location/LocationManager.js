@@ -21,7 +21,7 @@ class LocationManager {
 
   async loadCountriesData() {
     try {
-      const response = await fetch('/countries-regions.json');
+      const response = await fetch('/data/countries-regions.json');
       this.countriesData = await response.json();
     } catch (error) {
       console.error('Error loading countries data:', error);
