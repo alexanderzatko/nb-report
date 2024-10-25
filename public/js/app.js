@@ -118,28 +118,26 @@ class App {
 
     // Check for stored session
     const sessionId = this.managers.storage.getLocalStorage('sessionId');
-    if (sessionId) {
+    console.log('Stored sessionId:', sessionId);
+
+    const didAuth = await this.checkForURLParameters();
+    if (!didAuth && sessionId) {
       try {
         const isValid = await this.managers.auth.checkAuthStatus();
+        console.log('Auth status check result:', isValid);
         if (isValid) {
           await this.refreshUserData();
+          await this.managers.ui.updateUIBasedOnAuthState(true);
         } else {
           await this.handleInvalidSession();
         }
       } catch (error) {
-        this.logger.error('Error checking session:', error);
+        console.error('Error checking session:', error);
         await this.handleInvalidSession();
       }
     }
-
-    // Initialize UI state
-    await this.managers.ui.updateUIBasedOnAuthState(!!sessionId);
     
-    // Load initial data
-    await Promise.all([
-      this.managers.location.initialize(),
-      this.checkForURLParameters()
-    ]);
+    await this.managers.location.initialize();
   }
 
   async refreshUserData() {
@@ -165,13 +163,22 @@ class App {
   async checkForURLParameters() {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('code')) {
-      await this.managers.auth.handleOAuthCallback(
+      const success = await this.managers.auth.handleOAuthCallback(
         urlParams.get('code'),
         urlParams.get('state')
       );
       // Clean URL parameters
       window.history.replaceState({}, document.title, '/');
+      
+      // prevent double initialization
+      if (success) {
+        // Update UI directly here
+        await this.managers.ui.updateUIBasedOnAuthState(true);
+        await this.refreshUserData();
+        return true;
+      }
     }
+    return false;
   }
 
   handleInitializationError(error) {
