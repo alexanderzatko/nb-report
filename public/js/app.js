@@ -54,12 +54,25 @@ class App {
         photo: PhotoManager.getInstance(),
         location: LocationManager.getInstance(),
         validation: ValidationManager.getInstance(),
-        serviceWorker: ServiceWorkerManager.getInstance()
+        : Manager.getInstance()
       };
 
       // Initialize i18n
       await this.initializeI18n();
-      
+
+      // Initialize service worker
+      if ('serviceWorker' in navigator) {
+        const serviceWorker = ServiceWorkerManager.getInstance();
+        await serviceWorker.initialize();
+  
+        // Listen for messages from service worker
+        navigator.serviceWorker.addEventListener('message', (event) => {
+          if (event.data.type === 'UPDATE_AVAILABLE') {
+            serviceWorker.notifyUpdateReady();
+          }
+        });
+      }
+
       // Initialize location manager
       await this.managers.location.initialize();
 
