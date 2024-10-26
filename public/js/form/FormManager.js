@@ -112,6 +112,7 @@ class FormManager {
     
     return div;
   }
+  
   initializeFormValidation() {
     console.log('Initializing form validation');
     const inputs = document.querySelectorAll('[data-i18n-validate]');
@@ -132,22 +133,40 @@ class FormManager {
           }
           
           formGroup.classList.add('show-validation');
+          input.classList.add('field-invalid');
         }
       });
       
-      // Clear custom validation on input
-      input.addEventListener('input', () => {
+      // Clear custom validation on input/change
+      const clearValidation = () => {
         input.setCustomValidity('');
         const formGroup = input.closest('.form-group');
         if (formGroup) {
           formGroup.classList.remove('show-validation');
           input.classList.remove('field-invalid');
         }
-      });
+      };
+
+      input.addEventListener('input', clearValidation);
+      input.addEventListener('change', clearValidation);
 
       // Handle blur event
       input.addEventListener('blur', () => {
-        if (input.checkValidity()) {
+        if (!input.value && input.required) {
+          const formGroup = input.closest('.form-group');
+          const requiredMsg = this.i18next.t(input.dataset.i18nValidate);
+          
+          input.setCustomValidity(requiredMsg);
+          input.classList.add('field-invalid');
+          
+          if (formGroup) {
+            formGroup.classList.add('show-validation');
+            const validationMessage = formGroup.querySelector('.validation-message');
+            if (validationMessage) {
+              validationMessage.textContent = requiredMsg;
+            }
+          }
+        } else if (input.checkValidity()) {
           input.classList.remove('field-invalid');
           const formGroup = input.closest('.form-group');
           if (formGroup) {
@@ -156,7 +175,33 @@ class FormManager {
         }
       });
     });
+
+    // Add specific validation for country/region dependency
+    const countrySelect = document.getElementById('country');
+    const regionSelect = document.getElementById('region');
+
+    if (countrySelect && regionSelect) {
+      countrySelect.addEventListener('change', () => {
+        // When country changes, validate region if it's empty
+        if (!regionSelect.value && regionSelect.required) {
+          const formGroup = regionSelect.closest('.form-group');
+          const requiredMsg = this.i18next.t(regionSelect.dataset.i18nValidate);
+          
+          regionSelect.setCustomValidity(requiredMsg);
+          regionSelect.classList.add('field-invalid');
+          
+          if (formGroup) {
+            formGroup.classList.add('show-validation');
+            const validationMessage = formGroup.querySelector('.validation-message');
+            if (validationMessage) {
+              validationMessage.textContent = requiredMsg;
+            }
+          }
+        }
+      });
+    }
   }
+
 
   initializeDatePicker() {
     const dateInput = document.getElementById('report-date');
@@ -244,11 +289,25 @@ class FormManager {
       if (!element.checkValidity()) {
         isValid = false;
         element.classList.add('field-invalid');
+        
+        const formGroup = element.closest('.form-group');
+        if (formGroup) {
+          formGroup.classList.add('show-validation');
+          const validationMessage = formGroup.querySelector('.validation-message');
+          if (validationMessage) {
+            validationMessage.textContent = this.i18next.t(element.dataset.i18nValidate);
+          }
+        }
+        
         if (!firstInvalidElement) {
           firstInvalidElement = element;
         }
       } else {
         element.classList.remove('field-invalid');
+        const formGroup = element.closest('.form-group');
+        if (formGroup) {
+          formGroup.classList.remove('show-validation');
+        }
       }
     });
 
@@ -258,6 +317,7 @@ class FormManager {
       return;
     }
 
+    // Continue with form submission if validation passes
     try {
       const formData = this.collectFormData();
       await this.submitFormData(formData);
@@ -269,6 +329,7 @@ class FormManager {
       alert(this.i18next.t('form.validation.submitError'));
     }
   }
+
 
   collectFormData() {
     const formData = new FormData();
