@@ -1,3 +1,5 @@
+import Logger from '../utils/Logger.js';
+
 class PhotoManager {
   static instance = null;
 
