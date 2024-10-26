@@ -54,7 +54,7 @@ class App {
         photo: PhotoManager.getInstance(),
         location: LocationManager.getInstance(),
         validation: ValidationManager.getInstance(),
-        : Manager.getInstance()
+        serviceWorker: ServiceWorkerManager.getInstance()
       };
 
       // Initialize i18n
