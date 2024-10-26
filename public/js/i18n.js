@@ -34,20 +34,34 @@ const initI18next = () => {
         console.log('Loaded translations:', i18next.getResourceBundle(i18next.language, 'translation'));
 
         i18next.on('languageChanged', () => {
-            console.log('i18n: Language changed event firing');
-            console.log('i18n: Current language:', i18next.language);
+            console.log('i18n: Language changed event firing, language:', i18next.language);
             
-            // Create custom event with more detail
-            const event = new CustomEvent('languageChanged', {
-                detail: {
-                    language: i18next.language,
-                    timestamp: Date.now()
+            try {
+                // For Safari compatibility, use CustomEvent constructor with feature detection
+                if (typeof CustomEvent === 'function') {
+                    const event = new CustomEvent('languageChanged', {
+                        bubbles: true,  // Allow event to bubble up through the DOM
+                        detail: {
+                            language: i18next.language,
+                            timestamp: Date.now()
+                        }
+                    });
+                    console.log('i18n: Dispatching custom event');
+                    window.dispatchEvent(event);
+                } else {
+                    // Fallback for older browsers
+                    const event = document.createEvent('CustomEvent');
+                    event.initCustomEvent('languageChanged', true, true, {
+                        language: i18next.language,
+                        timestamp: Date.now()
+                    });
+                    console.log('i18n: Dispatching fallback event');
+                    window.dispatchEvent(event);
                 }
-            });
-            
-            console.log('i18n: Dispatching languageChanged event');
-            window.dispatchEvent(event);
-            console.log('i18n: Event dispatched');
+                console.log('i18n: Event dispatch complete');
+            } catch (error) {
+                console.error('i18n: Error dispatching language change event:', error);
+            }
         });
       });
   }
