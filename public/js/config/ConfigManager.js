@@ -12,6 +12,21 @@ class ConfigManager {
 
     this.logger = Logger.getInstance();
     this.config = {
+      cache: {
+        version: 'v76', //update this for new app release
+        name: 'snow-report-cache',
+        staticResources: [
+          '/',
+          '/index.html',
+          '/styles.css',
+          '/app.js',
+          '/i18n.js',
+          '/manifest.json',
+          '/locales/en/translation.json',
+          '/locales/sk/translation.json'
+        ]
+      },
+      
       app: {
         name: 'Snow Report',
         version: '1.0.0',
@@ -108,21 +123,6 @@ class ConfigManager {
             tracks: 'tracks'
           }
         }
-      },
-
-      cache: {
-        version: 'v76',
-        name: 'snow-report-cache',
-        staticResources: [
-          '/',
-          '/index.html',
-          '/styles.css',
-          '/app.js',
-          '/i18n.js',
-          '/manifest.json',
-          '/locales/en/translation.json',
-          '/locales/sk/translation.json'
-        ]
       },
 
       rewards: {
