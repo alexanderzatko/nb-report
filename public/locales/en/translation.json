@@ -289,5 +289,13 @@
     "severomadarskaStredohorie": "Severomaďarské Stredohorie",
     "plZapadneSudety": "Západné Sudety"
   },
-  "welcome": "Welcome, {{name}} ({{role}})"
+  "welcome": "Welcome, {{name}} ({{role}})",
+  {
+    "offline": {
+      "title": "You're Offline",
+      "message": "It looks like you've lost your internet connection. The Snow Report app requires an internet connection to load snow conditions and submit reports.",
+      "instruction": "Please check your connection and try again.",
+      "retryButton": "Try Again"
+    }
+  }
 }
