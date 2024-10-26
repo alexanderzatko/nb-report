@@ -290,12 +290,10 @@
     "plZapadneSudety": "Západné Sudety"
   },
   "welcome": "Welcome, {{name}} ({{role}})",
-  {
-    "offline": {
-      "title": "You're Offline",
-      "message": "It looks like you've lost your internet connection. This app requires an internet connection to load data and submit reports.",
-      "instruction": "Please check your connection and try again.",
-      "retryButton": "Try Again"
-    }
+  "offline": {
+    "title": "You're Offline",
+    "message": "It looks like you've lost your internet connection. This app requires an internet connection to load data and submit reports.",
+    "instruction": "Please check your connection and try again.",
+    "retryButton": "Try Again"
   }
 }
