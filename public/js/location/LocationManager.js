@@ -5,28 +5,36 @@ import i18next from '/node_modules/i18next/dist/esm/i18next.js';
 class LocationManager {
   static instance = null;
 
-  constructor() {
-      if (LocationManager.instance) {
-          return LocationManager.instance;
-      }
-      this.i18next = i18next;
-      this.countriesData = null;
-      this.dataLoadingPromise = null;
-      this.setupEventListeners();
-      
-      // Log when instance is created
-      console.log('LocationManager: Instance created');
-      
-      // Add listener and immediately log to verify it's attached
-      window.addEventListener('languageChanged', () => {
-          console.log('LocationManager: Window language change event received');
-          console.log('LocationManager: Current language:', this.i18next.language);
-          this.refreshDropdowns();
-      });
-      console.log('LocationManager: Language change listener attached');
-      
-      LocationManager.instance = this;
-  }
+    constructor() {
+        if (LocationManager.instance) {
+            return LocationManager.instance;
+        }
+        
+        // Log instance creation
+        console.log('LocationManager: Creating new instance');
+        
+        this.i18next = i18next;
+        this.countriesData = null;
+        this.dataLoadingPromise = null;
+        this.setupEventListeners();
+        
+        // Use both i18next and window event listeners to ensure we catch the event
+        this.i18next.on('languageChanged', (lng) => {
+            console.log('LocationManager: i18next language changed to:', lng);
+            this.refreshDropdowns();
+        });
+        
+        window.addEventListener('languageChanged', () => {
+            console.log('LocationManager: Window language change event received');
+            console.log('LocationManager: Current language:', this.i18next.language);
+            this.refreshDropdowns();
+        });
+
+        console.log('LocationManager: Event listeners attached');
+        
+        LocationManager.instance = this;
+        return this;  // Ensure we return the instance
+    }
 
   static getInstance() {
     if (!LocationManager.instance) {
@@ -57,11 +65,17 @@ class LocationManager {
   }
 
   // refresh dropdowns when language changes
-  refreshDropdowns() {
+  async refreshDropdowns() {
       console.log('LocationManager: refreshDropdowns called');
-      console.log('Current i18next language:', this.i18next.language);
-      console.log('Test translation of a country:', this.i18next.t('countries.slovakia'));
-      this.populateCountryDropdown();
+      console.log('LocationManager: Current language:', this.i18next.language);
+      console.log('LocationManager: Test translation:', this.i18next.t('countries.slovakia'));
+      
+      try {
+          await this.populateCountryDropdown();
+          console.log('LocationManager: Dropdowns refreshed successfully');
+      } catch (error) {
+          console.error('LocationManager: Error refreshing dropdowns:', error);
+      }
   }
   
 async populateCountryDropdown() {
