@@ -45,7 +45,12 @@ class LocationManager {
     }
   }
 
-    async populateCountryDropdown() {
+  // refresh dropdowns when language changes
+  refreshDropdowns() {
+    this.populateCountryDropdown();
+  }
+  
+  async populateCountryDropdown() {
     console.log('populateCountryDropdown called');
     
     if (!this.countriesData) {
