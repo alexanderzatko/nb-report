@@ -1,4 +1,10 @@
 {
+  "updates": {
+    "newVersionTitle": "Nová verzia aplikácie",
+    "newVersionMessage": "K dispozícii je nová verzia aplikácie. Aktualizujte teraz, aby ste získali najnovšie funkcie a vylepšenia.",
+    "updateNow": "Aktualizovať teraz",
+    "updateLater": "Neskôr"
+  },
   "app": {
     "title": "Report — Snehové podmienky",
     "header": "Report — Snehové podmienky"
