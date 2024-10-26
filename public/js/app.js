@@ -35,6 +35,7 @@ class App {
       await this.initializeApp();
     } catch (error) {
       this.logger.error('Initialization failed:', error);
+      throw error;
     }
   }
 
@@ -42,39 +43,49 @@ class App {
     try {
       this.logger.info('Initializing application...');
 
-      // Initialize managers in order of dependency
-      this.managers = {
-        config: ConfigManager.getInstance(),
-        event: EventManager.getInstance(),
-        network: NetworkManager.getInstance(),
-        storage: StorageManager.getInstance(),
-        auth: AuthManager.getInstance(),
-        ui: UIManager.getInstance(),
-        form: FormManager.getInstance(),
-        photo: PhotoManager.getInstance(),
-        location: LocationManager.getInstance(),
-        validation: ValidationManager.getInstance(),
-        serviceWorker: ServiceWorkerManager.getInstance()
-      };
+      // Initialize managers one by one to ensure proper error handling
+      try {
+        this.managers = {};
+
+        // Core managers first
+        this.managers.config = ConfigManager.getInstance();
+        this.managers.event = EventManager.getInstance();
+        this.managers.network = NetworkManager.getInstance();
+        this.managers.storage = StorageManager.getInstance();
+        
+        // Then auth and UI managers
+        this.managers.auth = AuthManager.getInstance();
+        this.managers.ui = UIManager.getInstance();
+        
+        // Form-related managers
+        this.managers.form = FormManager.getInstance();
+        this.managers.photo = PhotoManager.getInstance();
+        this.managers.location = new LocationManager(); // Note: LocationManager uses its own singleton check
+        this.managers.validation = ValidationManager.getInstance();
+        
+        // Service worker manager last
+        this.managers.serviceWorker = ServiceWorkerManager.getInstance();
+
+      } catch (error) {
+        this.logger.error('Error initializing managers:', error);
+        throw new Error(`Failed to initialize managers: ${error.message}`);
+      }
 
       // Initialize i18n
       await this.initializeI18n();
 
       // Initialize service worker
       if ('serviceWorker' in navigator) {
-        const serviceWorker = ServiceWorkerManager.getInstance();
-        await serviceWorker.initialize();
-  
-        // Listen for messages from service worker
+        await this.managers.serviceWorker.initialize();
         navigator.serviceWorker.addEventListener('message', (event) => {
           if (event.data.type === 'UPDATE_AVAILABLE') {
-            serviceWorker.notifyUpdateReady();
+            this.managers.serviceWorker.notifyUpdateReady();
           }
         });
       }
 
       // Initialize location manager
-      await this.managers.location.initialize();
+      await this.managers.location.initializationPromise;
 
       // Initialize form manager (needs i18n)
       await this.managers.form.initialize();
