@@ -3,6 +3,7 @@
 import i18next from '/node_modules/i18next/dist/esm/i18next.js';
 import AuthManager from '../auth/AuthManager.js';
 import FormManager from '../form/FormManager.js';
+import LocationManager from '../location/LocationManager.js';
 
 class UIManager {
   static instance = null;
