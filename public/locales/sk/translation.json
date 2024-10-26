@@ -246,14 +246,11 @@
     "zitavskaPahorkatina": "Žitavská Pahorkatina",
     "zilinskaKotlina": "Žilinská Kotlina"
   },
-  {
-    "offline": {
-      "title": "Nie ste pripojený na internet",
-      "message": "Zdá sa, že ste stratili pripojenie k internetu. Táto aplikácia vyžaduje pripojenie k internetu na načítanie dát a odosielanie hlásení.",
-      "instruction": "Skontrolujte svoje pripojenie a skúste to znova.",
-      "retryButton": "Skúsiť znova"
-    }
-  }
+  "offline": {
+    "title": "Nie ste pripojený na internet",
+    "message": "Zdá sa, že ste stratili pripojenie k internetu. Táto aplikácia vyžaduje pripojenie k internetu na načítanie dát a odosielanie hlásení.",
+    "instruction": "Skontrolujte svoje pripojenie a skúste to znova.",
+    "retryButton": "Skúsiť znova"
   },
   "welcome": "Vitajte, {{name}} ({{role}})"
 }
