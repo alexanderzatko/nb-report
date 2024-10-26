@@ -34,9 +34,11 @@ const initI18next = () => {
         console.log('Loaded translations:', i18next.getResourceBundle(i18next.language, 'translation'));
 
         i18next.on('languageChanged', () => {
-            console.log('i18n: Language changed event, dispatching to window');
-            // Dispatch a custom event when language changes
+            const newLang = i18next.language;
+            console.log('i18n: Language changed to:', newLang);
+            console.log('i18n: Dispatching window languageChanged event');
             window.dispatchEvent(new Event('languageChanged'));
+            console.log('i18n: languageChanged event dispatched');
         });
       });
   }
