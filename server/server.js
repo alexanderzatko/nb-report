@@ -47,6 +47,13 @@ const setCorrectMimeType = (res, path) => {
   }
 };
 
+// Serve static files with specific configurations
+app.use('/js', express.static(path.join(__dirname, '../public/js'), {
+  setHeaders: setCorrectMimeType
+}));
+
+app.use('/locales', express.static(path.join(__dirname, '../public/locales')));
+
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, '../public'), {
   setHeaders: setCorrectMimeType
@@ -64,34 +71,37 @@ app.get('/service-worker.js', (req, res) => {
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
 
-  // Define cache version and resources directly in server
-  const CACHE_VERSION = 'v76'; // Match this with your ConfigManager version
+  const CACHE_VERSION = 'v76';
+  // Only include files that definitely exist in your public directory
   const CACHE_RESOURCES = [
     '/',
     '/index.html',
     '/styles.css',
-    '/app.js',
-    '/i18n.js',
     '/manifest.json',
-    '/locales/en/translation.json',
-    '/locales/sk/translation.json',
-    '/locales/cs/translation.json',
-    '/icon/login-icon.svg'
+    '/icon/login-icon.svg',
+    '/offline.html'
   ];
 
-  // Generate service worker content
   const serviceWorkerContent = `
     const CACHE_NAME = 'snow-report-cache-${CACHE_VERSION}';
-    const OFFLINE_URL = '/offline.html';
     const RESOURCES_TO_CACHE = ${JSON.stringify(CACHE_RESOURCES)};
 
     self.addEventListener('install', (event) => {
       event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-          return cache.addAll([...RESOURCES_TO_CACHE, OFFLINE_URL]);
-        })
+        caches.open(CACHE_NAME)
+          .then((cache) => {
+            // Try to cache each resource, but don't fail if some aren't available
+            return Promise.allSettled(
+              RESOURCES_TO_CACHE.map(url => 
+                cache.add(url).catch(error => {
+                  console.warn('Failed to cache:', url, error);
+                  return null;
+                })
+              )
+            );
+          })
+          .then(() => self.skipWaiting())
       );
-      self.skipWaiting();
     });
 
     self.addEventListener('activate', (event) => {
@@ -131,28 +141,31 @@ app.get('/service-worker.js', (req, res) => {
               return response;
             }
 
-            return fetch(event.request).then((response) => {
-              // Check if we received a valid response
-              if (!response || response.status !== 200 || response.type !== 'basic') {
+            return fetch(event.request)
+              .then((response) => {
+                // Check if we received a valid response
+                if (!response || response.status !== 200 || response.type !== 'basic') {
+                  return response;
+                }
+
+                // Clone the response
+                const responseToCache = response.clone();
+
+                // Cache the response
+                caches.open(CACHE_NAME)
+                  .then((cache) => {
+                    cache.put(event.request, responseToCache);
+                  })
+                  .catch(error => {
+                    console.warn('Failed to cache:', event.request.url, error);
+                  });
+
                 return response;
-              }
-
-              const responseToCache = response.clone();
-
-              caches.open(CACHE_NAME)
-                .then((cache) => {
-                  cache.put(event.request, responseToCache);
-                });
-
-              return response;
-            });
-          })
-          .catch(() => {
-            // If both cache and network fail, show offline page
-            if (event.request.mode === 'navigate') {
-              return caches.match(OFFLINE_URL);
-            }
-            return null;
+              })
+              .catch(() => {
+                // Return cached response if available
+                return caches.match(event.request);
+              });
           })
       );
     });
@@ -162,6 +175,9 @@ app.get('/service-worker.js', (req, res) => {
         self.skipWaiting();
       }
     });
+
+    // Log the current cache version (helpful for debugging)
+    console.log('Service Worker initialized with cache version:', '${CACHE_VERSION}');
   `;
 
   res.send(serviceWorkerContent);
