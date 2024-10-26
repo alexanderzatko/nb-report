@@ -248,8 +248,8 @@
   },
   {
     "offline": {
-      "title": "Nie ste pripojený",
-      "message": "Zdá sa, že ste stratili pripojenie k internetu. Táto aplikácia vyžaduje pripojenie k internetu na načítanie snehových podmienok a odosielanie hlásení.",
+      "title": "Nie ste pripojený na internet",
+      "message": "Zdá sa, že ste stratili pripojenie k internetu. Táto aplikácia vyžaduje pripojenie k internetu na načítanie dát a odosielanie hlásení.",
       "instruction": "Skontrolujte svoje pripojenie a skúste to znova.",
       "retryButton": "Skúsiť znova"
     }
