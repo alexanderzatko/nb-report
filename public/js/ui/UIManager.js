@@ -185,23 +185,26 @@ class UIManager {
     document.getElementById('snow-report-form').style.display = 'none';
   }
 
-  updateUIWithUserData(userData) {
-      console.log('Updating UI with user data:', userData);  // Add this log
-      
-      // Set the language based on user data
-      if (userData.language) {
-          console.log('Changing language to:', userData.language);  // Add this log
-          this.i18next.changeLanguage(userData.language).then(() => {
-              console.log('Language changed successfully');  // Add this log
-              const locationManager = LocationManager.getInstance();
-              locationManager.refreshDropdowns();
-          }).catch(error => {
-              console.error('Error changing language:', error);  // Add this log
-          });
-      }
-      
-      this.updateRewardsSection(userData);
-  }
+updateUIWithUserData(userData) {
+    console.log('UIManager: Updating UI with user data:', userData);
+    
+    if (userData.language) {
+        console.log('UIManager: Initiating language change to:', userData.language);
+        this.i18next.changeLanguage(userData.language)
+            .then(() => {
+                console.log('UIManager: Language change completed to:', userData.language);
+                // Explicitly trigger LocationManager update
+                const locationManager = LocationManager.getInstance();
+                console.log('UIManager: Triggering location manager refresh');
+                locationManager.refreshDropdowns();
+            })
+            .catch(error => {
+                console.error('UIManager: Error changing language:', error);
+            });
+    }
+    
+    this.updateRewardsSection(userData);
+}
 
   updateRewardsSection(userData) {
     const rewardsSection = document.getElementById('rewards-section');
