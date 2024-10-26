@@ -289,13 +289,11 @@
     "severomadarskaStredohorie": "Severomaďarské Stredohorie",
     "plZapadneSudety": "Západné Sudety"
   },
-  {
-    "offline": {
-      "title": "Nejste připojen k internetu",
-      "message": "Vypadá to, že jste ztratili připojení k internetu. Tato aplikace vyžaduje připojení k internetu pro načtení dat a odesílání hlášení.",
-      "instruction": "Zkontrolujte své připojení a zkuste to znovu.",
-      "retryButton": "Zkusit znovu"
-    }
+  "offline": {
+    "title": "Nejste připojen k internetu",
+    "message": "Vypadá to, že jste ztratili připojení k internetu. Tato aplikace vyžaduje připojení k internetu pro načtení dat a odesílání hlášení.",
+    "instruction": "Zkontrolujte své připojení a zkuste to znovu.",
+    "retryButton": "Zkusit znovu"
   },
 "welcome": "Vitajte, {{name}} ({{role}})"
 }
