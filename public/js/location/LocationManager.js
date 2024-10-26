@@ -52,7 +52,10 @@ class LocationManager {
 
   // refresh dropdowns when language changes
   refreshDropdowns() {
-    this.populateCountryDropdown();
+      console.log('LocationManager: refreshDropdowns called');
+      console.log('Current i18next language:', this.i18next.language);
+      console.log('Test translation of a country:', this.i18next.t('countries.slovakia'));
+      this.populateCountryDropdown();
   }
   
   async populateCountryDropdown() {
