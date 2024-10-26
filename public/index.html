@@ -76,17 +76,23 @@
           </div>
             
           <div class="form-group">
-            <label for="country" data-i18n="form.country">Country:</label>
-            <select id="country" name="country">
-              <!-- Options will be populated dynamically -->
+            <label for="country" class="required-field">Country:</label>
+            <select id="country" 
+                    required 
+                    data-i18n-validate="form.validation.required">
+              <option value="">Select country</option>
             </select>
+            <div class="validation-message"></div>
           </div>
-  
+          
           <div class="form-group">
-            <label for="region" data-i18n="form.region">Region:</label>
-            <select id="region" name="region">
-              <!-- Options will be populated dynamically -->
+            <label for="region" class="required-field">Region:</label>
+            <select id="region" 
+                    required 
+                    data-i18n-validate="form.validation.required">
+              <option value="">Select region</option>
             </select>
+            <div class="validation-message"></div>
           </div>
         
           <div class="form-group">
