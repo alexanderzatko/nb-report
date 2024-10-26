@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import winston from 'winston';
 import MySQLStore from 'express-mysql-session';
 import axios from 'axios';
+import ConfigManager from './config/ConfigManager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -56,10 +57,91 @@ app.use('/node_modules', express.static(path.join(__dirname, '../node_modules'),
   setHeaders: setCorrectMimeType
 }));
 
-// Serve service-worker.js with the correct MIME type
 app.get('/service-worker.js', (req, res) => {
+  const config = ConfigManager.getInstance();
+  const cacheVersion = config.get('cache.version');
+  const cacheResources = config.get('cache.staticResources');
+  
+  // Set proper headers
   res.setHeader('Content-Type', 'application/javascript');
-  res.sendFile(path.join(__dirname, 'service-worker.js'));
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
+  // Generate service worker content
+  const serviceWorkerContent = `
+    const CACHE_NAME = 'snow-report-cache-${cacheVersion}';
+    const OFFLINE_URL = '/offline.html';
+    const RESOURCES_TO_CACHE = ${JSON.stringify(cacheResources)};
+
+    self.addEventListener('install', (event) => {
+      event.waitUntil(
+        caches.open(CACHE_NAME).then((cache) => {
+          return cache.addAll([...RESOURCES_TO_CACHE, OFFLINE_URL]);
+        })
+      );
+      self.skipWaiting();
+    });
+
+    self.addEventListener('activate', (event) => {
+      event.waitUntil(
+        Promise.all([
+          caches.keys().then((cacheNames) => {
+            return Promise.all(
+              cacheNames
+                .filter((cacheName) => cacheName !== CACHE_NAME)
+                .map((cacheName) => caches.delete(cacheName))
+            );
+          }),
+          clients.claim()
+        ])
+      );
+    });
+
+    self.addEventListener('fetch', (event) => {
+      // Don't cache API requests
+      if (event.request.url.includes('/api/')) {
+        event.respondWith(fetch(event.request));
+        return;
+      }
+
+      event.respondWith(
+        fetch(event.request)
+          .then((response) => {
+            if (response.ok) {
+              const responseClone = response.clone();
+              caches.open(CACHE_NAME).then((cache) => {
+                cache.put(event.request, responseClone);
+              });
+            }
+            return response;
+          })
+          .catch(async () => {
+            const cachedResponse = await caches.match(event.request);
+            return cachedResponse || caches.match(OFFLINE_URL);
+          })
+      );
+    });
+
+    self.addEventListener('message', (event) => {
+      if (event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+      }
+    });
+
+    // Check for updates every hour
+    setInterval(() => {
+      self.registration.update();
+    }, 60 * 60 * 1000);
+
+    // Log the current cache version (helpful for debugging)
+    console.log('Service Worker initialized with cache version:', '${cacheVersion}');
+  `;
+
+  // Add version info in headers for debugging
+  res.setHeader('X-Cache-Version', cacheVersion);
+  
+  res.send(serviceWorkerContent);
 });
 
 //This tells Express that it's behind a proxy and to trust the X-Forwarded-* headers
