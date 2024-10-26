@@ -73,19 +73,19 @@ app.get('/service-worker.js', (req, res) => {
     const CACHE_NAME = 'snow-report-cache-${cacheVersion}';
     const OFFLINE_URL = '/offline.html';
     const RESOURCES_TO_CACHE = ${JSON.stringify(cacheResources)};
-
+  
     self.addEventListener('install', (event) => {
       event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
           return cache.addAll([...RESOURCES_TO_CACHE, OFFLINE_URL]);
         })
       );
-      self.skipWaiting();
     });
-
+  
     self.addEventListener('activate', (event) => {
       event.waitUntil(
         Promise.all([
+          // Delete old caches
           caches.keys().then((cacheNames) => {
             return Promise.all(
               cacheNames
@@ -93,49 +93,67 @@ app.get('/service-worker.js', (req, res) => {
                 .map((cacheName) => caches.delete(cacheName))
             );
           }),
-          clients.claim()
+          // Tell clients to reload
+          self.clients.claim(),
+          // Optionally, send a message to clients about the update
+          self.clients.matchAll().then(clients => {
+            clients.forEach(client => client.postMessage({ type: 'UPDATE_AVAILABLE' }));
+          })
         ])
       );
     });
-
+  
     self.addEventListener('fetch', (event) => {
+      // Skip cross-origin requests
+      if (!event.request.url.startsWith(self.location.origin)) {
+        return;
+      }
+  
       // Don't cache API requests
       if (event.request.url.includes('/api/')) {
         event.respondWith(fetch(event.request));
         return;
       }
-
+  
       event.respondWith(
-        fetch(event.request)
+        caches.match(event.request)
           .then((response) => {
-            if (response.ok) {
-              const responseClone = response.clone();
-              caches.open(CACHE_NAME).then((cache) => {
-                cache.put(event.request, responseClone);
-              });
+            if (response) {
+              return response;
             }
-            return response;
+  
+            return fetch(event.request).then((response) => {
+              // Check if we received a valid response
+              if (!response || response.status !== 200 || response.type !== 'basic') {
+                return response;
+              }
+  
+              // Clone the response as it can only be consumed once
+              const responseToCache = response.clone();
+  
+              caches.open(CACHE_NAME)
+                .then((cache) => {
+                  cache.put(event.request, responseToCache);
+                });
+  
+              return response;
+            });
           })
-          .catch(async () => {
-            const cachedResponse = await caches.match(event.request);
-            return cachedResponse || caches.match(OFFLINE_URL);
+          .catch(() => {
+            // If both cache and network fail, show offline page
+            if (event.request.mode === 'navigate') {
+              return caches.match(OFFLINE_URL);
+            }
+            return null;
           })
       );
     });
-
+  
     self.addEventListener('message', (event) => {
       if (event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
       }
     });
-
-    // Check for updates every hour
-    setInterval(() => {
-      self.registration.update();
-    }, 60 * 60 * 1000);
-
-    // Log the current cache version (helpful for debugging)
-    console.log('Service Worker initialized with cache version:', '${cacheVersion}');
   `;
 
   // Add version info in headers for debugging
