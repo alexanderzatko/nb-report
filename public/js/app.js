@@ -178,9 +178,13 @@ class App {
     try {
       const userData = await this.managers.network.get('/api/user-data');
       if (userData) {
+        // Ensure LocationManager is initialized before proceeding
+        await this.managers.location.initializationPromise;
+        
         this.managers.ui.updateUIWithUserData(userData);
         this.managers.form.initializeForm(userData);
-        await this.managers.location.populateCountryDropdown();
+        await this.managers.location.refreshDropdowns();
+        return userData;
       }
     } catch (error) {
       this.logger.error('Error refreshing user data:', error);
