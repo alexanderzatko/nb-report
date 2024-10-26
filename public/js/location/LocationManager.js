@@ -6,19 +6,20 @@ class LocationManager {
   static instance = null;
 
   constructor() {
-    if (LocationManager.instance) {
-      return LocationManager.instance;
-    }
-    this.i18next = i18next;
-    this.countriesData = null;
-    this.dataLoadingPromise = null;
-    this.setupEventListeners();
-
-    this.i18next.on('languageChanged', () => {
-        this.refreshDropdowns();
-    });
-    
-    LocationManager.instance = this;
+      if (LocationManager.instance) {
+          return LocationManager.instance;
+      }
+      this.i18next = i18next;
+      this.countriesData = null;
+      this.dataLoadingPromise = null;
+      this.setupEventListeners();
+      
+      window.addEventListener('languageChanged', () => {
+          console.log('LocationManager: Window language change event received');
+          this.refreshDropdowns();
+      });
+      
+      LocationManager.instance = this;
   }
 
   static getInstance() {
