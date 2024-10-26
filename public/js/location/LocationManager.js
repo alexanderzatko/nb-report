@@ -13,6 +13,10 @@ class LocationManager {
     this.countriesData = null;
     this.dataLoadingPromise = null;
     this.setupEventListeners();
+
+    this.i18next.on('languageChanged', () => {
+        this.refreshDropdowns();
+    });
     
     LocationManager.instance = this;
   }
