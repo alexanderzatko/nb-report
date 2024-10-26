@@ -186,19 +186,22 @@ class UIManager {
   }
 
   updateUIWithUserData(userData) {
-    console.log(userData);
-    
-    // Set the language based on user data
-    if (userData.language) {
-        this.i18next.changeLanguage(userData.language).then(() => {
-            // After language change, refresh the location dropdowns
-            const locationManager = LocationManager.getInstance();
-            locationManager.refreshDropdowns();
-        });
-    }
-    
-    this.updateRewardsSection(userData);
-}
+      console.log('Updating UI with user data:', userData);  // Add this log
+      
+      // Set the language based on user data
+      if (userData.language) {
+          console.log('Changing language to:', userData.language);  // Add this log
+          this.i18next.changeLanguage(userData.language).then(() => {
+              console.log('Language changed successfully');  // Add this log
+              const locationManager = LocationManager.getInstance();
+              locationManager.refreshDropdowns();
+          }).catch(error => {
+              console.error('Error changing language:', error);  // Add this log
+          });
+      }
+      
+      this.updateRewardsSection(userData);
+  }
 
   updateRewardsSection(userData) {
     const rewardsSection = document.getElementById('rewards-section');
