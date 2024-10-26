@@ -186,6 +186,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /* Photos upload START */
 
+.photos-section {
+    margin-top: 45px;
+    margin-bottom: 40px;
+}
+
+div#photo-preview-container {
+    margin-bottom: 20px;
+}
+
 .button-group {
     display: flex;
     gap: 10px;
