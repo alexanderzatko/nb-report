@@ -4,6 +4,7 @@ import i18next from '/node_modules/i18next/dist/esm/i18next.js';
 import AuthManager from '../auth/AuthManager.js';
 import FormManager from '../form/FormManager.js';
 import LocationManager from '../location/LocationManager.js';
+import DropdownManager from '../dropdowns/DropdownManager.js';
 
 class UIManager {
   static instance = null;
@@ -185,26 +186,30 @@ class UIManager {
     document.getElementById('snow-report-form').style.display = 'none';
   }
 
-updateUIWithUserData(userData) {
-    console.log('UIManager: Updating UI with user data:', userData);
-    
-    if (userData.language) {
-        console.log('UIManager: Initiating language change to:', userData.language);
-        this.i18next.changeLanguage(userData.language)
-            .then(() => {
-                console.log('UIManager: Language change completed to:', userData.language);
-                // Explicitly trigger LocationManager update
-                const locationManager = LocationManager.getInstance();
-                console.log('UIManager: Triggering location manager refresh');
-                locationManager.refreshDropdowns();
-            })
-            .catch(error => {
-                console.error('UIManager: Error changing language:', error);
-            });
-    }
-    
-    this.updateRewardsSection(userData);
-}
+  updateUIWithUserData(userData) {
+      console.log('UIManager: Updating UI with user data:', userData);
+      
+      if (userData.language) {
+          console.log('UIManager: Initiating language change to:', userData.language);
+          this.i18next.changeLanguage(userData.language)
+              .then(() => {
+                  console.log('UIManager: Language change completed to:', userData.language);
+                  // Refresh all dropdowns
+                  const locationManager = LocationManager.getInstance();
+                  console.log('UIManager: Triggering location manager refresh');
+                  locationManager.refreshDropdowns();
+                  
+                  const dropdownManager = DropdownManager.getInstance();
+                  console.log('UIManager: Triggering dropdown manager refresh');
+                  dropdownManager.updateXcDropdowns();
+              })
+              .catch(error => {
+                  console.error('UIManager: Error changing language:', error);
+              });
+      }
+      
+      this.updateRewardsSection(userData);
+  }
 
   updateRewardsSection(userData) {
     const rewardsSection = document.getElementById('rewards-section');
