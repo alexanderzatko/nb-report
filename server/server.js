@@ -460,7 +460,6 @@ app.get('/api/user-data', async (req, res) => {
   }
 
   try {
-    // Fetch user data from Drupal server using the access token
     const response = await axios.post(
       `${OAUTH_PROVIDER_URL}/nabezky/rules/rules_retrieve_data_for_the_nb_report_app`,
       {},
@@ -473,7 +472,8 @@ app.get('/api/user-data', async (req, res) => {
       }
     );
 
-    // Update the session with the latest user data
+    logger.info('User data retrieved:', response.data);  // Add this log
+
     req.session.userData = response.data;
     req.session.save((err) => {
       if (err) logger.error('Error saving session:', err);
