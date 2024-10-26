@@ -189,11 +189,15 @@ class UIManager {
     
     // Set the language based on user data
     if (userData.language) {
-      this.i18next.changeLanguage(userData.language);
+        this.i18next.changeLanguage(userData.language).then(() => {
+            // After language change, refresh the location dropdowns
+            const locationManager = LocationManager.getInstance();
+            locationManager.refreshDropdowns();
+        });
     }
     
     this.updateRewardsSection(userData);
-  }
+}
 
   updateRewardsSection(userData) {
     const rewardsSection = document.getElementById('rewards-section');
