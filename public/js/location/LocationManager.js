@@ -14,10 +14,16 @@ class LocationManager {
       this.dataLoadingPromise = null;
       this.setupEventListeners();
       
+      // Log when instance is created
+      console.log('LocationManager: Instance created');
+      
+      // Add listener and immediately log to verify it's attached
       window.addEventListener('languageChanged', () => {
           console.log('LocationManager: Window language change event received');
+          console.log('LocationManager: Current language:', this.i18next.language);
           this.refreshDropdowns();
       });
+      console.log('LocationManager: Language change listener attached');
       
       LocationManager.instance = this;
   }
@@ -58,22 +64,22 @@ class LocationManager {
       this.populateCountryDropdown();
   }
   
-  async populateCountryDropdown() {
-    console.log('populateCountryDropdown called');
+async populateCountryDropdown() {
+    console.log('LocationManager: populateCountryDropdown called');
     console.log('LocationManager: Current language:', this.i18next.language);
-
+    
     if (!this.countriesData) {
-      console.log('Data not loaded, initializing first...');
-      await this.initialize();
+        console.log('LocationManager: Data not loaded, initializing first...');
+        await this.initialize();
     }
 
     const countrySelect = document.getElementById('country');
     if (!countrySelect) {
-      console.warn('Country select element not found');
-      return;
+        console.warn('LocationManager: Country select element not found');
+        return;
     }
 
-    // Clear and repopulate with current language
+    console.log('LocationManager: Starting country dropdown population');
     countrySelect.innerHTML = '';
     const defaultOption = document.createElement('option');
     defaultOption.value = '';
@@ -81,25 +87,18 @@ class LocationManager {
     countrySelect.appendChild(defaultOption);
     
     this.countriesData.countries.forEach(country => {
-      const option = document.createElement('option');
-      option.value = country.code;
-      // Get translation in current language
-      const countryName = this.i18next.t(country.nameKey);
-      console.log(`LocationManager: Translating country ${country.code}:`, countryName);
-      option.textContent = countryName;
-      countrySelect.appendChild(option);
+        const option = document.createElement('option');
+        option.value = country.code;
+        const countryName = this.i18next.t(country.nameKey);
+        console.log(`LocationManager: Translating country ${country.code} to: ${countryName}`);
+        option.textContent = countryName;
+        countrySelect.appendChild(option);
     });
 
-    // Maintain selected value if exists
-    const currentValue = this.getCurrentCountry() || this.inferCountryFromLanguage();
-    if (currentValue) {
-      console.log('LocationManager: Setting country value to:', currentValue);
-      countrySelect.value = currentValue;
-    }
-
-    console.log('Country dropdown populated. Selected value:', countrySelect.value);
+    // Log completion
+    console.log('LocationManager: Country dropdown population complete');
     await this.updateRegions();
-  }
+}
 
   async loadCountriesData() {
     if (this.dataLoadingPromise) {
