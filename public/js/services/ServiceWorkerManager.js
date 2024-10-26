@@ -10,7 +10,8 @@ class ServiceWorkerManager {
     
     this.registration = null;
     this.updateFound = false;
-    
+    this.i18next = i18next;
+
     ServiceWorkerManager.instance = this;
   }
 
@@ -79,10 +80,52 @@ class ServiceWorkerManager {
   }
 
   notifyUpdateReady() {
-    // You could emit a custom event here instead of using confirm
-    if (confirm('New version available! Click OK to refresh.')) {
+    const notification = document.createElement('div');
+    notification.className = 'update-notification';
+    notification.innerHTML = `
+      <div class="update-notification-content">
+        <div class="update-notification-header">
+          <h3>${this.i18next.t('updates.newVersionTitle')}</h3>
+          <button class="update-notification-close">&times;</button>
+        </div>
+        <p>${this.i18next.t('updates.newVersionMessage')}</p>
+        <div class="update-notification-actions">
+          <button class="update-notification-update">${this.i18next.t('updates.updateNow')}</button>
+          <button class="update-notification-later">${this.i18next.t('updates.updateLater')}</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    const closeBtn = notification.querySelector('.update-notification-close');
+    const updateBtn = notification.querySelector('.update-notification-update');
+    const laterBtn = notification.querySelector('.update-notification-later');
+
+    const removeNotification = () => {
+      notification.classList.add('update-notification-hiding');
+      setTimeout(() => notification.remove(), 300);
+    };
+
+    closeBtn.addEventListener('click', removeNotification);
+    laterBtn.addEventListener('click', removeNotification);
+    updateBtn.addEventListener('click', () => {
+      removeNotification();
       this.applyUpdate();
-    }
+    });
+
+    // Update translations when language changes
+    window.addEventListener('languageChanged', () => {
+      const title = notification.querySelector('h3');
+      const message = notification.querySelector('p');
+      const updateButton = notification.querySelector('.update-notification-update');
+      const laterButton = notification.querySelector('.update-notification-later');
+
+      title.textContent = this.i18next.t('updates.newVersionTitle');
+      message.textContent = this.i18next.t('updates.newVersionMessage');
+      updateButton.textContent = this.i18next.t('updates.updateNow');
+      laterButton.textContent = this.i18next.t('updates.updateLater');
+    });
   }
 
   async applyUpdate() {
