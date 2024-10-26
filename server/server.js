@@ -58,34 +58,45 @@ app.use('/node_modules', express.static(path.join(__dirname, '../node_modules'),
 }));
 
 app.get('/service-worker.js', (req, res) => {
-  const config = ConfigManager.getInstance();
-  const cacheVersion = config.get('cache.version');
-  const cacheResources = config.get('cache.staticResources');
-  
   // Set proper headers
   res.setHeader('Content-Type', 'application/javascript');
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
 
+  // Define cache version and resources directly in server
+  const CACHE_VERSION = 'v76'; // Match this with your ConfigManager version
+  const CACHE_RESOURCES = [
+    '/',
+    '/index.html',
+    '/styles.css',
+    '/app.js',
+    '/i18n.js',
+    '/manifest.json',
+    '/locales/en/translation.json',
+    '/locales/sk/translation.json',
+    '/locales/cs/translation.json',
+    '/icon/login-icon.svg'
+  ];
+
   // Generate service worker content
   const serviceWorkerContent = `
-    const CACHE_NAME = 'snow-report-cache-${cacheVersion}';
+    const CACHE_NAME = 'snow-report-cache-${CACHE_VERSION}';
     const OFFLINE_URL = '/offline.html';
-    const RESOURCES_TO_CACHE = ${JSON.stringify(cacheResources)};
-  
+    const RESOURCES_TO_CACHE = ${JSON.stringify(CACHE_RESOURCES)};
+
     self.addEventListener('install', (event) => {
       event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
           return cache.addAll([...RESOURCES_TO_CACHE, OFFLINE_URL]);
         })
       );
+      self.skipWaiting();
     });
-  
+
     self.addEventListener('activate', (event) => {
       event.waitUntil(
         Promise.all([
-          // Delete old caches
           caches.keys().then((cacheNames) => {
             return Promise.all(
               cacheNames
@@ -93,49 +104,46 @@ app.get('/service-worker.js', (req, res) => {
                 .map((cacheName) => caches.delete(cacheName))
             );
           }),
-          // Tell clients to reload
           self.clients.claim(),
-          // Optionally, send a message to clients about the update
           self.clients.matchAll().then(clients => {
             clients.forEach(client => client.postMessage({ type: 'UPDATE_AVAILABLE' }));
           })
         ])
       );
     });
-  
+
     self.addEventListener('fetch', (event) => {
       // Skip cross-origin requests
       if (!event.request.url.startsWith(self.location.origin)) {
         return;
       }
-  
+
       // Don't cache API requests
       if (event.request.url.includes('/api/')) {
         event.respondWith(fetch(event.request));
         return;
       }
-  
+
       event.respondWith(
         caches.match(event.request)
           .then((response) => {
             if (response) {
               return response;
             }
-  
+
             return fetch(event.request).then((response) => {
               // Check if we received a valid response
               if (!response || response.status !== 200 || response.type !== 'basic') {
                 return response;
               }
-  
-              // Clone the response as it can only be consumed once
+
               const responseToCache = response.clone();
-  
+
               caches.open(CACHE_NAME)
                 .then((cache) => {
                   cache.put(event.request, responseToCache);
                 });
-  
+
               return response;
             });
           })
@@ -148,7 +156,7 @@ app.get('/service-worker.js', (req, res) => {
           })
       );
     });
-  
+
     self.addEventListener('message', (event) => {
       if (event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
@@ -156,9 +164,6 @@ app.get('/service-worker.js', (req, res) => {
     });
   `;
 
-  // Add version info in headers for debugging
-  res.setHeader('X-Cache-Version', cacheVersion);
-  
   res.send(serviceWorkerContent);
 });
 
