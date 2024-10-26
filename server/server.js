@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 import winston from 'winston';
 import MySQLStore from 'express-mysql-session';
 import axios from 'axios';
-import ConfigManager from './config/ConfigManager.js';
+import ConfigManager from '../public/js/config/ConfigManager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
