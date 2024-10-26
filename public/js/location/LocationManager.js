@@ -16,6 +16,12 @@ class LocationManager {
       this.dataLoadingPromise = null;
       this.setupEventListeners();
       
+      // Add direct i18next listener like DropdownManager uses
+      this.i18next.on('languageChanged', (lng) => {
+          console.log('LocationManager: i18next language changed to:', lng);
+          this.refreshDropdowns();
+      });
+      
       LocationManager.instance = this;
   }
 
