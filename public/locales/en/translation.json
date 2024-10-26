@@ -1,4 +1,10 @@
 {
+  "updates": {
+    "newVersionTitle": "New App Version",
+    "newVersionMessage": "A new version of the app is available. Update now to get the latest features and improvements.",
+    "updateNow": "Update Now",
+    "updateLater": "Later"
+  },
   "app": {
     "title": "Report Snow Conditions",
     "header": "Report Snow Conditions"
