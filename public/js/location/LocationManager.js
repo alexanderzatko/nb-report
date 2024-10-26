@@ -60,7 +60,8 @@ class LocationManager {
   
   async populateCountryDropdown() {
     console.log('populateCountryDropdown called');
-    
+    console.log('LocationManager: Current language:', this.i18next.language);
+
     if (!this.countriesData) {
       console.log('Data not loaded, initializing first...');
       await this.initialize();
@@ -73,19 +74,26 @@ class LocationManager {
     }
 
     // Clear and repopulate with current language
-    countrySelect.innerHTML = `<option value="">${this.i18next.t('form.selectCountry')}</option>`;
+    countrySelect.innerHTML = '';
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = this.i18next.t('form.selectCountry');
+    countrySelect.appendChild(defaultOption);
     
     this.countriesData.countries.forEach(country => {
       const option = document.createElement('option');
       option.value = country.code;
       // Get translation in current language
-      option.textContent = this.i18next.t(country.nameKey);
+      const countryName = this.i18next.t(country.nameKey);
+      console.log(`LocationManager: Translating country ${country.code}:`, countryName);
+      option.textContent = countryName;
       countrySelect.appendChild(option);
     });
 
     // Maintain selected value if exists
-    const currentValue = this.getCurrentCountry();
+    const currentValue = this.getCurrentCountry() || this.inferCountryFromLanguage();
     if (currentValue) {
+      console.log('LocationManager: Setting country value to:', currentValue);
       countrySelect.value = currentValue;
     }
 
@@ -131,28 +139,39 @@ inferCountryFromLanguage(language = null) {
 }
 
 updateRegions() {
+  console.log('LocationManager: updateRegions called');
   const countrySelect = document.getElementById('country');
   const regionSelect = document.getElementById('region');
   const selectedCountry = countrySelect.value;
-  
-  regionSelect.innerHTML = `<option value="">${this.i18next.t('form.selectRegion')}</option>`;
+
+  console.log('LocationManager: Updating regions for country:', selectedCountry);
+
+  regionSelect.innerHTML = '';
+  const defaultOption = document.createElement('option');
+  defaultOption.value = '';
+  defaultOption.textContent = this.i18next.t('form.selectRegion');
+  regionSelect.appendChild(defaultOption);
 
   const country = this.countriesData.countries.find(c => c.code === selectedCountry);
   if (country && country.regions) {
-    const sortedRegions = Object.entries(country.regions)
-      .map(([regionId, regionKey]) => ({
-        id: regionId,
-        key: regionKey,
-        name: this.i18next.t(regionKey)
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+      const sortedRegions = Object.entries(country.regions)
+          .map(([regionId, regionKey]) => {
+              const translatedName = this.i18next.t(regionKey);
+              console.log(`LocationManager: Translating region ${regionKey}:`, translatedName);
+              return {
+                  id: regionId,
+                  key: regionKey,
+                  name: translatedName
+              };
+          })
+          .sort((a, b) => a.name.localeCompare(b.name));
 
-    sortedRegions.forEach(region => {
-      const option = document.createElement('option');
-      option.value = region.id;
-      option.textContent = region.name;
-      regionSelect.appendChild(option);
-    });
+      sortedRegions.forEach(region => {
+          const option = document.createElement('option');
+          option.value = region.id;
+          option.textContent = region.name;
+          regionSelect.appendChild(option);
+      });
   }
 }
 
