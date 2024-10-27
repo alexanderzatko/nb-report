@@ -2,7 +2,6 @@
 
 import i18next from '/node_modules/i18next/dist/esm/i18next.js';
 import Logger from '../utils/Logger.js';
-import AuthManager from '../auth/AuthManager.js';
 
 class SelectManager {
   static instance = null;
@@ -34,24 +33,29 @@ class SelectManager {
   async initialize() {
     this.logger.debug('SelectManager: Initializing...');
     try {
-      // Load data first
+      // Wait for i18next to be ready if it's not already
+      if (!this.i18next.isInitialized) {
+        this.logger.debug('Waiting for i18next to initialize...');
+        await new Promise(resolve => {
+          this.i18next.on('initialized', resolve);
+        });
+      }
+
+      // Load data
       await Promise.all([
         this.loadLocationData(),
         this.loadXCData()
       ]);
-  
-      // Only setup dropdowns if user is authenticated
-      const authManager = AuthManager.getInstance();
-      if (await authManager.checkAuthStatus()) {
-        this.setupLanguageListeners();
-        this.setupEventListeners();
-        await this.refreshAllDropdowns();
-      }
+
+      this.setupLanguageListeners();
+      this.setupEventListeners();
+      await this.refreshAllDropdowns();
       
+      this.logger.debug('SelectManager: Initialization complete');
       return true;
     } catch (error) {
       this.logger.error('SelectManager: Initialization error:', error);
-      return false;
+      throw error;
     }
   }
 
@@ -79,11 +83,15 @@ class SelectManager {
 
     this.loadingPromises.locations = (async () => {
       try {
+        this.logger.debug('Loading location data...');
         const response = await fetch('/data/countries-regions.json');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
         this.data.locations = await response.json();
-        this.logger.debug('SelectManager: Location data loaded successfully');
+        this.logger.debug('Location data loaded successfully');
       } catch (error) {
-        this.logger.error('SelectManager: Error loading location data:', error);
+        this.logger.error('Error loading location data:', error);
         throw error;
       }
     })();
@@ -98,11 +106,15 @@ class SelectManager {
 
     this.loadingPromises.xcConditions = (async () => {
       try {
+        this.logger.debug('Loading XC conditions data...');
         const response = await fetch('/data/xc_dropdowns.json');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
         this.data.xcConditions = await response.json();
-        this.logger.debug('SelectManager: XC conditions data loaded successfully');
+        this.logger.debug('XC conditions data loaded successfully');
       } catch (error) {
-        this.logger.error('SelectManager: Error loading XC conditions data:', error);
+        this.logger.error('Error loading XC conditions data:', error);
         throw error;
       }
     })();
@@ -110,9 +122,10 @@ class SelectManager {
     return this.loadingPromises.xcConditions;
   }
 
-  // Dropdown Population Methods
   async refreshAllDropdowns() {
     try {
+      this.logger.debug('Refreshing all dropdowns...');
+      
       // Ensure data is loaded
       if (!this.data.locations || !this.data.xcConditions) {
         await Promise.all([
@@ -121,17 +134,24 @@ class SelectManager {
         ]);
       }
       
-      await this.populateLocationDropdowns();
-      await this.populateXCDropdowns();
+      await Promise.all([
+        this.populateLocationDropdowns(),
+        this.populateXCDropdowns()
+      ]);
+      
+      this.logger.debug('All dropdowns refreshed successfully');
     } catch (error) {
-      this.logger.error('SelectManager: Error refreshing dropdowns:', error);
+      this.logger.error('Error refreshing dropdowns:', error);
       throw error;
     }
   }
 
   async populateLocationDropdowns() {
     const countrySelect = document.getElementById('country');
-    if (!countrySelect) return;
+    if (!countrySelect) {
+      this.logger.warn('Country select element not found');
+      return;
+    }
 
     const currentValue = countrySelect.value;
     
@@ -140,6 +160,11 @@ class SelectManager {
     defaultOption.value = '';
     defaultOption.textContent = this.i18next.t('form.selectCountry');
     countrySelect.appendChild(defaultOption);
+
+    if (!this.data.locations?.countries) {
+      this.logger.error('No countries data available');
+      return;
+    }
 
     this.data.locations.countries.forEach(country => {
       const option = document.createElement('option');
@@ -186,7 +211,10 @@ class SelectManager {
   }
 
   populateXCDropdowns() {
-    if (!this.data.xcConditions) return;
+    if (!this.data.xcConditions) {
+      this.logger.error('No XC conditions data available');
+      return;
+    }
 
     this.updateSnowTypeDropdown();
     this.updateTrackConditionsDropdowns();
@@ -196,9 +224,17 @@ class SelectManager {
 
   updateSnowTypeDropdown() {
     const snowTypeSelect = document.getElementById('snow-type');
-    if (!snowTypeSelect) return;
+    if (!snowTypeSelect) {
+      this.logger.warn('Snow type select element not found');
+      return;
+    }
 
     snowTypeSelect.innerHTML = '';
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = this.i18next.t('form.selectSnowType', 'Select snow type');
+    snowTypeSelect.appendChild(defaultOption);
+
     this.data.xcConditions.snowTypes.forEach(type => {
       const option = document.createElement('option');
       option.value = type.code;
