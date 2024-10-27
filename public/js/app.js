@@ -47,7 +47,6 @@ class App {
 
   async initializeApp() {
     try {
-      // Initialize essential managers first
       this.managers = {
         config: ConfigManager.getInstance(),
         event: EventManager.getInstance(),
@@ -58,16 +57,17 @@ class App {
         ui: UIManager.getInstance(),
         serviceWorker: ServiceWorkerManager.getInstance()
       };
-  
-      // Initialize i18n but don't initialize form managers yet
+
+      // Initialize i18next first and wait for completion
       await initI18next();
-  
-      // Initialize service worker
+      
+      // After i18next is initialized, initialize UI manager
+      await this.managers.ui.initialize();
+
       if ('serviceWorker' in navigator) {
         await this.managers.serviceWorker.initialize();
       }
-  
-      // Check auth and initialize app state
+
       await this.initializeAppState();
       
       this.initialized = true;
@@ -79,15 +79,15 @@ class App {
   }
 
   async initializeFormManagers() {
-    // Initialize form-related managers
     this.managers.select = SelectManager.getInstance();
     this.managers.form = FormManager.getInstance();
     this.managers.photo = PhotoManager.getInstance();
     this.managers.validation = ValidationManager.getInstance();
   
-    // Initialize managers that require setup
-    await this.managers.select.initialize();
-    await this.managers.form.initialize();
+    await Promise.all([
+      this.managers.select.initialize(),
+      this.managers.form.initialize()
+    ]);
   }
     
   async initializeAppState() {
@@ -103,7 +103,7 @@ class App {
           const isValid = await this.managers.auth.checkAuthStatus();
           console.log('Auth status check result:', isValid);
           if (isValid) {
-            await this.initializeFormManagers(); // Initialize form managers here
+            await this.initializeFormManagers();
             await this.refreshUserData();
             await this.managers.ui.updateUIBasedOnAuthState(true);
           } else {
@@ -150,7 +150,7 @@ class App {
     try {
       const userData = await this.managers.network.get('/api/user-data');
       if (userData) {
-        this.managers.ui.updateUIWithUserData(userData);
+        await this.managers.ui.updateUIWithUserData(userData);
         this.managers.form.initializeForm(userData);
         return userData;
       }
