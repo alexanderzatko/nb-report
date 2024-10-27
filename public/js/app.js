@@ -59,23 +59,13 @@ class App {
         serviceWorker: ServiceWorkerManager.getInstance()
       };
   
-      // Initialize i18n first, before any form managers
+      // Initialize i18n but don't initialize form managers yet
       await initI18next();
-      
-      // Initialize form-related managers immediately
-      this.managers.select = SelectManager.getInstance();
-      this.managers.form = FormManager.getInstance();
-      this.managers.photo = PhotoManager.getInstance();
-      this.managers.validation = ValidationManager.getInstance();
   
       // Initialize service worker
       if ('serviceWorker' in navigator) {
         await this.managers.serviceWorker.initialize();
       }
-  
-      // Initialize managers that require setup
-      await this.managers.select.initialize();
-      await this.managers.form.initialize();
   
       // Check auth and initialize app state
       await this.initializeAppState();
@@ -89,16 +79,13 @@ class App {
   }
 
   async initializeFormManagers() {
-    // Initialize i18n
-    await initI18next();
-    
     // Initialize form-related managers
     this.managers.select = SelectManager.getInstance();
     this.managers.form = FormManager.getInstance();
     this.managers.photo = PhotoManager.getInstance();
     this.managers.validation = ValidationManager.getInstance();
-    
-    // Initialize form components
+  
+    // Initialize managers that require setup
     await this.managers.select.initialize();
     await this.managers.form.initialize();
   }
@@ -116,6 +103,7 @@ class App {
           const isValid = await this.managers.auth.checkAuthStatus();
           console.log('Auth status check result:', isValid);
           if (isValid) {
+            await this.initializeFormManagers(); // Initialize form managers here
             await this.refreshUserData();
             await this.managers.ui.updateUIBasedOnAuthState(true);
           } else {
@@ -146,6 +134,7 @@ class App {
         window.history.replaceState({}, document.title, '/');
         
         if (success) {
+          await this.initializeFormManagers(); // Initialize form managers here
           await this.managers.ui.updateUIBasedOnAuthState(true);
           await this.refreshUserData();
           return true;
