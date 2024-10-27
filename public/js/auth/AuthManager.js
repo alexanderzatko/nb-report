@@ -10,6 +10,7 @@ class AuthManager {
 
     this.initPromise = null;
     this.exchangingToken = false;
+    this.stateCheckInProgress = false;
     AuthManager.instance = this;
   }
 
@@ -48,8 +49,13 @@ class AuthManager {
       if (state) {
         const storedState = localStorage.getItem('oauthState');
         console.log('Stored state:', storedState);
-        if (state !== storedState) {
-          console.error('State mismatch. Possible CSRF attack.');
+        
+        // Clear the stored state immediately to prevent reuse
+        localStorage.removeItem('oauthState');
+        console.log('Cleared stored OAuth state');
+        
+        if (!storedState || state !== storedState) {
+          console.error('State mismatch or missing. Possible CSRF attack.');
           return false;
         }
         console.log('State validation successful');
@@ -71,51 +77,51 @@ class AuthManager {
   
       return false;
     } finally {
-      this.exchangingToken = false;  
-      localStorage.removeItem('oauthState');
-      console.log('Cleared stored OAuth state');
+      this.exchangingToken = false;
     }
   }
 
   async initiateOAuth() {
-      console.log('InitiateOAuth called');
-      try {
-          const state = Math.random().toString(36).substring(2, 15);
-          console.log('Generated state:', state);
-          localStorage.setItem('oauthState', state);
-    
-          const response = await fetch('/api/initiate-oauth', {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ 
-                  state, 
-                  scopes: 'email'
-              }),
-          });
-          console.log('OAuth initiation response:', response);
-          const data = await response.json();
-          console.log('OAuth initiation data:', data);
-          if (data.authUrl) {
-              console.log('Redirecting to:', data.authUrl);
-              // Don't await or try to catch errors here since the page will unload
-              window.location.replace(data.authUrl);
-              // Return true to indicate successful initiation
-              return true;
-          } else {
-              console.error('No auth URL received');
-              return false;
-          }
-      } catch (error) {
-          // Only log real errors, not the expected redirect termination
-          if (!(error instanceof TypeError) || !error.message.includes('NetworkError')) {
-              console.error('Error initiating OAuth:', error);
-          }
-          return false;
+    console.log('InitiateOAuth called');
+    try {
+      // Clear any existing OAuth state first
+      localStorage.removeItem('oauthState');
+      
+      const state = Math.random().toString(36).substring(2, 15);
+      console.log('Generated state:', state);
+      localStorage.setItem('oauthState', state);
+
+      const response = await fetch('/api/initiate-oauth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          state, 
+          scopes: 'email'
+        }),
+      });
+      
+      console.log('OAuth initiation response:', response);
+      const data = await response.json();
+      console.log('OAuth initiation data:', data);
+      
+      if (data.authUrl) {
+        console.log('Redirecting to:', data.authUrl);
+        window.location.replace(data.authUrl);
+        return true;
+      } else {
+        console.error('No auth URL received');
+        return false;
       }
+    } catch (error) {
+      if (!(error instanceof TypeError) || !error.message.includes('NetworkError')) {
+        console.error('Error initiating OAuth:', error);
+      }
+      return false;
+    }
   }
-  
+
   async exchangeToken(code) {
     console.log('Attempting to exchange token with code:', code);
     try {
@@ -126,9 +132,8 @@ class AuthManager {
         },
         body: JSON.stringify({ 
           code,
-          // Add any other required parameters
-          redirect_uri: window.location.origin + '/api/nblogin/',  // Add this if required
-          grant_type: 'authorization_code'  // Add this if required
+          redirect_uri: window.location.origin + '/api/nblogin/',
+          grant_type: 'authorization_code'
         }),
         credentials: 'include'
       });
@@ -165,6 +170,11 @@ class AuthManager {
   async logout() {
     try {
       console.log('Logout function called');
+      
+      // Clear OAuth state and session data first
+      localStorage.removeItem('oauthState');
+      localStorage.removeItem('sessionId');
+      
       const response = await fetch('/api/logout', { 
         method: 'POST',
         credentials: 'include',
@@ -183,40 +193,6 @@ class AuthManager {
 
     } catch (error) {
       console.error('Logout error:', error);
-      return false;
-    }
-  }
-
-  async checkAndRefreshToken() {
-    const isLoggedIn = await this.checkAuthStatus();
-    
-    if (!isLoggedIn) {
-      console.log('User is not logged in, skipping token refresh');
-      return false;
-    }
-
-    try {
-      const response = await fetch('/api/refresh-token', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          console.log('Token refreshed successfully');
-          return true;
-        }
-      } else if (response.status === 401) {
-        console.log('Session expired. Please log in again.');
-        localStorage.removeItem('sessionId');
-        return false;
-      }
-    } catch (error) {
-      console.error('Error refreshing token:', error);
       return false;
     }
   }
