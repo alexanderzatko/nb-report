@@ -6,7 +6,6 @@ import { fileURLToPath } from 'url';
 import winston from 'winston';
 import MySQLStore from 'express-mysql-session';
 import axios from 'axios';
-import ConfigManager from '../public/js/config/ConfigManager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -63,122 +62,6 @@ app.use(express.static(path.join(__dirname, '../public'), {
 app.use('/node_modules', express.static(path.join(__dirname, '../node_modules'), {
   setHeaders: setCorrectMimeType
 }));
-
-app.get('/service-worker.js', (req, res) => {
-  const configManager = ConfigManager.getInstance();
-  
-  // Set proper headers
-  res.setHeader('Content-Type', 'application/javascript');
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-
-  // Get version from ConfigManager
-  const CACHE_VERSION = configManager.get('cache.version');
-  
-  // Get static resources from ConfigManager
-  const CACHE_RESOURCES = configManager.get('cache.staticResources');
-
-  const serviceWorkerContent = `
-    const CACHE_NAME = 'snow-report-cache-${CACHE_VERSION}';
-    const RESOURCES_TO_CACHE = ${JSON.stringify(CACHE_RESOURCES)};
-
-    self.addEventListener('install', (event) => {
-      event.waitUntil(
-        caches.open(CACHE_NAME)
-          .then((cache) => {
-            return Promise.allSettled(
-              RESOURCES_TO_CACHE.map(url => 
-                cache.add(url).catch(error => {
-                  console.warn('Failed to cache:', url, error);
-                  return null;
-                })
-              )
-            );
-          })
-          .then(() => self.skipWaiting())
-      );
-    });
-
-    self.addEventListener('activate', (event) => {
-      event.waitUntil(
-        Promise.all([
-          caches.keys().then((cacheNames) => {
-            return Promise.all(
-              cacheNames
-                .filter((cacheName) => cacheName !== CACHE_NAME)
-                .map((cacheName) => caches.delete(cacheName))
-            );
-          }),
-          self.clients.claim(),
-          self.clients.matchAll().then(clients => {
-            clients.forEach(client => client.postMessage({ 
-              type: 'UPDATE_AVAILABLE',
-              version: '${CACHE_VERSION}'
-            }));
-          })
-        ])
-      );
-    });
-
-    self.addEventListener('fetch', (event) => {
-      if (!event.request.url.startsWith(self.location.origin)) {
-        return;
-      }
-
-      if (event.request.url.includes('/api/')) {
-        event.respondWith(fetch(event.request));
-        return;
-      }
-
-      event.respondWith(
-        caches.match(event.request)
-          .then((response) => {
-            if (response) {
-              return response;
-            }
-
-            return fetch(event.request)
-              .then((response) => {
-                if (!response || response.status !== 200 || response.type !== 'basic') {
-                  return response;
-                }
-
-                const responseToCache = response.clone();
-
-                caches.open(CACHE_NAME)
-                  .then((cache) => {
-                    cache.put(event.request, responseToCache);
-                  })
-                  .catch(error => {
-                    console.warn('Failed to cache:', event.request.url, error);
-                  });
-
-                return response;
-              })
-              .catch(async () => {
-                // For navigation requests, return the offline page
-                if (event.request.mode === 'navigate') {
-                  const cache = await caches.open(CACHE_NAME);
-                  return cache.match('/offline.html');
-                }
-                return caches.match(event.request);
-              });
-          })
-      );
-    });
-
-    self.addEventListener('message', (event) => {
-      if (event.data.type === 'SKIP_WAITING') {
-        self.skipWaiting();
-      }
-    });
-
-    console.log('Service Worker initialized with cache version:', '${CACHE_VERSION}');
-  `;
-
-  res.send(serviceWorkerContent);
-});
 
 //This tells Express that it's behind a proxy and to trust the X-Forwarded-* headers
 app.set('trust proxy', 1);
