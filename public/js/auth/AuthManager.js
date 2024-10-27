@@ -39,11 +39,11 @@ class AuthManager {
       console.log('Token exchange already in progress');
       return false;
     }
-
-    this.exchangingToken = true;  // Set flag
+  
+    this.exchangingToken = true;  
     console.log('handleOAuthCallback called');
     console.log('Code:', code, 'State:', state);
-
+  
     try {
       if (state) {
         const storedState = localStorage.getItem('oauthState');
@@ -54,26 +54,24 @@ class AuthManager {
         }
         console.log('State validation successful');
       }
-
+  
       if (code) {
         console.log('Exchanging token');
         try {
           const success = await this.exchangeToken(code);
           if (success) {
-            // Initialize form managers after successful auth
-            await app.initializeFormManagers();
-            await this.managers.ui.updateUIBasedOnAuthState(true);
-            await this.refreshUserData();
+            console.log('Token exchanged successfully');
+            await this.checkAuthStatus();
             return true;
           }
         } catch (error) {
           console.error('Error exchanging token:', error);
         }
       }
-
+  
       return false;
     } finally {
-      this.exchangingToken = false;  // Reset flag
+      this.exchangingToken = false;  
       localStorage.removeItem('oauthState');
       console.log('Cleared stored OAuth state');
     }
