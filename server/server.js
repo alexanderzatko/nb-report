@@ -107,14 +107,17 @@ app.get('/service-worker.js', (req, res) => {
     self.addEventListener('activate', (event) => {
       event.waitUntil(
         Promise.all([
-          // Clear all caches, not just old versions
           caches.keys().then((cacheNames) => {
             return Promise.all(
-              cacheNames.map((cacheName) => caches.delete(cacheName))
+              cacheNames
+                .filter((cacheName) => cacheName !== CACHE_NAME)
+                .map((cacheName) => caches.delete(cacheName))
             );
           }),
-          // Clear any cached responses that might be in memory
-          clients.claim()
+          self.clients.claim(),
+          self.clients.matchAll().then(clients => {
+            clients.forEach(client => client.postMessage({ type: 'UPDATE_AVAILABLE' }));
+          })
         ])
       );
     });
