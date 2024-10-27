@@ -15,8 +15,11 @@ class UIManager {
     }
     this.i18next = i18next;
     this.logger = Logger.getInstance();
-    this.setupEventListeners();
     
+    // Remove formManager and selectManager initialization from constructor
+    this._selectManager = null;  // Will be lazily initialized
+    
+    this.setupEventListeners();
     UIManager.instance = this;
   }
 
@@ -191,13 +194,28 @@ class UIManager {
     document.getElementById('snow-report-form').style.display = 'none';
   }
 
-  updateUIWithUserData(userData) {
-    this.logger.debug('Updating UI with user data:', userData);
+  get selectManager() {
+    if (!this._selectManager) {
+      this._selectManager = SelectManager.getInstance();
+    }
+    return this._selectManager;
+  }
+
+  async updateUIWithUserData(userData) {
+    this.logger.debug('UIManager: Updating UI with user data:', userData);
     
     if (userData.language) {
-      this.i18next.changeLanguage(userData.language)
-        .then(() => this.logger.debug('Language changed successfully'))
-        .catch(error => this.logger.error('Error changing language:', error));
+      try {
+        await this.i18next.changeLanguage(userData.language);
+        this.logger.debug('Language changed successfully');
+        
+        // Only attempt to refresh select manager if it's initialized
+        if (this._selectManager) {
+          await this.selectManager.refreshAllDropdowns();
+        }
+      } catch (error) {
+        this.logger.error('UIManager: Error during language update:', error);
+      }
     }
     
     this.updateRewardsSection(userData);
