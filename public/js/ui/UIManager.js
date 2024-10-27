@@ -20,6 +20,29 @@ class UIManager {
     UIManager.instance = this;
   }
 
+  async initialize() {
+    if (this.initialized) {
+      return;
+    }
+
+    try {
+      // Wait for i18next to be ready
+      if (!this.i18next.isInitialized) {
+        this.logger.debug('Waiting for i18next to initialize...');
+        await new Promise((resolve) => {
+          this.i18next.on('initialized', resolve);
+        });
+      }
+
+      this.setupEventListeners();
+      this.updatePageContent();
+      this.initialized = true;
+    } catch (error) {
+      this.logger.error('Error initializing UIManager:', error);
+      throw error;
+    }
+  }
+  
   initializeFormManagers() {
     this.formManager = FormManager.getInstance();
     this.selectManager = SelectManager.getInstance();
@@ -107,28 +130,6 @@ class UIManager {
     }
   }
 
-  updatePageContent() {
-      this.logger.debug('Updating page content with translations');
-      try {
-          document.querySelectorAll('[data-i18n]').forEach(element => {
-              const key = element.getAttribute('data-i18n');
-              try {
-                  const translation = this.i18next.t(key, { 
-                      returnObjects: true, 
-                      interpolation: { escapeValue: false } 
-                  });
-                  this.updateElementTranslation(element, translation);
-              } catch (error) {
-                  this.logger.error(`Error translating key "${key}":`, error);
-              }
-          });
-          
-          this.updateLoginText();
-      } catch (error) {
-          this.logger.error('Error updating page content:', error);
-      }
-  }
-
   updateElementTranslation(element, translation) {
     if (typeof translation === 'object') {
       if (element.tagName.toLowerCase() === 'select') {
@@ -198,26 +199,62 @@ class UIManager {
   }
 
   async updateUIWithUserData(userData) {
-      this.logger.debug('Updating UI with user data:', userData);
-      
-      if (userData.language) {
-          try {
-              // Import the changeLanguage function
-              const { changeLanguage } = await import('../i18n.js');
-              await changeLanguage(userData.language);
-              this.logger.debug('Language changed successfully to:', userData.language);
-              
-              // Update page content after language change
-              this.updatePageContent();
-          } catch (error) {
-              this.logger.error('Error updating language:', error);
-              // Continue with other UI updates even if language change fails
-          }
+    this.logger.debug('Updating UI with user data:', userData);
+    
+    if (userData.language) {
+      try {
+        // Ensure i18next is initialized before changing language
+        if (!this.i18next.isInitialized) {
+          this.logger.debug('Waiting for i18next initialization before language change...');
+          await new Promise((resolve) => {
+            this.i18next.on('initialized', resolve);
+          });
+        }
+
+        await this.i18next.changeLanguage(userData.language);
+        this.logger.debug('Language changed successfully to:', userData.language);
+      } catch (error) {
+        this.logger.error('Error changing language:', error);
+        // Continue with other updates even if language change fails
       }
-      
-      this.updateRewardsSection(userData);
+    }
+    
+    // Update UI components that don't depend on translations
+    this.updateRewardsSection(userData);
+    
+    // Update translated content if i18next is ready
+    if (this.i18next.isInitialized) {
+      this.updatePageContent();
+    }
   }
 
+    updatePageContent() {
+    if (!this.i18next.isInitialized) {
+      this.logger.warn('Attempted to update page content before i18next initialization');
+      return;
+    }
+
+    this.logger.debug('Updating page content with translations');
+    try {
+      document.querySelectorAll('[data-i18n]').forEach(element => {
+        const key = element.getAttribute('data-i18n');
+        try {
+          const translation = this.i18next.t(key, { 
+            returnObjects: true, 
+            interpolation: { escapeValue: false } 
+          });
+          this.updateElementTranslation(element, translation);
+        } catch (error) {
+          this.logger.error(`Error translating key "${key}":`, error);
+        }
+      });
+      
+      this.updateLoginText();
+    } catch (error) {
+      this.logger.error('Error updating page content:', error);
+    }
+  }
+  
   updateRewardsSection(userData) {
     const rewardsSection = document.getElementById('rewards-section');
     if (rewardsSection) {
