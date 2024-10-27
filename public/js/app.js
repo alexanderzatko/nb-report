@@ -39,53 +39,34 @@ class App {
     }
   }
 
-  async initializeApp() {
+  async initializeAppState() {
+    this.managers.event.emit('APP_INIT_START');
+  
     try {
-      this.logger.info('Initializing application...');
-
-      // Initialize managers in order of dependency
-      this.managers = {
-        config: ConfigManager.getInstance(),
-        event: EventManager.getInstance(),
-        network: NetworkManager.getInstance(),
-        storage: StorageManager.getInstance(),
-        state: StateManager.getInstance(),
-        auth: AuthManager.getInstance(),
-        ui: UIManager.getInstance(),
-        select: SelectManager.getInstance(),
-        form: FormManager.getInstance(),
-        photo: PhotoManager.getInstance(),
-        validation: ValidationManager.getInstance(),
-        serviceWorker: ServiceWorkerManager.getInstance()
-      };
-
-      // Initialize i18n
-      await initI18next();
-
-      // Initialize service worker
-      if ('serviceWorker' in navigator) {
-        await this.managers.serviceWorker.initialize();
+      // Check for stored session
+      const sessionId = this.managers.storage.getLocalStorage('sessionId');
+      console.log('Stored sessionId:', sessionId);
+  
+      const didAuth = await this.checkForURLParameters();
+      if (!didAuth && sessionId) {
+        try {
+          const isValid = await this.managers.auth.checkAuthStatus();
+          console.log('Auth status check result:', isValid);
+          if (isValid) {
+            await this.refreshUserData();
+            await this.managers.ui.updateUIBasedOnAuthState(true);
+          } else {
+            await this.handleInvalidSession();
+          }
+        } catch (error) {
+          console.error('Error checking session:', error);
+          await this.handleInvalidSession();
+        }
+      } else if (!didAuth) {
+        await this.managers.ui.updateUIBasedOnAuthState(false);
       }
-
-      // Initialize select manager (replaces location and dropdown managers)
-      await this.managers.select.initialize();
-
-      // Initialize form manager
-      await this.managers.form.initialize();
-      
-      // Setup event listeners
-      this.setupEventListeners();
-      
-      // Check authentication and initialize UI
-      await this.initializeAppState();
-      
-      this.initialized = true;
-      this.managers.event.emit('APP_INIT_COMPLETE');
-      
-      this.logger.info('Application initialized successfully');
     } catch (error) {
-      this.logger.error('Failed to initialize application:', error);
-      this.handleInitializationError(error);
+      this.logger.error('Error in initializeAppState:', error);
       throw error;
     }
   }
@@ -215,14 +196,11 @@ class App {
     }
     return false;
   }
+
   handleInitializationError(error) {
     this.logger.error('Initialization error:', error);
-    if (this.managers?.ui) {
-      this.managers.ui.showErrorMessage(
-        'Application initialization failed. Please refresh the page.',
-        error
-      );
-    }
+    // Use alert instead of showErrorMessage
+    alert('Application initialization failed. Please refresh the page.');
   }
 
   // Public methods for external interactions
