@@ -118,13 +118,7 @@ class UIManager {
     } else {
       if (loginContainer) {
         loginContainer.style.display = 'flex';
-        // Add explicit login text update here
-        const loginText = document.getElementById('login-text');
-        if (loginText) {
-          loginText.innerHTML = this.i18next.t('auth.loginText', { 
-            interpolation: { escapeValue: false } 
-          });
-        }
+        this.updateLoginText();  // Add this explicit call
       }
       if (dashboardContainer) dashboardContainer.style.display = 'none';
       if (snowReportForm) snowReportForm.style.display = 'none';
