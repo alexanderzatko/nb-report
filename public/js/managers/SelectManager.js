@@ -38,11 +38,14 @@ class SelectManager {
         this.loadLocationData(),
         this.loadXCData()
       ]);
-
-      // Setup listeners after data is loaded
-      this.setupLanguageListeners();
-      this.setupEventListeners();
-      await this.refreshAllDropdowns();
+  
+      // Only setup dropdowns if user is authenticated
+      const authManager = AuthManager.getInstance();
+      if (await authManager.checkAuthStatus()) {
+        this.setupLanguageListeners();
+        this.setupEventListeners();
+        await this.refreshAllDropdowns();
+      }
       
       return true;
     } catch (error) {
