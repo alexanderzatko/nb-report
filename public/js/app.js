@@ -22,6 +22,7 @@ class App {
     
     this.logger = Logger.getInstance();
     this.initialized = false;
+    this.managers = {};  // Initialize empty managers object
     App.instance = this;
   }
 
@@ -47,6 +48,7 @@ class App {
 
   async initializeApp() {
     try {
+      // Initialize core managers
       this.managers = {
         config: ConfigManager.getInstance(),
         event: EventManager.getInstance(),
@@ -58,10 +60,13 @@ class App {
         serviceWorker: ServiceWorkerManager.getInstance()
       };
 
-      // Initialize i18next first and wait for completion
+      // Initialize form-related managers early
+      await this.initializeFormManagers();
+
+      // Initialize i18next and wait for completion
       await initI18next();
       
-      // After i18next is initialized, initialize UI manager
+      // Initialize UI manager after i18next
       await this.managers.ui.initialize();
 
       if ('serviceWorker' in navigator) {
@@ -79,17 +84,19 @@ class App {
   }
 
   async initializeFormManagers() {
+    // Initialize all form-related managers
     this.managers.select = SelectManager.getInstance();
     this.managers.form = FormManager.getInstance();
     this.managers.photo = PhotoManager.getInstance();
     this.managers.validation = ValidationManager.getInstance();
   
+    // Initialize them in parallel
     await Promise.all([
       this.managers.select.initialize(),
       this.managers.form.initialize()
     ]);
   }
-    
+
   async initializeAppState() {
     this.managers.event.emit('APP_INIT_START');
   
@@ -103,9 +110,8 @@ class App {
           const isValid = await this.managers.auth.checkAuthStatus();
           console.log('Auth status check result:', isValid);
           if (isValid) {
-            await this.initializeFormManagers();
-            await this.refreshUserData();
             await this.managers.ui.updateUIBasedOnAuthState(true);
+            await this.refreshUserData();
           } else {
             await this.handleInvalidSession();
           }
@@ -134,7 +140,6 @@ class App {
         window.history.replaceState({}, document.title, '/');
         
         if (success) {
-          await this.initializeFormManagers(); // Initialize form managers here
           await this.managers.ui.updateUIBasedOnAuthState(true);
           await this.refreshUserData();
           return true;
