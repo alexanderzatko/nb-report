@@ -99,7 +99,6 @@ class App {
     this.managers.event.emit('APP_INIT_START');
   
     try {
-      // Check for stored session
       const sessionId = this.managers.storage.getLocalStorage('sessionId');
       console.log('Stored sessionId:', sessionId);
   
@@ -109,6 +108,7 @@ class App {
           const isValid = await this.managers.auth.checkAuthStatus();
           console.log('Auth status check result:', isValid);
           if (isValid) {
+            await this.initializeFormManagers();
             await this.refreshUserData();
             await this.managers.ui.updateUIBasedOnAuthState(true);
           } else {
