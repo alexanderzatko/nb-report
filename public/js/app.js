@@ -16,6 +16,7 @@ import ServiceWorkerManager from './services/ServiceWorkerManager.js';
 import StateManager from './state/StateManager.js';
 import { initI18next } from './i18n.js';
 
+class App {
   constructor() {
     if (App.instance) {
       return App.instance;
