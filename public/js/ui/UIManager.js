@@ -329,7 +329,10 @@ class UIManager {
   }
 
   showError(message) {
-    alert(message);
+    // Add a small delay to ensure error is shown after any redirects
+    setTimeout(() => {
+      alert(message);
+    }, 100);
   }
 
   showSuccess(message) {
