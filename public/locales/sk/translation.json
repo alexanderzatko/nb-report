@@ -45,7 +45,8 @@
     "snowDepth500": "Hĺbka snehu v 500 m.n.m. (cm):",
     "snowDepth750": "Hĺbka snehu v 750 m.n.m. (cm):",
     "snowDepth1000": "Hĺbka snehu nad 1000 m.n.m. (cm):",
-    "selectSnowType": "Typ snehu:",
+    "SnowType": "Typ snehu:",
+    "selectSnowType": "Vyberte typ snehu",
     "snowTypes": {
       "0": "Neznámy typ",
       "PDR": "Prašan",
