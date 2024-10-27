@@ -99,7 +99,7 @@ class AuthManager {
       console.log('OAuth initiation data:', data);
       if (data.authUrl) {
         console.log('Redirecting to:', data.authUrl);
-        window.location.href = data.authUrl;
+        window.location.replace(data.authUrl);
       } else {
         console.error('No auth URL received');
       }
