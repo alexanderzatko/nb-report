@@ -21,7 +21,8 @@
   "auth": {
     "loginText": "Log in",
     "login": "Login",
-    "logout": "Logout"
+    "logout": "Logout",
+    "loginError": "Unable to connect to login service. Please try again later."
   },
   "form": {
     "validation": {
