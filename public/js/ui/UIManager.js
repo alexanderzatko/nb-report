@@ -56,6 +56,9 @@ class UIManager {
   }
 
   setupEventListeners() {
+    // Remove any existing listeners first
+    this.removeExistingListeners();
+
     const snowReportLink = document.getElementById('snow-report-link');
     if (snowReportLink) {
       snowReportLink.addEventListener('click', (e) => {
@@ -64,58 +67,108 @@ class UIManager {
       });
     }
 
-    // Add login container click handler
+    // Add login container click handler with debouncing
     const loginContainer = document.getElementById('login-container');
     console.log('Login container found:', !!loginContainer);
     if (loginContainer) {
-      loginContainer.addEventListener('click', async () => {
-          console.log('Login container clicked');
-          try {
-              const authManager = AuthManager.getInstance();
-              console.log('Initiating OAuth...');
-              const initiated = await authManager.initiateOAuth();
-              if (!initiated) {
-                  // Only show error if we failed to get the auth URL
-                  this.showError(this.i18next.t('auth.loginError', {
-                      defaultValue: 'Unable to connect to login service. Please try again later.'
-                  }));
-              }
-              // Don't handle errors from the redirect itself
-          } catch (error) {
-              // Handle only unexpected errors
-              if (!(error instanceof TypeError) || !error.message.includes('NetworkError')) {
-                  console.error('Failed to initiate login:', error);
-                  this.showError(this.i18next.t('auth.loginError', {
-                      defaultValue: 'Unable to connect to login service. Please try again later.'
-                  }));
-              }
-          }
-      });
+      loginContainer.addEventListener('click', this.handleLoginClick.bind(this));
     }
 
     const logoutButton = document.getElementById('logout-button');
     if (logoutButton) {
-      logoutButton.addEventListener('click', async () => {
-        try {
-          const authManager = AuthManager.getInstance();
-          const success = await authManager.logout();
-          if (success) {
-            // Clear any stored session data
-            localStorage.removeItem('sessionId');
-            // Update UI to show login screen
-            this.updateUIBasedOnAuthState(false);
-          } else {
-            console.error('Logout failed');
-          }
-        } catch (error) {
-          console.error('Error during logout:', error);
-        }
-      });
+      logoutButton.addEventListener('click', this.handleLogoutClick.bind(this));
     }
 
     window.addEventListener('languageChanged', () => this.updatePageContent());
   }
 
+  removeExistingListeners() {
+    const loginContainer = document.getElementById('login-container');
+    if (loginContainer) {
+      const newContainer = loginContainer.cloneNode(true);
+      loginContainer.parentNode.replaceChild(newContainer, loginContainer);
+    }
+
+    const logoutButton = document.getElementById('logout-button');
+    if (logoutButton) {
+      const newButton = logoutButton.cloneNode(true);
+      logoutButton.parentNode.replaceChild(newButton, logoutButton);
+    }
+  }
+
+  async handleLoginClick(event) {
+    event.preventDefault();
+    
+    // Prevent multiple rapid clicks
+    if (this.loginInProgress) {
+      console.log('Login already in progress');
+      return;
+    }
+
+    // Clear any existing timeout
+    if (this.loginClickTimeout) {
+      clearTimeout(this.loginClickTimeout);
+    }
+
+    this.loginInProgress = true;
+
+    try {
+      console.log('Login container clicked');
+      const authManager = AuthManager.getInstance();
+      console.log('Initiating OAuth...');
+      
+      const initiated = await authManager.initiateOAuth();
+      
+      if (!initiated) {
+        console.error('Failed to initiate OAuth');
+        this.showError(this.i18next.t('auth.loginError', {
+          defaultValue: 'Unable to connect to login service. Please try again later.'
+        }));
+      }
+    } catch (error) {
+      // Handle only unexpected errors
+      if (!(error instanceof TypeError) || !error.message.includes('NetworkError')) {
+        console.error('Failed to initiate login:', error);
+        this.showError(this.i18next.t('auth.loginError', {
+          defaultValue: 'Unable to connect to login service. Please try again later.'
+        }));
+      }
+    } finally {
+      // Reset login state after a delay
+      this.loginClickTimeout = setTimeout(() => {
+        this.loginInProgress = false;
+      }, 2000); // 2 second cooldown
+    }
+  }
+
+  async handleLogoutClick() {
+    try {
+      const authManager = AuthManager.getInstance();
+      const success = await authManager.logout();
+      if (success) {
+        // Clear any stored session data
+        localStorage.removeItem('sessionId');
+        // Update UI to show login screen
+        this.updateUIBasedOnAuthState(false);
+        // Reset login progress state
+        this.loginInProgress = false;
+        if (this.loginClickTimeout) {
+          clearTimeout(this.loginClickTimeout);
+        }
+      } else {
+        console.error('Logout failed');
+        this.showError(this.i18next.t('auth.logoutError', {
+          defaultValue: 'Unable to log out. Please try again.'
+        }));
+      }
+    } catch (error) {
+      console.error('Error during logout:', error);
+      this.showError(this.i18next.t('auth.logoutError', {
+        defaultValue: 'Unable to log out. Please try again.'
+      }));
+    }
+  }
+  
   updateUIBasedOnAuthState(isAuthenticated) {
     console.log('Updating UI based on auth state:', isAuthenticated);
     const loginContainer = document.getElementById('login-container');
