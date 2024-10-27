@@ -18,11 +18,7 @@ class SelectManager {
       xcConditions: null
     };
     
-    // Cache loading promises to prevent multiple simultaneous loads
     this.loadingPromises = {};
-    
-    // Setup language change listeners
-    this.setupLanguageListeners();
     
     SelectManager.instance = this;
   }
@@ -34,22 +30,17 @@ class SelectManager {
     return SelectManager.instance;
   }
 
-  setupLanguageListeners() {
-    this.i18next.on('languageChanged', (lng) => {
-      this.logger.debug('SelectManager: Language changed to:', lng);
-      this.refreshAllDropdowns();
-    });
-  }
-
   async initialize() {
     this.logger.debug('SelectManager: Initializing...');
     try {
-      // Load both data sources concurrently
+      // Load data first
       await Promise.all([
         this.loadLocationData(),
         this.loadXCData()
       ]);
 
+      // Setup listeners after data is loaded
+      this.setupLanguageListeners();
       this.setupEventListeners();
       await this.refreshAllDropdowns();
       
@@ -58,6 +49,15 @@ class SelectManager {
       this.logger.error('SelectManager: Initialization error:', error);
       return false;
     }
+  }
+
+  setupLanguageListeners() {
+    this.i18next.on('languageChanged', (lng) => {
+      this.logger.debug('SelectManager: Language changed to:', lng);
+      this.refreshAllDropdowns().catch(error => {
+        this.logger.error('SelectManager: Error refreshing dropdowns:', error);
+      });
+    });
   }
 
   setupEventListeners() {
@@ -109,10 +109,19 @@ class SelectManager {
   // Dropdown Population Methods
   async refreshAllDropdowns() {
     try {
+      // Ensure data is loaded
+      if (!this.data.locations || !this.data.xcConditions) {
+        await Promise.all([
+          this.loadLocationData(),
+          this.loadXCData()
+        ]);
+      }
+      
       await this.populateLocationDropdowns();
       await this.populateXCDropdowns();
     } catch (error) {
       this.logger.error('SelectManager: Error refreshing dropdowns:', error);
+      throw error;
     }
   }
 
