@@ -212,13 +212,16 @@ class UIManager {
   }
 
   showError(message) {
-    // You could implement a more sophisticated error display system here
     alert(message);
   }
 
   showSuccess(message) {
-    // You could implement a more sophisticated success display system here
     alert(message);
+  }
+
+  showErrorMessage(message, error = null) {
+    this.logger.error(message, error);
+    this.showError(message);
   }
 }
 
