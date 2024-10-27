@@ -3,7 +3,8 @@
 import i18next from '/node_modules/i18next/dist/esm/i18next.js';
 import AuthManager from '../auth/AuthManager.js';
 import FormManager from '../form/FormManager.js';
-import LocationManager from '../location/LocationManager.js';
+import SelectManager from '../managers/SelectManager.js';
+import Logger from '../utils/Logger.js';
 
 class UIManager {
   static instance = null;
@@ -13,7 +14,9 @@ class UIManager {
       return UIManager.instance;
     }
     this.i18next = i18next;
+    this.logger = Logger.getInstance();
     this.formManager = FormManager.getInstance();
+    this.selectManager = SelectManager.getInstance();
     this.setupEventListeners();
     
     UIManager.instance = this;
@@ -185,26 +188,17 @@ class UIManager {
     document.getElementById('snow-report-form').style.display = 'none';
   }
 
-updateUIWithUserData(userData) {
-    console.log('UIManager: Updating UI with user data:', userData);
+  updateUIWithUserData(userData) {
+    this.logger.debug('Updating UI with user data:', userData);
     
     if (userData.language) {
-        console.log('UIManager: Initiating language change to:', userData.language);
-        this.i18next.changeLanguage(userData.language)
-            .then(() => {
-                console.log('UIManager: Language change completed to:', userData.language);
-                // Explicitly trigger LocationManager update
-                const locationManager = LocationManager.getInstance();
-                console.log('UIManager: Triggering location manager refresh');
-                locationManager.refreshDropdowns();
-            })
-            .catch(error => {
-                console.error('UIManager: Error changing language:', error);
-            });
+      this.i18next.changeLanguage(userData.language)
+        .then(() => this.logger.debug('Language changed successfully'))
+        .catch(error => this.logger.error('Error changing language:', error));
     }
     
     this.updateRewardsSection(userData);
-}
+  }
 
   updateRewardsSection(userData) {
     const rewardsSection = document.getElementById('rewards-section');
