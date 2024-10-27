@@ -160,6 +160,43 @@ class LocationManager {
 
     await this.updateRegions();
   }
+
+  updateRegions() {
+    console.log('LocationManager: updateRegions called');
+    const countrySelect = document.getElementById('country');
+    const regionSelect = document.getElementById('region');
+    const selectedCountry = countrySelect.value;
+  
+    console.log('LocationManager: Updating regions for country:', selectedCountry);
+  
+    regionSelect.innerHTML = '';
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = this.i18next.t('form.selectRegion');
+    regionSelect.appendChild(defaultOption);
+  
+    const country = this.countriesData.countries.find(c => c.code === selectedCountry);
+    if (country && country.regions) {
+        const sortedRegions = Object.entries(country.regions)
+            .map(([regionId, regionKey]) => {
+                const translatedName = this.i18next.t(regionKey);
+                console.log(`LocationManager: Translating region ${regionKey}:`, translatedName);
+                return {
+                    id: regionId,
+                    key: regionKey,
+                    name: translatedName
+                };
+            })
+            .sort((a, b) => a.name.localeCompare(b.name));
+  
+        sortedRegions.forEach(region => {
+            const option = document.createElement('option');
+            option.value = region.id;
+            option.textContent = region.name;
+            regionSelect.appendChild(option);
+        });
+    }
+  }
 }
 
 export default LocationManager;
