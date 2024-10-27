@@ -33,28 +33,16 @@ class SelectManager {
   async initialize() {
     this.logger.debug('SelectManager: Initializing...');
     try {
-      // Load data first and ensure promises are properly handled
-      const loadPromises = [
-        this.loadLocationData().catch(err => {
-          this.logger.error('Failed to load location data:', err);
-          return { countries: [] }; // Fallback data
-        }),
-        this.loadXCData().catch(err => {
-          this.logger.error('Failed to load XC data:', err);
-          return { snowTypes: [], trackConditions: [], snowAge: [], wetness: [] }; // Fallback data
-        })
-      ];
-
-      await Promise.all(loadPromises);
+      // Load data first
+      await Promise.all([
+        this.loadLocationData(),
+        this.loadXCData()
+      ]);
 
       // Setup listeners after data is loaded
       this.setupLanguageListeners();
       this.setupEventListeners();
-      
-      // Only try to refresh dropdowns if we have data
-      if (this.data.locations && this.data.xcConditions) {
-        await this.refreshAllDropdowns();
-      }
+      await this.refreshAllDropdowns();
       
       return true;
     } catch (error) {
@@ -121,16 +109,19 @@ class SelectManager {
   // Dropdown Population Methods
   async refreshAllDropdowns() {
     try {
-      // Add null checks before accessing data
-      if (!this.data.locations?.countries || !this.data.xcConditions) {
-        this.logger.warn('SelectManager: Required data not available for dropdown refresh');
-        return;
+      // Ensure data is loaded
+      if (!this.data.locations || !this.data.xcConditions) {
+        await Promise.all([
+          this.loadLocationData(),
+          this.loadXCData()
+        ]);
       }
       
       await this.populateLocationDropdowns();
       await this.populateXCDropdowns();
     } catch (error) {
       this.logger.error('SelectManager: Error refreshing dropdowns:', error);
+      throw error;
     }
   }
 
@@ -138,30 +129,24 @@ class SelectManager {
     const countrySelect = document.getElementById('country');
     if (!countrySelect) return;
 
-    try {
-      const currentValue = countrySelect.value;
-      
-      countrySelect.innerHTML = '';
-      const defaultOption = document.createElement('option');
-      defaultOption.value = '';
-      defaultOption.textContent = this.i18next.t('form.selectCountry');
-      countrySelect.appendChild(defaultOption);
+    const currentValue = countrySelect.value;
+    
+    countrySelect.innerHTML = '';
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = this.i18next.t('form.selectCountry');
+    countrySelect.appendChild(defaultOption);
 
-      // Add null check for countries array
-      if (Array.isArray(this.data.locations?.countries)) {
-        this.data.locations.countries.forEach(country => {
-          const option = document.createElement('option');
-          option.value = country.code;
-          option.textContent = this.i18next.t(country.nameKey);
-          countrySelect.appendChild(option);
-        });
-      }
+    this.data.locations.countries.forEach(country => {
+      const option = document.createElement('option');
+      option.value = country.code;
+      option.textContent = this.i18next.t(country.nameKey);
+      countrySelect.appendChild(option);
+    });
 
-      countrySelect.value = currentValue || this.inferCountryFromLanguage();
-      await this.updateRegions();
-    } catch (error) {
-      this.logger.error('Error populating country dropdown:', error);
-    }
+    // Restore previous selection or infer from language
+    countrySelect.value = currentValue || this.inferCountryFromLanguage();
+    await this.updateRegions();
   }
 
   updateRegions() {
