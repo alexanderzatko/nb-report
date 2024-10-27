@@ -55,22 +55,30 @@ class App {
         storage: StorageManager.getInstance(),
         state: StateManager.getInstance(),
         auth: AuthManager.getInstance(),
-        ui: UIManager.getInstance(),  // Move UI manager to essential managers
+        ui: UIManager.getInstance(),
         serviceWorker: ServiceWorkerManager.getInstance()
       };
+  
+      // Initialize i18n first, before any form managers
+      await initI18next();
+      
+      // Initialize form-related managers immediately
+      this.managers.select = SelectManager.getInstance();
+      this.managers.form = FormManager.getInstance();
+      this.managers.photo = PhotoManager.getInstance();
+      this.managers.validation = ValidationManager.getInstance();
   
       // Initialize service worker
       if ('serviceWorker' in navigator) {
         await this.managers.serviceWorker.initialize();
       }
   
-      // Check auth first
+      // Initialize managers that require setup
+      await this.managers.select.initialize();
+      await this.managers.form.initialize();
+  
+      // Check auth and initialize app state
       await this.initializeAppState();
-      
-      // Only initialize form-related managers after successful auth
-      if (await this.managers.auth.checkAuthStatus()) {
-        await this.initializeFormManagers();
-      }
       
       this.initialized = true;
       this.managers.event.emit('APP_INIT_COMPLETE');
