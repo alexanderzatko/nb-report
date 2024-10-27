@@ -6,16 +6,16 @@ import AuthManager from './auth/AuthManager.js';
 import UIManager from './ui/UIManager.js';
 import FormManager from './form/FormManager.js';
 import PhotoManager from './media/PhotoManager.js';
-import LocationManager from './location/LocationManager.js';
+import SelectManager from './managers/SelectManager.js';
 import ValidationManager from './validation/ValidationManager.js';
 import StorageManager from './storage/StorageManager.js';
 import NetworkManager from './network/NetworkManager.js';
 import ConfigManager from './config/ConfigManager.js';
 import EventManager from './events/EventManager.js';
 import ServiceWorkerManager from './services/ServiceWorkerManager.js';
+import StateManager from './state/StateManager.js';
 import { initI18next } from './i18n.js';
 
-class App {
   constructor() {
     if (App.instance) {
       return App.instance;
@@ -30,12 +30,11 @@ class App {
     if (this.initialized) {
       return;
     }
-    
+
     try {
       await this.initializeApp();
     } catch (error) {
       this.logger.error('Initialization failed:', error);
-      throw error;
     }
   }
 
@@ -43,51 +42,34 @@ class App {
     try {
       this.logger.info('Initializing application...');
 
-      // Initialize managers one by one to ensure proper error handling
-      try {
-        this.managers = {};
-
-        // Core managers first
-        this.managers.config = ConfigManager.getInstance();
-        this.managers.event = EventManager.getInstance();
-        this.managers.network = NetworkManager.getInstance();
-        this.managers.storage = StorageManager.getInstance();
-        
-        // Then auth and UI managers
-        this.managers.auth = AuthManager.getInstance();
-        this.managers.ui = UIManager.getInstance();
-        
-        // Form-related managers
-        this.managers.form = FormManager.getInstance();
-        this.managers.photo = PhotoManager.getInstance();
-        this.managers.location = new LocationManager(); // Note: LocationManager uses its own singleton check
-        this.managers.validation = ValidationManager.getInstance();
-        
-        // Service worker manager last
-        this.managers.serviceWorker = ServiceWorkerManager.getInstance();
-
-      } catch (error) {
-        this.logger.error('Error initializing managers:', error);
-        throw new Error(`Failed to initialize managers: ${error.message}`);
-      }
+      // Initialize managers in order of dependency
+      this.managers = {
+        config: ConfigManager.getInstance(),
+        event: EventManager.getInstance(),
+        network: NetworkManager.getInstance(),
+        storage: StorageManager.getInstance(),
+        state: StateManager.getInstance(),
+        auth: AuthManager.getInstance(),
+        ui: UIManager.getInstance(),
+        select: SelectManager.getInstance(),
+        form: FormManager.getInstance(),
+        photo: PhotoManager.getInstance(),
+        validation: ValidationManager.getInstance(),
+        serviceWorker: ServiceWorkerManager.getInstance()
+      };
 
       // Initialize i18n
-      await this.initializeI18n();
+      await initI18next();
 
       // Initialize service worker
       if ('serviceWorker' in navigator) {
         await this.managers.serviceWorker.initialize();
-        navigator.serviceWorker.addEventListener('message', (event) => {
-          if (event.data.type === 'UPDATE_AVAILABLE') {
-            this.managers.serviceWorker.notifyUpdateReady();
-          }
-        });
       }
 
-      // Initialize location manager
-      await this.managers.location.initializationPromise;
+      // Initialize select manager (replaces location and dropdown managers)
+      await this.managers.select.initialize();
 
-      // Initialize form manager (needs i18n)
+      // Initialize form manager
       await this.managers.form.initialize();
       
       // Setup event listeners
