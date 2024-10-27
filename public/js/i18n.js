@@ -63,11 +63,12 @@ const initI18next = async () => {
   return initPromise;
 };
 
-const changeLanguage = async (lang) => {
-  if (!isInitialized) {
-    await initI18next();
+const resetI18next = async () => {
+  initPromise = null;
+  isInitialized = false;
+  if (i18next.isInitialized) {
+    await i18next.destroy();
   }
-  return i18next.changeLanguage(lang);
 };
 
-export { i18next, initI18next, changeLanguage };
+export { i18next, initI18next, resetI18next };
