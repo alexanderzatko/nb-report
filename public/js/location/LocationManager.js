@@ -56,6 +56,22 @@ class LocationManager {
     }
   }
 
+  inferCountryFromLanguage(language = null) {
+    const languageToCountry = {
+      'sk': 'SK',
+      'cs': 'CZ',
+      'de': 'AT',
+      'it': 'IT',
+      'pl': 'PL',
+      'hu': 'HU',
+      'en': 'SK' // Default to Slovakia if language is English
+    };
+    
+    const currentLanguage = language || this.i18next.language;
+    const languageCode = currentLanguage.split('-')[0].toLowerCase();
+    
+    return languageToCountry[languageCode] || 'SK';
+  }
   async loadCountriesData() {
     if (this.dataLoadingPromise) {
       return this.dataLoadingPromise;
