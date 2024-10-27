@@ -21,7 +21,8 @@
   "auth": {
     "loginText": "Prihlásiť sa do aplikácie",
     "login": "Prihlásiť",
-    "logout": "Odhlásiť"
+    "logout": "Odhlásiť",
+    "loginError": "Nedarí sam mi pripojiť sa na prihlasovací server. Skúste prosím neskôr."
   },
   "form": {
     "validation": {
