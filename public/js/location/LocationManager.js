@@ -49,6 +49,25 @@ class LocationManager {
     }
   }
 
+  async loadCountriesData() {
+    if (this.dataLoadingPromise) {
+      return this.dataLoadingPromise;
+    }
+
+    this.dataLoadingPromise = (async () => {
+      try {
+        const response = await fetch('/data/countries-regions.json');
+        this.countriesData = await response.json();
+        console.log('Countries data loaded successfully');
+        return this.countriesData;
+      } catch (error) {
+        console.error('Error loading countries data:', error);
+        throw error;
+      }
+    })();
+
+    return this.dataLoadingPromise;
+  }
   async refreshDropdowns() {
     console.log('LocationManager: refreshDropdowns called');
     if (!this.initialized || !this.countriesData) {
