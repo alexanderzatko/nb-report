@@ -19,6 +19,13 @@ class LocationManager {
     return this;
   }
 
+  setupEventListeners() {
+    const countrySelect = document.getElementById('country');
+    if (countrySelect) {
+      countrySelect.addEventListener('change', () => this.updateRegions());
+    }
+  }
+  
   async initialize() {
     console.log('LocationManager initializing...');
     try {
