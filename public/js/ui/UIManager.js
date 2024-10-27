@@ -108,19 +108,25 @@ class UIManager {
   }
 
   updatePageContent() {
-    console.log('Updating page content with translations');
-    document.querySelectorAll('[data-i18n]').forEach(element => {
-      const key = element.getAttribute('data-i18n');
-      const translation = this.i18next.t(key, { 
-        returnObjects: true, 
-        interpolation: { escapeValue: false } 
-      });
-      //console.log(`Translating key: ${key}, result:`, translation);
-      
-      this.updateElementTranslation(element, translation);
-    });
-    
-    this.updateLoginText();
+      this.logger.debug('Updating page content with translations');
+      try {
+          document.querySelectorAll('[data-i18n]').forEach(element => {
+              const key = element.getAttribute('data-i18n');
+              try {
+                  const translation = this.i18next.t(key, { 
+                      returnObjects: true, 
+                      interpolation: { escapeValue: false } 
+                  });
+                  this.updateElementTranslation(element, translation);
+              } catch (error) {
+                  this.logger.error(`Error translating key "${key}":`, error);
+              }
+          });
+          
+          this.updateLoginText();
+      } catch (error) {
+          this.logger.error('Error updating page content:', error);
+      }
   }
 
   updateElementTranslation(element, translation) {
@@ -191,16 +197,25 @@ class UIManager {
     document.getElementById('snow-report-form').style.display = 'none';
   }
 
-  updateUIWithUserData(userData) {
-    this.logger.debug('Updating UI with user data:', userData);
-    
-    if (userData.language) {
-      this.i18next.changeLanguage(userData.language)
-        .then(() => this.logger.debug('Language changed successfully'))
-        .catch(error => this.logger.error('Error changing language:', error));
-    }
-    
-    this.updateRewardsSection(userData);
+  async updateUIWithUserData(userData) {
+      this.logger.debug('Updating UI with user data:', userData);
+      
+      if (userData.language) {
+          try {
+              // Import the changeLanguage function
+              const { changeLanguage } = await import('../i18n.js');
+              await changeLanguage(userData.language);
+              this.logger.debug('Language changed successfully to:', userData.language);
+              
+              // Update page content after language change
+              this.updatePageContent();
+          } catch (error) {
+              this.logger.error('Error updating language:', error);
+              // Continue with other UI updates even if language change fails
+          }
+      }
+      
+      this.updateRewardsSection(userData);
   }
 
   updateRewardsSection(userData) {
