@@ -15,16 +15,18 @@ class ConfigManager {
       cache: {
         version: 'v84', //update this for new app release
         name: 'snow-report-cache',
-        staticResources: [
-          '/',
-          '/index.html',
-          '/styles.css',
-          '/js/app.js',
-          '/js/i18n.js',
-          '/manifest.json',
-          '/locales/en/translation.json',
-          '/locales/sk/translation.json'
-        ]
+          staticResources: [
+            '/',
+            '/index.html',
+            '/styles.css',
+            '/js/app.js',
+            '/js/i18n.js',
+            '/manifest.json',
+            '/locales/en/translation.json',
+            '/locales/sk/translation.json',
+            '/icon/login-icon.svg',
+            '/offline.html'
+          ]
       },
       
       app: {
