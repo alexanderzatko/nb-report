@@ -8,20 +8,18 @@ class FormManager {
   static instance = null;
 
   constructor() {
-      if (FormManager.instance) {
-          return FormManager.instance;
-      }
-      this.i18next = i18next;
-      this.trailConditions = {};
-      this.formStartTime = null;
-      this.elapsedTimeInterval = null;
-      this.dropdownManager = new DropdownManager(i18next);
-      this.photoManager = PhotoManager.getInstance();
+    if (FormManager.instance) {
+      return FormManager.instance;
+    }
+    this.i18next = i18next;
+    this.trailConditions = {};
+    this.formStartTime = null;
+    this.elapsedTimeInterval = null;
+    this.selectManager = SelectManager.getInstance();
+    this.photoManager = PhotoManager.getInstance();
 
-      // Don't initialize immediately
-      FormManager.instance = this;
+    FormManager.instance = this;
   }
-
 
   static getInstance() {
       if (!FormManager.instance) {
@@ -31,30 +29,18 @@ class FormManager {
   }
 
   async initialize() {
-      console.log('Initializing FormManager');
-      
-      // Wait for i18next to be initialized
-      if (!this.i18next.isInitialized) {
-          console.log('Waiting for i18next to initialize...');
-          await new Promise(resolve => {
-              this.i18next.on('initialized', resolve);
-          });
-      }
-      
-      console.log('i18next is ready, current language:', this.i18next.language);
-      
-      this.initializeFormValidation();
-      this.initializeDatePicker();
-      await this.dropdownManager.initialize();
-      
-      // Set up language change listener
-      this.i18next.on('languageChanged', () => {
-          console.log('Language changed, updating dropdowns');
-          this.dropdownManager.updateXcDropdowns();
+    console.log('Initializing FormManager');
+    
+    if (!this.i18next.isInitialized) {
+      console.log('Waiting for i18next to initialize...');
+      await new Promise(resolve => {
+        this.i18next.on('initialized', resolve);
       });
-
-      this.setupEventListeners();
-      console.log('FormManager initialization complete');
+    }
+    
+    this.initializeFormValidation();
+    this.initializeDatePicker();
+    this.setupEventListeners();
   }
 
   initializeForm(userData) {
@@ -330,48 +316,59 @@ class FormManager {
     }
   }
 
-
   collectFormData() {
     const formData = new FormData();
+    const selectValues = this.selectManager.getSelectedValues();
     
-    // Common fields
-    formData.append('snowType', document.getElementById('snow-type').value);
-    formData.append('note', document.getElementById('report-note').value);
+    // Add select values to form data
+    Object.entries(selectValues).forEach(([key, value]) => {
+      if (value) formData.append(key, value);
+    });
     
-    const isAdmin = document.getElementById('admin-section').style.display !== 'none';
+    // Add other form data
+    const noteElement = document.getElementById('report-note');
+    if (noteElement) formData.append('note', noteElement.value);
+    
+    const isAdmin = document.getElementById('admin-section')?.style.display !== 'none';
     
     if (isAdmin) {
-      // Admin-specific fields
-      formData.append('snowDepthTotal', document.getElementById('snow-depth-total').value);
-      formData.append('snowDepthNew', document.getElementById('snow-depth-new').value);
-      formData.append('trailConditions', JSON.stringify(this.trailConditions));
+      this.collectAdminFormData(formData);
     } else {
-      // Regular user fields
-      formData.append('classicStyle', document.getElementById('classic-style').value);
-      formData.append('freeStyle', document.getElementById('free-style').value);
-      formData.append('country', document.getElementById('country').value);
-      formData.append('region', document.getElementById('region').value);
-      formData.append('reportDate', document.getElementById('report-date').value);
-      formData.append('snowDepth250', document.getElementById('snow-depth250').value);
-      formData.append('snowDepth500', document.getElementById('snow-depth500').value);
-      formData.append('snowDepth750', document.getElementById('snow-depth750').value);
-      formData.append('snowDepth1000', document.getElementById('snow-depth1000').value);
+      this.collectRegularUserFormData(formData);
     }
 
-    // Rewards section fields
-    const laborTime = document.getElementById('labor-time');
-    const rewardRequested = document.getElementById('reward-requested');
+    this.collectRewardsData(formData);
     
-    if (laborTime) {
-      formData.append('laborTime', laborTime.value);
-    }
-    if (rewardRequested) {
-      formData.append('rewardRequested', rewardRequested.value);
-    }
-
     return formData;
   }
 
+  collectAdminFormData(formData) {
+    const snowDepthTotal = document.getElementById('snow-depth-total')?.value;
+    const snowDepthNew = document.getElementById('snow-depth-new')?.value;
+    
+    if (snowDepthTotal) formData.append('snowDepthTotal', snowDepthTotal);
+    if (snowDepthNew) formData.append('snowDepthNew', snowDepthNew);
+    formData.append('trailConditions', JSON.stringify(this.trailConditions));
+  }
+
+  collectRegularUserFormData(formData) {
+    const fields = ['report-date', 'snow-depth250', 'snow-depth500', 'snow-depth750', 'snow-depth1000'];
+    fields.forEach(field => {
+      const element = document.getElementById(field);
+      if (element?.value) {
+        formData.append(field.replace('-', ''), element.value);
+      }
+    });
+  }
+
+  collectRewardsData(formData) {
+    const laborTime = document.getElementById('labor-time')?.value;
+    const rewardRequested = document.getElementById('reward-requested')?.value;
+    
+    if (laborTime) formData.append('laborTime', laborTime);
+    if (rewardRequested) formData.append('rewardRequested', rewardRequested);
+  }
+  
   async submitFormData(formData) {
     const response = await fetch('/api/submit-snow-report', {
       method: 'POST',
