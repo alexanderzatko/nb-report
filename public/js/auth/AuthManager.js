@@ -162,7 +162,7 @@ class AuthManager {
     console.log('After clearing:', afterClear);
   }
   
-  async initiateOAuth() {
+async initiateOAuth() {
     console.log('InitiateOAuth called');
     try {
       // Clear any existing auth data before starting new auth flow
@@ -175,9 +175,16 @@ class AuthManager {
       
       console.log('Generated state:', state);
       
-      // Store state in sessionStorage
+      // Store state in sessionStorage before making the request
       sessionStorage.setItem(AuthManager.STATE_KEY, state);
       sessionStorage.setItem('oauth_initiated_at', timestamp.toString());
+
+      // Verify state was stored
+      const storedState = sessionStorage.getItem(AuthManager.STATE_KEY);
+      if (storedState !== state) {
+        console.error('Failed to store OAuth state');
+        return false;
+      }
 
       const response = await fetch('/api/initiate-oauth', {
         method: 'POST',
@@ -190,27 +197,27 @@ class AuthManager {
         }),
       });
       
-      console.log('OAuth initiation response:', response);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       console.log('OAuth initiation data:', data);
       
-      if (data.authUrl) {
-        // Double-check state is stored before redirect
-        const storedState = sessionStorage.getItem(AuthManager.STATE_KEY);
-        console.log('Stored state before redirect:', storedState);
-        
-        if (storedState !== state) {
-          console.error('State storage failed');
-          return false;
-        }
-        
-        console.log('Redirecting to:', data.authUrl);
-        window.location.href = data.authUrl;
-        return true;
-      } else {
-        console.error('No auth URL received');
-        return false;
+      if (!data.authUrl) {
+        throw new Error('No auth URL received');
       }
+
+      // Final state verification before redirect
+      const finalStoredState = sessionStorage.getItem(AuthManager.STATE_KEY);
+      if (finalStoredState !== state) {
+        throw new Error('State verification failed before redirect');
+      }
+
+      console.log('All checks passed, redirecting to:', data.authUrl);
+      window.location.href = data.authUrl;
+      return true;
+
     } catch (error) {
       console.error('Error initiating OAuth:', error);
       return false;
