@@ -69,14 +69,27 @@ class UIManager {
     console.log('Login container found:', !!loginContainer);
     if (loginContainer) {
       loginContainer.addEventListener('click', async () => {
-        console.log('Login container clicked');
-        try {
-          const authManager = AuthManager.getInstance();
-          console.log('Initiating OAuth...');
-          await authManager.initiateOAuth();
-        } catch (error) {
-          console.error('Failed to initiate login:', error);
-        }
+          console.log('Login container clicked');
+          try {
+              const authManager = AuthManager.getInstance();
+              console.log('Initiating OAuth...');
+              const initiated = await authManager.initiateOAuth();
+              if (!initiated) {
+                  // Only show error if we failed to get the auth URL
+                  this.showError(this.i18next.t('auth.loginError', {
+                      defaultValue: 'Unable to connect to login service. Please try again later.'
+                  }));
+              }
+              // Don't handle errors from the redirect itself
+          } catch (error) {
+              // Handle only unexpected errors
+              if (!(error instanceof TypeError) || !error.message.includes('NetworkError')) {
+                  console.error('Failed to initiate login:', error);
+                  this.showError(this.i18next.t('auth.loginError', {
+                      defaultValue: 'Unable to connect to login service. Please try again later.'
+                  }));
+              }
+          }
       });
     }
 
