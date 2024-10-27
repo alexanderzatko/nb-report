@@ -78,34 +78,42 @@ class AuthManager {
   }
 
   async initiateOAuth() {
-    console.log('InitiateOAuth called');
-    try {
-      const state = Math.random().toString(36).substring(2, 15);
-      console.log('Generated state:', state);
-      localStorage.setItem('oauthState', state);
-  
-      const response = await fetch('/api/initiate-oauth', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          state, 
-          scopes: 'email'
-        }),
-      });
-      console.log('OAuth initiation response:', response);
-      const data = await response.json();
-      console.log('OAuth initiation data:', data);
-      if (data.authUrl) {
-        console.log('Redirecting to:', data.authUrl);
-        window.location.replace(data.authUrl);
-      } else {
-        console.error('No auth URL received');
+      console.log('InitiateOAuth called');
+      try {
+          const state = Math.random().toString(36).substring(2, 15);
+          console.log('Generated state:', state);
+          localStorage.setItem('oauthState', state);
+    
+          const response = await fetch('/api/initiate-oauth', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ 
+                  state, 
+                  scopes: 'email'
+              }),
+          });
+          console.log('OAuth initiation response:', response);
+          const data = await response.json();
+          console.log('OAuth initiation data:', data);
+          if (data.authUrl) {
+              console.log('Redirecting to:', data.authUrl);
+              // Don't await or try to catch errors here since the page will unload
+              window.location.replace(data.authUrl);
+              // Return true to indicate successful initiation
+              return true;
+          } else {
+              console.error('No auth URL received');
+              return false;
+          }
+      } catch (error) {
+          // Only log real errors, not the expected redirect termination
+          if (!(error instanceof TypeError) || !error.message.includes('NetworkError')) {
+              console.error('Error initiating OAuth:', error);
+          }
+          return false;
       }
-    } catch (error) {
-      console.error('Error initiating OAuth:', error);
-    }
   }
   
   async exchangeToken(code) {
