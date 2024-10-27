@@ -47,21 +47,36 @@ class UIManager {
   }
 
   setupBasicEventListeners() {
-    // Remove any existing listeners first
-    this.removeExistingListeners();
+    try {
+      // Remove any existing listeners first
+      this.removeExistingListeners();
 
-    // Only set up auth-related listeners initially
-    const loginContainer = document.getElementById('login-container');
-    if (loginContainer) {
-      loginContainer.addEventListener('click', this.handleLoginClick.bind(this));
+      // Only set up auth-related listeners initially
+      const loginContainer = document.getElementById('login-container');
+      this.logger.debug('Found login container:', !!loginContainer);
+      
+      if (loginContainer) {
+        loginContainer.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.handleLoginClick(e);
+        });
+      }
+
+      const logoutButton = document.getElementById('logout-button');
+      if (logoutButton) {
+        logoutButton.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.handleLogoutClick(e);
+        });
+      }
+
+      window.addEventListener('languageChanged', () => {
+        this.updatePageContent();
+      });
+      
+    } catch (error) {
+      this.logger.error('Error setting up event listeners:', error);
     }
-
-    const logoutButton = document.getElementById('logout-button');
-    if (logoutButton) {
-      logoutButton.addEventListener('click', this.handleLogoutClick.bind(this));
-    }
-
-    window.addEventListener('languageChanged', () => this.updatePageContent());
   }
   
   async initializeFormManagers() {
@@ -117,25 +132,29 @@ class UIManager {
   }
 
   removeExistingListeners() {
-    const loginContainer = document.getElementById('login-container');
-    if (loginContainer) {
-      const newContainer = loginContainer.cloneNode(true);
-      loginContainer.parentNode.replaceChild(newContainer, loginContainer);
-    }
+    try {
+      const loginContainer = document.getElementById('login-container');
+      if (loginContainer) {
+        const newContainer = loginContainer.cloneNode(true);
+        loginContainer.parentNode.replaceChild(newContainer, loginContainer);
+      }
 
-    const logoutButton = document.getElementById('logout-button');
-    if (logoutButton) {
-      const newButton = logoutButton.cloneNode(true);
-      logoutButton.parentNode.replaceChild(newButton, logoutButton);
+      const logoutButton = document.getElementById('logout-button');
+      if (logoutButton) {
+        const newButton = logoutButton.cloneNode(true);
+        logoutButton.parentNode.replaceChild(newButton, logoutButton);
+      }
+    } catch (error) {
+      this.logger.error('Error removing existing listeners:', error);
     }
   }
 
-  async handleLoginClick(event) {
+  handleLoginClick(event) {
     event.preventDefault();
     
     // Prevent multiple rapid clicks
     if (this.loginInProgress) {
-      console.log('Login already in progress');
+      this.logger.debug('Login already in progress');
       return;
     }
 
@@ -147,31 +166,37 @@ class UIManager {
     this.loginInProgress = true;
 
     try {
-      console.log('Login container clicked');
+      this.logger.debug('Login container clicked');
       const authManager = AuthManager.getInstance();
-      console.log('Initiating OAuth...');
+      this.logger.debug('Initiating OAuth...');
       
-      const initiated = await authManager.initiateOAuth();
-      
-      if (!initiated) {
-        console.error('Failed to initiate OAuth');
-        this.showError(this.i18next.t('auth.loginError', {
-          defaultValue: 'Unable to connect to login service. Please try again later.'
-        }));
-      }
+      authManager.initiateOAuth()
+        .then(initiated => {
+          if (!initiated) {
+            this.logger.error('Failed to initiate OAuth');
+            this.showError(this.i18next.t('auth.loginError', {
+              defaultValue: 'Unable to connect to login service. Please try again later.'
+            }));
+          }
+        })
+        .catch(error => {
+          // Handle only unexpected errors
+          if (!(error instanceof TypeError) || !error.message.includes('NetworkError')) {
+            this.logger.error('Failed to initiate login:', error);
+            this.showError(this.i18next.t('auth.loginError', {
+              defaultValue: 'Unable to connect to login service. Please try again later.'
+            }));
+          }
+        })
+        .finally(() => {
+          // Reset login state after a delay
+          this.loginClickTimeout = setTimeout(() => {
+            this.loginInProgress = false;
+          }, 2000); // 2 second cooldown
+        });
     } catch (error) {
-      // Handle only unexpected errors
-      if (!(error instanceof TypeError) || !error.message.includes('NetworkError')) {
-        console.error('Failed to initiate login:', error);
-        this.showError(this.i18next.t('auth.loginError', {
-          defaultValue: 'Unable to connect to login service. Please try again later.'
-        }));
-      }
-    } finally {
-      // Reset login state after a delay
-      this.loginClickTimeout = setTimeout(() => {
-        this.loginInProgress = false;
-      }, 2000); // 2 second cooldown
+      this.logger.error('Error in handleLoginClick:', error);
+      this.loginInProgress = false;
     }
   }
 
