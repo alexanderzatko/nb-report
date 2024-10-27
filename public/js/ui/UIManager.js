@@ -15,13 +15,16 @@ class UIManager {
     }
     this.i18next = i18next;
     this.logger = Logger.getInstance();
-    this.formManager = FormManager.getInstance();
-    this.selectManager = SelectManager.getInstance();
     this.setupEventListeners();
     
     UIManager.instance = this;
   }
 
+  initializeFormManagers() {
+    this.formManager = FormManager.getInstance();
+    this.selectManager = SelectManager.getInstance();
+  }
+    
   static getInstance() {
     if (!UIManager.instance) {
       UIManager.instance = new UIManager();
