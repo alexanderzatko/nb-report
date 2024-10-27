@@ -65,22 +65,19 @@ app.use('/node_modules', express.static(path.join(__dirname, '../node_modules'),
 }));
 
 app.get('/service-worker.js', (req, res) => {
+  const configManager = ConfigManager.getInstance();
+  
   // Set proper headers
   res.setHeader('Content-Type', 'application/javascript');
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
 
-  const CACHE_VERSION = 'v76';
-  // Only include files that definitely exist in your public directory
-  const CACHE_RESOURCES = [
-    '/',
-    '/index.html',
-    '/styles.css',
-    '/manifest.json',
-    '/icon/login-icon.svg',
-    '/offline.html'
-  ];
+  // Get version from ConfigManager
+  const CACHE_VERSION = configManager.get('cache.version');
+  
+  // Get static resources from ConfigManager
+  const CACHE_RESOURCES = configManager.get('cache.staticResources');
 
   const serviceWorkerContent = `
     const CACHE_NAME = 'snow-report-cache-${CACHE_VERSION}';
@@ -90,7 +87,6 @@ app.get('/service-worker.js', (req, res) => {
       event.waitUntil(
         caches.open(CACHE_NAME)
           .then((cache) => {
-            // Try to cache each resource, but don't fail if some aren't available
             return Promise.allSettled(
               RESOURCES_TO_CACHE.map(url => 
                 cache.add(url).catch(error => {
@@ -116,19 +112,20 @@ app.get('/service-worker.js', (req, res) => {
           }),
           self.clients.claim(),
           self.clients.matchAll().then(clients => {
-            clients.forEach(client => client.postMessage({ type: 'UPDATE_AVAILABLE' }));
+            clients.forEach(client => client.postMessage({ 
+              type: 'UPDATE_AVAILABLE',
+              version: '${CACHE_VERSION}'
+            }));
           })
         ])
       );
     });
 
     self.addEventListener('fetch', (event) => {
-      // Skip cross-origin requests
       if (!event.request.url.startsWith(self.location.origin)) {
         return;
       }
 
-      // Don't cache API requests
       if (event.request.url.includes('/api/')) {
         event.respondWith(fetch(event.request));
         return;
@@ -143,15 +140,12 @@ app.get('/service-worker.js', (req, res) => {
 
             return fetch(event.request)
               .then((response) => {
-                // Check if we received a valid response
                 if (!response || response.status !== 200 || response.type !== 'basic') {
                   return response;
                 }
 
-                // Clone the response
                 const responseToCache = response.clone();
 
-                // Cache the response
                 caches.open(CACHE_NAME)
                   .then((cache) => {
                     cache.put(event.request, responseToCache);
@@ -162,8 +156,12 @@ app.get('/service-worker.js', (req, res) => {
 
                 return response;
               })
-              .catch(() => {
-                // Return cached response if available
+              .catch(async () => {
+                // For navigation requests, return the offline page
+                if (event.request.mode === 'navigate') {
+                  const cache = await caches.open(CACHE_NAME);
+                  return cache.match('/offline.html');
+                }
                 return caches.match(event.request);
               });
           })
@@ -176,7 +174,6 @@ app.get('/service-worker.js', (req, res) => {
       }
     });
 
-    // Log the current cache version (helpful for debugging)
     console.log('Service Worker initialized with cache version:', '${CACHE_VERSION}');
   `;
 
