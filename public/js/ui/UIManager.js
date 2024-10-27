@@ -15,7 +15,8 @@ class UIManager {
     }
     this.i18next = i18next;
     this.logger = Logger.getInstance();
-    this.setupEventListeners();
+    this.formManager = null;
+    this.selectManager = null;
     
     UIManager.instance = this;
   }
@@ -34,8 +35,13 @@ class UIManager {
         });
       }
 
+      // Initialize form managers first
+      await this.initializeFormManagers();
+      
+      // Then set up event listeners and update page content
       this.setupEventListeners();
       this.updatePageContent();
+      
       this.initialized = true;
     } catch (error) {
       this.logger.error('Error initializing UIManager:', error);
@@ -43,9 +49,23 @@ class UIManager {
     }
   }
   
-  initializeFormManagers() {
-    this.formManager = FormManager.getInstance();
-    this.selectManager = SelectManager.getInstance();
+  async initializeFormManagers() {
+    this.logger.debug('Initializing form managers...');
+    try {
+      this.formManager = FormManager.getInstance();
+      this.selectManager = SelectManager.getInstance();
+      
+      // Initialize both managers
+      await Promise.all([
+        this.formManager.initialize(),
+        this.selectManager.initialize()
+      ]);
+      
+      this.logger.debug('Form managers initialized successfully');
+    } catch (error) {
+      this.logger.error('Error initializing form managers:', error);
+      throw error;
+    }
   }
     
   static getInstance() {
@@ -250,9 +270,21 @@ class UIManager {
   }
   
   showSnowReportForm() {
-    document.getElementById('dashboard-container').style.display = 'none';
-    document.getElementById('snow-report-form').style.display = 'block';
-    this.formManager.startTrackingFormTime();
+    if (!this.formManager) {
+      this.logger.error('FormManager not initialized');
+      return;
+    }
+
+    const dashboardContainer = document.getElementById('dashboard-container');
+    const snowReportForm = document.getElementById('snow-report-form');
+    
+    if (dashboardContainer && snowReportForm) {
+      dashboardContainer.style.display = 'none';
+      snowReportForm.style.display = 'block';
+      this.formManager.startTrackingFormTime();
+    } else {
+      this.logger.error('Required DOM elements not found');
+    }
   }
 
   showDashboard() {
