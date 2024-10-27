@@ -47,9 +47,7 @@ class App {
 
   async initializeApp() {
     try {
-      this.logger.info('Initializing application...');
-
-      // Initialize managers in order of dependency
+      // Only initialize essential managers first
       this.managers = {
         config: ConfigManager.getInstance(),
         event: EventManager.getInstance(),
@@ -57,41 +55,46 @@ class App {
         storage: StorageManager.getInstance(),
         state: StateManager.getInstance(),
         auth: AuthManager.getInstance(),
-        ui: UIManager.getInstance(),
-        select: SelectManager.getInstance(),
-        form: FormManager.getInstance(),
-        photo: PhotoManager.getInstance(),
-        validation: ValidationManager.getInstance(),
         serviceWorker: ServiceWorkerManager.getInstance()
       };
-
-      // Initialize i18n
-      await initI18next();
-
+  
       // Initialize service worker
       if ('serviceWorker' in navigator) {
         await this.managers.serviceWorker.initialize();
       }
-
-      // Initialize select manager
-      await this.managers.select.initialize();
-
-      // Initialize form manager
-      await this.managers.form.initialize();
-      
-      // Initialize app state
+  
+      // Check auth first
       await this.initializeAppState();
+      
+      // Only initialize form-related managers after successful auth
+      if (this.managers.auth.checkAuthStatus()) {
+        await this.initializeFormManagers();
+      }
       
       this.initialized = true;
       this.managers.event.emit('APP_INIT_COMPLETE');
-      
-      this.logger.info('Application initialized successfully');
     } catch (error) {
       this.logger.error('Failed to initialize application:', error);
       throw error;
     }
   }
 
+  async initializeFormManagers() {
+    // Initialize i18n
+    await initI18next();
+    
+    // Initialize form-related managers
+    this.managers.ui = UIManager.getInstance();
+    this.managers.select = SelectManager.getInstance();
+    this.managers.form = FormManager.getInstance();
+    this.managers.photo = PhotoManager.getInstance();
+    this.managers.validation = ValidationManager.getInstance();
+    
+    // Initialize form components
+    await this.managers.select.initialize();
+    await this.managers.form.initialize();
+  }
+    
   async initializeAppState() {
     this.managers.event.emit('APP_INIT_START');
   
