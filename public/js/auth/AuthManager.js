@@ -11,6 +11,7 @@ class AuthManager {
     this.initPromise = null;
     this.exchangingToken = false;
     this.stateCheckInProgress = false;
+    this.tokenRefreshInterval = null;
     AuthManager.instance = this;
   }
 
@@ -28,11 +29,29 @@ class AuthManager {
       });
       const data = await response.json();
       console.log('Auth status response:', data);
+      
+      if (data.isAuthenticated && !this.tokenRefreshInterval) {
+        // Set up token refresh if authenticated
+        this.setupTokenRefresh();
+      }
+      
       return data.isAuthenticated;
     } catch (error) {
       console.error('Error checking auth status:', error);
       return false;
     }
+  }
+
+  setupTokenRefresh() {
+    // Clear any existing interval
+    if (this.tokenRefreshInterval) {
+      clearInterval(this.tokenRefreshInterval);
+    }
+    
+    // Set up new refresh interval (e.g., every 5 minutes)
+    this.tokenRefreshInterval = setInterval(() => {
+      this.checkAndRefreshToken();
+    }, 5 * 60 * 1000); // 5 minutes
   }
 
   async handleOAuthCallback(code, state) {
@@ -47,11 +66,12 @@ class AuthManager {
   
     try {
       if (state) {
-        const storedState = localStorage.getItem('oauthState');
+        // Get state from sessionStorage instead of localStorage
+        const storedState = sessionStorage.getItem('oauthState');
         console.log('Stored state:', storedState);
         
-        // Clear the stored state immediately to prevent reuse
-        localStorage.removeItem('oauthState');
+        // Clear the stored state immediately
+        sessionStorage.removeItem('oauthState');
         console.log('Cleared stored OAuth state');
         
         if (!storedState || state !== storedState) {
@@ -67,7 +87,10 @@ class AuthManager {
           const success = await this.exchangeToken(code);
           if (success) {
             console.log('Token exchanged successfully');
-            await this.checkAuthStatus();
+            const isAuthenticated = await this.checkAuthStatus();
+            if (isAuthenticated) {
+              this.setupTokenRefresh();
+            }
             return true;
           }
         } catch (error) {
@@ -84,12 +107,16 @@ class AuthManager {
   async initiateOAuth() {
     console.log('InitiateOAuth called');
     try {
-      // Clear any existing OAuth state first
-      localStorage.removeItem('oauthState');
+      // Clear any existing OAuth state
+      sessionStorage.removeItem('oauthState');
       
-      const state = Math.random().toString(36).substring(2, 15);
+      // Generate new state
+      const state = Math.random().toString(36).substring(2, 15) + 
+                   Math.random().toString(36).substring(2, 15);
       console.log('Generated state:', state);
-      localStorage.setItem('oauthState', state);
+      
+      // Store in sessionStorage instead of localStorage
+      sessionStorage.setItem('oauthState', state);
 
       const response = await fetch('/api/initiate-oauth', {
         method: 'POST',
@@ -108,7 +135,8 @@ class AuthManager {
       
       if (data.authUrl) {
         console.log('Redirecting to:', data.authUrl);
-        window.location.replace(data.authUrl);
+        // Use location.href instead of replace to ensure state is preserved
+        window.location.href = data.authUrl;
         return true;
       } else {
         console.error('No auth URL received');
@@ -167,13 +195,62 @@ class AuthManager {
     }
   }
 
+  async checkAndRefreshToken() {
+    console.log('Checking if token needs refresh...');
+    const isLoggedIn = await this.checkAuthStatus();
+    
+    if (!isLoggedIn) {
+      console.log('User is not logged in, skipping token refresh');
+      if (this.tokenRefreshInterval) {
+        clearInterval(this.tokenRefreshInterval);
+        this.tokenRefreshInterval = null;
+      }
+      return false;
+    }
+
+    try {
+      const response = await fetch('/api/refresh-token', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          console.log('Token refreshed successfully');
+          return true;
+        }
+      } else if (response.status === 401) {
+        console.log('Session expired. Please log in again.');
+        localStorage.removeItem('sessionId');
+        if (this.tokenRefreshInterval) {
+          clearInterval(this.tokenRefreshInterval);
+          this.tokenRefreshInterval = null;
+        }
+        return false;
+      }
+    } catch (error) {
+      console.error('Error refreshing token:', error);
+      return false;
+    }
+  }
+
   async logout() {
     try {
       console.log('Logout function called');
       
-      // Clear OAuth state and session data first
-      localStorage.removeItem('oauthState');
+      // Clear all auth-related data
+      sessionStorage.removeItem('oauthState');
       localStorage.removeItem('sessionId');
+      
+      // Clear token refresh interval
+      if (this.tokenRefreshInterval) {
+        clearInterval(this.tokenRefreshInterval);
+        this.tokenRefreshInterval = null;
+      }
       
       const response = await fetch('/api/logout', { 
         method: 'POST',
