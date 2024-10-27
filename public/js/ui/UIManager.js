@@ -111,19 +111,21 @@ class UIManager {
     const logoutButton = document.getElementById('logout-button');
   
     if (isAuthenticated) {
-      console.log('Showing dashboard for authenticated user');
       if (loginContainer) loginContainer.style.display = 'none';
-      if (dashboardContainer) {
-        dashboardContainer.style.display = 'block';
-        console.log('Dashboard container display set to block');
-      } else {
-        console.error('Dashboard container not found');
-      }
+      if (dashboardContainer) dashboardContainer.style.display = 'block';
       if (snowReportForm) snowReportForm.style.display = 'none';
       if (logoutButton) logoutButton.style.display = 'block';
     } else {
-      console.log('Showing login for unauthenticated user');
-      if (loginContainer) loginContainer.style.display = 'flex';
+      if (loginContainer) {
+        loginContainer.style.display = 'flex';
+        // Add explicit login text update here
+        const loginText = document.getElementById('login-text');
+        if (loginText) {
+          loginText.innerHTML = this.i18next.t('auth.loginText', { 
+            interpolation: { escapeValue: false } 
+          });
+        }
+      }
       if (dashboardContainer) dashboardContainer.style.display = 'none';
       if (snowReportForm) snowReportForm.style.display = 'none';
       if (logoutButton) logoutButton.style.display = 'none';
