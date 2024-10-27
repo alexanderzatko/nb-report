@@ -13,7 +13,7 @@ class ConfigManager {
     this.logger = Logger.getInstance();
     this.config = {
       cache: {
-        version: 'v79', //update this for new app release
+        version: 'v80', //update this for new app release
         name: 'snow-report-cache',
         staticResources: [
           '/',
