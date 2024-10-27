@@ -34,9 +34,12 @@ class UIManager {
           this.i18next.on('initialized', resolve);
         });
       }
+
+      // Initialize form managers first
+      await this.initializeFormManagers();
       
-      // Only set up basic event listeners initially
-      this.setupBasicEventListeners();
+      // Then set up event listeners and update page content
+      this.setupEventListeners();
       this.updatePageContent();
       
       this.initialized = true;
@@ -45,67 +48,23 @@ class UIManager {
       throw error;
     }
   }
-
-  setupBasicEventListeners() {
-    try {
-      // Remove any existing listeners first
-      this.removeExistingListeners();
-
-      // Only set up auth-related listeners initially
-      const loginContainer = document.getElementById('login-container');
-      this.logger.debug('Found login container:', !!loginContainer);
-      
-      if (loginContainer) {
-        loginContainer.addEventListener('click', (e) => {
-          e.preventDefault();
-          this.handleLoginClick(e);
-        });
-      }
-
-      const logoutButton = document.getElementById('logout-button');
-      if (logoutButton) {
-        logoutButton.addEventListener('click', (e) => {
-          e.preventDefault();
-          this.handleLogoutClick(e);
-        });
-      }
-
-      window.addEventListener('languageChanged', () => {
-        this.updatePageContent();
-      });
-      
-    } catch (error) {
-      this.logger.error('Error setting up event listeners:', error);
-    }
-  }
   
   async initializeFormManagers() {
-    // Only initialize form managers when needed
-    if (!this.formManager) {
-      this.logger.debug('Initializing form managers...');
-      try {
-        this.formManager = FormManager.getInstance();
-        this.selectManager = SelectManager.getInstance();
-        
-        await Promise.all([
-          this.formManager.initialize(),
-          this.selectManager.initialize()
-        ]);
-        
-        // Set up form-related event listeners
-        const snowReportLink = document.getElementById('snow-report-link');
-        if (snowReportLink) {
-          snowReportLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.showSnowReportForm();
-          });
-        }
-        
-        this.logger.debug('Form managers initialized successfully');
-      } catch (error) {
-        this.logger.error('Error initializing form managers:', error);
-        throw error;
-      }
+    this.logger.debug('Initializing form managers...');
+    try {
+      this.formManager = FormManager.getInstance();
+      this.selectManager = SelectManager.getInstance();
+      
+      // Initialize both managers
+      await Promise.all([
+        this.formManager.initialize(),
+        this.selectManager.initialize()
+      ]);
+      
+      this.logger.debug('Form managers initialized successfully');
+    } catch (error) {
+      this.logger.error('Error initializing form managers:', error);
+      throw error;
     }
   }
     
@@ -115,6 +74,18 @@ class UIManager {
     }
     return UIManager.instance;
   }
+
+  setupEventListeners() {
+    // Remove any existing listeners first
+    this.removeExistingListeners();
+
+    const snowReportLink = document.getElementById('snow-report-link');
+    if (snowReportLink) {
+      snowReportLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.showSnowReportForm();
+      });
+    }
 
     // Add login container click handler with debouncing
     const loginContainer = document.getElementById('login-container');
@@ -132,29 +103,25 @@ class UIManager {
   }
 
   removeExistingListeners() {
-    try {
-      const loginContainer = document.getElementById('login-container');
-      if (loginContainer) {
-        const newContainer = loginContainer.cloneNode(true);
-        loginContainer.parentNode.replaceChild(newContainer, loginContainer);
-      }
+    const loginContainer = document.getElementById('login-container');
+    if (loginContainer) {
+      const newContainer = loginContainer.cloneNode(true);
+      loginContainer.parentNode.replaceChild(newContainer, loginContainer);
+    }
 
-      const logoutButton = document.getElementById('logout-button');
-      if (logoutButton) {
-        const newButton = logoutButton.cloneNode(true);
-        logoutButton.parentNode.replaceChild(newButton, logoutButton);
-      }
-    } catch (error) {
-      this.logger.error('Error removing existing listeners:', error);
+    const logoutButton = document.getElementById('logout-button');
+    if (logoutButton) {
+      const newButton = logoutButton.cloneNode(true);
+      logoutButton.parentNode.replaceChild(newButton, logoutButton);
     }
   }
 
-  handleLoginClick(event) {
+  async handleLoginClick(event) {
     event.preventDefault();
     
     // Prevent multiple rapid clicks
     if (this.loginInProgress) {
-      this.logger.debug('Login already in progress');
+      console.log('Login already in progress');
       return;
     }
 
@@ -166,37 +133,31 @@ class UIManager {
     this.loginInProgress = true;
 
     try {
-      this.logger.debug('Login container clicked');
+      console.log('Login container clicked');
       const authManager = AuthManager.getInstance();
-      this.logger.debug('Initiating OAuth...');
+      console.log('Initiating OAuth...');
       
-      authManager.initiateOAuth()
-        .then(initiated => {
-          if (!initiated) {
-            this.logger.error('Failed to initiate OAuth');
-            this.showError(this.i18next.t('auth.loginError', {
-              defaultValue: 'Unable to connect to login service. Please try again later.'
-            }));
-          }
-        })
-        .catch(error => {
-          // Handle only unexpected errors
-          if (!(error instanceof TypeError) || !error.message.includes('NetworkError')) {
-            this.logger.error('Failed to initiate login:', error);
-            this.showError(this.i18next.t('auth.loginError', {
-              defaultValue: 'Unable to connect to login service. Please try again later.'
-            }));
-          }
-        })
-        .finally(() => {
-          // Reset login state after a delay
-          this.loginClickTimeout = setTimeout(() => {
-            this.loginInProgress = false;
-          }, 2000); // 2 second cooldown
-        });
+      const initiated = await authManager.initiateOAuth();
+      
+      if (!initiated) {
+        console.error('Failed to initiate OAuth');
+        this.showError(this.i18next.t('auth.loginError', {
+          defaultValue: 'Unable to connect to login service. Please try again later.'
+        }));
+      }
     } catch (error) {
-      this.logger.error('Error in handleLoginClick:', error);
-      this.loginInProgress = false;
+      // Handle only unexpected errors
+      if (!(error instanceof TypeError) || !error.message.includes('NetworkError')) {
+        console.error('Failed to initiate login:', error);
+        this.showError(this.i18next.t('auth.loginError', {
+          defaultValue: 'Unable to connect to login service. Please try again later.'
+        }));
+      }
+    } finally {
+      // Reset login state after a delay
+      this.loginClickTimeout = setTimeout(() => {
+        this.loginInProgress = false;
+      }, 2000); // 2 second cooldown
     }
   }
 
@@ -228,30 +189,19 @@ class UIManager {
     }
   }
   
-  async updateUIBasedOnAuthState(isAuthenticated) {
+  updateUIBasedOnAuthState(isAuthenticated) {
     console.log('Updating UI based on auth state:', isAuthenticated);
-    
+    const loginContainer = document.getElementById('login-container');
+    const dashboardContainer = document.getElementById('dashboard-container');
+    const snowReportForm = document.getElementById('snow-report-form');
+    const logoutButton = document.getElementById('logout-button');
+  
     if (isAuthenticated) {
-      // Initialize form managers only after successful authentication
-      await this.initializeFormManagers();
-      
-      // Update UI elements
-      const loginContainer = document.getElementById('login-container');
-      const dashboardContainer = document.getElementById('dashboard-container');
-      const snowReportForm = document.getElementById('snow-report-form');
-      const logoutButton = document.getElementById('logout-button');
-    
       if (loginContainer) loginContainer.style.display = 'none';
       if (dashboardContainer) dashboardContainer.style.display = 'block';
       if (snowReportForm) snowReportForm.style.display = 'none';
       if (logoutButton) logoutButton.style.display = 'block';
     } else {
-      // Reset UI to login state
-      const loginContainer = document.getElementById('login-container');
-      const dashboardContainer = document.getElementById('dashboard-container');
-      const snowReportForm = document.getElementById('snow-report-form');
-      const logoutButton = document.getElementById('logout-button');
-    
       if (loginContainer) {
         loginContainer.style.display = 'flex';
         this.updateLoginText();
