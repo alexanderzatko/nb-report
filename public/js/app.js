@@ -60,9 +60,10 @@ class App {
         serviceWorker: ServiceWorkerManager.getInstance()
       };
 
-      // Initialize i18next and wait for completion
+      // Initialize i18next first and ensure fresh initialization
+      await resetI18next();
       await initI18next();
-      
+
       // Initialize form-related managers early
       await this.initializeFormManagers();
 
