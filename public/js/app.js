@@ -81,19 +81,17 @@ class App {
   }
 
   async initializeFormManagers() {
-    // Initialize i18n first
+    // Initialize i18n
     await initI18next();
     
-    // Initialize select manager and wait for its initialization
+    // Initialize form-related managers
     this.managers.select = SelectManager.getInstance();
-    await this.managers.select.initialize();
-    
-    // Then initialize other form-related managers
     this.managers.form = FormManager.getInstance();
     this.managers.photo = PhotoManager.getInstance();
     this.managers.validation = ValidationManager.getInstance();
     
-    // Initialize form components last
+    // Initialize form components
+    await this.managers.select.initialize();
     await this.managers.form.initialize();
   }
     
