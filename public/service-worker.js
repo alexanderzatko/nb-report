@@ -1,6 +1,6 @@
 // public/service-worker.js
 
-const CACHE_VERSION = 'v84';  // Update this when deploying new version
+const CACHE_VERSION = 'v87';  // Update this when deploying new version
 const CACHE_NAME = `snow-report-cache-${CACHE_VERSION}`;
 
 const STATIC_RESOURCES = [
