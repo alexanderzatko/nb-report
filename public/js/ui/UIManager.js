@@ -118,7 +118,7 @@ class UIManager {
     } else {
       if (loginContainer) {
         loginContainer.style.display = 'flex';
-        this.updateLoginText();  // Add this explicit call
+        this.updateLoginText();
       }
       if (dashboardContainer) dashboardContainer.style.display = 'none';
       if (snowReportForm) snowReportForm.style.display = 'none';
