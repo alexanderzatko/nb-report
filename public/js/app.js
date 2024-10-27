@@ -1,5 +1,3 @@
-// app.js
-
 import i18next from '/node_modules/i18next/dist/esm/i18next.js';
 import Logger from './utils/Logger.js';
 import AuthManager from './auth/AuthManager.js';
@@ -27,15 +25,70 @@ class App {
     App.instance = this;
   }
 
+  static getInstance() {
+    if (!App.instance) {
+      App.instance = new App();
+    }
+    return App.instance;
+  }
+
   async start() {
     if (this.initialized) {
       return;
     }
-
+    
     try {
       await this.initializeApp();
     } catch (error) {
       this.logger.error('Initialization failed:', error);
+      this.handleInitializationError(error);
+    }
+  }
+
+  async initializeApp() {
+    try {
+      this.logger.info('Initializing application...');
+
+      // Initialize managers in order of dependency
+      this.managers = {
+        config: ConfigManager.getInstance(),
+        event: EventManager.getInstance(),
+        network: NetworkManager.getInstance(),
+        storage: StorageManager.getInstance(),
+        state: StateManager.getInstance(),
+        auth: AuthManager.getInstance(),
+        ui: UIManager.getInstance(),
+        select: SelectManager.getInstance(),
+        form: FormManager.getInstance(),
+        photo: PhotoManager.getInstance(),
+        validation: ValidationManager.getInstance(),
+        serviceWorker: ServiceWorkerManager.getInstance()
+      };
+
+      // Initialize i18n
+      await initI18next();
+
+      // Initialize service worker
+      if ('serviceWorker' in navigator) {
+        await this.managers.serviceWorker.initialize();
+      }
+
+      // Initialize select manager
+      await this.managers.select.initialize();
+
+      // Initialize form manager
+      await this.managers.form.initialize();
+      
+      // Initialize app state
+      await this.initializeAppState();
+      
+      this.initialized = true;
+      this.managers.event.emit('APP_INIT_COMPLETE');
+      
+      this.logger.info('Application initialized successfully');
+    } catch (error) {
+      this.logger.error('Failed to initialize application:', error);
+      throw error;
     }
   }
 
@@ -71,108 +124,6 @@ class App {
     }
   }
 
-  async initializeI18n() {
-    try {
-      await initI18next();
-      const userLang = this.managers.storage.getLocalStorage('userLanguage') 
-        || navigator.language 
-        || this.managers.config.get('defaultLocale');
-      await i18next.changeLanguage(userLang);
-      this.logger.info('i18n initialized with language:', userLang);
-    } catch (error) {
-      this.logger.error('Failed to initialize i18n:', error);
-      throw error;
-    }
-  }
-
-  setupEventListeners() {
-    // Auth events
-    this.managers.event.on('AUTH_LOGIN_SUCCESS', async (userData) => {
-      await this.managers.storage.setLocalStorage('sessionId', userData.sessionId);
-      await this.managers.ui.updateUIBasedOnAuthState(true);
-      await this.refreshUserData();
-    });
-
-    this.managers.event.on('AUTH_LOGOUT', async () => {
-      await this.managers.storage.removeLocalStorage('sessionId');
-      await this.managers.ui.updateUIBasedOnAuthState(false);
-    });
-
-    // Form events
-    this.managers.event.on('FORM_SUBMIT_START', () => {
-      this.managers.ui.showLoading();
-    });
-
-    this.managers.event.on('FORM_SUBMIT_SUCCESS', () => {
-      this.managers.ui.hideLoading();
-      this.managers.form.resetForm();
-    });
-
-    // Network events
-    this.managers.event.on('NETWORK_OFFLINE', () => {
-      this.managers.ui.showOfflineWarning();
-    });
-
-    // App update events
-    this.managers.event.on('APP_UPDATE_AVAILABLE', () => {
-      this.managers.ui.showUpdatePrompt();
-    });
-  }
-
-  async initializeAppState() {
-      this.managers.event.emit('APP_INIT_START');
-  
-      // Check for stored session
-      const sessionId = this.managers.storage.getLocalStorage('sessionId');
-      console.log('Stored sessionId:', sessionId);
-  
-      const didAuth = await this.checkForURLParameters();
-      if (!didAuth && sessionId) {
-          try {
-              const isValid = await this.managers.auth.checkAuthStatus();
-              console.log('Auth status check result:', isValid);
-              if (isValid) {
-                  await this.refreshUserData();
-                  await this.managers.ui.updateUIBasedOnAuthState(true);
-              } else {
-                  await this.handleInvalidSession();
-              }
-          } catch (error) {
-              console.error('Error checking session:', error);
-              await this.handleInvalidSession();
-          }
-      } else if (!didAuth) {
-          // Explicitly set initial unauthenticated state if no auth occurred
-          await this.managers.ui.updateUIBasedOnAuthState(false);
-      }
-      
-      await this.managers.location.initialize();
-  }
-
-  async refreshUserData() {
-    try {
-      const userData = await this.managers.network.get('/api/user-data');
-      if (userData) {
-        // Ensure LocationManager is initialized before proceeding
-        await this.managers.location.initializationPromise;
-        
-        this.managers.ui.updateUIWithUserData(userData);
-        this.managers.form.initializeForm(userData);
-        await this.managers.location.refreshDropdowns();
-        return userData;
-      }
-    } catch (error) {
-      this.logger.error('Error refreshing user data:', error);
-      await this.handleInvalidSession();
-    }
-  }
-
-  async handleInvalidSession() {
-    this.logger.info('Handling invalid session');
-    await this.managers.auth.logout();
-    this.managers.ui.showLoginPrompt();
-  }
-
   async checkForURLParameters() {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('code') && !this.processingAuth) {
@@ -182,7 +133,6 @@ class App {
           urlParams.get('code'),
           urlParams.get('state')
         );
-        // Clean URL parameters
         window.history.replaceState({}, document.title, '/');
         
         if (success) {
@@ -197,32 +147,34 @@ class App {
     return false;
   }
 
-  handleInitializationError(error) {
-    this.logger.error('Initialization error:', error);
-    // Use alert instead of showErrorMessage
-    alert('Application initialization failed. Please refresh the page.');
-  }
-
-  // Public methods for external interactions
-  async start() {
-    if (!this.initialized) {
-      await this.initializeApp();
+  async refreshUserData() {
+    try {
+      const userData = await this.managers.network.get('/api/user-data');
+      if (userData) {
+        this.managers.ui.updateUIWithUserData(userData);
+        this.managers.form.initializeForm(userData);
+        return userData;
+      }
+    } catch (error) {
+      this.logger.error('Error refreshing user data:', error);
+      throw error;
     }
   }
 
-  async restart() {
-    this.initialized = false;
-    await this.start();
+  async handleInvalidSession() {
+    this.logger.info('Handling invalid session');
+    await this.managers.auth.logout();
+    this.managers.ui.showLoginPrompt();
   }
 
-  getManager(managerName) {
-    return this.managers[managerName];
+  handleInitializationError(error) {
+    this.logger.error('Initialization error:', error);
+    alert('Application initialization failed. Please refresh the page.');
   }
 }
 
 // Create and export app instance
-const app = new App();
-export default app;
+const app = App.getInstance();
 
 // Start the application when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
@@ -230,3 +182,5 @@ document.addEventListener('DOMContentLoaded', () => {
     console.error('Failed to start application:', error);
   });
 });
+
+export default app;
