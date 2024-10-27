@@ -2,6 +2,9 @@
 
 class AuthManager {
   static instance = null;
+  static STATE_KEY = 'oauth_state';
+  static SESSION_KEY = 'session_id';
+  static AUTH_DATA_KEY = 'auth_data';
 
   constructor() {
     if (AuthManager.instance) {
@@ -66,19 +69,25 @@ class AuthManager {
   
     try {
       if (state) {
-        // Get state from sessionStorage instead of localStorage
-        const storedState = sessionStorage.getItem('oauthState');
+        const storedState = sessionStorage.getItem(AuthManager.STATE_KEY);
         console.log('Stored state:', storedState);
         
-        // Clear the stored state immediately
-        sessionStorage.removeItem('oauthState');
-        console.log('Cleared stored OAuth state');
-        
-        if (!storedState || state !== storedState) {
+        // Validate state and check timestamp
+        if (storedState && state === storedState) {
+          const [timestamp] = storedState.split('.');
+          const initiatedAt = parseInt(sessionStorage.getItem('oauth_initiated_at') || '0');
+          
+          // Check if the OAuth flow took too long (more than 5 minutes)
+          if (Date.now() - initiatedAt > 5 * 60 * 1000) {
+            console.error('OAuth flow took too long');
+            return false;
+          }
+          
+          console.log('State validation successful');
+        } else {
           console.error('State mismatch or missing. Possible CSRF attack.');
           return false;
         }
-        console.log('State validation successful');
       }
   
       if (code) {
@@ -87,10 +96,6 @@ class AuthManager {
           const success = await this.exchangeToken(code);
           if (success) {
             console.log('Token exchanged successfully');
-            const isAuthenticated = await this.checkAuthStatus();
-            if (isAuthenticated) {
-              this.setupTokenRefresh();
-            }
             return true;
           }
         } catch (error) {
@@ -101,22 +106,43 @@ class AuthManager {
       return false;
     } finally {
       this.exchangingToken = false;
+      // Clear OAuth-specific data but keep session if successful
+      sessionStorage.removeItem(AuthManager.STATE_KEY);
+      sessionStorage.removeItem('oauth_initiated_at');
     }
   }
 
+  clearAuthData() {
+    // Clear all authentication-related data
+    sessionStorage.removeItem(AuthManager.STATE_KEY);
+    localStorage.removeItem(AuthManager.SESSION_KEY);
+    localStorage.removeItem(AuthManager.AUTH_DATA_KEY);
+    
+    // Clear cookies by setting them to expire
+    document.cookie = 'nb_report_cookie=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+    document.cookie = 'connect.sid=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+    
+    if (this.tokenRefreshInterval) {
+      clearInterval(this.tokenRefreshInterval);
+      this.tokenRefreshInterval = null;
+    }
+  }
+  
   async initiateOAuth() {
     console.log('InitiateOAuth called');
     try {
-      // Clear any existing OAuth state
-      sessionStorage.removeItem('oauthState');
+      // Clear any existing auth data before starting new auth flow
+      this.clearAuthData();
       
-      // Generate new state
-      const state = Math.random().toString(36).substring(2, 15) + 
-                   Math.random().toString(36).substring(2, 15);
+      // Generate new state with timestamp to prevent replay attacks
+      const timestamp = Date.now();
+      const randomPart = Math.random().toString(36).substring(2, 15);
+      const state = `${timestamp}.${randomPart}`;
+      
       console.log('Generated state:', state);
       
-      // Store in sessionStorage instead of localStorage
-      sessionStorage.setItem('oauthState', state);
+      // Store state in sessionStorage
+      sessionStorage.setItem(AuthManager.STATE_KEY, state);
 
       const response = await fetch('/api/initiate-oauth', {
         method: 'POST',
@@ -135,7 +161,8 @@ class AuthManager {
       
       if (data.authUrl) {
         console.log('Redirecting to:', data.authUrl);
-        // Use location.href instead of replace to ensure state is preserved
+        // Store the timestamp when we initiated OAuth
+        sessionStorage.setItem('oauth_initiated_at', timestamp.toString());
         window.location.href = data.authUrl;
         return true;
       } else {
@@ -143,9 +170,7 @@ class AuthManager {
         return false;
       }
     } catch (error) {
-      if (!(error instanceof TypeError) || !error.message.includes('NetworkError')) {
-        console.error('Error initiating OAuth:', error);
-      }
+      console.error('Error initiating OAuth:', error);
       return false;
     }
   }
@@ -242,16 +267,7 @@ class AuthManager {
     try {
       console.log('Logout function called');
       
-      // Clear all auth-related data
-      sessionStorage.removeItem('oauthState');
-      localStorage.removeItem('sessionId');
-      
-      // Clear token refresh interval
-      if (this.tokenRefreshInterval) {
-        clearInterval(this.tokenRefreshInterval);
-        this.tokenRefreshInterval = null;
-      }
-      
+      // Make the logout request first
       const response = await fetch('/api/logout', { 
         method: 'POST',
         credentials: 'include',
@@ -265,11 +281,16 @@ class AuthManager {
         throw new Error('Logout failed: ' + data.message);
       }
 
+      // Clear all auth data after successful server logout
+      this.clearAuthData();
+
       console.log('Logout successful');
       return true;
 
     } catch (error) {
       console.error('Logout error:', error);
+      // Still clear auth data on error to prevent stuck states
+      this.clearAuthData();
       return false;
     }
   }
