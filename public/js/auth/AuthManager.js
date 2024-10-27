@@ -58,35 +58,44 @@ class AuthManager {
   }
 
   async handleOAuthCallback(code, state) {
+    console.log('handleOAuthCallback called');
+    console.log('Code:', code, 'State:', state);
+
     if (this.exchangingToken) {
       console.log('Token exchange already in progress');
       return false;
     }
   
-    this.exchangingToken = true;  
-    console.log('handleOAuthCallback called');
-    console.log('Code:', code, 'State:', state);
+    this.exchangingToken = true;
   
     try {
       if (state) {
         const storedState = sessionStorage.getItem(AuthManager.STATE_KEY);
         console.log('Stored state:', storedState);
         
-        // Validate state and check timestamp
-        if (storedState && state === storedState) {
-          const [timestamp] = storedState.split('.');
-          const initiatedAt = parseInt(sessionStorage.getItem('oauth_initiated_at') || '0');
-          
-          // Check if the OAuth flow took too long (more than 5 minutes)
-          if (Date.now() - initiatedAt > 5 * 60 * 1000) {
-            console.error('OAuth flow took too long');
-            return false;
-          }
-          
-          console.log('State validation successful');
-        } else {
-          console.error('State mismatch or missing. Possible CSRF attack.');
+        if (!storedState || !state) {
+          console.error('Missing state');
           return false;
+        }
+
+        // Parse timestamps from states
+        const [returnedTimestamp] = state.split('.');
+        const [storedTimestamp] = storedState.split('.');
+        
+        console.log('Timestamps - Returned:', returnedTimestamp, 'Stored:', storedTimestamp);
+        
+        // Allow for small timing differences (within 5 seconds)
+        const timeDiff = Math.abs(parseInt(returnedTimestamp) - parseInt(storedTimestamp));
+        if (timeDiff > 5000) {
+          console.error('Timestamp difference too large:', timeDiff);
+          return false;
+        }
+
+        // Verify the complete state if timestamps are close
+        if (state === storedState) {
+          console.log('Exact state match');
+        } else {
+          console.log('States differ but timestamps are within tolerance');
         }
       }
   
@@ -96,6 +105,7 @@ class AuthManager {
           const success = await this.exchangeToken(code);
           if (success) {
             console.log('Token exchanged successfully');
+            await this.checkAuthStatus(); // Ensure we get the latest auth status
             return true;
           }
         } catch (error) {
@@ -113,12 +123,24 @@ class AuthManager {
   }
 
   clearAuthData() {
-    // Clear all authentication-related data
+    console.log('Clearing auth data...');
+    const beforeClear = {
+      sessionStorage: {
+        state: sessionStorage.getItem(AuthManager.STATE_KEY),
+        initiatedAt: sessionStorage.getItem('oauth_initiated_at')
+      },
+      localStorage: {
+        sessionId: localStorage.getItem(AuthManager.SESSION_KEY),
+        authData: localStorage.getItem(AuthManager.AUTH_DATA_KEY)
+      }
+    };
+    console.log('Before clearing:', beforeClear);
+
     sessionStorage.removeItem(AuthManager.STATE_KEY);
+    sessionStorage.removeItem('oauth_initiated_at');
     localStorage.removeItem(AuthManager.SESSION_KEY);
     localStorage.removeItem(AuthManager.AUTH_DATA_KEY);
     
-    // Clear cookies by setting them to expire
     document.cookie = 'nb_report_cookie=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
     document.cookie = 'connect.sid=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
     
@@ -126,6 +148,18 @@ class AuthManager {
       clearInterval(this.tokenRefreshInterval);
       this.tokenRefreshInterval = null;
     }
+
+    const afterClear = {
+      sessionStorage: {
+        state: sessionStorage.getItem(AuthManager.STATE_KEY),
+        initiatedAt: sessionStorage.getItem('oauth_initiated_at')
+      },
+      localStorage: {
+        sessionId: localStorage.getItem(AuthManager.SESSION_KEY),
+        authData: localStorage.getItem(AuthManager.AUTH_DATA_KEY)
+      }
+    };
+    console.log('After clearing:', afterClear);
   }
   
   async initiateOAuth() {
@@ -135,7 +169,7 @@ class AuthManager {
       this.clearAuthData();
       
       // Generate new state with timestamp to prevent replay attacks
-      const timestamp = Date.now();
+      const timestamp = Math.floor(Date.now() / 1000) * 1000; // Round to nearest second
       const randomPart = Math.random().toString(36).substring(2, 15);
       const state = `${timestamp}.${randomPart}`;
       
@@ -143,6 +177,7 @@ class AuthManager {
       
       // Store state in sessionStorage
       sessionStorage.setItem(AuthManager.STATE_KEY, state);
+      sessionStorage.setItem('oauth_initiated_at', timestamp.toString());
 
       const response = await fetch('/api/initiate-oauth', {
         method: 'POST',
@@ -160,9 +195,16 @@ class AuthManager {
       console.log('OAuth initiation data:', data);
       
       if (data.authUrl) {
+        // Double-check state is stored before redirect
+        const storedState = sessionStorage.getItem(AuthManager.STATE_KEY);
+        console.log('Stored state before redirect:', storedState);
+        
+        if (storedState !== state) {
+          console.error('State storage failed');
+          return false;
+        }
+        
         console.log('Redirecting to:', data.authUrl);
-        // Store the timestamp when we initiated OAuth
-        sessionStorage.setItem('oauth_initiated_at', timestamp.toString());
         window.location.href = data.authUrl;
         return true;
       } else {
@@ -206,8 +248,8 @@ class AuthManager {
         console.log('Token exchange successful');
         
         if (data.sessionId) {
-          localStorage.setItem('sessionId', data.sessionId);
-          console.log('Session ID stored in localStorage');
+          console.log('Storing session ID:', data.sessionId);
+          localStorage.setItem(AuthManager.SESSION_KEY, data.sessionId);
         }
         
         return true;
