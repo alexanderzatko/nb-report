@@ -12,7 +12,7 @@ import ConfigManager from './config/ConfigManager.js';
 import EventManager from './events/EventManager.js';
 import ServiceWorkerManager from './services/ServiceWorkerManager.js';
 import StateManager from './state/StateManager.js';
-import { initI18next } from './i18n.js';
+import { initI18next, resetI18next } from './i18n.js';
 
 class App {
   constructor() {
