@@ -60,8 +60,10 @@ class AuthManager {
         try {
           const success = await this.exchangeToken(code);
           if (success) {
-            console.log('Token exchanged successfully');
-            await this.checkAuthStatus();
+            // Initialize form managers after successful auth
+            await app.initializeFormManagers();
+            await this.managers.ui.updateUIBasedOnAuthState(true);
+            await this.refreshUserData();
             return true;
           }
         } catch (error) {
