@@ -130,26 +130,31 @@ class App {
   }
 
   async checkForURLParameters() {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('code') && !this.processingAuth) {
-      this.processingAuth = true;
-      try {
-        const success = await this.managers.auth.handleOAuthCallback(
-          urlParams.get('code'),
-          urlParams.get('state')
-        );
-        window.history.replaceState({}, document.title, '/');
-        
-        if (success) {
-          await this.managers.ui.updateUIBasedOnAuthState(true);
-          await this.refreshUserData();
-          return true;
-        }
-      } finally {
-        this.processingAuth = false;
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('code') && !this.processingAuth) {
+          this.processingAuth = true;
+          try {
+              console.log('Processing OAuth callback...');
+              const success = await this.managers.auth.handleOAuthCallback(
+                  urlParams.get('code'),
+                  urlParams.get('state')
+              );
+              window.history.replaceState({}, document.title, '/');
+              
+              if (success) {
+                  console.log('OAuth callback successful, updating UI...');
+                  await this.managers.ui.updateUIBasedOnAuthState(true);
+                  await this.refreshUserData();
+                  return true;
+              } else {
+                  console.log('OAuth callback failed, showing login...');
+                  await this.managers.ui.updateUIBasedOnAuthState(false);
+              }
+          } finally {
+              this.processingAuth = false;
+          }
       }
-    }
-    return false;
+      return false;
   }
 
   async refreshUserData() {
