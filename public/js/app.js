@@ -47,7 +47,7 @@ class App {
 
   async initializeApp() {
     try {
-      // Only initialize essential managers first
+      // Initialize essential managers first
       this.managers = {
         config: ConfigManager.getInstance(),
         event: EventManager.getInstance(),
@@ -55,6 +55,7 @@ class App {
         storage: StorageManager.getInstance(),
         state: StateManager.getInstance(),
         auth: AuthManager.getInstance(),
+        ui: UIManager.getInstance(),  // Move UI manager to essential managers
         serviceWorker: ServiceWorkerManager.getInstance()
       };
   
@@ -67,7 +68,7 @@ class App {
       await this.initializeAppState();
       
       // Only initialize form-related managers after successful auth
-      if (this.managers.auth.checkAuthStatus()) {
+      if (await this.managers.auth.checkAuthStatus()) {
         await this.initializeFormManagers();
       }
       
@@ -84,7 +85,6 @@ class App {
     await initI18next();
     
     // Initialize form-related managers
-    this.managers.ui = UIManager.getInstance();
     this.managers.select = SelectManager.getInstance();
     this.managers.form = FormManager.getInstance();
     this.managers.photo = PhotoManager.getInstance();
