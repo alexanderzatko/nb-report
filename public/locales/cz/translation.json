@@ -62,6 +62,13 @@
     "snowDepthTotal": "Celková výška sněhu (cm)",
     "snowDepthNew": "Nový sníh (cm)",
     "nextMaintenance": "Nejbližší úprava",
+    "maintenance": {
+      "today": "Dnes",
+      "tomorrow": "Zítra",
+      "laterDays": "Pozítří anebo později",
+      "fridaySaturday": "Pátek anebo v sobotu ráno",
+      "afterSnow": "Po najbližším sněžení"
+    },
     "classicStyle": "Klasický styl:",
     "freeStyle": "Volný styl:",
     "trackConditions": {
