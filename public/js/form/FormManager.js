@@ -43,8 +43,23 @@ class FormManager {
     this.initializeFormValidation();
     this.initializeDatePicker();
     this.setupEventListeners();
+    
+    // Initialize photo upload functionality
+    this.photoManager.initializePhotoUpload();
   }
 
+  setupEventListeners() {
+    const form = document.getElementById('snow-report-form');
+    if (form) {
+      form.addEventListener('submit', (event) => this.handleFormSubmit(event));
+    }
+
+    const cancelButton = document.getElementById('cancel-button');
+    if (cancelButton) {
+      cancelButton.addEventListener('click', () => this.handleCancel());
+    }
+  }
+  
   initializeForm(userData) {
     console.log('Initializing form with user data:', userData);
     const isAdmin = userData?.ski_center_admin === "1";
@@ -199,37 +214,6 @@ class FormManager {
       dateInput.value = formattedDate;
       dateInput.max = formattedDate;
     }
-  }
-
-  setupEventListeners() {
-      const form = document.getElementById('snow-report-form');
-      if (form) {
-          form.addEventListener('submit', (event) => this.handleFormSubmit(event));
-      }
-
-      const cancelButton = document.getElementById('cancel-button');
-      if (cancelButton) {
-          cancelButton.addEventListener('click', () => this.handleCancel());
-      }
-
-      // Initialize photo upload listeners
-      const selectPhotosBtn = document.getElementById('select-photos');
-      const takePhotoBtn = document.getElementById('take-photo');
-      const fileInput = document.getElementById('photo-file-input');
-      const cameraInput = document.getElementById('camera-input');
-
-      if (selectPhotosBtn && fileInput) {
-          selectPhotosBtn.addEventListener('click', () => fileInput.click());
-      }
-      if (takePhotoBtn && cameraInput) {
-          takePhotoBtn.addEventListener('click', () => cameraInput.click());
-      }
-      if (fileInput) {
-          fileInput.addEventListener('change', (e) => this.photoManager.handleFiles(e.target.files));
-      }
-      if (cameraInput) {
-          cameraInput.addEventListener('change', (e) => this.photoManager.handleFiles(e.target.files));
-      }
   }
 
   startTrackingFormTime() {
@@ -392,33 +376,30 @@ class FormManager {
   }
 
   resetForm() {
-      const form = document.getElementById('snow-report-form');
-      if (form) {
-          form.reset();
-          this.trailConditions = {};
-          
-          // Reset photo previews
-          const photoPreviewContainer = document.getElementById('photo-preview-container');
-          if (photoPreviewContainer) {
-              photoPreviewContainer.innerHTML = '';
-          }
-          
-          // Reset elapsed time and stop tracking
-          this.stopTrackingFormTime();
-          this.formStartTime = null;  // Add this to ensure clean reset
-          
-          // Reset time display
-          const hoursElement = document.getElementById('elapsed-hours');
-          const minutesElement = document.getElementById('elapsed-minutes');
-          const secondsElement = document.getElementById('elapsed-seconds');
-          if (hoursElement) hoursElement.textContent = '00';
-          if (minutesElement) minutesElement.textContent = '00';
-          if (secondsElement) secondsElement.textContent = '00';
-          
-          // Reset trail conditions UI
-          const selectedButtons = document.querySelectorAll('.condition-btn.selected');
-          selectedButtons.forEach(button => button.classList.remove('selected'));
-      }
+    const form = document.getElementById('snow-report-form');
+    if (form) {
+      form.reset();
+      this.trailConditions = {};
+      
+      // Reset photo previews using PhotoManager
+      this.photoManager.clearPhotos();
+      
+      // Reset elapsed time and stop tracking
+      this.stopTrackingFormTime();
+      this.formStartTime = null;
+      
+      // Reset time display
+      const hoursElement = document.getElementById('elapsed-hours');
+      const minutesElement = document.getElementById('elapsed-minutes');
+      const secondsElement = document.getElementById('elapsed-seconds');
+      if (hoursElement) hoursElement.textContent = '00';
+      if (minutesElement) minutesElement.textContent = '00';
+      if (secondsElement) secondsElement.textContent = '00';
+      
+      // Reset trail conditions UI
+      const selectedButtons = document.querySelectorAll('.condition-btn.selected');
+      selectedButtons.forEach(button => button.classList.remove('selected'));
+    }
   }
 
   handleConditionSelection(trailId, type, value, buttonGroup) {
