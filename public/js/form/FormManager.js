@@ -97,6 +97,7 @@ class FormManager {
   }
 
   setupEventListeners() {
+    console.log('Setting up form event listeners');  // Add this
     // Clean up existing event listeners by cloning nodes
     const form = document.getElementById('snow-report-form');
     if (form) {
