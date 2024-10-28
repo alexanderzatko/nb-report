@@ -19,6 +19,7 @@ class FormManager {
     this.selectManager = SelectManager.getInstance();
     this.photoManager = PhotoManager.getInstance();
     this.logger = Logger.getInstance();
+    this.isSubmitting = false;
 
     FormManager.instance = this;
   }
@@ -446,100 +447,94 @@ class FormManager {
 
   async handleFormSubmit(event) {
     event.preventDefault();
-    console.log('Form submission started');
+    event.stopPropagation();
 
-    // Identify admin vs regular user form
-    const isAdmin = document.getElementById('admin-section')?.style.display !== 'none';
-    console.log('Is admin form:', isAdmin);
-
-    let requiredFields = [];
-    if (isAdmin) {
-      // For admin form, explicitly check these fields
-      requiredFields = [
-        {
-          element: document.getElementById('snow-depth-total'),
-          required: true
-        },
-        {
-          element: document.getElementById('report-note'),
-          required: true
-        }
-      ];
-    } else {
-      // For regular user form, use the existing selector
-      const formElements = document.querySelectorAll('input[required], textarea[required], select[required]');
-      requiredFields = Array.from(formElements).map(element => ({
-        element,
-        required: true
-      }));
+    if (this.isSubmitting) {
+      this.logger.debug('Form submission already in progress');
+      return;
     }
 
-    console.log('Found fields to validate:', requiredFields.length);
-    
-    let isValid = true;
-    let firstInvalidElement = null;
+    this.isSubmitting = true;
+    this.logger.debug('Form submission started');
 
-    requiredFields.forEach(({element, required}) => {
-      if (!element) {
-        console.warn('Required element not found in DOM');
+    try {
+      const isAdmin = document.getElementById('admin-section')?.style.display !== 'none';
+      this.logger.debug('Is admin form:', isAdmin);
+
+      let requiredFields = [];
+      if (isAdmin) {
+        requiredFields = [
+          {
+            element: document.getElementById('snow-depth-total'),
+            required: true
+          },
+          {
+            element: document.getElementById('report-note'),
+            required: true
+          }
+        ];
+      } else {
+        const formElements = document.querySelectorAll('input[required], textarea[required], select[required]');
+        requiredFields = Array.from(formElements).map(element => ({
+          element,
+          required: true
+        }));
+      }
+
+      this.logger.debug('Found fields to validate:', requiredFields.length);
+      
+      let isValid = true;
+      let firstInvalidElement = null;
+
+      requiredFields.forEach(({element, required}) => {
+        if (!element) {
+          this.logger.warn('Required element not found in DOM');
+          return;
+        }
+
+        if (required && !element.value.trim()) {
+          isValid = false;
+          element.classList.add('field-invalid');
+          
+          const formGroup = element.closest('.form-group');
+          if (formGroup) {
+            formGroup.classList.add('show-validation');
+            const validationMessage = formGroup.querySelector('.validation-message');
+            if (validationMessage) {
+              validationMessage.textContent = this.i18next.t('form.validation.required');
+            }
+          }
+          
+          if (!firstInvalidElement) {
+            firstInvalidElement = element;
+          }
+        }
+      });
+
+      this.logger.debug('Form validation result:', isValid);
+      if (!isValid && firstInvalidElement) {
+        firstInvalidElement.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center'
+        });
+        setTimeout(() => firstInvalidElement.focus(), 500);
+        this.isSubmitting = false;
         return;
       }
 
-      console.log('Validating element:', {
-        id: element.id,
-        type: element.type || element.tagName.toLowerCase(),
-        required,
-        value: element.value,
-        validity: element.validity
-      });
-
-      if (required && !element.value.trim()) {
-        isValid = false;
-        element.classList.add('field-invalid');
-        
-        const formGroup = element.closest('.form-group');
-        if (formGroup) {
-          formGroup.classList.add('show-validation');
-          const validationMessage = formGroup.querySelector('.validation-message');
-          if (validationMessage) {
-            validationMessage.textContent = this.i18next.t('form.validation.required');
-          }
-        }
-        
-        if (!firstInvalidElement) {
-          firstInvalidElement = element;
-          console.log('First invalid element:', {
-            id: element.id,
-            type: element.type || element.tagName.toLowerCase(),
-            offsetTop: element.offsetTop
-          });
-        }
-      }
-    });
-
-    console.log('Form validation result:', isValid);
-    if (!isValid && firstInvalidElement) {
-      console.log('Scrolling to first invalid element:', firstInvalidElement.id);
-      firstInvalidElement.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'center'
-      });
-      setTimeout(() => {
-        firstInvalidElement.focus();
-      }, 500);
-      return false;
-    }
-
-    // Continue with form submission if validation passes
-    try {
       const formData = this.collectFormData();
       await this.submitFormData(formData);
       this.stopTrackingFormTime();
-      alert(this.i18next.t('form.validation.submitSuccess'));
+      
+      // Show success message and reset form in one go
+      this.showSuccess(this.i18next.t('form.validation.submitSuccess'));
       this.resetForm();
+      
     } catch (error) {
-      console.error('Error submitting snow report:', error);
-      alert(this.i18next.t('form.validation.submitError'));
+      this.logger.error('Error submitting snow report:', error);
+      this.showError(this.i18next.t('form.validation.submitError'));
+    } finally {
+      this.isSubmitting = false;
     }
   }
 
@@ -626,15 +621,10 @@ class FormManager {
     if (form) {
       form.reset();
       this.trailConditions = {};
-      
-      // Reset photo previews using PhotoManager
       this.photoManager.clearPhotos();
-      
-      // Reset elapsed time and stop tracking
       this.stopTrackingFormTime();
       this.formStartTime = null;
       
-      // Reset time display
       const hoursElement = document.getElementById('elapsed-hours');
       const minutesElement = document.getElementById('elapsed-minutes');
       const secondsElement = document.getElementById('elapsed-seconds');
@@ -642,12 +632,25 @@ class FormManager {
       if (minutesElement) minutesElement.textContent = '00';
       if (secondsElement) secondsElement.textContent = '00';
       
-      // Reset trail conditions UI
       const selectedButtons = document.querySelectorAll('.condition-btn.selected');
       selectedButtons.forEach(button => button.classList.remove('selected'));
+
+      form.style.display = 'none';
+      const dashboardContainer = document.getElementById('dashboard-container');
+      if (dashboardContainer) {
+        dashboardContainer.style.display = 'block';
+      }
     }
   }
 
+  showSuccess(message) {
+    alert(message);
+  }
+
+  showError(message) {
+    alert(message);
+  }
+  
   handleConditionSelection(trailId, type, value, buttonGroup) {
     // Remove selection from all buttons in the group
     buttonGroup.querySelectorAll('.condition-btn').forEach(btn => {
