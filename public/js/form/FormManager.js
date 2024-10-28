@@ -72,30 +72,28 @@ class FormManager {
     if (regularUserSection) {
       regularUserSection.style.display = isAdmin ? 'none' : 'block';
     }
+
     if (adminSection) {
       adminSection.style.display = isAdmin ? 'block' : 'none';
       
       if (isAdmin) {
-        // Explicitly configure admin form fields
+        // Configure admin form fields
         const snowDepthTotal = document.getElementById('snow-depth-total');
         const snowDepthNew = document.getElementById('snow-depth-new');
         const reportNote = document.getElementById('report-note');
         
         if (snowDepthTotal) {
           snowDepthTotal.required = true;
-          snowDepthTotal.setAttribute('data-i18n-validate', 'form.validation.required');
           console.log('Set snow-depth-total as required');
         }
         
         if (snowDepthNew) {
           snowDepthNew.required = false;
-          snowDepthNew.removeAttribute('data-i18n-validate');
           console.log('Set snow-depth-new as NOT required');
         }
         
         if (reportNote) {
           reportNote.required = true;
-          reportNote.setAttribute('data-i18n-validate', 'form.validation.required');
           console.log('Set report-note as required');
         }
       }
@@ -108,8 +106,22 @@ class FormManager {
         this.initializeTrailsSection(userData.trails);
       }
     }
+
+    // Set up form validation
+    this.setupFormValidation();
   }
 
+  setupFormValidation() {
+    const form = document.querySelector('form');
+    if (!form) return;
+
+    // Prevent default form submission
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      return false;
+    });
+  }
+  
   initializeTrailsSection(trails) {
     const container = document.getElementById('trails-container');
     if (!container) return;
@@ -440,38 +452,48 @@ class FormManager {
     const isAdmin = document.getElementById('admin-section')?.style.display !== 'none';
     console.log('Is admin form:', isAdmin);
 
-    // Get relevant form section
-    const formSection = isAdmin ? 
-      document.getElementById('admin-section') : 
-      document.getElementById('regular-user-section');
-
-    if (!formSection) {
-      console.error('Form section not found');
-      return;
+    let requiredFields = [];
+    if (isAdmin) {
+      // For admin form, explicitly check these fields
+      requiredFields = [
+        {
+          element: document.getElementById('snow-depth-total'),
+          required: true
+        },
+        {
+          element: document.getElementById('report-note'),
+          required: true
+        }
+      ];
+    } else {
+      // For regular user form, use the existing selector
+      const formElements = document.querySelectorAll('input[required], textarea[required], select[required]');
+      requiredFields = Array.from(formElements).map(element => ({
+        element,
+        required: true
+      }));
     }
 
-    // Select only visible required fields
-    const formElements = formSection.querySelectorAll('input[required], textarea[required], select[required]');
-    console.log('Found form elements to validate:', formElements.length);
+    console.log('Found fields to validate:', requiredFields.length);
     
-    // Debug info for each element
-    formElements.forEach(el => {
-      console.log('Validating element:', {
-        id: el.id,
-        type: el.type,
-        required: el.required,
-        value: el.value,
-        validity: el.validity,
-        validationMessage: el.validationMessage
-      });
-    });
-
     let isValid = true;
     let firstInvalidElement = null;
 
-    formElements.forEach(element => {
-      const isVisible = element.offsetParent !== null; // Check if element is visible
-      if (isVisible && (!element.value || !element.checkValidity())) {
+    requiredFields.forEach(({element, required}) => {
+      if (!element) {
+        console.warn('Required element not found in DOM');
+        return;
+      }
+
+      console.log('Validating element:', {
+        id: element.id,
+        type: element.type || element.tagName.toLowerCase(),
+        required,
+        value: element.value,
+        validity: element.validity
+      });
+
+      if (required && !element.value.trim()) {
         isValid = false;
         element.classList.add('field-invalid');
         
@@ -488,7 +510,7 @@ class FormManager {
           firstInvalidElement = element;
           console.log('First invalid element:', {
             id: element.id,
-            type: element.type,
+            type: element.type || element.tagName.toLowerCase(),
             offsetTop: element.offsetTop
           });
         }
@@ -498,17 +520,14 @@ class FormManager {
     console.log('Form validation result:', isValid);
     if (!isValid && firstInvalidElement) {
       console.log('Scrolling to first invalid element:', firstInvalidElement.id);
-      // Try both approaches for scrolling
       firstInvalidElement.scrollIntoView({ 
         behavior: 'smooth', 
         block: 'center'
       });
-      window.scrollTo({
-        top: firstInvalidElement.offsetTop - 100,
-        behavior: 'smooth'
-      });
-      firstInvalidElement.focus();
-      return;
+      setTimeout(() => {
+        firstInvalidElement.focus();
+      }, 500);
+      return false;
     }
 
     // Continue with form submission if validation passes
