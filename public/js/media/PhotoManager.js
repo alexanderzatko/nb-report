@@ -8,10 +8,12 @@ class PhotoManager {
       return PhotoManager.instance;
     }
     this.photos = [];
+    this.photoCaptions = new Map();
     this.logger = Logger.getInstance();
     this.initialized = false;
     PhotoManager.instance = this;
   }
+
 
   static getInstance() {
     if (!PhotoManager.instance) {
@@ -207,7 +209,7 @@ class PhotoManager {
     });
   }
 
-async addPhotoPreview(file) {
+  async addPhotoPreview(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       
@@ -225,10 +227,29 @@ async addPhotoPreview(file) {
           img.src = e.target.result;
           img.dataset.rotation = '0';
 
-          // Get the current index of this photo
           const photoIndex = this.photos.indexOf(file);
-          // Store the index on the wrapper element
           wrapper.dataset.photoIndex = photoIndex;
+
+          // Create photo info container
+          const photoInfo = document.createElement('div');
+          photoInfo.className = 'photo-info';
+
+          // Create caption input
+          const captionInput = document.createElement('input');
+          captionInput.type = 'text';
+          captionInput.className = 'photo-caption';
+          captionInput.placeholder = 'Add a caption...';
+          captionInput.maxLength = 200; // Set reasonable max length
+          
+          // Restore caption if it exists
+          if (this.photoCaptions.has(photoIndex)) {
+            captionInput.value = this.photoCaptions.get(photoIndex);
+          }
+
+          // Save caption on input
+          captionInput.addEventListener('input', (e) => {
+            this.photoCaptions.set(photoIndex, e.target.value);
+          });
 
           const controlsDiv = document.createElement('div');
           controlsDiv.className = 'photo-controls';
@@ -249,15 +270,17 @@ async addPhotoPreview(file) {
           removeBtn.onclick = (event) => {
             event.preventDefault();
             event.stopPropagation();
-            // Use the stored index from the wrapper element
             const currentIndex = parseInt(wrapper.dataset.photoIndex);
             this.removePhoto(currentIndex, wrapper);
           };
 
           controlsDiv.appendChild(rotateBtn);
           controlsDiv.appendChild(removeBtn);
+          
+          photoInfo.appendChild(captionInput);
           wrapper.appendChild(img);
           wrapper.appendChild(controlsDiv);
+          wrapper.appendChild(photoInfo);
           previewContainer.appendChild(wrapper);
 
           resolve();
@@ -293,15 +316,23 @@ async addPhotoPreview(file) {
     this.logger.debug('Removing photo at index:', photoIndex, 'Current photos array:', this.photos);
     
     if (photoIndex >= 0 && photoIndex < this.photos.length) {
-      // Remove from array
+      // Remove from arrays
       this.photos.splice(photoIndex, 1);
+      this.photoCaptions.delete(photoIndex);
+      
       // Remove from UI
       wrapper.remove();
       
-      // Update all remaining photo indices
+      // Update all remaining photo indices and their captions
       const allPreviews = document.querySelectorAll('.photo-preview');
       allPreviews.forEach((preview, newIndex) => {
         preview.dataset.photoIndex = newIndex;
+        const oldIndex = parseInt(preview.dataset.photoIndex);
+        if (this.photoCaptions.has(oldIndex)) {
+          const caption = this.photoCaptions.get(oldIndex);
+          this.photoCaptions.delete(oldIndex);
+          this.photoCaptions.set(newIndex, caption);
+        }
       });
       
       this.logger.debug('Photo removed. Remaining photos:', this.photos);
@@ -355,11 +386,15 @@ async addPhotoPreview(file) {
   }
 
   getPhotos() {
-    return this.photos;
+    return this.photos.map((photo, index) => ({
+      file: photo,
+      caption: this.photoCaptions.get(index) || ''
+    }));
   }
 
   clearPhotos() {
     this.photos = [];
+    this.photoCaptions.clear();
     const previewContainer = document.getElementById('photo-preview-container');
     if (previewContainer) {
       previewContainer.innerHTML = '';
