@@ -679,7 +679,7 @@ textarea:invalid + .validation-message {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2px;
+  /* padding: 0px; */
   /* Prevent text from wrapping */
   white-space: nowrap;
   /* Enable automatic scaling */
