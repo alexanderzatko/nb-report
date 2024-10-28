@@ -284,10 +284,26 @@ class PhotoManager {
     }
   }
 
-  removePhoto(photoIndex, wrapper) {
+removePhoto(photoIndex, wrapper) {
+    this.logger.debug('Removing photo at index:', photoIndex, 'Current photos array:', this.photos);
+    
     if (photoIndex >= 0 && photoIndex < this.photos.length) {
+      // Remove from array
       this.photos.splice(photoIndex, 1);
+      // Remove from UI
       wrapper.remove();
+      
+      this.logger.debug('Photo removed. Remaining photos:', this.photos);
+      
+      // Update preview container if no photos left
+      if (this.photos.length === 0) {
+        const previewContainer = document.getElementById('photo-preview-container');
+        if (previewContainer) {
+          previewContainer.innerHTML = '';
+        }
+      }
+    } else {
+      this.logger.error('Invalid photo index:', photoIndex);
     }
   }
 
