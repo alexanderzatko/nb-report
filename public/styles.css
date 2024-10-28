@@ -612,79 +612,81 @@ textarea:invalid + .validation-message {
 /* Dashboard STOP */
 
 /* Trail Section Styles START */
+
 .trail-item {
   background: #f8f9fa;
-  border: 1px solid #dee2e6;
   border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 20px;
+  padding: 15px;
+  margin-bottom: 15px;
 }
 
 .trail-name {
-  font-size: 1.1em;
+  font-size: 1.2em;
   font-weight: 500;
   margin-bottom: 15px;
   color: #333;
+  padding-left: 5px;
 }
 
 .condition-group {
   margin-bottom: 15px;
 }
 
-.condition-label {
-  font-size: 0.95em;
-  color: #666;
+.condition-header {
+  display: flex;
+  align-items: center;
   margin-bottom: 8px;
+  padding-left: 5px;
+}
+
+.condition-label {
+  font-size: 1.1em;
+  color: #333;
+}
+
+.selected-value {
+  color: #666;
+  margin-left: 5px;
 }
 
 .condition-buttons {
   display: flex;
-  gap: 4px;
+  gap: 2px;
 }
 
 .condition-btn {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border: 1px solid #ccc;
-  background: #fff;
+  background: #e0e0e0;
   border-radius: 4px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 20px;
   transition: all 0.2s ease;
   padding: 0;
+  color: #666;
 }
 
 .condition-btn:hover {
-  background: #f0f0f0;
+  background: #d0d0d0;
 }
 
 .condition-btn.selected {
-  background: #0078d4;
+  background: #1a4789;
   color: white;
-  border-color: #0078d4;
+  border-color: #1a4789;
 }
 
-.condition-btn.inactive {
-  background: #eee;
-  color: #999;
-  cursor: default;
+/* Set specific styles for maintenance buttons */
+.condition-btn[data-value="Ps"] {
+  font-size: 16px;
 }
 
-/* Form Section Styles */
-.form-section {
-  margin-bottom: 30px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+.condition-btn[data-value="snow"] {
+  font-size: 24px;
 }
 
-.form-section h3 {
-  margin-top: 0;
-  margin-bottom: 20px;
-  color: #333;
-  font-size: 1.2em;
-}
 /* Trail Section Styles STOP */
