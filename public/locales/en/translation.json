@@ -63,6 +63,7 @@
     "snowDepthNew": "New snow (cm)",
     "nextMaintenance": "Next maintenance",
     "maintenance": {
+      "unknown": "Unknown",
       "today": "Today",
       "tomorrow": "Tomorrow",
       "laterDays": "The day after tomorrow or later",
