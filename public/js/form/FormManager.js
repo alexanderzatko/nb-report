@@ -78,6 +78,7 @@ class FormManager {
     if (regularUserSection) {
       regularUserSection.style.display = isAdmin ? 'none' : 'block';
     }
+  
     if (adminSection) {
       adminSection.style.display = isAdmin ? 'block' : 'none';
       
@@ -88,7 +89,8 @@ class FormManager {
         
         if (snowDepthTotal) {
           snowDepthTotal.required = true;
-          snowDepthTotal.setAttribute('data-i18n-validate', 'form.validation.required');
+          // Add input event listener
+          this.addValidationClearingListener(snowDepthTotal);
         }
         
         if (snowDepthNew) {
@@ -97,11 +99,9 @@ class FormManager {
         
         if (reportNote) {
           reportNote.required = true;
-          reportNote.setAttribute('data-i18n-validate', 'form.validation.required');
+          // Add input event listener
+          this.addValidationClearingListener(reportNote);
         }
-        
-        // Reinitialize validation for admin form
-        this.initializeFormValidation();
       }
     }
     
@@ -112,6 +112,37 @@ class FormManager {
         this.initializeTrailsSection(userData.trails);
       }
     }
+  
+    // Add validation clearing listeners for regular user fields
+    if (!isAdmin) {
+      const requiredFields = [
+        'report-date', 'country', 'region', 'classic-style', 'free-style',
+        'snow-depth250', 'snow-depth500', 'snow-depth750', 'snow-depth1000', 'report-note'
+      ];
+  
+      requiredFields.forEach(fieldId => {
+        const element = document.getElementById(fieldId);
+        if (element) {
+          this.addValidationClearingListener(element);
+        }
+      });
+    }
+  }
+
+  addValidationClearingListener(element) {
+    element.addEventListener('input', () => {
+      if (element.value.trim()) {
+        element.classList.remove('field-invalid');
+        const formGroup = element.closest('.form-group');
+        if (formGroup) {
+          formGroup.classList.remove('show-validation');
+          const validationMessage = formGroup.querySelector('.validation-message');
+          if (validationMessage) {
+            validationMessage.textContent = '';
+          }
+        }
+      }
+    });
   }
 
   setupFormValidation() {
@@ -348,52 +379,63 @@ class FormManager {
     
   initializeFormValidation() {
     console.log('Initializing form validation');
+    // Select all required inputs and textareas
+    const inputs = document.querySelectorAll('input[required], textarea[required], select[required], [data-i18n-validate]');
     
-    // Select all required inputs, textareas, and selects for both admin and regular forms
-    const handleValidationElements = (elements) => {
-      elements.forEach(input => {    
-        // Clear custom validation on input/change
-        const clearValidation = () => {
-          input.setCustomValidity('');
-          const formGroup = input.closest('.form-group');
+    inputs.forEach(input => {    
+      // Set custom validation message
+      input.addEventListener('invalid', (e) => {
+        e.preventDefault();
+        const formGroup = input.closest('.form-group');
+        
+        if (!input.value) {
+          const requiredMsg = this.i18next.t(input.dataset.i18nValidate || 'form.validation.required');
+          input.setCustomValidity(requiredMsg);
+          
           if (formGroup) {
-            formGroup.classList.remove('show-validation');
-            input.classList.remove('field-invalid');
-          }
-        };
-  
-        // Add input and change event listeners
-        input.addEventListener('input', clearValidation);
-        input.addEventListener('change', clearValidation);
-  
-        // Handle blur event
-        input.addEventListener('blur', () => {
-          if (!input.value.trim() && input.required) {
-            const formGroup = input.closest('.form-group');
-            const requiredMsg = this.i18next.t(input.dataset.i18nValidate || 'form.validation.required');
+            const validationMessage = formGroup.querySelector('.validation-message');
+            if (validationMessage) {
+              validationMessage.textContent = requiredMsg;
+            }
             
-            input.setCustomValidity(requiredMsg);
+            formGroup.classList.add('show-validation');
             input.classList.add('field-invalid');
-            
-            if (formGroup) {
-              formGroup.classList.add('show-validation');
-              const validationMessage = formGroup.querySelector('.validation-message');
-              if (validationMessage) {
-                validationMessage.textContent = requiredMsg;
-              }
+          }
+        }
+      });
+      
+      // Clear custom validation on input/change
+      const clearValidation = () => {
+        input.setCustomValidity('');
+        const formGroup = input.closest('.form-group');
+        if (formGroup) {
+          formGroup.classList.remove('show-validation');
+          input.classList.remove('field-invalid');
+        }
+      };
+  
+      input.addEventListener('input', clearValidation);
+      input.addEventListener('change', clearValidation);
+  
+      // Handle blur event
+      input.addEventListener('blur', () => {
+        if (!input.value && input.required) {
+          const formGroup = input.closest('.form-group');
+          const requiredMsg = this.i18next.t(input.dataset.i18nValidate || 'form.validation.required');
+          
+          input.setCustomValidity(requiredMsg);
+          input.classList.add('field-invalid');
+          
+          if (formGroup) {
+            formGroup.classList.add('show-validation');
+            const validationMessage = formGroup.querySelector('.validation-message');
+            if (validationMessage) {
+              validationMessage.textContent = requiredMsg;
             }
           }
-        });
+        }
       });
-    };
-  
-    // Add validation for regular user form elements
-    const regularInputs = document.querySelectorAll('#regular-user-section input[required], #regular-user-section textarea[required], #regular-user-section select[required], #regular-user-section [data-i18n-validate]');
-    handleValidationElements(regularInputs);
-  
-    // Add validation for admin form elements
-    const adminInputs = document.querySelectorAll('#admin-section input[required], #admin-section textarea[required], #admin-section [data-i18n-validate]');
-    handleValidationElements(adminInputs);
+    });
   }
 
   initializeDatePicker() {
