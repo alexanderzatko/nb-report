@@ -207,7 +207,7 @@ class PhotoManager {
     });
   }
 
-  async addPhotoPreview(file) {
+async addPhotoPreview(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       
@@ -225,7 +225,10 @@ class PhotoManager {
           img.src = e.target.result;
           img.dataset.rotation = '0';
 
+          // Get the current index of this photo
           const photoIndex = this.photos.indexOf(file);
+          // Store the index on the wrapper element
+          wrapper.dataset.photoIndex = photoIndex;
 
           const controlsDiv = document.createElement('div');
           controlsDiv.className = 'photo-controls';
@@ -246,7 +249,9 @@ class PhotoManager {
           removeBtn.onclick = (event) => {
             event.preventDefault();
             event.stopPropagation();
-            this.removePhoto(photoIndex, wrapper);
+            // Use the stored index from the wrapper element
+            const currentIndex = parseInt(wrapper.dataset.photoIndex);
+            this.removePhoto(currentIndex, wrapper);
           };
 
           controlsDiv.appendChild(rotateBtn);
@@ -284,7 +289,7 @@ class PhotoManager {
     }
   }
 
-removePhoto(photoIndex, wrapper) {
+  removePhoto(photoIndex, wrapper) {
     this.logger.debug('Removing photo at index:', photoIndex, 'Current photos array:', this.photos);
     
     if (photoIndex >= 0 && photoIndex < this.photos.length) {
@@ -293,15 +298,13 @@ removePhoto(photoIndex, wrapper) {
       // Remove from UI
       wrapper.remove();
       
-      this.logger.debug('Photo removed. Remaining photos:', this.photos);
+      // Update all remaining photo indices
+      const allPreviews = document.querySelectorAll('.photo-preview');
+      allPreviews.forEach((preview, newIndex) => {
+        preview.dataset.photoIndex = newIndex;
+      });
       
-      // Update preview container if no photos left
-      if (this.photos.length === 0) {
-        const previewContainer = document.getElementById('photo-preview-container');
-        if (previewContainer) {
-          previewContainer.innerHTML = '';
-        }
-      }
+      this.logger.debug('Photo removed. Remaining photos:', this.photos);
     } else {
       this.logger.error('Invalid photo index:', photoIndex);
     }
