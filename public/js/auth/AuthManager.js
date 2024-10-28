@@ -27,18 +27,31 @@ class AuthManager {
 
   async checkAuthStatus() {
     try {
+      // First check if we have a stored session ID
+      const storedSessionId = localStorage.getItem(AuthManager.SESSION_KEY);
+      
+      if (!storedSessionId) {
+        return false;
+      }
+  
       const response = await fetch('/api/auth-status', {
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+          'X-Session-ID': storedSessionId
+        }
       });
+      
       const data = await response.json();
       console.log('Auth status response:', data);
       
       if (data.isAuthenticated && !this.tokenRefreshInterval) {
-        // Set up token refresh if authenticated
         this.setupTokenRefresh();
+      } else if (!data.isAuthenticated) {
+        // Clear stored session if it's invalid
+        this.clearAuthData();
       }
       
-      return data.isAuthenticated;
+      return data.isAuthenticated;  // Keep returning the original boolean from server
     } catch (error) {
       console.error('Error checking auth status:', error);
       return false;
@@ -60,7 +73,7 @@ class AuthManager {
   async handleOAuthCallback(code, state) {
     console.log('handleOAuthCallback called');
     console.log('Code:', code, 'State:', state);
-
+  
     if (this.exchangingToken) {
       console.log('Token exchange already in progress');
       return false;
@@ -77,7 +90,7 @@ class AuthManager {
           console.error('Missing state');
           return false;
         }
-
+  
         // Parse timestamps from states
         const [returnedTimestamp] = state.split('.');
         const [storedTimestamp] = storedState.split('.');
@@ -90,7 +103,7 @@ class AuthManager {
           console.error('Timestamp difference too large:', timeDiff);
           return false;
         }
-
+  
         // Verify the complete state if timestamps are close
         if (state === storedState) {
           console.log('Exact state match');
@@ -104,6 +117,12 @@ class AuthManager {
         try {
           const success = await this.exchangeToken(code);
           if (success) {
+            // Store the session ID we got from the response
+            const sessionId = localStorage.getItem(AuthManager.SESSION_KEY);
+            if (sessionId) {
+              console.log('Storing session ID:', sessionId);
+              localStorage.setItem(AuthManager.SESSION_KEY, sessionId);
+            }
             console.log('Token exchanged successfully');
             await this.checkAuthStatus(); // Ensure we get the latest auth status
             return true;
