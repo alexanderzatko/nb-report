@@ -22,15 +22,15 @@ class PhotoManager {
     return PhotoManager.instance;
   }
 
-  initializePhotoUpload() {
-    console.log('PhotoManager initializePhotoUpload called');
-    if (this.initialized) {
-      this.logger.debug('PhotoManager already initialized');
+  initializePhotoUpload(forceInit = false) {
+    console.log('PhotoManager initializePhotoUpload called, force:', forceInit);
+    
+    if (this.initialized && !forceInit) {
+      console.log('PhotoManager already initialized');
       return;
     }
-
-    this.logger.debug('Initializing PhotoManager...');
-
+    
+    this.initialized = false;  // Reset flag when forced
     console.log('Finding photo elements');
 
     // Find existing elements
