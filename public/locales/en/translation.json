@@ -62,6 +62,13 @@
     "snowDepthTotal": "Total snow height (cm)",
     "snowDepthNew": "New snow (cm)",
     "nextMaintenance": "Next maintenance",
+    "maintenance": {
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "laterDays": "The day after tomorrow or later",
+      "fridaySaturday": "Friday or Saturday morning",
+      "afterSnow": "After the next snowfall"
+    },
     "classicStyle": "Classic Style:",
     "freeStyle": "Free Style:",
     "trackConditions": {
