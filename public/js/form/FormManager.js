@@ -483,6 +483,10 @@ class FormManager {
         // Using the same explicit approach for regular user fields
         requiredFields = [
           {
+            element: document.getElementById('report-title'),
+            required: true
+          },
+          {
             element: document.getElementById('report-date'),
             required: true
           },
