@@ -29,10 +29,9 @@ class ServiceWorkerManager {
       console.log('Service Worker is not supported in this browser');
       return false;
     }
-
+  
     try {
       await this.registerServiceWorker();
-      this.setupUpdateHandling();
       return true;
     } catch (error) {
       console.error('Service Worker registration failed:', error);
@@ -44,6 +43,35 @@ class ServiceWorkerManager {
     try {
       this.registration = await navigator.serviceWorker.register('/service-worker.js');
       console.log('ServiceWorker registration successful with scope:', this.registration.scope);
+  
+      // Handle updates found during initial registration
+      if (this.registration.waiting) {
+        this.updateFound = true;
+        this.notifyUpdateReady();
+      }
+  
+      // Handle updates found after page load
+      this.registration.addEventListener('updatefound', () => {
+        const newWorker = this.registration.installing;
+        console.log('[ServiceWorker] Update found - new worker installing');
+        
+        newWorker.addEventListener('statechange', () => {
+          console.log('[ServiceWorker] New worker state:', newWorker.state);
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            this.updateFound = true;
+            this.notifyUpdateReady();
+          }
+        });
+      });
+  
+      // Handle controller change
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (this.updateFound) {
+          console.log('[ServiceWorker] New service worker activated, reloading page...');
+          window.location.reload();
+        }
+      });
+  
       return true;
     } catch (error) {
       console.error('ServiceWorker registration failed:', error);
@@ -132,9 +160,10 @@ class ServiceWorkerManager {
 
   async applyUpdate() {
     if (!this.registration) return;
-
+  
     try {
       if (this.registration.waiting) {
+        console.log('[ServiceWorker] Sending SKIP_WAITING message to waiting worker');
         // Send message to service worker to skip waiting
         this.registration.waiting.postMessage({ type: 'SKIP_WAITING' });
       }
