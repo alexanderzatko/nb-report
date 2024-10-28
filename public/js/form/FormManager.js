@@ -97,13 +97,16 @@ class FormManager {
   }
 
   setupEventListeners() {
-    console.log('Setting up form event listeners');  // Add this
+    console.log('Setting up form event listeners');
     // Clean up existing event listeners by cloning nodes
     const form = document.getElementById('snow-report-form');
     if (form) {
+      console.log('Form found, cloning...');
       const newForm = form.cloneNode(true);
       form.parentNode.replaceChild(newForm, form);
       newForm.addEventListener('submit', (event) => this.handleFormSubmit(event));
+
+      console.log('About to initialize photo upload');
 
       // Initialize photo manager with the new form
       setTimeout(() => this.photoManager.initializePhotoUpload(), 0);
