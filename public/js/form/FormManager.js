@@ -209,25 +209,6 @@ class FormManager {
       if (cancelButton) {
           cancelButton.addEventListener('click', () => this.handleCancel());
       }
-
-      // Initialize photo upload listeners
-      const selectPhotosBtn = document.getElementById('select-photos');
-      const takePhotoBtn = document.getElementById('take-photo');
-      const fileInput = document.getElementById('photo-file-input');
-      const cameraInput = document.getElementById('camera-input');
-
-      if (selectPhotosBtn && fileInput) {
-          selectPhotosBtn.addEventListener('click', () => fileInput.click());
-      }
-      if (takePhotoBtn && cameraInput) {
-          takePhotoBtn.addEventListener('click', () => cameraInput.click());
-      }
-      if (fileInput) {
-          fileInput.addEventListener('change', (e) => this.photoManager.handleFiles(e.target.files));
-      }
-      if (cameraInput) {
-          cameraInput.addEventListener('change', (e) => this.photoManager.handleFiles(e.target.files));
-      }
   }
 
   startTrackingFormTime() {
