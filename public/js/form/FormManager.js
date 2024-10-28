@@ -199,86 +199,119 @@ class FormManager {
   }
 
   createConditionButtons(container, valueDisplay, trailId, type) {
-    const conditions = [
-      { value: '0', label: '?', title: this.i18next.t('form.trackConditions.0') },
-      { value: '1', label: '★★★', title: this.i18next.t('form.trackConditions.1') },
-      { value: '2', label: '★★', title: this.i18next.t('form.trackConditions.2') },
-      { value: '3', label: '★', title: this.i18next.t('form.trackConditions.3') },
-      { value: '4', label: '∥', title: this.i18next.t('form.trackConditions.4') },
-      { value: '5', label: 'x', title: this.i18next.t('form.trackConditions.5') }
-    ];
+  	const conditions = [
+  	  { value: '0', label: '?', title: this.i18next.t('form.trackConditions.0') },
+  	  { value: '1', label: '★★★', title: this.i18next.t('form.trackConditions.1') },
+  	  { value: '2', label: '★★', title: this.i18next.t('form.trackConditions.2') },
+  	  { value: '3', label: '★', title: this.i18next.t('form.trackConditions.3') },
+  	  { value: '4', label: '∥', title: this.i18next.t('form.trackConditions.4') },
+  	  { value: '5', label: 'x', title: this.i18next.t('form.trackConditions.5') }
+  	];
   
     conditions.forEach(condition => {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'condition-btn';
       button.dataset.value = condition.value;
-      button.innerHTML = condition.label;
       button.title = condition.title;
       
+      // Create text container
+      const textSpan = document.createElement('span');
+      textSpan.className = 'condition-btn-text';
+      textSpan.textContent = condition.label;
+      button.appendChild(textSpan);
+      
       button.addEventListener('click', () => {
-        // Remove selected class from all buttons in this group
         container.querySelectorAll('.condition-btn').forEach(btn => {
           btn.classList.remove('selected');
         });
-        
-        // Add selected class to clicked button
         button.classList.add('selected');
-        
-        // Update the value display
         valueDisplay.textContent = ': ' + condition.title;
         
-        // Store the selection
         if (!this.trailConditions[trailId]) {
           this.trailConditions[trailId] = {};
         }
         this.trailConditions[trailId][type] = condition.value;
       });
+  
+      // Add resize observer to handle text scaling
+      const resizeObserver = new ResizeObserver(() => {
+        this.scaleTextToFit(textSpan);
+      });
+      resizeObserver.observe(button);
       
       container.appendChild(button);
     });
   }
   
   createMaintenanceButtons(container, valueDisplay, trailId) {
-    const options = [
-      { value: '0', label: '?', title: this.i18next.t('form.maintenance.unknown') },
-      { value: '1', label: '1', title: this.i18next.t('form.maintenance.today') },
-      { value: '2', label: '2', title: this.i18next.t('form.maintenance.tomorrow') },
-      { value: '3+', label: '3+', title: this.i18next.t('form.maintenance.laterDays') },
-      { value: 'Ps', label: 'Ps', title: this.i18next.t('form.maintenance.fridaySaturday') },
-      { value: 'snow', label: '❄', title: this.i18next.t('form.maintenance.afterSnow') }
-    ];
+      const options = [
+        { value: '0', label: '?', title: this.i18next.t('form.maintenance.unknown') },
+        { value: '1', label: '1', title: this.i18next.t('form.maintenance.today') },
+        { value: '2', label: '2', title: this.i18next.t('form.maintenance.tomorrow') },
+        { value: '3+', label: '3+', title: this.i18next.t('form.maintenance.laterDays') },
+        { value: 'Ps', label: 'Ps', title: this.i18next.t('form.maintenance.fridaySaturday') },
+        { value: 'snow', label: '❄', title: this.i18next.t('form.maintenance.afterSnow') }
+      ];
   
     options.forEach(option => {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'condition-btn';
       button.dataset.value = option.value;
-      button.innerHTML = option.label;
       button.title = option.title;
       
+      // Create text container
+      const textSpan = document.createElement('span');
+      textSpan.className = 'condition-btn-text';
+      textSpan.textContent = option.label;
+      button.appendChild(textSpan);
+      
       button.addEventListener('click', () => {
-        // Remove selected class from all buttons in this group
         container.querySelectorAll('.condition-btn').forEach(btn => {
           btn.classList.remove('selected');
         });
-        
-        // Add selected class to clicked button
         button.classList.add('selected');
-        
-        // Update the value display
         valueDisplay.textContent = ': ' + option.title;
         
-        // Store the selection
         if (!this.trailConditions[trailId]) {
           this.trailConditions[trailId] = {};
         }
         this.trailConditions[trailId].maintenance = option.value;
       });
+  
+      // Add resize observer to handle text scaling
+      const resizeObserver = new ResizeObserver(() => {
+        this.scaleTextToFit(textSpan);
+      });
+      resizeObserver.observe(button);
       
       container.appendChild(button);
     });
   }
+
+  //used to make the button labels to fit the button for the trails section
+  scaleTextToFit(textElement) {
+    const button = textElement.parentElement;
+    const buttonWidth = button.clientWidth - 4; // Account for padding
+    const buttonHeight = button.clientHeight - 4;
+    
+    // Reset scale to measure original size
+    textElement.style.transform = 'scale(1)';
+    const textWidth = textElement.scrollWidth;
+    const textHeight = textElement.scrollHeight;
+    
+    // Calculate scale factors for both dimensions
+    const scaleX = buttonWidth / textWidth;
+    const scaleY = buttonHeight / textHeight;
+    
+    // Use the smaller scale factor to ensure text fits in both dimensions
+    const scale = Math.min(scaleX, scaleY, 1); // Don't scale up past original size
+    
+    // Apply the scaling
+    textElement.style.transform = `scale(${scale})`;
+  }
+    
   initializeFormValidation() {
     console.log('Initializing form validation');
     const inputs = document.querySelectorAll('[data-i18n-validate]');
