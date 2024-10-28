@@ -10,7 +10,15 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   border: 1px solid #e2e8f0;
   z-index: 1000;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.3s, transform 0.3s;
   animation: slide-up 0.3s ease-out;
+}
+
+.update-notification.update-notification-hiding {
+  opacity: 0;
+  transform: translateY(100%);
 }
 
 .update-notification-hiding {
