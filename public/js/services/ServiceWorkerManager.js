@@ -59,8 +59,8 @@ class ServiceWorkerManager {
       if (this.registration.waiting) {
         console.log('[ServiceWorkerManager] Found waiting worker on initial registration');
         this.updateFound = true;
-        // Add delay before showing notification
-        setTimeout(() => this.notifyUpdateReady(), 2000);
+        // Remove delay, show immediately since DOM is ready
+        this.notifyUpdateReady();
       }
   
       // Watch for new updates
@@ -73,8 +73,7 @@ class ServiceWorkerManager {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
             console.log('[ServiceWorker] New version ready to activate');
             this.updateFound = true;
-            // Add delay before showing notification
-            setTimeout(() => this.notifyUpdateReady(), 2000);
+            this.notifyUpdateReady();
           }
         });
       });
@@ -99,7 +98,13 @@ class ServiceWorkerManager {
       console.log('[ServiceWorkerManager] Notification already shown');
       return;
     }
-  
+
+    // Quick check for i18next readiness
+    if (!this.i18next.isInitialized) {
+      console.log('[ServiceWorkerManager] Waiting for i18next');
+      await new Promise(resolve => this.i18next.on('initialized', resolve));
+    }
+
     console.log('[ServiceWorkerManager] Creating update notification');
     this.notificationShown = true;
   
