@@ -65,7 +65,7 @@
     "maintenance": {
       "today": "Dnes",
       "tomorrow": "Zajtra",
-      "laterDays": "Pozajtra aalebo neskôr",
+      "laterDays": "Pozajtra alebo neskôr",
       "fridaySaturday": "Piatok alebo v sobotu ráno",
       "afterSnow": "Po najbližšom snežení"
     },
