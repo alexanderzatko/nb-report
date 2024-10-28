@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v96';  // Should match ConfigManager.js version
+const CACHE_VERSION = 'v97';  // Should match ConfigManager.js version
 const CACHE_NAME = 'snow-report-cache';
 const FULL_CACHE_NAME = `${CACHE_NAME}-${CACHE_VERSION}`;
 
@@ -14,7 +14,6 @@ const urlsToCache = [
   '/data/xc_dropdowns.json',
   '/data/countries-regions.json',
   '/vendor/exif.js',
-  // Keep your existing urlsToCache list
 ];
 
 self.addEventListener('install', function(event) {
@@ -26,7 +25,6 @@ self.addEventListener('install', function(event) {
         return cache.addAll(urlsToCache);
       })
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', function(event) {
@@ -55,6 +53,7 @@ self.addEventListener('fetch', function(event) {
 
 self.addEventListener('message', function(event) {
   if (event.data.type === 'SKIP_WAITING') {
+    console.log('[ServiceWorker] Skip waiting message received');
     self.skipWaiting();
   }
 });
