@@ -16,6 +16,13 @@ class ServiceWorkerManager {
     ServiceWorkerManager.instance = this;
   }
 
+  static getInstance() {
+    if (!ServiceWorkerManager.instance) {
+      ServiceWorkerManager.instance = new ServiceWorkerManager();
+    }
+    return ServiceWorkerManager.instance;
+  }
+
   async initialize() {
     console.log('[ServiceWorkerManager] Starting initialization');
     if (!('serviceWorker' in navigator)) {
