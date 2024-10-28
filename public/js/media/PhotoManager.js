@@ -23,6 +23,7 @@ class PhotoManager {
   }
 
   initializePhotoUpload() {
+    console.log('PhotoManager initializePhotoUpload called');
     if (this.initialized) {
       this.logger.debug('PhotoManager already initialized');
       return;
@@ -30,12 +31,21 @@ class PhotoManager {
 
     this.logger.debug('Initializing PhotoManager...');
 
+    console.log('Finding photo elements');
+
     // Find existing elements
     const selectPhotosBtn = document.getElementById('select-photos');
     const takePhotoBtn = document.getElementById('take-photo');
     const fileInput = document.getElementById('photo-file-input');
     const cameraInput = document.getElementById('camera-input');
 
+    console.log('Photo elements found:', {
+      selectPhotosBtn: !!selectPhotosBtn,
+      takePhotoBtn: !!takePhotoBtn,
+      fileInput: !!fileInput,
+      cameraInput: !!cameraInput
+    });
+    
     this.logger.debug('Found elements:', {
       selectPhotosBtn: !!selectPhotosBtn,
       takePhotoBtn: !!takePhotoBtn,
