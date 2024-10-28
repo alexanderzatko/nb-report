@@ -54,45 +54,39 @@ class ServiceWorkerManager {
     try {
       this.registration = await navigator.serviceWorker.register('/service-worker.js');
       console.log('[ServiceWorkerManager] Registration successful, scope:', this.registration.scope);
-
-      // Check for existing waiting worker
+  
+      // Check for waiting worker immediately
       if (this.registration.waiting) {
-        console.log('[ServiceWorkerManager] Found waiting worker on initial check');
+        console.log('[ServiceWorkerManager] Found waiting worker on initial registration');
         this.updateFound = true;
-        // Delay the notification to ensure DOM is ready
+        // Add delay before showing notification
         setTimeout(() => this.notifyUpdateReady(), 2000);
       }
-
-      // Listen for new updates
+  
+      // Watch for new updates
       this.registration.addEventListener('updatefound', () => {
         const newWorker = this.registration.installing;
-        console.log('[ServiceWorkerManager] Update found, new worker installing');
-
+        console.log('[ServiceWorker] Update found, new worker installing');
+        
         newWorker.addEventListener('statechange', () => {
-          console.log('[ServiceWorkerManager] Worker state changed to:', newWorker.state);
+          console.log('[ServiceWorker] Worker state changed to:', newWorker.state);
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            console.log('[ServiceWorkerManager] New version ready to activate');
+            console.log('[ServiceWorker] New version ready to activate');
             this.updateFound = true;
-            if (!this.notificationShown) {
-              setTimeout(() => this.notifyUpdateReady(), 2000);
-            }
+            // Add delay before showing notification
+            setTimeout(() => this.notifyUpdateReady(), 2000);
           }
         });
       });
-
-      // Handle controller change
+  
+      // Handle page reload after service worker takes control
       let refreshing = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        console.log('[ServiceWorkerManager] Controller changed');
-        if (refreshing) {
-          console.log('[ServiceWorkerManager] Already refreshing, skip');
-          return;
-        }
+        if (refreshing) return;
         refreshing = true;
-        console.log('[ServiceWorkerManager] Reloading page for new version');
         window.location.reload();
       });
-
+  
       return true;
     } catch (error) {
       console.error('[ServiceWorkerManager] Registration failed:', error);
@@ -102,25 +96,16 @@ class ServiceWorkerManager {
 
   async notifyUpdateReady() {
     if (this.notificationShown) {
-      console.log('[ServiceWorkerManager] Update notification already shown');
+      console.log('[ServiceWorkerManager] Notification already shown');
       return;
     }
-
+  
     console.log('[ServiceWorkerManager] Creating update notification');
     this.notificationShown = true;
-    
-    // Remove any existing notification
-    const existing = document.querySelector('.update-notification');
-    if (existing) {
-      console.log('[ServiceWorkerManager] Removing existing notification');
-      existing.remove();
-    }
-
+  
+    // Create notification element
     const notification = document.createElement('div');
     notification.className = 'update-notification';
-    
-    // Store reference to prevent garbage collection
-    this.currentNotification = notification;
     
     notification.innerHTML = `
       <div class="update-notification-content">
@@ -135,12 +120,10 @@ class ServiceWorkerManager {
         </div>
       </div>
     `;
-
-    // Add to DOM
+  
     document.body.appendChild(notification);
     console.log('[ServiceWorkerManager] Notification added to DOM');
-
-    // Handle button clicks
+  
     return new Promise((resolve) => {
       const cleanup = () => {
         notification.classList.add('update-notification-hiding');
@@ -149,18 +132,18 @@ class ServiceWorkerManager {
           resolve();
         }, 300);
       };
-
+  
       notification.querySelector('.update-notification-update').addEventListener('click', () => {
         console.log('[ServiceWorkerManager] Update button clicked');
         this.applyUpdate();
         cleanup();
       });
-
+  
       notification.querySelector('.update-notification-later').addEventListener('click', () => {
         console.log('[ServiceWorkerManager] Later button clicked');
         cleanup();
       });
-
+  
       notification.querySelector('.update-notification-close').addEventListener('click', () => {
         console.log('[ServiceWorkerManager] Close button clicked');
         cleanup();
