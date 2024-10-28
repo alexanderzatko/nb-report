@@ -116,8 +116,11 @@ class FormManager {
     // Add validation clearing listeners for regular user fields
     if (!isAdmin) {
       const requiredFields = [
-        'report-date', 'country', 'region', 'classic-style', 'free-style',
-        'snow-depth250', 'snow-depth500', 'snow-depth750', 'snow-depth1000', 'report-note'
+        'report-title',
+        'report-date', 
+        'country', 
+        'region', 
+        'report-note'
       ];
   
       requiredFields.forEach(fieldId => {
