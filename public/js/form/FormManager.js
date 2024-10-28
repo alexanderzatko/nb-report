@@ -51,36 +51,6 @@ class FormManager {
             validationKey: 'form.validation.required'
           },
           {
-            id: 'classic-style',
-            type: 'select',
-            validationKey: 'form.validation.required'
-          },
-          {
-            id: 'free-style',
-            type: 'select',
-            validationKey: 'form.validation.required'
-          },
-          {
-            id: 'snow-depth250',
-            type: 'number',
-            validationKey: 'form.validation.required'
-          },
-          {
-            id: 'snow-depth500',
-            type: 'number',
-            validationKey: 'form.validation.required'
-          },
-          {
-            id: 'snow-depth750',
-            type: 'number',
-            validationKey: 'form.validation.required'
-          },
-          {
-            id: 'snow-depth1000',
-            type: 'number',
-            validationKey: 'form.validation.required'
-          },
-          {
             id: 'report-note',
             type: 'textarea',
             validationKey: 'form.validation.required'
