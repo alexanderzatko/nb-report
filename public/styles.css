@@ -664,10 +664,28 @@ textarea:invalid + .validation-message {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
   transition: all 0.2s ease;
   padding: 0;
   color: #666;
+  position: relative;
+  overflow: hidden;
+}
+
+.condition-btn-text {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  /* Enable scale-to-fit behavior */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  /* Prevent text from wrapping */
+  white-space: nowrap;
+  /* Enable automatic scaling */
+  transform-origin: center center;
+  /* Ensure text scales smoothly */
+  transition: transform 0.2s ease;
 }
 
 .condition-btn:hover {
