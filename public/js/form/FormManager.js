@@ -103,6 +103,8 @@ class FormManager {
       const newForm = form.cloneNode(true);
       form.parentNode.replaceChild(newForm, form);
       newForm.addEventListener('submit', (event) => this.handleFormSubmit(event));
+
+      this.photoManager.initializePhotoUpload();
     }
   
     const cancelButton = document.getElementById('cancel-button');
