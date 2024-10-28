@@ -621,11 +621,14 @@ textarea:invalid + .validation-message {
 }
 
 .trail-name {
-  font-size: 1.2em;
-  font-weight: 500;
-  margin-bottom: 15px;
-  color: #333;
-  padding-left: 5px;
+    font-size: 1.2em;
+    font-weight: 900;
+    margin-bottom: 15px;
+    background-color: #67a599;
+    color: #ffffff;
+    padding-left: 7px;
+    padding-top: 3px;
+    padding-bottom: 3px;
 }
 
 .condition-group {
@@ -636,7 +639,6 @@ textarea:invalid + .validation-message {
   display: flex;
   align-items: center;
   margin-bottom: 8px;
-  padding-left: 5px;
 }
 
 .condition-label {
