@@ -12,6 +12,83 @@ class FormManager {
     if (FormManager.instance) {
       return FormManager.instance;
     }
+
+    this.formConfig = {
+      admin: {
+        requiredFields: [
+          {
+            id: 'snow-depth-total',
+            type: 'number',
+            validationKey: 'form.validation.required'
+          },
+          {
+            id: 'report-note',
+            type: 'textarea',
+            validationKey: 'form.validation.required'
+          }
+        ]
+      },
+      regular: {
+        requiredFields: [
+          {
+            id: 'report-title',
+            type: 'text',
+            validationKey: 'form.validation.required'
+          },
+          {
+            id: 'report-date',
+            type: 'date',
+            validationKey: 'form.validation.required'
+          },
+          {
+            id: 'country',
+            type: 'select',
+            validationKey: 'form.validation.required'
+          },
+          {
+            id: 'region',
+            type: 'select',
+            validationKey: 'form.validation.required'
+          },
+          {
+            id: 'classic-style',
+            type: 'select',
+            validationKey: 'form.validation.required'
+          },
+          {
+            id: 'free-style',
+            type: 'select',
+            validationKey: 'form.validation.required'
+          },
+          {
+            id: 'snow-depth250',
+            type: 'number',
+            validationKey: 'form.validation.required'
+          },
+          {
+            id: 'snow-depth500',
+            type: 'number',
+            validationKey: 'form.validation.required'
+          },
+          {
+            id: 'snow-depth750',
+            type: 'number',
+            validationKey: 'form.validation.required'
+          },
+          {
+            id: 'snow-depth1000',
+            type: 'number',
+            validationKey: 'form.validation.required'
+          },
+          {
+            id: 'report-note',
+            type: 'textarea',
+            validationKey: 'form.validation.required'
+          }
+        ]
+      }
+    };
+
     this.i18next = i18next;
     this.trailConditions = {};
     this.formStartTime = null;
@@ -74,36 +151,18 @@ class FormManager {
     const regularUserSection = document.getElementById('regular-user-section');
     const adminSection = document.getElementById('admin-section');
     const trailsSection = document.getElementById('trails-section');
-  
+
     if (regularUserSection) {
       regularUserSection.style.display = isAdmin ? 'none' : 'block';
     }
-  
+
     if (adminSection) {
       adminSection.style.display = isAdmin ? 'block' : 'none';
-      
-      if (isAdmin) {
-        const snowDepthTotal = document.getElementById('snow-depth-total');
-        const snowDepthNew = document.getElementById('snow-depth-new');
-        const reportNote = document.getElementById('report-note');
-        
-        if (snowDepthTotal) {
-          snowDepthTotal.required = true;
-          // Add input event listener
-          this.addValidationClearingListener(snowDepthTotal);
-        }
-        
-        if (snowDepthNew) {
-          snowDepthNew.required = false;
-        }
-        
-        if (reportNote) {
-          reportNote.required = true;
-          // Add input event listener
-          this.addValidationClearingListener(reportNote);
-        }
-      }
     }
+
+    // Initialize form fields based on user type
+    const config = isAdmin ? this.formConfig.admin : this.formConfig.regular;
+    this.initializeFormFields(config);
     
     if (trailsSection) {
       trailsSection.style.display = 'none';
@@ -112,24 +171,17 @@ class FormManager {
         this.initializeTrailsSection(userData.trails);
       }
     }
-  
-    // Add validation clearing listeners for regular user fields
-    if (!isAdmin) {
-      const requiredFields = [
-        'report-title',
-        'report-date', 
-        'country', 
-        'region', 
-        'report-note'
-      ];
-  
-      requiredFields.forEach(fieldId => {
-        const element = document.getElementById(fieldId);
-        if (element) {
-          this.addValidationClearingListener(element);
-        }
-      });
-    }
+  }
+
+  initializeFormFields(config) {
+    config.requiredFields.forEach(field => {
+      const element = document.getElementById(field.id);
+      if (element) {
+        element.required = true;
+        element.setAttribute('data-i18n-validate', field.validationKey);
+        this.addValidationClearingListener(element);
+      }
+    });
   }
 
   addValidationClearingListener(element) {
@@ -494,66 +546,26 @@ class FormManager {
     this.logger.debug('Form submission started');
   
     try {
-      // Identify admin vs regular user form
       const isAdmin = document.getElementById('admin-section')?.style.display !== 'none';
       this.logger.debug('Is admin form:', isAdmin);
-  
-      let requiredFields = [];
-      if (isAdmin) {
-        requiredFields = [
-          {
-            element: document.getElementById('snow-depth-total'),
-            required: true
-          },
-          {
-            element: document.getElementById('report-note'),
-            required: true
-          }
-        ];
-      } else {
-      requiredFields = [
-        {
-          element: document.getElementById('report-title'),
-          required: true
-        },
-        {
-          element: document.getElementById('report-date'),
-          required: true
-        },
-        {
-          element: document.getElementById('country'),
-          required: true
-        },
-        {
-          element: document.getElementById('region'),
-          required: true
-        },
-        {
-          element: document.getElementById('report-note'),
-          required: true
-        }
-      ];
-    }
-  
+
+      const config = isAdmin ? this.formConfig.admin : this.formConfig.regular;
+      const requiredFields = config.requiredFields.map(field => ({
+        element: document.getElementById(field.id),
+        required: true
+      }));
+
       this.logger.debug('Found fields to validate:', requiredFields.length);
-      
+
       let isValid = true;
       let firstInvalidElement = null;
-  
+      
       requiredFields.forEach(({element, required}) => {
         if (!element) {
           this.logger.warn('Required element not found in DOM');
           return;
         }
-  
-        this.logger.debug('Validating element:', {
-          id: element.id,
-          type: element.type || element.tagName.toLowerCase(),
-          required,
-          value: element.value,
-          validity: element.validity
-        });
-  
+
         if (required && !element.value.trim()) {
           isValid = false;
           element.classList.add('field-invalid');
@@ -569,15 +581,10 @@ class FormManager {
           
           if (!firstInvalidElement) {
             firstInvalidElement = element;
-            this.logger.debug('First invalid element:', {
-              id: element.id,
-              type: element.type || element.tagName.toLowerCase(),
-              offsetTop: element.offsetTop
-            });
           }
         }
       });
-  
+    
       this.logger.debug('Form validation result:', isValid);
       if (!isValid && firstInvalidElement) {
         this.logger.debug('Scrolling to first invalid element:', firstInvalidElement.id);
