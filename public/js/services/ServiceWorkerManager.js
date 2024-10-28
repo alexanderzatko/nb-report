@@ -1,10 +1,6 @@
 // services/ServiceWorkerManager.js
 
-import i18next from '/node_modules/i18next/dist/esm/i18next.js';
-
 class ServiceWorkerManager {
-  static instance = null;
-
   constructor() {
     if (ServiceWorkerManager.instance) {
       return ServiceWorkerManager.instance;
@@ -13,17 +9,10 @@ class ServiceWorkerManager {
     this.registration = null;
     this.updateFound = false;
     this.i18next = i18next;
-
+    
     ServiceWorkerManager.instance = this;
   }
 
-  static getInstance() {
-    if (!ServiceWorkerManager.instance) {
-      ServiceWorkerManager.instance = new ServiceWorkerManager();
-    }
-    return ServiceWorkerManager.instance;
-  }
-  
   async initialize() {
     if (!('serviceWorker' in navigator)) {
       console.log('Service Worker is not supported in this browser');
@@ -33,6 +22,12 @@ class ServiceWorkerManager {
     try {
       await this.registerServiceWorker();
       this.setupUpdateHandling();
+      
+      // Check for updates every 30 minutes
+      setInterval(() => {
+        this.checkForUpdates();
+      }, 30 * 60 * 1000);
+      
       return true;
     } catch (error) {
       console.error('Service Worker registration failed:', error);
@@ -44,10 +39,27 @@ class ServiceWorkerManager {
     try {
       this.registration = await navigator.serviceWorker.register('/service-worker.js');
       console.log('ServiceWorker registration successful with scope:', this.registration.scope);
+      
+      // Check for waiting service worker immediately after registration
+      if (this.registration.waiting) {
+        this.notifyUpdateReady();
+      }
+      
       return true;
     } catch (error) {
       console.error('ServiceWorker registration failed:', error);
       throw error;
+    }
+  }
+
+  async checkForUpdates() {
+    if (!this.registration) return;
+    
+    try {
+      await this.registration.update();
+      console.log('Service Worker update check completed');
+    } catch (error) {
+      console.error('Error checking for Service Worker updates:', error);
     }
   }
 
@@ -79,9 +91,22 @@ class ServiceWorkerManager {
         window.location.reload();
       }
     });
+
+    // Listen for update messages from the service worker
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      if (event.data.type === 'UPDATE_AVAILABLE') {
+        this.notifyUpdateReady();
+      }
+    });
   }
 
   notifyUpdateReady() {
+    // Remove any existing notification first
+    const existingNotification = document.querySelector('.update-notification');
+    if (existingNotification) {
+      existingNotification.remove();
+    }
+
     const notification = document.createElement('div');
     notification.className = 'update-notification';
     notification.innerHTML = `
@@ -115,19 +140,6 @@ class ServiceWorkerManager {
       removeNotification();
       this.applyUpdate();
     });
-
-    // Update translations when language changes
-    window.addEventListener('languageChanged', () => {
-      const title = notification.querySelector('h3');
-      const message = notification.querySelector('p');
-      const updateButton = notification.querySelector('.update-notification-update');
-      const laterButton = notification.querySelector('.update-notification-later');
-
-      title.textContent = this.i18next.t('updates.newVersionTitle');
-      message.textContent = this.i18next.t('updates.newVersionMessage');
-      updateButton.textContent = this.i18next.t('updates.updateNow');
-      laterButton.textContent = this.i18next.t('updates.updateLater');
-    });
   }
 
   async applyUpdate() {
@@ -143,87 +155,6 @@ class ServiceWorkerManager {
       // Force reload as fallback
       window.location.reload();
     }
-  }
-
-  async clearCache() {
-    try {
-      const keys = await caches.keys();
-      await Promise.all(
-        keys.map(key => caches.delete(key))
-      );
-      console.log('Cache cleared successfully');
-      return true;
-    } catch (error) {
-      console.error('Error clearing cache:', error);
-      return false;
-    }
-  }
-
-  async preloadResources(resources) {
-    if (!this.registration) return;
-
-    try {
-      const cache = await caches.open('snow-report-cache');
-      await cache.addAll(resources);
-      console.log('Resources preloaded successfully');
-      return true;
-    } catch (error) {
-      console.error('Error preloading resources:', error);
-      return false;
-    }
-  }
-
-  async postMessageToSW(message) {
-    if (!this.registration || !this.registration.active) return;
-
-    try {
-      this.registration.active.postMessage(message);
-      return true;
-    } catch (error) {
-      console.error('Error posting message to Service Worker:', error);
-      return false;
-    }
-  }
-
-  // Optional: Monitor service worker lifecycle states
-  setupLifecycleMonitoring() {
-    navigator.serviceWorker.addEventListener('message', event => {
-      console.log('Message from service worker:', event.data);
-    });
-
-    if (this.registration) {
-      ['installing', 'waiting', 'active'].forEach(state => {
-        const worker = this.registration[state];
-        if (worker) {
-          worker.addEventListener('statechange', () => {
-            console.log(`Service worker ${state} state changed to:`, worker.state);
-          });
-        }
-      });
-    }
-  }
-
-  // Optional: Handle offline/online status
-  setupNetworkStatusHandling() {
-    window.addEventListener('online', () => {
-      console.log('Application is online');
-      this.postMessageToSW({ type: 'ONLINE' });
-    });
-
-    window.addEventListener('offline', () => {
-      console.log('Application is offline');
-      this.postMessageToSW({ type: 'OFFLINE' });
-    });
-  }
-
-  // Get current service worker registration
-  getRegistration() {
-    return this.registration;
-  }
-
-  // Check if service worker is supported and active
-  isServiceWorkerActive() {
-    return !!navigator.serviceWorker.controller;
   }
 }
 
