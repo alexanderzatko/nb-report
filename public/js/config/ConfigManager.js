@@ -13,20 +13,19 @@ class ConfigManager {
     this.logger = Logger.getInstance();
     this.config = {
       cache: {
-        version: 'v88', //update this for new app release
+        version: 'v90', // update this for new app release and do the same in service-worker.js
         name: 'snow-report-cache',
-          staticResources: [
-            '/',
-            '/index.html',
-            '/styles.css',
-            '/js/app.js',
-            '/js/i18n.js',
-            '/manifest.json',
-            '/locales/en/translation.json',
-            '/locales/sk/translation.json',
-            '/icon/login-icon.svg',
-            '/offline.html'
-          ]
+        staticResources: [
+          '/',
+          '/index.html',
+          '/styles.css',
+          '/js/app.js',
+          '/js/i18n.js',
+          '/manifest.json',
+          '/locales/en/translation.json',
+          '/locales/sk/translation.json',
+          // Keep your existing staticResources list
+        ]
       },
       
       app: {
