@@ -3,6 +3,7 @@
 import i18next from '/node_modules/i18next/dist/esm/i18next.js';
 import SelectManager from '../managers/SelectManager.js';
 import PhotoManager from '../media/PhotoManager.js';
+import Logger from '../utils/Logger.js';
 
 class FormManager {
   static instance = null;
@@ -17,6 +18,7 @@ class FormManager {
     this.elapsedTimeInterval = null;
     this.selectManager = SelectManager.getInstance();
     this.photoManager = PhotoManager.getInstance();
+    this.logger = Logger.getInstance();
 
     FormManager.instance = this;
   }
@@ -208,6 +210,25 @@ class FormManager {
       const cancelButton = document.getElementById('cancel-button');
       if (cancelButton) {
           cancelButton.addEventListener('click', () => this.handleCancel());
+      }
+
+      // Initialize photo upload listeners
+      const selectPhotosBtn = document.getElementById('select-photos');
+      const takePhotoBtn = document.getElementById('take-photo');
+      const fileInput = document.getElementById('photo-file-input');
+      const cameraInput = document.getElementById('camera-input');
+
+      if (selectPhotosBtn && fileInput) {
+          selectPhotosBtn.addEventListener('click', () => fileInput.click());
+      }
+      if (takePhotoBtn && cameraInput) {
+          takePhotoBtn.addEventListener('click', () => cameraInput.click());
+      }
+      if (fileInput) {
+          fileInput.addEventListener('change', (e) => this.photoManager.handleFiles(e.target.files));
+      }
+      if (cameraInput) {
+          cameraInput.addEventListener('change', (e) => this.photoManager.handleFiles(e.target.files));
       }
   }
 
