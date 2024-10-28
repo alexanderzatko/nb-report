@@ -108,14 +108,177 @@ class FormManager {
     div.className = 'trail-item';
     div.dataset.trailId = trailId;
     
+    // Trail name header
     const nameDiv = document.createElement('div');
     nameDiv.className = 'trail-name';
     nameDiv.textContent = trailName;
     div.appendChild(nameDiv);
+  
+    // Free Style condition
+    const freeStyleGroup = document.createElement('div');
+    freeStyleGroup.className = 'condition-group';
     
+    const freeStyleHeader = document.createElement('div');
+    freeStyleHeader.className = 'condition-header';
+    
+    const freeStyleLabel = document.createElement('span');
+    freeStyleLabel.className = 'condition-label';
+    freeStyleLabel.textContent = this.i18next.t('form.freeStyle');
+    
+    const freeStyleValue = document.createElement('span');
+    freeStyleValue.className = 'selected-value';
+    freeStyleValue.dataset.forType = 'free';
+    
+    freeStyleHeader.appendChild(freeStyleLabel);
+    freeStyleHeader.appendChild(freeStyleValue);
+    
+    const freeStyleButtons = document.createElement('div');
+    freeStyleButtons.className = 'condition-buttons';
+    
+    this.createConditionButtons(freeStyleButtons, freeStyleValue, trailId, 'free');
+    
+    freeStyleGroup.appendChild(freeStyleHeader);
+    freeStyleGroup.appendChild(freeStyleButtons);
+    div.appendChild(freeStyleGroup);
+  
+    // Classic Style condition
+    const classicGroup = document.createElement('div');
+    classicGroup.className = 'condition-group';
+    
+    const classicHeader = document.createElement('div');
+    classicHeader.className = 'condition-header';
+    
+    const classicLabel = document.createElement('span');
+    classicLabel.className = 'condition-label';
+    classicLabel.textContent = this.i18next.t('form.classicStyle');
+    
+    const classicValue = document.createElement('span');
+    classicValue.className = 'selected-value';
+    classicValue.dataset.forType = 'classic';
+    
+    classicHeader.appendChild(classicLabel);
+    classicHeader.appendChild(classicValue);
+    
+    const classicButtons = document.createElement('div');
+    classicButtons.className = 'condition-buttons';
+    
+    this.createConditionButtons(classicButtons, classicValue, trailId, 'classic');
+    
+    classicGroup.appendChild(classicHeader);
+    classicGroup.appendChild(classicButtons);
+    div.appendChild(classicGroup);
+  
+    // Next Maintenance Section
+    const maintenanceGroup = document.createElement('div');
+    maintenanceGroup.className = 'condition-group';
+    
+    const maintenanceHeader = document.createElement('div');
+    maintenanceHeader.className = 'condition-header';
+    
+    const maintenanceLabel = document.createElement('span');
+    maintenanceLabel.className = 'condition-label';
+    maintenanceLabel.textContent = this.i18next.t('form.nextMaintenance');
+    
+    const maintenanceValue = document.createElement('span');
+    maintenanceValue.className = 'selected-value';
+    maintenanceValue.dataset.forType = 'maintenance';
+    
+    maintenanceHeader.appendChild(maintenanceLabel);
+    maintenanceHeader.appendChild(maintenanceValue);
+    
+    const maintenanceButtons = document.createElement('div');
+    maintenanceButtons.className = 'condition-buttons';
+    
+    this.createMaintenanceButtons(maintenanceButtons, maintenanceValue, trailId);
+    
+    maintenanceGroup.appendChild(maintenanceHeader);
+    maintenanceGroup.appendChild(maintenanceButtons);
+    div.appendChild(maintenanceGroup);
+  
     return div;
   }
+
+  createConditionButtons(container, valueDisplay, trailId, type) {
+    const conditions = [
+      { value: '0', label: '?', title: this.i18next.t('form.trackConditions.0') },
+      { value: '1', label: '★', title: this.i18next.t('form.trackConditions.1') },
+      { value: '2', label: '☆', title: this.i18next.t('form.trackConditions.2') },
+      { value: '3', label: '↓', title: this.i18next.t('form.trackConditions.3') },
+      { value: '4', label: '∥', title: this.i18next.t('form.trackConditions.4') },
+      { value: '5', label: '⛌', title: this.i18next.t('form.trackConditions.5') }
+    ];
   
+    conditions.forEach(condition => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'condition-btn';
+      button.dataset.value = condition.value;
+      button.innerHTML = condition.label;
+      button.title = condition.title;
+      
+      button.addEventListener('click', () => {
+        // Remove selected class from all buttons in this group
+        container.querySelectorAll('.condition-btn').forEach(btn => {
+          btn.classList.remove('selected');
+        });
+        
+        // Add selected class to clicked button
+        button.classList.add('selected');
+        
+        // Update the value display
+        valueDisplay.textContent = ': ' + condition.title;
+        
+        // Store the selection
+        if (!this.trailConditions[trailId]) {
+          this.trailConditions[trailId] = {};
+        }
+        this.trailConditions[trailId][type] = condition.value;
+      });
+      
+      container.appendChild(button);
+    });
+  }
+  
+  createMaintenanceButtons(container, valueDisplay, trailId) {
+    const options = [
+      { value: '0', label: '?', title: this.i18next.t('form.maintenance.unknown') },
+      { value: '1', label: '1', title: this.i18next.t('form.maintenance.today') },
+      { value: '2', label: '2', title: this.i18next.t('form.maintenance.tomorrow') },
+      { value: '3+', label: '3+', title: this.i18next.t('form.maintenance.laterDays') },
+      { value: 'Ps', label: 'Ps', title: this.i18next.t('form.maintenance.afterSnow') },
+      { value: 'snow', label: '❄', title: this.i18next.t('form.maintenance.duringSnow') }
+    ];
+  
+    options.forEach(option => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'condition-btn';
+      button.dataset.value = option.value;
+      button.innerHTML = option.label;
+      button.title = option.title;
+      
+      button.addEventListener('click', () => {
+        // Remove selected class from all buttons in this group
+        container.querySelectorAll('.condition-btn').forEach(btn => {
+          btn.classList.remove('selected');
+        });
+        
+        // Add selected class to clicked button
+        button.classList.add('selected');
+        
+        // Update the value display
+        valueDisplay.textContent = ': ' + option.title;
+        
+        // Store the selection
+        if (!this.trailConditions[trailId]) {
+          this.trailConditions[trailId] = {};
+        }
+        this.trailConditions[trailId].maintenance = option.value;
+      });
+      
+      container.appendChild(button);
+    });
+  }
   initializeFormValidation() {
     console.log('Initializing form validation');
     const inputs = document.querySelectorAll('[data-i18n-validate]');
