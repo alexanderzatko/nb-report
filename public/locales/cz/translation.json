@@ -63,6 +63,7 @@
     "snowDepthNew": "Nový sníh (cm)",
     "nextMaintenance": "Nejbližší úprava",
     "maintenance": {
+      "unknown": "Neznámé",
       "today": "Dnes",
       "tomorrow": "Zítra",
       "laterDays": "Pozítří anebo později",
