@@ -106,10 +106,11 @@ class FormManager {
       form.parentNode.replaceChild(newForm, form);
       newForm.addEventListener('submit', (event) => this.handleFormSubmit(event));
 
-      console.log('About to initialize photo upload');
+      console.log('About to initialize photo upload with force');
+      this.photoManager.initializePhotoUpload(true);
 
       // Initialize photo manager with the new form
-      setTimeout(() => this.photoManager.initializePhotoUpload(), 0);
+//      setTimeout(() => this.photoManager.initializePhotoUpload(), 0);
     }
   
     const cancelButton = document.getElementById('cancel-button');
