@@ -140,6 +140,7 @@ form {
 
 input#report-title {
     width: calc(100% - 20px);
+    font-size: 14px;
 }
 
 input, select {
