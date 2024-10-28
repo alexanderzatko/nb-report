@@ -288,6 +288,27 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /* Photos upload START */
 
+.photo-info {
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  border-top: 1px solid #eee;
+}
+
+.photo-caption {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.photo-caption:focus {
+  border-color: #0078d4;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+}
+
 .photos-section {
     margin-top: 20px;
 }
@@ -323,18 +344,21 @@ div#photo-preview-container {
 }
 
 .photo-preview {
-    position: relative;
-    aspect-ratio: 1;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    overflow: hidden;
+  position: relative;
+  aspect-ratio: 1;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .photo-preview img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
+  flex: 1;
+  width: 100%;
+  height: calc(100% - 60px); /* Adjust for caption area */
+  object-fit: cover;
+  transition: transform 0.3s ease;
 }
 
 .photo-controls {
