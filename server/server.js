@@ -195,10 +195,16 @@ app.get('/api/auth-status', (req, res) => {
     hasAccessToken: req.session && !!req.session.accessToken
   });
 
+  // Check if session exists and has valid tokens
   const isAuthenticated = !!(req.session && req.session.accessToken);
   
+  if (isAuthenticated) {
+    // Refresh the session expiry
+    req.session.touch();
+  }
+
   res.json({ 
-    isAuthenticated: isAuthenticated,
+    isAuthenticated,
     sessionID: req.sessionID,
     // Only include non-sensitive user info here
     userInfo: isAuthenticated ? {
