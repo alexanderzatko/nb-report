@@ -11,6 +11,7 @@ class ServiceWorkerManager {
     this.registration = null;
     this.updateFound = false;
     this.i18next = i18next;
+    this.notificationShown = false;  // Add flag to prevent multiple notifications
     console.log('[ServiceWorkerManager] Initialized');
 
     ServiceWorkerManager.instance = this;
@@ -30,6 +31,14 @@ class ServiceWorkerManager {
       return false;
     }
 
+    // Wait for i18next to be ready
+    if (!this.i18next.isInitialized) {
+      console.log('[ServiceWorkerManager] Waiting for i18next initialization');
+      await new Promise(resolve => {
+        this.i18next.on('initialized', resolve);
+      });
+    }
+
     try {
       await this.registerServiceWorker();
       console.log('[ServiceWorkerManager] Initialization complete');
@@ -46,13 +55,15 @@ class ServiceWorkerManager {
       this.registration = await navigator.serviceWorker.register('/service-worker.js');
       console.log('[ServiceWorkerManager] Registration successful, scope:', this.registration.scope);
 
-      // Immediately check for waiting worker
+      // Check for existing waiting worker
       if (this.registration.waiting) {
         console.log('[ServiceWorkerManager] Found waiting worker on initial check');
         this.updateFound = true;
-        await this.notifyUpdateReady();
+        // Delay the notification to ensure DOM is ready
+        setTimeout(() => this.notifyUpdateReady(), 2000);
       }
 
+      // Listen for new updates
       this.registration.addEventListener('updatefound', () => {
         const newWorker = this.registration.installing;
         console.log('[ServiceWorkerManager] Update found, new worker installing');
@@ -62,16 +73,23 @@ class ServiceWorkerManager {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
             console.log('[ServiceWorkerManager] New version ready to activate');
             this.updateFound = true;
-            this.notifyUpdateReady().catch(console.error);
+            if (!this.notificationShown) {
+              setTimeout(() => this.notifyUpdateReady(), 2000);
+            }
           }
         });
       });
 
+      // Handle controller change
       let refreshing = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         console.log('[ServiceWorkerManager] Controller changed');
-        if (refreshing) return;
+        if (refreshing) {
+          console.log('[ServiceWorkerManager] Already refreshing, skip');
+          return;
+        }
         refreshing = true;
+        console.log('[ServiceWorkerManager] Reloading page for new version');
         window.location.reload();
       });
 
@@ -83,7 +101,13 @@ class ServiceWorkerManager {
   }
 
   async notifyUpdateReady() {
+    if (this.notificationShown) {
+      console.log('[ServiceWorkerManager] Update notification already shown');
+      return;
+    }
+
     console.log('[ServiceWorkerManager] Creating update notification');
+    this.notificationShown = true;
     
     // Remove any existing notification
     const existing = document.querySelector('.update-notification');
@@ -92,56 +116,54 @@ class ServiceWorkerManager {
       existing.remove();
     }
 
-    return new Promise((resolve) => {
-      const notification = document.createElement('div');
-      notification.className = 'update-notification';
-      
-      // Store reference to prevent garbage collection
-      this.currentNotification = notification;
-      
-      notification.innerHTML = `
-        <div class="update-notification-content">
-          <div class="update-notification-header">
-            <h3>${this.i18next.t('updates.newVersionTitle')}</h3>
-            <button class="update-notification-close">&times;</button>
-          </div>
-          <p>${this.i18next.t('updates.newVersionMessage')}</p>
-          <div class="update-notification-actions">
-            <button class="update-notification-update">${this.i18next.t('updates.updateNow')}</button>
-            <button class="update-notification-later">${this.i18next.t('updates.updateLater')}</button>
-          </div>
+    const notification = document.createElement('div');
+    notification.className = 'update-notification';
+    
+    // Store reference to prevent garbage collection
+    this.currentNotification = notification;
+    
+    notification.innerHTML = `
+      <div class="update-notification-content">
+        <div class="update-notification-header">
+          <h3>${this.i18next.t('updates.newVersionTitle')}</h3>
+          <button class="update-notification-close">&times;</button>
         </div>
-      `;
+        <p>${this.i18next.t('updates.newVersionMessage')}</p>
+        <div class="update-notification-actions">
+          <button class="update-notification-update">${this.i18next.t('updates.updateNow')}</button>
+          <button class="update-notification-later">${this.i18next.t('updates.updateLater')}</button>
+        </div>
+      </div>
+    `;
 
-      // Add notification to DOM after a small delay
-      setTimeout(() => {
-        document.body.appendChild(notification);
-        console.log('[ServiceWorkerManager] Notification added to DOM');
-      }, 1000);
+    // Add to DOM
+    document.body.appendChild(notification);
+    console.log('[ServiceWorkerManager] Notification added to DOM');
 
-      // Handle update button
+    // Handle button clicks
+    return new Promise((resolve) => {
+      const cleanup = () => {
+        notification.classList.add('update-notification-hiding');
+        setTimeout(() => {
+          notification.remove();
+          resolve();
+        }, 300);
+      };
+
       notification.querySelector('.update-notification-update').addEventListener('click', () => {
         console.log('[ServiceWorkerManager] Update button clicked');
         this.applyUpdate();
-        notification.classList.add('update-notification-hiding');
-        setTimeout(() => notification.remove(), 300);
-        resolve();
+        cleanup();
       });
 
-      // Handle later button
       notification.querySelector('.update-notification-later').addEventListener('click', () => {
         console.log('[ServiceWorkerManager] Later button clicked');
-        notification.classList.add('update-notification-hiding');
-        setTimeout(() => notification.remove(), 300);
-        resolve();
+        cleanup();
       });
 
-      // Handle close button
       notification.querySelector('.update-notification-close').addEventListener('click', () => {
         console.log('[ServiceWorkerManager] Close button clicked');
-        notification.classList.add('update-notification-hiding');
-        setTimeout(() => notification.remove(), 300);
-        resolve();
+        cleanup();
       });
     });
   }
