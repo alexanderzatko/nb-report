@@ -68,12 +68,36 @@ class FormManager {
     const regularUserSection = document.getElementById('regular-user-section');
     const adminSection = document.getElementById('admin-section');
     const trailsSection = document.getElementById('trails-section');
-
+  
     if (regularUserSection) {
       regularUserSection.style.display = isAdmin ? 'none' : 'block';
     }
     if (adminSection) {
       adminSection.style.display = isAdmin ? 'block' : 'none';
+      
+      // Set up admin form field validation
+      if (isAdmin) {
+        const snowDepthTotal = document.getElementById('snow-depth-total');
+        const snowDepthNew = document.getElementById('snow-depth-new');
+        const reportNote = document.getElementById('report-note');
+        
+        if (snowDepthTotal) {
+          snowDepthTotal.required = true;
+          snowDepthTotal.setAttribute('data-i18n-validate', 'form.validation.required');
+        }
+        
+        if (snowDepthNew) {
+          snowDepthNew.required = false;
+        }
+        
+        if (reportNote) {
+          reportNote.required = true;
+          reportNote.setAttribute('data-i18n-validate', 'form.validation.required');
+        }
+        
+        // Reinitialize validation for admin form
+        this.initializeFormValidation();
+      }
     }
     
     if (trailsSection) {
@@ -83,12 +107,6 @@ class FormManager {
         this.initializeTrailsSection(userData.trails);
       }
     }
-    
-    console.log('Form initialization complete:', {
-      isAdmin,
-      hasTrails,
-      trails: userData?.trails
-    });
   }
 
   initializeTrailsSection(trails) {
@@ -314,7 +332,8 @@ class FormManager {
     
   initializeFormValidation() {
     console.log('Initializing form validation');
-    const inputs = document.querySelectorAll('[data-i18n-validate]');
+    // Select all required inputs and textareas
+    const inputs = document.querySelectorAll('input[required], textarea[required], select[required], [data-i18n-validate]');
     
     inputs.forEach(input => {    
       // Set custom validation message
@@ -323,16 +342,18 @@ class FormManager {
         const formGroup = input.closest('.form-group');
         
         if (!input.value) {
-          const requiredMsg = this.i18next.t(input.dataset.i18nValidate);
+          const requiredMsg = this.i18next.t(input.dataset.i18nValidate || 'form.validation.required');
           input.setCustomValidity(requiredMsg);
           
-          const validationMessage = formGroup.querySelector('.validation-message');
-          if (validationMessage) {
-            validationMessage.textContent = requiredMsg;
+          if (formGroup) {
+            const validationMessage = formGroup.querySelector('.validation-message');
+            if (validationMessage) {
+              validationMessage.textContent = requiredMsg;
+            }
+            
+            formGroup.classList.add('show-validation');
+            input.classList.add('field-invalid');
           }
-          
-          formGroup.classList.add('show-validation');
-          input.classList.add('field-invalid');
         }
       });
       
@@ -345,15 +366,15 @@ class FormManager {
           input.classList.remove('field-invalid');
         }
       };
-
+  
       input.addEventListener('input', clearValidation);
       input.addEventListener('change', clearValidation);
-
+  
       // Handle blur event
       input.addEventListener('blur', () => {
         if (!input.value && input.required) {
           const formGroup = input.closest('.form-group');
-          const requiredMsg = this.i18next.t(input.dataset.i18nValidate);
+          const requiredMsg = this.i18next.t(input.dataset.i18nValidate || 'form.validation.required');
           
           input.setCustomValidity(requiredMsg);
           input.classList.add('field-invalid');
@@ -365,42 +386,10 @@ class FormManager {
               validationMessage.textContent = requiredMsg;
             }
           }
-        } else if (input.checkValidity()) {
-          input.classList.remove('field-invalid');
-          const formGroup = input.closest('.form-group');
-          if (formGroup) {
-            formGroup.classList.remove('show-validation');
-          }
         }
       });
     });
-
-    // Add specific validation for country/region dependency
-    const countrySelect = document.getElementById('country');
-    const regionSelect = document.getElementById('region');
-
-    if (countrySelect && regionSelect) {
-      countrySelect.addEventListener('change', () => {
-        // When country changes, validate region if it's empty
-        if (!regionSelect.value && regionSelect.required) {
-          const formGroup = regionSelect.closest('.form-group');
-          const requiredMsg = this.i18next.t(regionSelect.dataset.i18nValidate);
-          
-          regionSelect.setCustomValidity(requiredMsg);
-          regionSelect.classList.add('field-invalid');
-          
-          if (formGroup) {
-            formGroup.classList.add('show-validation');
-            const validationMessage = formGroup.querySelector('.validation-message');
-            if (validationMessage) {
-              validationMessage.textContent = requiredMsg;
-            }
-          }
-        }
-      });
-    }
   }
-
 
   initializeDatePicker() {
     const dateInput = document.getElementById('report-date');
@@ -445,16 +434,16 @@ class FormManager {
   async handleFormSubmit(event) {
     event.preventDefault();
     console.log('Form submission started');
-
-    // Manual validation
-    const formElements = event.target.querySelectorAll('[data-i18n-validate]');
+  
+    // Get all required fields and fields with validation
+    const formElements = event.target.querySelectorAll('input[required], textarea[required], select[required], [data-i18n-validate]');
     console.log('Found form elements to validate:', formElements.length);
     
     let isValid = true;
     let firstInvalidElement = null;
     
     formElements.forEach(element => {
-      if (!element.checkValidity()) {
+      if (!element.value || !element.checkValidity()) {
         isValid = false;
         element.classList.add('field-invalid');
         
@@ -463,28 +452,23 @@ class FormManager {
           formGroup.classList.add('show-validation');
           const validationMessage = formGroup.querySelector('.validation-message');
           if (validationMessage) {
-            validationMessage.textContent = this.i18next.t(element.dataset.i18nValidate);
+            validationMessage.textContent = this.i18next.t(element.dataset.i18nValidate || 'form.validation.required');
           }
         }
         
         if (!firstInvalidElement) {
           firstInvalidElement = element;
         }
-      } else {
-        element.classList.remove('field-invalid');
-        const formGroup = element.closest('.form-group');
-        if (formGroup) {
-          formGroup.classList.remove('show-validation');
-        }
       }
     });
-
+  
     console.log('Form validation result:', isValid);
     if (!isValid && firstInvalidElement) {
       firstInvalidElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      firstInvalidElement.focus();
       return;
     }
-
+  
     // Continue with form submission if validation passes
     try {
       const formData = this.collectFormData();
