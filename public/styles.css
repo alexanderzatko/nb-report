@@ -227,12 +227,13 @@ label {
 }
 
 input[type=number] {
-    width: 70px;
+  width: 70px;
 }
 
 textarea#report-note {
-    width: 98%;
-    height: 120px;
+  width: 98%;
+  height: 120px;
+  font-size: 14px;
 }
 
 button:hover {
