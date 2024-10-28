@@ -480,16 +480,49 @@ class FormManager {
           }
         ];
       } else {
-        const formSection = document.getElementById('regular-user-section');
-        if (!formSection) {
-          this.logger.error('Regular user form section not found');
-          throw new Error('Form section not found');
-        }
-        const formElements = formSection.querySelectorAll('input[required], textarea[required], select[required]');
-        requiredFields = Array.from(formElements).map(element => ({
-          element,
-          required: true
-        }));
+        // Using the same explicit approach for regular user fields
+        requiredFields = [
+          {
+            element: document.getElementById('report-date'),
+            required: true
+          },
+          {
+            element: document.getElementById('country'),
+            required: true
+          },
+          {
+            element: document.getElementById('region'),
+            required: true
+          },
+          {
+            element: document.getElementById('classic-style'),
+            required: true
+          },
+          {
+            element: document.getElementById('free-style'),
+            required: true
+          },
+          {
+            element: document.getElementById('snow-depth250'),
+            required: true
+          },
+          {
+            element: document.getElementById('snow-depth500'),
+            required: true
+          },
+          {
+            element: document.getElementById('snow-depth750'),
+            required: true
+          },
+          {
+            element: document.getElementById('snow-depth1000'),
+            required: true
+          },
+          {
+            element: document.getElementById('report-note'),
+            required: true
+          }
+        ];
       }
   
       this.logger.debug('Found fields to validate:', requiredFields.length);
