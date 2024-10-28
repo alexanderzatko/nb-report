@@ -50,14 +50,19 @@ class FormManager {
   }
 
   setupEventListeners() {
+    // Clean up existing event listeners by cloning nodes
     const form = document.getElementById('snow-report-form');
     if (form) {
-      form.addEventListener('submit', (event) => this.handleFormSubmit(event));
+      const newForm = form.cloneNode(true);
+      form.parentNode.replaceChild(newForm, form);
+      newForm.addEventListener('submit', (event) => this.handleFormSubmit(event));
     }
-
+  
     const cancelButton = document.getElementById('cancel-button');
     if (cancelButton) {
-      cancelButton.addEventListener('click', () => this.handleCancel());
+      const newCancelButton = cancelButton.cloneNode(true);
+      cancelButton.parentNode.replaceChild(newCancelButton, cancelButton);
+      newCancelButton.addEventListener('click', () => this.handleCancel());
     }
   }
   
@@ -448,19 +453,20 @@ class FormManager {
   async handleFormSubmit(event) {
     event.preventDefault();
     event.stopPropagation();
-
+  
     if (this.isSubmitting) {
       this.logger.debug('Form submission already in progress');
       return;
     }
-
+  
     this.isSubmitting = true;
     this.logger.debug('Form submission started');
-
+  
     try {
+      // Identify admin vs regular user form
       const isAdmin = document.getElementById('admin-section')?.style.display !== 'none';
       this.logger.debug('Is admin form:', isAdmin);
-
+  
       let requiredFields = [];
       if (isAdmin) {
         requiredFields = [
@@ -474,24 +480,37 @@ class FormManager {
           }
         ];
       } else {
-        const formElements = document.querySelectorAll('input[required], textarea[required], select[required]');
+        const formSection = document.getElementById('regular-user-section');
+        if (!formSection) {
+          this.logger.error('Regular user form section not found');
+          throw new Error('Form section not found');
+        }
+        const formElements = formSection.querySelectorAll('input[required], textarea[required], select[required]');
         requiredFields = Array.from(formElements).map(element => ({
           element,
           required: true
         }));
       }
-
+  
       this.logger.debug('Found fields to validate:', requiredFields.length);
       
       let isValid = true;
       let firstInvalidElement = null;
-
+  
       requiredFields.forEach(({element, required}) => {
         if (!element) {
           this.logger.warn('Required element not found in DOM');
           return;
         }
-
+  
+        this.logger.debug('Validating element:', {
+          id: element.id,
+          type: element.type || element.tagName.toLowerCase(),
+          required,
+          value: element.value,
+          validity: element.validity
+        });
+  
         if (required && !element.value.trim()) {
           isValid = false;
           element.classList.add('field-invalid');
@@ -507,12 +526,18 @@ class FormManager {
           
           if (!firstInvalidElement) {
             firstInvalidElement = element;
+            this.logger.debug('First invalid element:', {
+              id: element.id,
+              type: element.type || element.tagName.toLowerCase(),
+              offsetTop: element.offsetTop
+            });
           }
         }
       });
-
+  
       this.logger.debug('Form validation result:', isValid);
       if (!isValid && firstInvalidElement) {
+        this.logger.debug('Scrolling to first invalid element:', firstInvalidElement.id);
         firstInvalidElement.scrollIntoView({ 
           behavior: 'smooth', 
           block: 'center'
@@ -521,15 +546,14 @@ class FormManager {
         this.isSubmitting = false;
         return;
       }
-
+  
+      // Continue with form submission if validation passes
       const formData = this.collectFormData();
       await this.submitFormData(formData);
       this.stopTrackingFormTime();
-      
-      // Show success message and reset form in one go
       this.showSuccess(this.i18next.t('form.validation.submitSuccess'));
       this.resetForm();
-      
+  
     } catch (error) {
       this.logger.error('Error submitting snow report:', error);
       this.showError(this.i18next.t('form.validation.submitError'));
