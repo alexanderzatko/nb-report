@@ -102,26 +102,17 @@ class App {
     this.managers.event.emit('APP_INIT_START');
   
     try {
-      const sessionId = this.managers.storage.getLocalStorage('sessionId');
-      console.log('Stored sessionId:', sessionId);
-  
-      const didAuth = await this.checkForURLParameters();
-      if (!didAuth && sessionId) {
-        try {
-          const isValid = await this.managers.auth.checkAuthStatus();
-          console.log('Auth status check result:', isValid);
-          if (isValid) {
-            await this.managers.ui.updateUIBasedOnAuthState(true);
-            await this.refreshUserData();
-          } else {
-            await this.handleInvalidSession();
-          }
-        } catch (error) {
-          console.error('Error checking session:', error);
-          await this.handleInvalidSession();
+      // Always try to restore session first
+      const isAuthenticated = await this.managers.auth.checkAuthStatus();
+      
+      if (!isAuthenticated) {
+        const didAuth = await this.checkForURLParameters();
+        if (!didAuth) {
+          await this.managers.ui.updateUIBasedOnAuthState(false);
         }
-      } else if (!didAuth) {
-        await this.managers.ui.updateUIBasedOnAuthState(false);
+      } else {
+        await this.managers.ui.updateUIBasedOnAuthState(true);
+        await this.refreshUserData();
       }
     } catch (error) {
       this.logger.error('Error in initializeAppState:', error);
