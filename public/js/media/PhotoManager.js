@@ -23,68 +23,82 @@ class PhotoManager {
   }
 
   initializePhotoUpload() {
-      if (this.initialized) {
-        this.logger.debug('PhotoManager already initialized');
-        return;
+    if (this.initialized) {
+      this.logger.debug('PhotoManager already initialized');
+      return;
+    }
+
+    this.logger.debug('Initializing PhotoManager...');
+
+    // Find existing elements
+    const selectPhotosBtn = document.getElementById('select-photos');
+    const takePhotoBtn = document.getElementById('take-photo');
+    const fileInput = document.getElementById('photo-file-input');
+    const cameraInput = document.getElementById('camera-input');
+
+    this.logger.debug('Found elements:', {
+      selectPhotosBtn: !!selectPhotosBtn,
+      takePhotoBtn: !!takePhotoBtn,
+      fileInput: !!fileInput,
+      cameraInput: !!cameraInput
+    });
+
+    if (!selectPhotosBtn || !takePhotoBtn) {
+      this.logger.error('Photo buttons not found in DOM');
+      return;
+    }
+
+    if (!fileInput || !cameraInput) {
+      this.logger.debug('Creating input elements...');
+      this.createInputElements();
+      return this.initializePhotoUpload();
+    }
+
+    // Remove any existing listeners
+    const newFileInput = fileInput.cloneNode(true);
+    const newCameraInput = cameraInput.cloneNode(true);
+    fileInput.parentNode.replaceChild(newFileInput, fileInput);
+    cameraInput.parentNode.replaceChild(newCameraInput, cameraInput);
+
+    // Add event listeners
+    selectPhotosBtn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.logger.debug('Select photos button clicked');
+      newFileInput.click();
+    };
+
+    takePhotoBtn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.logger.debug('Take photo button clicked');
+      newCameraInput.click();
+    };
+
+    newFileInput.onchange = async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.logger.debug('File input change event', { files: e.target.files?.length });
+      if (e.target.files?.length > 0) {
+        await this.handleFiles(e.target.files);
+        e.target.value = ''; // Clear the input
       }
-  
-      this.logger.debug('Initializing PhotoManager...');
-  
-      // If form is hidden, set up observer to initialize when it becomes visible
-      const form = document.getElementById('snow-report-form');
-      if (form && form.style.display === 'none') {
-        this.logger.debug('Form is hidden, setting up observer');
-        const observer = new MutationObserver((mutations) => {
-          mutations.forEach((mutation) => {
-            if (mutation.target.style.display !== 'none') {
-              this.logger.debug('Form now visible, initializing photo upload');
-              observer.disconnect();
-              this.doInitialize();
-            }
-          });
-        });
-        
-        observer.observe(form, { 
-          attributes: true, 
-          attributeFilter: ['style'] 
-        });
-        return;
+    };
+
+    newCameraInput.onchange = async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.logger.debug('Camera input change event', { files: e.target.files?.length });
+      if (e.target.files?.length > 0) {
+        await this.handleFiles(e.target.files);
+        e.target.value = ''; // Clear the input
       }
-  
-      this.doInitialize();
+    };
+
+    this.initialized = true;
+    this.logger.debug('PhotoManager initialization complete');
   }
 
-  doInitialize() {
-      // Find existing elements
-      const selectPhotosBtn = document.getElementById('select-photos');
-      const takePhotoBtn = document.getElementById('take-photo');
-      const fileInput = document.getElementById('photo-file-input');
-      const cameraInput = document.getElementById('camera-input');
-  
-      this.logger.debug('Found elements:', {
-        selectPhotosBtn: !!selectPhotosBtn,
-        takePhotoBtn: !!takePhotoBtn,
-        fileInput: !!fileInput,
-        cameraInput: !!cameraInput
-      });
-  
-      if (!selectPhotosBtn || !takePhotoBtn) {
-        this.logger.error('Photo buttons not found in DOM');
-        return;
-      }
-  
-      if (!fileInput || !cameraInput) {
-        this.logger.debug('Creating input elements...');
-        this.createInputElements();
-        return this.doInitialize();
-      }
-  
-      // Rest of your existing initialization code...
-      // Event listeners setup etc.
-  
-      this.initialized = true;
-      this.logger.debug('PhotoManager initialization complete');
-  }
   createInputElements() {
     this.logger.debug('Creating file input elements');
     
