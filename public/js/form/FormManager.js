@@ -68,15 +68,15 @@ class FormManager {
     const regularUserSection = document.getElementById('regular-user-section');
     const adminSection = document.getElementById('admin-section');
     const trailsSection = document.getElementById('trails-section');
-  
+
     if (regularUserSection) {
       regularUserSection.style.display = isAdmin ? 'none' : 'block';
     }
     if (adminSection) {
       adminSection.style.display = isAdmin ? 'block' : 'none';
       
-      // Set up admin form field validation
       if (isAdmin) {
+        // Explicitly configure admin form fields
         const snowDepthTotal = document.getElementById('snow-depth-total');
         const snowDepthNew = document.getElementById('snow-depth-new');
         const reportNote = document.getElementById('report-note');
@@ -84,19 +84,20 @@ class FormManager {
         if (snowDepthTotal) {
           snowDepthTotal.required = true;
           snowDepthTotal.setAttribute('data-i18n-validate', 'form.validation.required');
+          console.log('Set snow-depth-total as required');
         }
         
         if (snowDepthNew) {
           snowDepthNew.required = false;
+          snowDepthNew.removeAttribute('data-i18n-validate');
+          console.log('Set snow-depth-new as NOT required');
         }
         
         if (reportNote) {
           reportNote.required = true;
           reportNote.setAttribute('data-i18n-validate', 'form.validation.required');
+          console.log('Set report-note as required');
         }
-        
-        // Reinitialize validation for admin form
-        this.initializeFormValidation();
       }
     }
     
@@ -434,16 +435,43 @@ class FormManager {
   async handleFormSubmit(event) {
     event.preventDefault();
     console.log('Form submission started');
-  
-    // Get all required fields and fields with validation
-    const formElements = event.target.querySelectorAll('input[required], textarea[required], select[required], [data-i18n-validate]');
+
+    // Identify admin vs regular user form
+    const isAdmin = document.getElementById('admin-section')?.style.display !== 'none';
+    console.log('Is admin form:', isAdmin);
+
+    // Get relevant form section
+    const formSection = isAdmin ? 
+      document.getElementById('admin-section') : 
+      document.getElementById('regular-user-section');
+
+    if (!formSection) {
+      console.error('Form section not found');
+      return;
+    }
+
+    // Select only visible required fields
+    const formElements = formSection.querySelectorAll('input[required], textarea[required], select[required]');
     console.log('Found form elements to validate:', formElements.length);
     
+    // Debug info for each element
+    formElements.forEach(el => {
+      console.log('Validating element:', {
+        id: el.id,
+        type: el.type,
+        required: el.required,
+        value: el.value,
+        validity: el.validity,
+        validationMessage: el.validationMessage
+      });
+    });
+
     let isValid = true;
     let firstInvalidElement = null;
-    
+
     formElements.forEach(element => {
-      if (!element.value || !element.checkValidity()) {
+      const isVisible = element.offsetParent !== null; // Check if element is visible
+      if (isVisible && (!element.value || !element.checkValidity())) {
         isValid = false;
         element.classList.add('field-invalid');
         
@@ -452,23 +480,37 @@ class FormManager {
           formGroup.classList.add('show-validation');
           const validationMessage = formGroup.querySelector('.validation-message');
           if (validationMessage) {
-            validationMessage.textContent = this.i18next.t(element.dataset.i18nValidate || 'form.validation.required');
+            validationMessage.textContent = this.i18next.t('form.validation.required');
           }
         }
         
         if (!firstInvalidElement) {
           firstInvalidElement = element;
+          console.log('First invalid element:', {
+            id: element.id,
+            type: element.type,
+            offsetTop: element.offsetTop
+          });
         }
       }
     });
-  
+
     console.log('Form validation result:', isValid);
     if (!isValid && firstInvalidElement) {
-      firstInvalidElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      console.log('Scrolling to first invalid element:', firstInvalidElement.id);
+      // Try both approaches for scrolling
+      firstInvalidElement.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center'
+      });
+      window.scrollTo({
+        top: firstInvalidElement.offsetTop - 100,
+        behavior: 'smooth'
+      });
       firstInvalidElement.focus();
       return;
     }
-  
+
     // Continue with form submission if validation passes
     try {
       const formData = this.collectFormData();
@@ -498,7 +540,12 @@ class FormManager {
     const isAdmin = document.getElementById('admin-section')?.style.display !== 'none';
     
     if (isAdmin) {
-      this.collectAdminFormData(formData);
+      const snowDepthTotal = document.getElementById('snow-depth-total')?.value;
+      const snowDepthNew = document.getElementById('snow-depth-new')?.value;
+      
+      if (snowDepthTotal) formData.append('snowDepthTotal', snowDepthTotal);
+      if (snowDepthNew) formData.append('snowDepthNew', snowDepthNew); // Optional field
+      formData.append('trailConditions', JSON.stringify(this.trailConditions));
     } else {
       this.collectRegularUserFormData(formData);
     }
