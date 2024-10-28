@@ -10,10 +10,6 @@ class PhotoManager {
     this.photos = [];
     this.logger = Logger.getInstance();
     PhotoManager.instance = this;
-    
-    // Bind methods to preserve context
-    this.handleFiles = this.handleFiles.bind(this);
-    this.initializePhotoUpload = this.initializePhotoUpload.bind(this);
   }
 
   static getInstance() {
@@ -24,12 +20,58 @@ class PhotoManager {
   }
 
   initializePhotoUpload() {
+    // Find existing elements instead of creating new ones
     const selectPhotosBtn = document.getElementById('select-photos');
     const takePhotoBtn = document.getElementById('take-photo');
-    const fileInput = document.createElement('input');
-    const cameraInput = document.createElement('input');
+    const fileInput = document.getElementById('photo-file-input');
+    const cameraInput = document.getElementById('camera-input');
 
-    // Set up file input
+    if (!fileInput || !cameraInput) {
+      // Create inputs only if they don't exist
+      this.createInputElements();
+      return this.initializePhotoUpload(); // Retry initialization
+    }
+
+    // Add event listeners
+    if (selectPhotosBtn) {
+      selectPhotosBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        fileInput.click();
+      }, { passive: false });
+    }
+
+    if (takePhotoBtn) {
+      takePhotoBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        cameraInput.click();
+      }, { passive: false });
+    }
+
+    // Use change event for file inputs
+    fileInput.addEventListener('change', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.target.files.length > 0) {
+        await this.handleFiles(e.target.files);
+        fileInput.value = ''; // Clear the input
+      }
+    }, { passive: false });
+
+    cameraInput.addEventListener('change', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.target.files.length > 0) {
+        await this.handleFiles(e.target.files);
+        cameraInput.value = ''; // Clear the input
+      }
+    }, { passive: false });
+  }
+
+  createInputElements() {
+    // Create file input
+    const fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.id = 'photo-file-input';
     fileInput.accept = 'image/*';
@@ -37,48 +79,25 @@ class PhotoManager {
     fileInput.style.display = 'none';
     document.body.appendChild(fileInput);
 
-    // Set up camera input
+    // Create camera input
+    const cameraInput = document.createElement('input');
     cameraInput.type = 'file';
     cameraInput.id = 'camera-input';
     cameraInput.accept = 'image/*';
     cameraInput.capture = 'environment';
     cameraInput.style.display = 'none';
     document.body.appendChild(cameraInput);
-
-    // Add event listeners
-    if (selectPhotosBtn) {
-      selectPhotosBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        fileInput.click();
-      });
-    }
-
-    if (takePhotoBtn) {
-      takePhotoBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        cameraInput.click();
-      });
-    }
-
-    // Use change event instead of click
-    fileInput.addEventListener('change', async (e) => {
-      e.preventDefault();
-      await this.handleFiles(e.target.files);
-      // Clear the input value to allow selecting the same file again
-      fileInput.value = '';
-    });
-
-    cameraInput.addEventListener('change', async (e) => {
-      e.preventDefault();
-      await this.handleFiles(e.target.files);
-      // Clear the input value to allow taking another photo
-      cameraInput.value = '';
-    });
   }
-
+  
   async handleFiles(fileList) {
     if (!fileList || fileList.length === 0) {
       this.logger.warn('No files selected');
+      return;
+    }
+
+    const previewContainer = document.getElementById('photo-preview-container');
+    if (!previewContainer) {
+      this.logger.error('Preview container not found');
       return;
     }
 
