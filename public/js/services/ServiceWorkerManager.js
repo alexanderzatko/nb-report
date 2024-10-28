@@ -43,14 +43,15 @@ class ServiceWorkerManager {
     try {
       this.registration = await navigator.serviceWorker.register('/service-worker.js');
       console.log('ServiceWorker registration successful with scope:', this.registration.scope);
-  
-      // Handle updates found during initial registration
+      
+      // Check for existing waiting worker
       if (this.registration.waiting) {
+        console.log('[ServiceWorker] Found waiting worker on initial registration');
         this.updateFound = true;
-        this.notifyUpdateReady();
+        await this.notifyUpdateReady();
       }
   
-      // Handle updates found after page load
+      // Listen for new updates
       this.registration.addEventListener('updatefound', () => {
         const newWorker = this.registration.installing;
         console.log('[ServiceWorker] Update found - new worker installing');
@@ -58,6 +59,7 @@ class ServiceWorkerManager {
         newWorker.addEventListener('statechange', () => {
           console.log('[ServiceWorker] New worker state:', newWorker.state);
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            console.log('[ServiceWorker] New version installed and waiting');
             this.updateFound = true;
             this.notifyUpdateReady();
           }
@@ -65,11 +67,16 @@ class ServiceWorkerManager {
       });
   
       // Handle controller change
+      let refreshing = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (this.updateFound) {
-          console.log('[ServiceWorker] New service worker activated, reloading page...');
-          window.location.reload();
+        console.log('[ServiceWorker] Controller changed');
+        if (refreshing) {
+          console.log('[ServiceWorker] Refresh already in progress');
+          return;
         }
+        refreshing = true;
+        console.log('[ServiceWorker] Reloading page for new version');
+        window.location.reload();
       });
   
       return true;
@@ -109,7 +116,16 @@ class ServiceWorkerManager {
     });
   }
 
-  notifyUpdateReady() {
+  async notifyUpdateReady() {
+    console.log('[ServiceWorker] Showing update notification');
+    
+    // Remove any existing notification
+    const existingNotification = document.querySelector('.update-notification');
+    if (existingNotification) {
+      console.log('[ServiceWorker] Removing existing notification');
+      existingNotification.remove();
+    }
+  
     const notification = document.createElement('div');
     notification.className = 'update-notification';
     notification.innerHTML = `
@@ -125,50 +141,62 @@ class ServiceWorkerManager {
         </div>
       </div>
     `;
-
+  
+    // Add notification to DOM
     document.body.appendChild(notification);
-
-    const closeBtn = notification.querySelector('.update-notification-close');
-    const updateBtn = notification.querySelector('.update-notification-update');
-    const laterBtn = notification.querySelector('.update-notification-later');
-
-    const removeNotification = () => {
+    console.log('[ServiceWorker] Update notification added to DOM');
+  
+    // Handle update button click
+    const updateButton = notification.querySelector('.update-notification-update');
+    updateButton.addEventListener('click', async () => {
+      console.log('[ServiceWorker] Update button clicked');
       notification.classList.add('update-notification-hiding');
       setTimeout(() => notification.remove(), 300);
-    };
-
-    closeBtn.addEventListener('click', removeNotification);
-    laterBtn.addEventListener('click', removeNotification);
-    updateBtn.addEventListener('click', () => {
-      removeNotification();
-      this.applyUpdate();
+      await this.applyUpdate();
     });
-
-    // Update translations when language changes
-    window.addEventListener('languageChanged', () => {
-      const title = notification.querySelector('h3');
-      const message = notification.querySelector('p');
-      const updateButton = notification.querySelector('.update-notification-update');
-      const laterButton = notification.querySelector('.update-notification-later');
-
-      title.textContent = this.i18next.t('updates.newVersionTitle');
-      message.textContent = this.i18next.t('updates.newVersionMessage');
-      updateButton.textContent = this.i18next.t('updates.updateNow');
-      laterButton.textContent = this.i18next.t('updates.updateLater');
+  
+    // Handle later button click
+    const laterButton = notification.querySelector('.update-notification-later');
+    laterButton.addEventListener('click', () => {
+      console.log('[ServiceWorker] Later button clicked');
+      notification.classList.add('update-notification-hiding');
+      setTimeout(() => notification.remove(), 300);
+    });
+  
+    // Handle close button click
+    const closeButton = notification.querySelector('.update-notification-close');
+    closeButton.addEventListener('click', () => {
+      console.log('[ServiceWorker] Close button clicked');
+      notification.classList.add('update-notification-hiding');
+      setTimeout(() => notification.remove(), 300);
+    });
+  
+    // Prevent notification from being automatically removed
+    return new Promise(resolve => {
+      notification.addEventListener('transitionend', () => {
+        if (notification.classList.contains('update-notification-hiding')) {
+          notification.remove();
+          resolve();
+        }
+      });
     });
   }
 
   async applyUpdate() {
-    if (!this.registration) return;
+    if (!this.registration) {
+      console.log('[ServiceWorker] No registration available for update');
+      return;
+    }
   
     try {
       if (this.registration.waiting) {
-        console.log('[ServiceWorker] Sending SKIP_WAITING message to waiting worker');
-        // Send message to service worker to skip waiting
+        console.log('[ServiceWorker] Sending skip waiting message');
         this.registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      } else {
+        console.log('[ServiceWorker] No waiting worker to update to');
       }
     } catch (error) {
-      console.error('Error applying update:', error);
+      console.error('[ServiceWorker] Error applying update:', error);
       // Force reload as fallback
       window.location.reload();
     }
