@@ -32,8 +32,8 @@
       <div id="dashboard-container" style="display: none;">
           <div class="dashboard-header">
               <h2 data-i18n="app.header">Report — Snow Conditions</h2>
-              <button id="logout-button" class="auth-button logout" data-i18n="auth.logout">Logout</button>
           </div>
+
           <div class="dashboard-grid">
               <a href="#" class="dashboard-card" id="snow-report-link">
                   <div class="card-icon">
@@ -53,12 +53,24 @@
                   <p data-i18n="dashboard.recordGpsDesc">Start GPS recording (Coming soon)</p>
               </div>
               
-              <div class="dashboard-card disabled">
+              <a href="#" id="settings-link" class="dashboard-card">
                   <div class="card-icon">
                       <!-- <img src="/icon/profile-icon.svg" alt="Preferences"> -->
                   </div>
                   <h3 data-i18n="dashboard.preferences">Preferences</h3>
                   <p data-i18n="dashboard.preferencesDesc">Manage your preferences (Coming soon)</p>
+              </a>
+          </div>
+      </div>
+
+      <div id="settings-container" style="display: none;">
+          <div class="dashboard-header">
+              <h2 id="settings-title" data-i18n="settings.title">Settings</h2>
+          </div>
+          <div class="settings-content">
+              <div class="settings-buttons">
+                  <button type="button" id="dashboard-button" class="settings-button" data-i18n="settings.returnToDashboard">Return to Dashboard</button>
+                  <button type="button" id="logout-button" class="settings-button" data-i18n="auth.logout">Logout</button>
               </div>
           </div>
       </div>
