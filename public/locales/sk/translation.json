@@ -18,7 +18,7 @@
     "stopGpsRecording": "Zastaviť záznam",
     "recordingStats": "Vzdialenosť: {{distance}} km\nNadmorská výška: {{elevation}} m",
     "gpsTrack": "GPS Trasa",
-    "trackStats": "Vzdialenosť: {{distance}} km\nDoba trvania: {{hours}} h {{minutes}} m"
+    "trackStats": "Vzdialenosť: {{distance}} km\nDoba trvania: {{hours}} h {{minutes}} m",
     "preferences": "Nastavenia",
     "preferencesDesc": "Správa nastavení aplikácie",
     "settings": "Nastavenia",
