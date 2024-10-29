@@ -94,6 +94,10 @@ class FormManager {
     
     // Initialize photo upload functionality
     this.photoManager.initializePhotoUpload();
+
+    if (document.getElementById('gps-track-section')) {
+      await this.initializeGPSTrackSection();
+    }
   }
 
   setupEventListeners() {
