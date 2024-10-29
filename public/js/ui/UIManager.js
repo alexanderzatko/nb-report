@@ -126,12 +126,18 @@ class UIManager {
           const gpsManager = GPSManager.getInstance();
           
           if (gpsManager.isRecording) {
-            const track = gpsManager.stopRecording();
-            this.updateGPSCardForStandby(gpsCard);
-            if (track) {
-              this.showGPSTrackCard();
-            }
-          } else {
+              try {
+                const track = await gpsManager.stopRecording();
+                if (track) {
+                  await new Promise(resolve => setTimeout(resolve, 100));  // Small delay to ensure data is set
+                  this.showGPSTrackCard();
+                  this.updateGPSCardForStandby(gpsCard);
+                }
+              } catch (error) {
+                this.logger.error('Error stopping GPS recording:', error);
+                this.updateGPSCardForStandby(gpsCard);
+              }
+            } else {
             if (gpsManager.hasExistingTrack()) {
               const confirm = window.confirm(
                 this.i18next.t('dashboard.confirmOverwriteTrack')
