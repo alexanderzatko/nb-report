@@ -188,6 +188,34 @@ class FormManager {
       return false;
     });
   }
+
+  async initializeGPSTrackSection() {
+    const gpsManager = GPSManager.getInstance();
+    const track = await gpsManager.loadLatestTrack();
+    
+    const gpsTrackSection = document.getElementById('gps-track-section');
+    const trackLabel = document.getElementById('gps-track-label');
+    const trackDetails = document.getElementById('gps-track-details');
+    
+    if (track && gpsTrackSection && trackLabel && trackDetails) {
+      const startDate = new Date(track.startTime);
+      const formattedDate = startDate.toLocaleDateString();
+      const stats = gpsManager.getTrackStats();
+      
+      trackLabel.textContent = this.i18next.t('form.gpsTrack.attachLabel', {
+        date: formattedDate
+      });
+      
+      trackDetails.textContent = this.i18next.t('form.gpsTrack.details', {
+        distance: stats.distance,
+        duration: `${stats.duration.hours}:${String(stats.duration.minutes).padStart(2, '0')}`
+      });
+      
+      gpsTrackSection.style.display = 'block';
+    } else {
+      gpsTrackSection.style.display = 'none';
+    }
+  }
   
   initializeTrailsSection(trails) {
     const container = document.getElementById('trails-container');
