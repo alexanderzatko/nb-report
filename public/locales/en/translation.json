@@ -324,5 +324,15 @@
     "message": "It looks like you've lost your internet connection. This app requires an internet connection to load data and submit reports.",
     "instruction": "Please check your connection and try again.",
     "retryButton": "Try Again"
+  },
+  "errors": {
+    "gps": {
+      "androidOnly": "This feature is currently only supported on Android devices",
+      "notAvailable": "GPS functionality is not available on this device",
+      "permissionDenied": "Location permission denied"
+    },
+    "application": {
+      "initFailed": "Application initialization failed. Please refresh the page."
+    }
   }
 }
