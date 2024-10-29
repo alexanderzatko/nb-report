@@ -111,6 +111,10 @@
     "photos": "Fotografie:",
     "selectPhotos": "Vybrať fotografie",
     "takePhoto": "Urobiť fotografiu",
+    "gpsTrack": {
+      "attachLabel": "Priložiť GPS záznam z {{date}}",
+      "details": "Dĺžka trasy: {{distance}} km, Trvanie: {{duration}}"
+    },
     "rewards": {
       "sectionTitle": "Odmeňovanie",
       "timeElapsed": "Čas od otvorenia tejto stránky:",
