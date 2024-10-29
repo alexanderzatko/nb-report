@@ -615,6 +615,12 @@ class FormManager {
   collectFormData() {
     const formData = new FormData();
     const selectValues = this.selectManager.getSelectedValues();
+
+    const gpsManager = GPSManager.getInstance();
+    const includeGPX = document.getElementById('include-gpx')?.checked;
+    if (includeGPX && gpsManager.hasExistingTrack()) {
+      formData.append('gpx', gpsManager.exportGPX());
+    }
     
     // Add select values to form data
     Object.entries(selectValues).forEach(([key, value]) => {
