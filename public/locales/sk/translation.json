@@ -275,6 +275,16 @@
     "zitavskaPahorkatina": "Žitavská Pahorkatina",
     "zilinskaKotlina": "Žilinská Kotlina"
   },
+  "errors": {
+    "gps": {
+      "androidOnly": "Táto funkcia je momentálne podporovaná len na zariadeniach s Androidom",
+      "notAvailable": "GPS funkcionalita nie je na tomto zariadení dostupná",
+      "permissionDenied": "Prístup k polohe bol zamietnutý"
+    },
+    "application": {
+      "initFailed": "Inicializácia aplikácie zlyhala. Obnovte stránku."
+    }
+  },
   "offline": {
     "title": "Nie ste pripojený na internet",
     "message": "Zdá sa, že ste stratili pripojenie k internetu. Táto aplikácia vyžaduje pripojenie k internetu na načítanie dát a odosielanie hlásení.",
