@@ -318,6 +318,16 @@ port{
     "severomadarskaStredohorie": "Severomaďarské Stredohorie",
     "plZapadneSudety": "Západné Sudety"
   },
+  "errors": {
+    "gps": {
+      "androidOnly": "Tato funkce je momentálně podporována pouze na zařízeních s Androidem",
+      "notAvailable": "GPS funkcionalita není na tomto zařízení dostupná",
+      "permissionDenied": "Přístup k poloze byl zamítnut"
+    },
+    "application": {
+      "initFailed": "Inicializace aplikace selhala. Obnovte stránku."
+    }
+  },
   "offline": {
     "title": "Nejste připojen k internetu",
     "message": "Vypadá to, že jste ztratili připojení k internetu. Tato aplikace vyžaduje připojení k internetu pro načtení dat a odesílání hlášení.",
