@@ -20,7 +20,7 @@
     "gpsTrack": "GPS Trasa",
     "trackStats": "Vzdialenosť: {{distance}} km\nDoba trvania: {{hours}} h {{minutes}} m",
     "confirmOverwriteTrack": "Pozor! Týmto vymažete existujúci záznam!",
-    "downloadGpx": "Uložiť GPS záznam",
+    "downloadGpx": "Exportovať GPS záznam",
     "gpxDownloadError": "Chyba pri ukladaní GPS záznamu. Skúste znovu.",
     "preferences": "Nastavenia",
     "preferencesDesc": "Správa nastavení aplikácie",
