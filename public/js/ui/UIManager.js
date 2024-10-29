@@ -117,7 +117,47 @@ class UIManager {
       if (logoutButton) {
           logoutButton.addEventListener('click', this.handleLogoutClick.bind(this));
       }
-  
+
+      const gpsCard = document.querySelector('[data-feature="gps-recording"]');
+      if (gpsCard) {
+        gpsCard.addEventListener('click', async (e) => {
+          e.preventDefault();
+          const gpsManager = GPSManager.getInstance();
+          
+          if (gpsManager.isRecording) {
+            const track = gpsManager.stopRecording();
+            this.updateGPSCardForStandby(gpsCard);
+            if (track) {
+              this.showGPSTrackCard();
+            }
+          } else {
+            if (gpsManager.hasExistingTrack()) {
+              const confirm = window.confirm(
+                this.i18next.t('dashboard.confirmOverwriteTrack')
+              );
+              if (!confirm) return;
+              gpsManager.clearTrack();
+              this.removeGPSTrackCard();
+            }
+            
+            try {
+              await gpsManager.startRecording();
+              this.updateGPSCardForRecording(gpsCard);
+            } catch (error) {
+              alert(error.message);
+            }
+          }
+        });
+      }
+
+      // Listen for GPS updates
+      window.addEventListener('gps-update', () => {
+        const gpsCard = document.querySelector('[data-feature="gps-recording"]');
+        if (gpsCard) {
+          this.updateGPSCardForRecording(gpsCard);
+        }
+      });
+
       window.addEventListener('languageChanged', () => this.updatePageContent());
   }
 
