@@ -223,12 +223,25 @@ class GPSManager {
       startTime: this.trackPoints[0]?.time,
       endTime: this.trackPoints[this.trackPoints.length - 1]?.time
     };
+    
+    this.logger.debug('Track data before save:', {
+      totalDistance: track.totalDistance,
+      pointsCount: track.points.length,
+      startTime: track.startTime,
+      endTime: track.endTime
+    });
 
     // Save completed track
     try {
       const trackId = await this.saveTrack(track);
       this.currentTrack = track;
-      
+
+      this.logger.debug('Track saved and set as currentTrack:', {
+        id: trackId,
+        currentTrackSet: !!this.currentTrack,
+        currentTrackDistance: this.currentTrack?.totalDistance
+      });
+          
       // Clear active points after successful save
       await this.clearActivePoints();
       
@@ -240,8 +253,15 @@ class GPSManager {
   }
 
   getTrackStats() {
+    this.logger.debug('getTrackStats called, currentTrack:', {
+      exists: !!this.currentTrack,
+      totalDistance: this.currentTrack?.totalDistance,
+      startTime: this.currentTrack?.startTime,
+      endTime: this.currentTrack?.endTime
+    });
+    
     if (!this.currentTrack) return null;
-
+  
     return {
       distance: Math.round(this.currentTrack.totalDistance),
       startTime: new Date(this.currentTrack.startTime),
