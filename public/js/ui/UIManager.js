@@ -504,9 +504,18 @@ class UIManager {
     const container = document.querySelector('.dashboard-grid');
     if (!container) return;
   
+    // Remove existing track card if present
+    this.removeGPSTrackCard();
+  
     const trackCard = document.createElement('div');
     trackCard.className = 'dashboard-card';
     trackCard.dataset.feature = 'gps-track';
+    
+    // Create download link
+    const downloadLink = document.createElement('a');
+    downloadLink.className = 'gpx-download';
+    downloadLink.href = '#';
+    downloadLink.textContent = this.i18next.t('dashboard.downloadGpx');
     
     trackCard.innerHTML = `
       <div class="card-icon"></div>
@@ -517,8 +526,50 @@ class UIManager {
         minutes: stats.duration.minutes
       })}</p>
     `;
+    
+    // Add the download link after the paragraph
+    trackCard.appendChild(downloadLink);
+  
+    // Add click handler for the download link
+    downloadLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.handleGPXDownload();
+    });
   
     container.appendChild(trackCard);
+  }
+
+  async handleGPXDownload() {
+    try {
+      const gpsManager = GPSManager.getInstance();
+      const gpxContent = gpsManager.exportGPX();
+      
+      if (!gpxContent) {
+        this.logger.error('No GPX content available for download');
+        return;
+      }
+  
+      // Create a date string for the filename
+      const stats = gpsManager.getTrackStats();
+      const dateStr = stats.startTime.toISOString().split('T')[0];
+      
+      // Create blob and download link
+      const blob = new Blob([gpxContent], { type: 'application/gpx+xml' });
+      const url = window.URL.createObjectURL(blob);
+      const tempLink = document.createElement('a');
+      tempLink.href = url;
+      tempLink.download = `track_${dateStr}.gpx`;
+  
+      // Append to document, click, and remove
+      document.body.appendChild(tempLink);
+      tempLink.click();
+      document.body.removeChild(tempLink);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      this.logger.error('Error downloading GPX:', error);
+      alert(this.i18next.t('dashboard.gpxDownloadError'));
+    }
   }
   
   removeGPSTrackCard() {
