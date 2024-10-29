@@ -619,6 +619,26 @@ textarea:invalid + .validation-message {
     font-size: 14px;
     margin: 0;
 }
+
+.gpx-download {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 5px 10px;
+  background-color: #0078d4;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.gpx-download:hover {
+  background-color: #005a9e;
+}
+
+.gpx-download:visited {
+  color: white;
+}
+
 /* Dashboard STOP */
 
 /* Settings section START */
