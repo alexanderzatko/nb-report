@@ -111,6 +111,10 @@
     "photos": "Photos:",
     "selectPhotos": "Select photos",
     "takePhoto": "Take Photo",
+    "gpsTrack": {
+      "attachLabel": "Attach GPS record from {{date}}",
+      "details": "Track length: {{distance}} km, Time elapsed: {{duration}}"
+    },
     "rewards": {
       "sectionTitle": "Rewards",
       "timeElapsed": "Time since opening this form:",
