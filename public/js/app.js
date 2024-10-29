@@ -24,6 +24,7 @@ class App {
     this.logger = Logger.getInstance();
     this.initialized = false;
     this.managers = {};  // Initialize empty managers object
+    this.i18next = i18next;
     App.instance = this;
   }
 
