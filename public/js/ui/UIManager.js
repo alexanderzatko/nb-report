@@ -3,7 +3,7 @@
 import i18next from '/node_modules/i18next/dist/esm/i18next.js';
 import AuthManager from '../auth/AuthManager.js';
 import FormManager from '../form/FormManager.js';
-import GPSManager from '../manager/GPSManager.js';
+import GPSManager from '../managers/GPSManager.js';
 import SelectManager from '../managers/SelectManager.js';
 import Logger from '../utils/Logger.js';
 
