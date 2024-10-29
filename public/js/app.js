@@ -49,6 +49,10 @@ class App {
 
   async initializeApp() {
     try {
+      // Initialize i18next first
+      await resetI18next();
+      await initI18next();
+
       // Initialize core managers
       this.managers = {
         config: ConfigManager.getInstance(),
@@ -62,10 +66,6 @@ class App {
         gps: GPSManager.getInstance()
       };
 
-      // Initialize i18next first and ensure fresh initialization
-      await resetI18next();
-      await initI18next();
-
       // Initialize form-related managers early
       await this.initializeFormManagers();
 
@@ -76,8 +76,10 @@ class App {
         await this.managers.serviceWorker.initialize();
       }
 
-      await this.managers.ui.updateGPSCardVisibility();
-
+      if (this.i18next.isInitialized) {
+        await this.managers.ui.updateGPSCardVisibility();
+      }
+      
       this.managers.gps = GPSManager.getInstance();
 
       const hasActiveRecording = await this.managers.gps.checkForActiveRecording();
