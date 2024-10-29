@@ -14,9 +14,9 @@
     "newReport": "Nová zpráva",
     "newReportDesc": "Vytvořiť a odeslat novou zprávu z terénu",
     "recordGps": "Nový GPS záznam",
-    "recordGpsDesc": "Spustit GPS záznam vaší túry (plánovaná funkce)",
+    "recordGpsDesc": "Spustit GPS záznam vaší túry",
     "preferences": "Nastavení",
-    "preferencesDesc": "Správa nastavení aplikace (plánovaná funkce)",
+    "preferencesDesc": "Správa nastavení aplikace",
     "settings": "Settings",
     "settingsDesc": "Manage your preferences and account"
   },
