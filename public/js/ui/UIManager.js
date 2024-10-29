@@ -79,6 +79,15 @@ class UIManager {
       // Remove any existing listeners first
       this.removeExistingListeners();
   
+      // Add login container click handler
+      const loginContainer = document.getElementById('login-container');
+      if (loginContainer) {
+          loginContainer.addEventListener('click', (e) => {
+              e.preventDefault();
+              this.handleLoginClick(e);
+          });
+      }
+  
       const snowReportLink = document.getElementById('snow-report-link');
       if (snowReportLink) {
           snowReportLink.addEventListener('click', (e) => {
@@ -127,48 +136,48 @@ class UIManager {
   }
 
   async handleLoginClick(event) {
-    event.preventDefault();
-    
-    // Prevent multiple rapid clicks
-    if (this.loginInProgress) {
-      console.log('Login already in progress');
-      return;
-    }
-
-    // Clear any existing timeout
-    if (this.loginClickTimeout) {
-      clearTimeout(this.loginClickTimeout);
-    }
-
-    this.loginInProgress = true;
-
-    try {
-      console.log('Login container clicked');
-      const authManager = AuthManager.getInstance();
-      console.log('Initiating OAuth...');
+      event.preventDefault();
       
-      const initiated = await authManager.initiateOAuth();
-      
-      if (!initiated) {
-        console.error('Failed to initiate OAuth');
-        this.showError(this.i18next.t('auth.loginError', {
-          defaultValue: 'Unable to connect to login service. Please try again later.'
-        }));
+      // Prevent multiple rapid clicks
+      if (this.loginInProgress) {
+          console.log('Login already in progress');
+          return;
       }
-    } catch (error) {
-      // Handle only unexpected errors
-      if (!(error instanceof TypeError) || !error.message.includes('NetworkError')) {
-        console.error('Failed to initiate login:', error);
-        this.showError(this.i18next.t('auth.loginError', {
-          defaultValue: 'Unable to connect to login service. Please try again later.'
-        }));
+  
+      // Clear any existing timeout
+      if (this.loginClickTimeout) {
+          clearTimeout(this.loginClickTimeout);
       }
-    } finally {
-      // Reset login state after a delay
-      this.loginClickTimeout = setTimeout(() => {
-        this.loginInProgress = false;
-      }, 2000); // 2 second cooldown
-    }
+  
+      this.loginInProgress = true;
+  
+      try {
+          console.log('Login container clicked');
+          const authManager = AuthManager.getInstance();
+          console.log('Initiating OAuth...');
+          
+          const initiated = await authManager.initiateOAuth();
+          
+          if (!initiated) {
+              console.error('Failed to initiate OAuth');
+              this.showError(this.i18next.t('auth.loginError', {
+                  defaultValue: 'Unable to connect to login service. Please try again later.'
+              }));
+          }
+      } catch (error) {
+          // Handle only unexpected errors
+          if (!(error instanceof TypeError) || !error.message.includes('NetworkError')) {
+              console.error('Failed to initiate login:', error);
+              this.showError(this.i18next.t('auth.loginError', {
+                  defaultValue: 'Unable to connect to login service. Please try again later.'
+              }));
+          }
+      } finally {
+          // Reset login state after a delay
+          this.loginClickTimeout = setTimeout(() => {
+              this.loginInProgress = false;
+          }, 2000); // 2 second cooldown
+      }
   }
 
   async handleLogoutClick() {
