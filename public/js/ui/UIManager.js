@@ -504,24 +504,27 @@ class UIManager {
   }
   
   showGPSTrackCard() {
-    const stats = GPSManager.getInstance().getTrackStats();
-    if (!stats) return;
-  
+    const gpsManager = GPSManager.getInstance();
+    const stats = gpsManager.getTrackStats();
+    if (!stats) {
+      this.logger.debug('No track stats available');
+      return;
+    }
+
+    this.logger.debug('Showing GPS track card with stats:', stats);
+
     const container = document.querySelector('.dashboard-grid');
-    if (!container) return;
-  
+    if (!container) {
+      this.logger.warn('Dashboard grid container not found');
+      return;
+    }
+
     // Remove existing track card if present
     this.removeGPSTrackCard();
-  
+
     const trackCard = document.createElement('div');
     trackCard.className = 'dashboard-card';
     trackCard.dataset.feature = 'gps-track';
-    
-    // Create download link
-    const downloadLink = document.createElement('a');
-    downloadLink.className = 'gpx-download';
-    downloadLink.href = '#';
-    downloadLink.textContent = this.i18next.t('dashboard.downloadGpx');
     
     trackCard.innerHTML = `
       <div class="card-icon"></div>
@@ -531,19 +534,18 @@ class UIManager {
         hours: stats.duration.hours,
         minutes: stats.duration.minutes
       })}</p>
+      <a href="#" class="gpx-download">${this.i18next.t('dashboard.downloadGpx')}</a>
     `;
-    
-    // Add the download link after the paragraph
-    trackCard.appendChild(downloadLink);
-  
+
     // Add click handler for the download link
-    downloadLink.addEventListener('click', (e) => {
+    trackCard.querySelector('.gpx-download').addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
       this.handleGPXDownload();
     });
-  
+
     container.appendChild(trackCard);
+    this.logger.debug('GPS track card added to dashboard');
   }
 
   async handleGPXDownload() {
