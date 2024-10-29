@@ -1,6 +1,7 @@
 // managers/GPSManager.js
 
 import Logger from '../utils/Logger.js';
+import i18next from '/node_modules/i18next/dist/esm/i18next.js';
 
 class GPSManager {
   static instance = null;
@@ -39,20 +40,18 @@ class GPSManager {
   }
 
   checkGPSCapability() {
-    // Check if device is Android
     const isAndroid = /Android/i.test(navigator.userAgent);
     if (!isAndroid) {
       return {
         supported: false,
-        reason: 'This feature is currently only supported on Android devices'
+        reason: this.i18next.t('errors.gps.androidOnly')
       };
     }
   
-    // Check for geolocation API
     if (!('geolocation' in navigator)) {
       return {
         supported: false,
-        reason: 'GPS functionality is not available on this device'
+        reason: this.i18next.t('errors.gps.notAvailable')
       };
     }
   
@@ -134,11 +133,13 @@ class GPSManager {
         return true;
       }
       if (result.state === 'prompt') {
-        // This will trigger the permission prompt
         return new Promise((resolve) => {
           navigator.geolocation.getCurrentPosition(
             () => resolve(true),
-            () => resolve(false)
+            () => {
+              this.logger.error(this.i18next.t('errors.gps.permissionDenied'));
+              resolve(false);
+            }
           );
         });
       }
