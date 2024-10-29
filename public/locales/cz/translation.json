@@ -1,4 +1,4 @@
-{
+port{
   "updates": {
     "newVersionTitle": "Nová verze aplikace",
     "newVersionMessage": "K dispozici je nová verze aplikace. Aktualizujte nyní a získejte nejnovější funkce a vylepšení.",
@@ -20,7 +20,7 @@
     "gpsTrack": "Trasa GPS",
     "trackStats": "Vzdálenost: {{distance}} km\nDoba trvání: {{hours}} h {{minutes}} m",
     "confirmOverwriteTrack": "Pozor! Tímto vymažete existující záznam!",
-    "downloadGpx": "Uložit GPS záznam",
+    "downloadGpx": "Exportovat GPS záznam",
     "gpxDownloadError": "Chyba při ukládání GPS záznamu. Zkuste to znovu.",
     "preferences": "Nastavení",
     "preferencesDesc": "Správa nastavení aplikace",
