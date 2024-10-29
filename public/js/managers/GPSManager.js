@@ -470,6 +470,39 @@ class GPSManager {
     }
   }
 
+  async loadLatestTrack() {
+    if (!this.db) await this.initializeDB();
+    
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction(['tracks'], 'readonly');
+      const store = transaction.objectStore('tracks');
+      const index = store.index('startTime');
+      
+      // Get the most recent track
+      const request = index.openCursor(null, 'prev');
+
+      request.onsuccess = (event) => {
+        const cursor = event.target.result;
+        if (cursor) {
+          // Found the latest track
+          const track = cursor.value;
+          this.currentTrack = {
+            points: track.points,
+            totalDistance: track.totalDistance,
+            startTime: new Date(track.startTime).toISOString(),
+            endTime: new Date(track.endTime).toISOString()
+          };
+          resolve(this.currentTrack);
+        } else {
+          // No tracks found
+          resolve(null);
+        }
+      };
+
+      request.onerror = () => reject(request.error);
+    });
+  }
+
   exportGPX() {
     if (!this.currentTrack) return null;
 
