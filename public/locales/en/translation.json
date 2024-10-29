@@ -16,7 +16,13 @@
     "recordGps": "New GPS Record",
     "recordGpsDesc": "Make a GPS recording of your trip (Coming soon)",
     "preferences": "Preferences",
-    "preferencesDesc": "Manage your preferences (Coming soon)"
+    "preferencesDesc": "Manage your preferences (Coming soon)",
+    "settings": "Nastavení",
+    "settingsDesc": "Správa nastavení a účtu"
+  },
+  "settings": {
+    "title": "Nastavení",
+    "returnToDashboard": "Zpět na hlavní stránku"
   },
   "auth": {
     "loginText": "Log in",
