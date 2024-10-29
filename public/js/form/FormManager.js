@@ -226,6 +226,8 @@ class FormManager {
     const freeStyleValue = document.createElement('span');
     freeStyleValue.className = 'selected-value';
     freeStyleValue.dataset.forType = 'free';
+    // Set default text for unknown condition
+    freeStyleValue.textContent = ': ' + this.i18next.t('form.trackConditions.0');
     
     freeStyleHeader.appendChild(freeStyleLabel);
     freeStyleHeader.appendChild(freeStyleValue);
@@ -253,6 +255,8 @@ class FormManager {
     const classicValue = document.createElement('span');
     classicValue.className = 'selected-value';
     classicValue.dataset.forType = 'classic';
+    // Set default text for unknown condition
+    classicValue.textContent = ': ' + this.i18next.t('form.trackConditions.0');
     
     classicHeader.appendChild(classicLabel);
     classicHeader.appendChild(classicValue);
@@ -280,6 +284,8 @@ class FormManager {
     const maintenanceValue = document.createElement('span');
     maintenanceValue.className = 'selected-value';
     maintenanceValue.dataset.forType = 'maintenance';
+    // Set default text for unknown condition
+    maintenanceValue.textContent = ': ' + this.i18next.t('form.maintenance.unknown');
     
     maintenanceHeader.appendChild(maintenanceLabel);
     maintenanceHeader.appendChild(maintenanceValue);
@@ -297,23 +303,32 @@ class FormManager {
   }
 
   createConditionButtons(container, valueDisplay, trailId, type) {
-  	const conditions = [
-  	  { value: '0', label: '?', title: this.i18next.t('form.trackConditions.0') },
-  	  { value: '1', label: '★★★', title: this.i18next.t('form.trackConditions.1') },
-  	  { value: '2', label: '★★', title: this.i18next.t('form.trackConditions.2') },
-  	  { value: '3', label: '★', title: this.i18next.t('form.trackConditions.3') },
-  	  { value: '4', label: '∥', title: this.i18next.t('form.trackConditions.4') },
-  	  { value: '5', label: 'x', title: this.i18next.t('form.trackConditions.5') }
-  	];
+    const conditions = [
+      { value: '0', label: '?', title: this.i18next.t('form.trackConditions.0') },
+      { value: '1', label: '★★★', title: this.i18next.t('form.trackConditions.1') },
+      { value: '2', label: '★★', title: this.i18next.t('form.trackConditions.2') },
+      { value: '3', label: '★', title: this.i18next.t('form.trackConditions.3') },
+      { value: '4', label: '∥', title: this.i18next.t('form.trackConditions.4') },
+      { value: '5', label: 'x', title: this.i18next.t('form.trackConditions.5') }
+    ];
   
     conditions.forEach(condition => {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'condition-btn';
+      // Add selected class for the default unknown condition
+      if (condition.value === '0') {
+        button.classList.add('selected');
+        
+        // Initialize trail conditions for this type
+        if (!this.trailConditions[trailId]) {
+          this.trailConditions[trailId] = {};
+        }
+        this.trailConditions[trailId][type] = '0';
+      }
       button.dataset.value = condition.value;
       button.title = condition.title;
       
-      // Create text container
       const textSpan = document.createElement('span');
       textSpan.className = 'condition-btn-text';
       textSpan.textContent = condition.label;
@@ -332,7 +347,6 @@ class FormManager {
         this.trailConditions[trailId][type] = condition.value;
       });
   
-      // Add resize observer to handle text scaling
       const resizeObserver = new ResizeObserver(() => {
         this.scaleTextToFit(textSpan);
       });
@@ -343,23 +357,32 @@ class FormManager {
   }
   
   createMaintenanceButtons(container, valueDisplay, trailId) {
-      const options = [
-        { value: '0', label: '?', title: this.i18next.t('form.maintenance.unknown') },
-        { value: '1', label: '1', title: this.i18next.t('form.maintenance.today') },
-        { value: '2', label: '2', title: this.i18next.t('form.maintenance.tomorrow') },
-        { value: '3+', label: '3+', title: this.i18next.t('form.maintenance.laterDays') },
-        { value: 'Ps', label: 'Ps', title: this.i18next.t('form.maintenance.fridaySaturday') },
-        { value: 'snow', label: '❄', title: this.i18next.t('form.maintenance.afterSnow') }
-      ];
+    const options = [
+      { value: '0', label: '?', title: this.i18next.t('form.maintenance.unknown') },
+      { value: '1', label: '1', title: this.i18next.t('form.maintenance.today') },
+      { value: '2', label: '2', title: this.i18next.t('form.maintenance.tomorrow') },
+      { value: '3+', label: '3+', title: this.i18next.t('form.maintenance.laterDays') },
+      { value: 'Ps', label: 'Ps', title: this.i18next.t('form.maintenance.fridaySaturday') },
+      { value: 'snow', label: '❄', title: this.i18next.t('form.maintenance.afterSnow') }
+    ];
   
     options.forEach(option => {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'condition-btn';
+      // Add selected class for the default unknown condition
+      if (option.value === '0') {
+        button.classList.add('selected');
+        
+        // Initialize trail conditions for maintenance
+        if (!this.trailConditions[trailId]) {
+          this.trailConditions[trailId] = {};
+        }
+        this.trailConditions[trailId].maintenance = '0';
+      }
       button.dataset.value = option.value;
       button.title = option.title;
       
-      // Create text container
       const textSpan = document.createElement('span');
       textSpan.className = 'condition-btn-text';
       textSpan.textContent = option.label;
@@ -378,7 +401,6 @@ class FormManager {
         this.trailConditions[trailId].maintenance = option.value;
       });
   
-      // Add resize observer to handle text scaling
       const resizeObserver = new ResizeObserver(() => {
         this.scaleTextToFit(textSpan);
       });
