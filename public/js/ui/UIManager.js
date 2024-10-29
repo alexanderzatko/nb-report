@@ -422,6 +422,71 @@ class UIManager {
     }
   }
 
+  updateGPSCardVisibility() {
+    const gpsCard = document.querySelector('[data-feature="gps-recording"]');
+    if (!gpsCard) return;
+  
+    const gpsManager = GPSManager.getInstance();
+    const capability = gpsManager.checkGPSCapability();
+  
+    if (capability.supported) {
+      gpsCard.classList.remove('disabled');
+      if (gpsManager.isRecording) {
+        this.updateGPSCardForRecording(gpsCard);
+      } else {
+        this.updateGPSCardForStandby(gpsCard);
+      }
+    } else {
+      gpsCard.classList.add('disabled');
+      gpsCard.querySelector('p').textContent = capability.reason;
+    }
+  }
+  
+  updateGPSCardForRecording(card) {
+    const stats = GPSManager.getInstance().getCurrentStats();
+    card.querySelector('h3').textContent = this.i18next.t('dashboard.stopGpsRecording');
+    card.querySelector('p').textContent = this.i18next.t('dashboard.recordingStats', {
+      distance: stats.distance,
+      elevation: stats.elevation ? Math.round(stats.elevation) : '–'
+    });
+  }
+  
+  updateGPSCardForStandby(card) {
+    card.querySelector('h3').textContent = this.i18next.t('dashboard.recordGps');
+    card.querySelector('p').textContent = this.i18next.t('dashboard.recordGpsDesc');
+  }
+  
+  showGPSTrackCard() {
+    const stats = GPSManager.getInstance().getTrackStats();
+    if (!stats) return;
+  
+    const container = document.querySelector('.dashboard-grid');
+    if (!container) return;
+  
+    const trackCard = document.createElement('div');
+    trackCard.className = 'dashboard-card';
+    trackCard.dataset.feature = 'gps-track';
+    
+    trackCard.innerHTML = `
+      <div class="card-icon"></div>
+      <h3>${this.i18next.t('dashboard.gpsTrack')}</h3>
+      <p>${this.i18next.t('dashboard.trackStats', {
+        distance: stats.distance,
+        hours: stats.duration.hours,
+        minutes: stats.duration.minutes
+      })}</p>
+    `;
+  
+    container.appendChild(trackCard);
+  }
+  
+  removeGPSTrackCard() {
+    const trackCard = document.querySelector('[data-feature="gps-track"]');
+    if (trackCard) {
+      trackCard.remove();
+    }
+  }
+  
   showError(message) {
     // Add a small delay to ensure error is shown after any redirects
     setTimeout(() => {
