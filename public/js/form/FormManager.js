@@ -4,6 +4,7 @@ import i18next from '/node_modules/i18next/dist/esm/i18next.js';
 import SelectManager from '../managers/SelectManager.js';
 import PhotoManager from '../media/PhotoManager.js';
 import Logger from '../utils/Logger.js';
+import GPSManager from '../managers/GPSManager.js';
 
 class FormManager {
   static instance = null;
