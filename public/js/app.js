@@ -13,6 +13,7 @@ import EventManager from './events/EventManager.js';
 import ServiceWorkerManager from './services/ServiceWorkerManager.js';
 import StateManager from './state/StateManager.js';
 import { initI18next, resetI18next } from './i18n.js';
+import GPSManager from './managers/GPSManager.js';
 
 class App {
   constructor() {
@@ -57,7 +58,8 @@ class App {
         state: StateManager.getInstance(),
         auth: AuthManager.getInstance(),
         ui: UIManager.getInstance(),
-        serviceWorker: ServiceWorkerManager.getInstance()
+        serviceWorker: ServiceWorkerManager.getInstance(),
+        gps: GPSManager.getInstance()
       };
 
       // Initialize i18next first and ensure fresh initialization
@@ -73,6 +75,8 @@ class App {
       if ('serviceWorker' in navigator) {
         await this.managers.serviceWorker.initialize();
       }
+
+      await this.managers.ui.updateGPSCardVisibility();
 
       await this.initializeAppState();
       
