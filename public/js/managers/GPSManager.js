@@ -21,7 +21,13 @@ class GPSManager {
     
     this.wakeLock = null;
     this.hasWakeLock = 'wakeLock' in navigator;
-    
+
+    // IndexedDB initialization
+    this.dbName = 'GPSTrackerDB';
+    this.dbVersion = 1;
+    this.db = null;
+    this.initializeDB();
+
     GPSManager.instance = this;
   }
 
@@ -80,31 +86,30 @@ class GPSManager {
       if (!capability.supported) {
         throw new Error(capability.reason);
       }
-  
-      // Request permission
+
       const permission = await this.requestLocationPermission();
       if (!permission) {
         throw new Error('Location permission denied');
       }
-  
+
+      // Clear any existing active points
+      await this.clearActivePoints();
+
       this.trackPoints = [];
       this.totalDistance = 0;
       this.lastPoint = null;
       this.lastElevation = null;
       this.isRecording = true;
-  
-      // Try to acquire wake lock to prevent device sleep
+
       if (this.hasWakeLock) {
         try {
           this.wakeLock = await navigator.wakeLock.request('screen');
           this.logger.debug('Wake Lock acquired');
         } catch (err) {
           this.logger.warn('Failed to acquire wake lock:', err);
-          // Continue even if wake lock fails
         }
       }
-  
-      // Start watching position with high accuracy
+
       this.watchId = navigator.geolocation.watchPosition(
         (position) => this.handlePosition(position),
         (error) => this.handleError(error),
@@ -114,7 +119,7 @@ class GPSManager {
           maximumAge: 0
         }
       );
-  
+
       return true;
     } catch (error) {
       this.logger.error('Error starting GPS recording:', error);
@@ -144,7 +149,7 @@ class GPSManager {
     }
   }
 
-  handlePosition(position) {
+  async handlePosition(position) {
     const point = {
       lat: position.coords.latitude,
       lon: position.coords.longitude,
@@ -167,6 +172,13 @@ class GPSManager {
     this.lastPoint = point;
     this.lastElevation = point.ele;
 
+    // Save point to IndexedDB
+    try {
+      await this.savePoint(point);
+    } catch (error) {
+      this.logger.error('Failed to save GPS point:', error);
+    }
+
     // Emit update event
     const event = new CustomEvent('gps-update', {
       detail: {
@@ -186,32 +198,45 @@ class GPSManager {
     window.dispatchEvent(event);
   }
 
-  stopRecording() {
+  async stopRecording() {
     if (this.watchId) {
       navigator.geolocation.clearWatch(this.watchId);
       this.watchId = null;
     }
-  
-    // Release wake lock if we have it
+
     if (this.wakeLock) {
-      this.wakeLock.release()
-        .then(() => {
-          this.logger.debug('Wake Lock released');
-          this.wakeLock = null;
-        })
-        .catch((err) => {
-          this.logger.warn('Error releasing wake lock:', err);
-        });
+      try {
+        await this.wakeLock.release();
+        this.logger.debug('Wake Lock released');
+        this.wakeLock = null;
+      } catch (err) {
+        this.logger.warn('Error releasing wake lock:', err);
+      }
     }
-  
+
     this.isRecording = false;
-    this.currentTrack = {
+
+    // Create track data
+    const track = {
       points: this.trackPoints,
       totalDistance: this.totalDistance,
       startTime: this.trackPoints[0]?.time,
       endTime: this.trackPoints[this.trackPoints.length - 1]?.time
     };
-    return this.currentTrack;
+
+    // Save completed track
+    try {
+      const trackId = await this.saveTrack(track);
+      this.currentTrack = track;
+      
+      // Clear active points after successful save
+      await this.clearActivePoints();
+      
+      return track;
+    } catch (error) {
+      this.logger.error('Failed to save completed track:', error);
+      throw error;
+    }
   }
 
   getTrackStats() {
@@ -252,6 +277,166 @@ class GPSManager {
     this.totalDistance = 0;
     this.lastPoint = null;
     this.lastElevation = null;
+  }
+
+  async initializeDB() {
+    try {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(this.dbName, this.dbVersion);
+
+        request.onerror = (event) => {
+          this.logger.error('IndexedDB error:', event.target.error);
+          reject(event.target.error);
+        };
+
+        request.onsuccess = (event) => {
+          this.db = event.target.result;
+          this.logger.debug('IndexedDB initialized successfully');
+          resolve();
+        };
+
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result;
+          
+          // Create tracks store
+          if (!db.objectStoreNames.contains('tracks')) {
+            const trackStore = db.createObjectStore('tracks', { keyPath: 'id' });
+            trackStore.createIndex('startTime', 'startTime', { unique: false });
+          }
+          
+          // Create points store for active recording
+          if (!db.objectStoreNames.contains('activePoints')) {
+            const pointsStore = db.createObjectStore('activePoints', { keyPath: 'timestamp' });
+            pointsStore.createIndex('timestamp', 'timestamp', { unique: false });
+          }
+        };
+      });
+    } catch (error) {
+      this.logger.error('Failed to initialize IndexedDB:', error);
+      throw error;
+    }
+  }
+
+  // Save point during recording
+  async savePoint(point) {
+    if (!this.db) await this.initializeDB();
+    
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction(['activePoints'], 'readwrite');
+      const store = transaction.objectStore('activePoints');
+      
+      const request = store.add({
+        ...point,
+        timestamp: new Date(point.time).getTime()
+      });
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  // Load active recording points
+  async loadActivePoints() {
+    if (!this.db) await this.initializeDB();
+    
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction(['activePoints'], 'readonly');
+      const store = transaction.objectStore('activePoints');
+      const request = store.getAll();
+
+      request.onsuccess = () => {
+        const points = request.result;
+        resolve(points.sort((a, b) => a.timestamp - b.timestamp));
+      };
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  // Clear active recording points
+  async clearActivePoints() {
+    if (!this.db) await this.initializeDB();
+    
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction(['activePoints'], 'readwrite');
+      const store = transaction.objectStore('activePoints');
+      const request = store.clear();
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  // Save completed track
+  async saveTrack(track) {
+    if (!this.db) await this.initializeDB();
+    
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction(['tracks'], 'readwrite');
+      const store = transaction.objectStore('tracks');
+      
+      const trackData = {
+        id: new Date().getTime().toString(),
+        ...track,
+        startTime: new Date(track.startTime).getTime(),
+        endTime: new Date(track.endTime).getTime()
+      };
+
+      const request = store.add(trackData);
+
+      request.onsuccess = () => resolve(trackData.id);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  // Load saved track
+  async loadTrack(trackId) {
+    if (!this.db) await this.initializeDB();
+    
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction(['tracks'], 'readonly');
+      const store = transaction.objectStore('tracks');
+      const request = store.get(trackId);
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async checkForActiveRecording() {
+    try {
+      const points = await this.loadActivePoints();
+      if (points.length > 0) {
+        this.trackPoints = points.map(p => ({
+          lat: p.lat,
+          lon: p.lon,
+          ele: p.ele,
+          time: new Date(p.timestamp).toISOString(),
+          accuracy: p.accuracy
+        }));
+        
+        // Recalculate total distance
+        this.totalDistance = 0;
+        for (let i = 1; i < this.trackPoints.length; i++) {
+          const distance = this.calculateDistance(
+            this.trackPoints[i-1].lat,
+            this.trackPoints[i-1].lon,
+            this.trackPoints[i].lat,
+            this.trackPoints[i].lon
+          );
+          this.totalDistance += distance;
+        }
+        
+        this.lastPoint = this.trackPoints[this.trackPoints.length - 1];
+        this.lastElevation = this.lastPoint.ele;
+        this.isRecording = true;
+        
+        return true;
+      }
+      return false;
+    } catch (error) {
+      this.logger.error('Error checking for active recording:', error);
+      return false;
+    }
   }
 
   exportGPX() {
