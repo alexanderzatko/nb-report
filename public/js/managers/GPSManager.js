@@ -19,6 +19,9 @@ class GPSManager {
     this.totalDistance = 0;
     this.lastElevation = null;
     
+    this.wakeLock = null;
+    this.hasWakeLock = 'wakeLock' in navigator;
+    
     GPSManager.instance = this;
   }
 
@@ -77,20 +80,31 @@ class GPSManager {
       if (!capability.supported) {
         throw new Error(capability.reason);
       }
-
+  
       // Request permission
       const permission = await this.requestLocationPermission();
       if (!permission) {
         throw new Error('Location permission denied');
       }
-
+  
       this.trackPoints = [];
       this.totalDistance = 0;
       this.lastPoint = null;
       this.lastElevation = null;
       this.isRecording = true;
-
-      // Start watching position
+  
+      // Try to acquire wake lock to prevent device sleep
+      if (this.hasWakeLock) {
+        try {
+          this.wakeLock = await navigator.wakeLock.request('screen');
+          this.logger.debug('Wake Lock acquired');
+        } catch (err) {
+          this.logger.warn('Failed to acquire wake lock:', err);
+          // Continue even if wake lock fails
+        }
+      }
+  
+      // Start watching position with high accuracy
       this.watchId = navigator.geolocation.watchPosition(
         (position) => this.handlePosition(position),
         (error) => this.handleError(error),
@@ -100,7 +114,7 @@ class GPSManager {
           maximumAge: 0
         }
       );
-
+  
       return true;
     } catch (error) {
       this.logger.error('Error starting GPS recording:', error);
@@ -177,6 +191,19 @@ class GPSManager {
       navigator.geolocation.clearWatch(this.watchId);
       this.watchId = null;
     }
+  
+    // Release wake lock if we have it
+    if (this.wakeLock) {
+      this.wakeLock.release()
+        .then(() => {
+          this.logger.debug('Wake Lock released');
+          this.wakeLock = null;
+        })
+        .catch((err) => {
+          this.logger.warn('Error releasing wake lock:', err);
+        });
+    }
+  
     this.isRecording = false;
     this.currentTrack = {
       points: this.trackPoints,
