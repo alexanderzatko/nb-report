@@ -16,7 +16,13 @@
     "recordGps": "Nový GPS záznam",
     "recordGpsDesc": "Spustiť GPS záznam vašej túry (Už čoskoro)",
     "preferences": "Nastavenia",
-    "preferencesDesc": "Správa nastavení aplikácie (Už čoskoro)"
+    "preferencesDesc": "Správa nastavení aplikácie (Už čoskoro)",
+    "settings": "Nastavenia",
+    "settingsDesc": "Správa nastavení a účtu"
+  },
+  "settings": {
+    "title": "Nastavenia",
+    "returnToDashboard": "Späť na hlavnú stránku"
   },
   "auth": {
     "loginText": "Prihlásiť sa do aplikácie",
