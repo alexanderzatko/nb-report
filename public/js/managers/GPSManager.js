@@ -38,7 +38,7 @@ class GPSManager {
         reason: 'This feature is currently only supported on Android devices'
       };
     }
-
+  
     // Check for geolocation API
     if (!('geolocation' in navigator)) {
       return {
@@ -46,15 +46,7 @@ class GPSManager {
         reason: 'GPS functionality is not available on this device'
       };
     }
-
-    // Check for background capability
-    if (!('BackgroundGeolocation' in window)) {
-      return {
-        supported: false,
-        reason: 'Background GPS recording is not supported on this device'
-      };
-    }
-
+  
     return {
       supported: true
     };
