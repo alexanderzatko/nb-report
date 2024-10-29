@@ -83,8 +83,14 @@ class App {
       const hasActiveRecording = await this.managers.gps.checkForActiveRecording();
       if (hasActiveRecording) {
         this.logger.debug('Restored active GPS recording');
-        // Update UI to show recording state
         await this.managers.ui.updateGPSCardVisibility();
+      } else {
+        // Try to load the latest completed track
+        const latestTrack = await this.managers.gps.loadLatestTrack();
+        if (latestTrack) {
+          this.logger.debug('Loaded latest completed track');
+          await this.managers.ui.showGPSTrackCard();
+        }
       }
 
       await this.initializeAppState();
