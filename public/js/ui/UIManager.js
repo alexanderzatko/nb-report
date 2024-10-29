@@ -76,30 +76,40 @@ class UIManager {
   }
 
   setupEventListeners() {
-    // Remove any existing listeners first
-    this.removeExistingListeners();
-
-    const snowReportLink = document.getElementById('snow-report-link');
-    if (snowReportLink) {
-      snowReportLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        this.showSnowReportForm();
-      });
-    }
-
-    // Add login container click handler with debouncing
-    const loginContainer = document.getElementById('login-container');
-    console.log('Login container found:', !!loginContainer);
-    if (loginContainer) {
-      loginContainer.addEventListener('click', this.handleLoginClick.bind(this));
-    }
-
-    const logoutButton = document.getElementById('logout-button');
-    if (logoutButton) {
-      logoutButton.addEventListener('click', this.handleLogoutClick.bind(this));
-    }
-
-    window.addEventListener('languageChanged', () => this.updatePageContent());
+      // Remove any existing listeners first
+      this.removeExistingListeners();
+  
+      const snowReportLink = document.getElementById('snow-report-link');
+      if (snowReportLink) {
+          snowReportLink.addEventListener('click', (e) => {
+              e.preventDefault();
+              this.showSnowReportForm();
+          });
+      }
+  
+      // Add settings link handler
+      const settingsLink = document.getElementById('settings-link');
+      if (settingsLink) {
+          settingsLink.addEventListener('click', (e) => {
+              e.preventDefault();
+              this.showSettings();
+          });
+      }
+  
+      // Add dashboard button handler
+      const dashboardButton = document.getElementById('dashboard-button');
+      if (dashboardButton) {
+          dashboardButton.addEventListener('click', () => {
+              this.showDashboard();
+          });
+      }
+  
+      const logoutButton = document.getElementById('logout-button');
+      if (logoutButton) {
+          logoutButton.addEventListener('click', this.handleLogoutClick.bind(this));
+      }
+  
+      window.addEventListener('languageChanged', () => this.updatePageContent());
   }
 
   removeExistingListeners() {
@@ -190,26 +200,38 @@ class UIManager {
   }
   
   updateUIBasedOnAuthState(isAuthenticated) {
-    console.log('Updating UI based on auth state:', isAuthenticated);
-    const loginContainer = document.getElementById('login-container');
-    const dashboardContainer = document.getElementById('dashboard-container');
-    const snowReportForm = document.getElementById('snow-report-form');
-    const logoutButton = document.getElementById('logout-button');
+      console.log('Updating UI based on auth state:', isAuthenticated);
+      const loginContainer = document.getElementById('login-container');
+      const dashboardContainer = document.getElementById('dashboard-container');
+      const settingsContainer = document.getElementById('settings-container');
+      const snowReportForm = document.getElementById('snow-report-form');
+      const regularUserSection = document.getElementById('regular-user-section');
+      const adminSection = document.getElementById('admin-section');
+      const trailsSection = document.getElementById('trails-section');
+      const rewardsSection = document.getElementById('rewards-section');
   
-    if (isAuthenticated) {
-      if (loginContainer) loginContainer.style.display = 'none';
-      if (dashboardContainer) dashboardContainer.style.display = 'block';
-      if (snowReportForm) snowReportForm.style.display = 'none';
-      if (logoutButton) logoutButton.style.display = 'block';
-    } else {
-      if (loginContainer) {
-        loginContainer.style.display = 'flex';
-        this.updateLoginText();
+      if (isAuthenticated) {
+          if (loginContainer) loginContainer.style.display = 'none';
+          if (dashboardContainer) dashboardContainer.style.display = 'block';
+          if (settingsContainer) settingsContainer.style.display = 'none';
+          if (snowReportForm) snowReportForm.style.display = 'none';
+          if (regularUserSection) regularUserSection.style.display = 'none';
+          if (adminSection) adminSection.style.display = 'none';
+          if (trailsSection) trailsSection.style.display = 'none';
+          if (rewardsSection) rewardsSection.style.display = 'none';
+      } else {
+          if (loginContainer) {
+              loginContainer.style.display = 'flex';
+              this.updateLoginText();
+          }
+          if (dashboardContainer) dashboardContainer.style.display = 'none';
+          if (settingsContainer) settingsContainer.style.display = 'none';
+          if (snowReportForm) snowReportForm.style.display = 'none';
+          if (regularUserSection) regularUserSection.style.display = 'none';
+          if (adminSection) adminSection.style.display = 'none';
+          if (trailsSection) trailsSection.style.display = 'none';
+          if (rewardsSection) rewardsSection.style.display = 'none';
       }
-      if (dashboardContainer) dashboardContainer.style.display = 'none';
-      if (snowReportForm) snowReportForm.style.display = 'none';
-      if (logoutButton) logoutButton.style.display = 'none';
-    }
   }
 
   updateElementTranslation(element, translation) {
@@ -288,8 +310,39 @@ class UIManager {
   }
 
   showDashboard() {
-    document.getElementById('dashboard-container').style.display = 'block';
-    document.getElementById('snow-report-form').style.display = 'none';
+      const dashboardContainer = document.getElementById('dashboard-container');
+      const settingsContainer = document.getElementById('settings-container');
+      const snowReportForm = document.getElementById('snow-report-form');
+      const regularUserSection = document.getElementById('regular-user-section');
+      const adminSection = document.getElementById('admin-section');
+      const trailsSection = document.getElementById('trails-section');
+      const rewardsSection = document.getElementById('rewards-section');
+      
+      if (dashboardContainer) dashboardContainer.style.display = 'block';
+      if (settingsContainer) settingsContainer.style.display = 'none';
+      if (snowReportForm) snowReportForm.style.display = 'none';
+      if (regularUserSection) regularUserSection.style.display = 'none';
+      if (adminSection) adminSection.style.display = 'none';
+      if (trailsSection) trailsSection.style.display = 'none';
+      if (rewardsSection) rewardsSection.style.display = 'none';
+  }
+
+  showSettings() {
+      const dashboardContainer = document.getElementById('dashboard-container');
+      const settingsContainer = document.getElementById('settings-container');
+      const snowReportForm = document.getElementById('snow-report-form');
+      const regularUserSection = document.getElementById('regular-user-section');
+      const adminSection = document.getElementById('admin-section');
+      const trailsSection = document.getElementById('trails-section');
+      const rewardsSection = document.getElementById('rewards-section');
+      
+      if (dashboardContainer) dashboardContainer.style.display = 'none';
+      if (settingsContainer) settingsContainer.style.display = 'block';
+      if (snowReportForm) snowReportForm.style.display = 'none';
+      if (regularUserSection) regularUserSection.style.display = 'none';
+      if (adminSection) adminSection.style.display = 'none';
+      if (trailsSection) trailsSection.style.display = 'none';
+      if (rewardsSection) rewardsSection.style.display = 'none';
   }
 
   async updateUIWithUserData(userData) {
