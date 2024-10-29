@@ -20,7 +20,7 @@
     "gpsTrack": "GPS Track",
     "trackStats": "Distance: {{distance}}km\nDuration: {{hours}}h {{minutes}}m",
     "confirmOverwriteTrack": "Warning! This will overwrite the existing record!",
-    "downloadGpx": "Save GPS record",
+    "downloadGpx": "Export GPS record",
     "gpxDownloadError": "Error saving GPS record. Please try again.",
     "preferences": "Preferences",
     "preferencesDesc": "Manage your preferences",
