@@ -203,7 +203,7 @@ class GPSManager {
       navigator.geolocation.clearWatch(this.watchId);
       this.watchId = null;
     }
-
+  
     if (this.wakeLock) {
       try {
         await this.wakeLock.release();
@@ -213,9 +213,9 @@ class GPSManager {
         this.logger.warn('Error releasing wake lock:', err);
       }
     }
-
+  
     this.isRecording = false;
-
+  
     // Create track data
     const track = {
       points: this.trackPoints,
@@ -223,27 +223,31 @@ class GPSManager {
       startTime: this.trackPoints[0]?.time,
       endTime: this.trackPoints[this.trackPoints.length - 1]?.time
     };
-    
+  
     this.logger.debug('Track data before save:', {
       totalDistance: track.totalDistance,
       pointsCount: track.points.length,
       startTime: track.startTime,
       endTime: track.endTime
     });
-
-    // Save completed track
+  
     try {
       const trackId = await this.saveTrack(track);
       this.currentTrack = track;
-
+      
       this.logger.debug('Track saved and set as currentTrack:', {
         id: trackId,
         currentTrackSet: !!this.currentTrack,
         currentTrackDistance: this.currentTrack?.totalDistance
       });
-          
-      // Clear active points after successful save
+      
       await this.clearActivePoints();
+  
+      // Verify that we can get stats before returning
+      const stats = this.getTrackStats();
+      if (!stats) {
+        throw new Error('Failed to generate track stats after saving');
+      }
       
       return track;
     } catch (error) {
