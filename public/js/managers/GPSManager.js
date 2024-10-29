@@ -12,6 +12,7 @@ class GPSManager {
     }
 
     this.logger = Logger.getInstance();
+    this.i18next = i18next;
     this.isRecording = false;
     this.currentTrack = null;
     this.watchId = null;
@@ -40,6 +41,14 @@ class GPSManager {
   }
 
   checkGPSCapability() {
+    // Wait for i18next to be initialized before accessing translations
+    if (!this.i18next.isInitialized) {
+      return {
+        supported: false,
+        reason: 'GPS check unavailable' // Fallback message
+      };
+    }
+
     const isAndroid = /Android/i.test(navigator.userAgent);
     if (!isAndroid) {
       return {
