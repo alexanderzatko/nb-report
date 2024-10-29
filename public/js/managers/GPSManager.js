@@ -253,24 +253,35 @@ class GPSManager {
   }
 
   getTrackStats() {
-    this.logger.debug('getTrackStats called, currentTrack:', {
+    this.logger.debug('Getting track stats, currentTrack:', {
       exists: !!this.currentTrack,
+      data: this.currentTrack,
       totalDistance: this.currentTrack?.totalDistance,
       startTime: this.currentTrack?.startTime,
       endTime: this.currentTrack?.endTime
     });
-    
-    if (!this.currentTrack) return null;
   
-    return {
-      distance: Math.round(this.currentTrack.totalDistance),
-      startTime: new Date(this.currentTrack.startTime),
-      endTime: new Date(this.currentTrack.endTime),
-      duration: this.calculateDuration(
-        this.currentTrack.startTime,
-        this.currentTrack.endTime
-      )
-    };
+    if (!this.currentTrack) {
+      this.logger.debug('No current track available');
+      return null;
+    }
+  
+    try {
+      const stats = {
+        distance: Math.round(this.currentTrack.totalDistance),
+        startTime: new Date(this.currentTrack.startTime),
+        endTime: new Date(this.currentTrack.endTime),
+        duration: this.calculateDuration(
+          this.currentTrack.startTime,
+          this.currentTrack.endTime
+        )
+      };
+      this.logger.debug('Calculated track stats:', stats);
+      return stats;
+    } catch (error) {
+      this.logger.error('Error calculating track stats:', error);
+      return null;
+    }
   }
 
   calculateDuration(startTime, endTime) {
