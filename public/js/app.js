@@ -78,6 +78,15 @@ class App {
 
       await this.managers.ui.updateGPSCardVisibility();
 
+      this.managers.gps = GPSManager.getInstance();
+
+      const hasActiveRecording = await this.managers.gps.checkForActiveRecording();
+      if (hasActiveRecording) {
+        this.logger.debug('Restored active GPS recording');
+        // Update UI to show recording state
+        await this.managers.ui.updateGPSCardVisibility();
+      }
+
       await this.initializeAppState();
       
       this.initialized = true;
