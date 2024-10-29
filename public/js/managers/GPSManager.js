@@ -1,5 +1,7 @@
 // managers/GPSManager.js
 
+import Logger from '../utils/Logger.js';
+
 class GPSManager {
   static instance = null;
 
