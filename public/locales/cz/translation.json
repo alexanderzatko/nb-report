@@ -16,7 +16,13 @@
     "recordGps": "Nový GPS záznam",
     "recordGpsDesc": "Spustit GPS záznam vaší túry (plánovaná funkce)",
     "preferences": "Nastavení",
-    "preferencesDesc": "Správa nastavení aplikace (plánovaná funkce)"
+    "preferencesDesc": "Správa nastavení aplikace (plánovaná funkce)",
+    "settings": "Settings",
+    "settingsDesc": "Manage your preferences and account"
+  },
+  "settings": {
+    "title": "Settings",
+    "returnToDashboard": "Return to Dashboard"
   },
   "auth": {
     "loginText": "Přihlásit se do aplikace",
