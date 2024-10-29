@@ -189,7 +189,7 @@ class App {
 
   handleInitializationError(error) {
     this.logger.error('Initialization error:', error);
-    alert('Application initialization failed. Please refresh the page.');
+    alert(this.i18next.t('errors.application.initFailed'));
   }
 }
 
