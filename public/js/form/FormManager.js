@@ -203,23 +203,28 @@ class FormManager {
     const trackDetails = document.getElementById('gps-track-details');
     
     if (track && gpsTrackSection && trackLabel && trackDetails) {
-      const startDate = new Date(track.startTime);
-      const formattedDate = startDate.toLocaleDateString();
-      const stats = gpsManager.getTrackStats();
-      
-      trackLabel.textContent = this.i18next.t('form.gpsTrack.attachLabel', {
-        date: formattedDate
-      });
-      
-      trackDetails.textContent = this.i18next.t('form.gpsTrack.details', {
-        distance: stats.distance,
-        duration: `${stats.duration.hours}:${String(stats.duration.minutes).padStart(2, '0')}`
-      });
-      
-      gpsTrackSection.style.display = 'block';
+        const startDate = new Date(track.startTime);
+        const duration = this.formatDuration(track.elapsedTime);
+        
+        trackLabel.textContent = this.i18next.t('form.gpsTrack.attachLabel', {
+            date: startDate.toLocaleDateString()
+        });
+        
+        trackDetails.textContent = this.i18next.t('form.gpsTrack.details', {
+            distance: Math.round(track.totalDistance),
+            duration: duration
+        });
+        
+        gpsTrackSection.style.display = 'block';
     } else {
-      gpsTrackSection.style.display = 'none';
+        gpsTrackSection.style.display = 'none';
     }
+  }
+
+  formatDuration(ms) {
+      const hours = Math.floor(ms / (1000 * 60 * 60));
+      const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+      return `${hours}:${String(minutes).padStart(2, '0')}`;
   }
   
   initializeTrailsSection(trails) {
