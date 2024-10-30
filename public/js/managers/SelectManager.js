@@ -17,8 +17,8 @@ class SelectManager {
       locations: null,
       xcConditions: null
     };
-    
     this.loadingPromises = {};
+    this.selectedValues = {};
     
     SelectManager.instance = this;
   }
@@ -71,7 +71,18 @@ class SelectManager {
   setupEventListeners() {
     const countrySelect = document.getElementById('country');
     if (countrySelect) {
-      countrySelect.addEventListener('change', () => this.updateRegions());
+      countrySelect.addEventListener('change', () => {
+        this.selectedValues.country = countrySelect.value;
+        this.selectedValues.region = ''; // Reset region when country changes
+        this.updateRegions();
+      });
+    }
+
+    const regionSelect = document.getElementById('region');
+    if (regionSelect) {
+      regionSelect.addEventListener('change', () => {
+        this.selectedValues.region = regionSelect.value;
+      });
     }
   }
 
@@ -153,7 +164,7 @@ class SelectManager {
       return;
     }
 
-    const currentValue = countrySelect.value;
+    const currentValue = countrySelect.value || this.selectedValues.country;
     
     countrySelect.innerHTML = '';
     const defaultOption = document.createElement('option');
@@ -173,17 +184,23 @@ class SelectManager {
       countrySelect.appendChild(option);
     });
 
-    // Restore previous selection or infer from language
-    countrySelect.value = currentValue || this.inferCountryFromLanguage();
+    // Use stored value, or infer from language if no value is stored
+    const valueToSet = currentValue || this.selectedValues.country || this.inferCountryFromLanguage();
+    countrySelect.value = valueToSet;
+    
+    // Store the selected value
+    this.selectedValues.country = valueToSet;
+    
     await this.updateRegions();
   }
 
-  updateRegions() {
+  async updateRegions() {
     const countrySelect = document.getElementById('country');
     const regionSelect = document.getElementById('region');
     if (!countrySelect || !regionSelect) return;
 
     const selectedCountry = countrySelect.value;
+    const currentRegion = this.selectedValues.region;
     
     regionSelect.innerHTML = '';
     const defaultOption = document.createElement('option');
@@ -207,7 +224,16 @@ class SelectManager {
         option.textContent = region.name;
         regionSelect.appendChild(option);
       });
+
+      // Restore previous region selection if it exists for this country
+      if (currentRegion) {
+        regionSelect.value = currentRegion;
+      }
     }
+
+    // Store current selections
+    this.selectedValues.country = selectedCountry;
+    this.selectedValues.region = regionSelect.value;
   }
 
   populateXCDropdowns() {
@@ -304,6 +330,20 @@ class SelectManager {
     return languageToCountry[languageCode] || 'SK';
   }
 
+  clearState() {
+    this.selectedValues = {};
+  }
+
+  restoreState() {
+    if (this.selectedValues.country) {
+      const countrySelect = document.getElementById('country');
+      if (countrySelect) {
+        countrySelect.value = this.selectedValues.country;
+        this.updateRegions(); // This will handle region restoration as well
+      }
+    }
+  }
+
   // Getter Methods
   getCurrentCountry() {
     const countrySelect = document.getElementById('country');
@@ -316,14 +356,22 @@ class SelectManager {
   }
 
   getSelectedValues() {
+    const countrySelect = document.getElementById('country');
+    const regionSelect = document.getElementById('region');
+    const snowTypeSelect = document.getElementById('snow-type');
+    const classicStyleSelect = document.getElementById('classic-style');
+    const freeStyleSelect = document.getElementById('free-style');
+    const snowAgeSelect = document.getElementById('snow-age');
+    const wetnessSelect = document.getElementById('wetness');
+
     return {
-      country: this.getCurrentCountry(),
-      region: this.getCurrentRegion(),
-      snowType: document.getElementById('snow-type')?.value,
-      classicStyle: document.getElementById('classic-style')?.value,
-      freeStyle: document.getElementById('free-style')?.value,
-      snowAge: document.getElementById('snow-age')?.value,
-      wetness: document.getElementById('wetness')?.value
+      country: (countrySelect?.value || this.selectedValues.country || ''),
+      region: (regionSelect?.value || this.selectedValues.region || ''),
+      snowType: snowTypeSelect?.value || '',
+      classicStyle: classicStyleSelect?.value || '',
+      freeStyle: freeStyleSelect?.value || '',
+      snowAge: snowAgeSelect?.value || '',
+      wetness: wetnessSelect?.value || ''
     };
   }
 }
