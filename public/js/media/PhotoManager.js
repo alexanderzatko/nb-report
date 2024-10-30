@@ -249,7 +249,7 @@ class PhotoManager {
           const captionInput = document.createElement('input');
           captionInput.type = 'text';
           captionInput.className = 'photo-caption';
-          captionInput.placeholder = i18next.t('form.photos.captionPlaceholder', 'Add a caption...');
+          captionInput.placeholder = i18next.t('form.captionPlaceholder', 'Add a caption...');
           captionInput.maxLength = 200;
                     
           // Restore caption if it exists
