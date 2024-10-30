@@ -786,6 +786,9 @@ class FormManager {
       this.stopTrackingFormTime();
       this.formStartTime = null;
       
+      // Clear select manager state
+      this.selectManager.clearState();
+      
       const hoursElement = document.getElementById('elapsed-hours');
       const minutesElement = document.getElementById('elapsed-minutes');
       const secondsElement = document.getElementById('elapsed-seconds');
