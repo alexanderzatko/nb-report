@@ -346,7 +346,7 @@ class UIManager {
       this.logger.error('FormManager not initialized');
       return;
     }
-
+  
     try {
       const dashboardContainer = document.getElementById('dashboard-container');
       const snowReportForm = document.getElementById('snow-report-form');
@@ -355,38 +355,46 @@ class UIManager {
         this.logger.error('Required DOM elements not found');
         return;
       }
-
+  
       // Ensure SelectManager is ready before proceeding
       if (!this.selectManager) {
         this.selectManager = SelectManager.getInstance();
         await this.selectManager.initialize();
       }
-
+  
       // Show the form container first
       dashboardContainer.style.display = 'none';
       snowReportForm.style.display = 'block';
-
+  
       // Fetch fresh user data and initialize form
       const response = await fetch('/api/user-data', {
         credentials: 'include'
       });
-
+  
+      // Handle unauthorized state
+      if (response.status === 401) {
+        this.logger.debug('Session expired, redirecting to login');
+        await AuthManager.getInstance().logout();
+        this.showLoginPrompt();
+        return;
+      }
+  
       if (!response.ok) {
         throw new Error('Failed to fetch user data');
       }
-
+  
       const userData = await response.json();
       this.logger.debug('Fetched user data for form:', userData);
-
+  
       // First initialize form with user data
       this.formManager.initializeForm(userData);
-
+  
       // Then ensure select fields are populated with proper state
       await this.selectManager.refreshAllDropdowns();
       
       // Start tracking form time only after everything is initialized
       this.formManager.startTrackingFormTime();
-
+  
     } catch (error) {
       this.logger.error('Error showing snow report form:', error);
       this.showError(this.i18next.t('form.error.loading', 'Error loading form'));
