@@ -111,6 +111,7 @@
     "photos": "Fotografie:",
     "selectPhotos": "Vybrať fotografie",
     "takePhoto": "Urobiť fotografiu",
+    "captionPlaceholder": "Pridať popisku ...",
     "gpsTrack": {
       "attachLabel": "Priložiť GPS záznam z {{date}}",
       "details": "Dĺžka trasy: {{distance}} km, Trvanie: {{duration}}"
