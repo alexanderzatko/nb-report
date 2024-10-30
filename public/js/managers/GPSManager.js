@@ -291,13 +291,15 @@ class GPSManager {
     this.isRecording = false;
 
     // Create track data
+    const metadata = await this.loadTrackMetadata();
     const track = {
-      points: this.trackPoints,
-      totalDistance: this.totalDistance,
-      startTime: this.trackPoints[0]?.time,
-      endTime: this.trackPoints[this.trackPoints.length - 1]?.time
+        points: this.trackPoints,
+        totalDistance: this.totalDistance,
+        startTime: metadata.startTime,
+        endTime: new Date().toISOString(),
+        elapsedTime: metadata.elapsedTime
     };
-    
+
     this.logger.debug('Track data before save:', {
       totalDistance: track.totalDistance,
       pointsCount: track.points.length,
@@ -316,6 +318,9 @@ class GPSManager {
         currentTrackDistance: this.currentTrack?.totalDistance
       });
           
+      // Clear metadata after successful save
+      await this.clearTrackMetadata();
+
       // Clear active points after successful save
       await this.clearActivePoints();
       
@@ -324,29 +329,6 @@ class GPSManager {
       this.logger.error('Failed to save completed track:', error);
       throw error;
     }
-
-    const metadata = await this.loadTrackMetadata();
-    const track = {
-        points: this.trackPoints,
-        totalDistance: this.totalDistance,
-        startTime: metadata.startTime,
-        endTime: new Date().toISOString(),
-        elapsedTime: metadata.elapsedTime
-    };
-
-    try {
-        const trackId = await this.saveTrack(track);
-        this.currentTrack = track;
-        
-        // Clear metadata after successful save
-        await this.clearTrackMetadata();
-        
-        return track;
-    } catch (error) {
-        this.logger.error('Failed to save completed track:', error);
-        throw error;
-    }
-
   }
 
   getTrackStats() {
