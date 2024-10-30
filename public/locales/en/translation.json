@@ -338,6 +338,9 @@
     },
     "application": {
       "initFailed": "Application initialization failed. Please refresh the page."
+    },
+    "form": {
+      "loading": "Error loading form"
     }
   }
 }
