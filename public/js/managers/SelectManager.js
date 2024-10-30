@@ -296,7 +296,7 @@ class SelectManager {
     this.data.xcConditions.snowAge.forEach(age => {
       const option = document.createElement('option');
       option.value = age.code;
-      option.textContent = this.i18next.t(`form.snowAge.${age.code}`, age.name);
+      option.textContent = this.i18next.t(`form.snowAgeOptions.${age.code}`, age.name);
       snowAgeSelect.appendChild(option);
     });
   }
@@ -309,7 +309,7 @@ class SelectManager {
     this.data.xcConditions.wetness.forEach(wet => {
       const option = document.createElement('option');
       option.value = wet.code;
-      option.textContent = this.i18next.t(`form.wetness.${wet.code}`, wet.name);
+      option.textContent = this.i18next.t(`form.wetnessOptions.${wet.code}`, wet.name);
       wetnessSelect.appendChild(option);
     });
   }
