@@ -59,15 +59,21 @@ class AuthManager {
   }
 
   setupTokenRefresh() {
-    // Clear any existing interval
     if (this.tokenRefreshInterval) {
       clearInterval(this.tokenRefreshInterval);
     }
     
-    // Set up new refresh interval (e.g., every 5 minutes)
-    this.tokenRefreshInterval = setInterval(() => {
-      this.checkAndRefreshToken();
-    }, 5 * 60 * 1000); // 5 minutes
+    this.tokenRefreshInterval = setInterval(async () => {
+      try {
+        const success = await this.checkAndRefreshToken();
+        if (!success) {
+          this.clearAuthData();
+          window.location.reload();
+        }
+      } catch (error) {
+        this.logger.error('Token refresh failed:', error);
+      }
+    }, 15 * 60 * 1000); // Refresh every 15 minutes
   }
 
   async handleOAuthCallback(code, state) {
