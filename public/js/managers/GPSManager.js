@@ -483,24 +483,33 @@ class GPSManager {
 
   // Save completed track
   async saveTrack(track) {
-    if (!this.db) await this.initializeDB();
-    
-    return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(['tracks'], 'readwrite');
-      const store = transaction.objectStore('tracks');
+      if (!this.db) await this.initializeDB();
       
-      const trackData = {
-        id: new Date().getTime().toString(),
-        ...track,
-        startTime: new Date(track.startTime).getTime(),
-        endTime: new Date(track.endTime).getTime()
-      };
-
-      const request = store.add(trackData);
-
-      request.onsuccess = () => resolve(trackData.id);
-      request.onerror = () => reject(request.error);
-    });
+      this.logger.debug('Saving track with data:', track); // Add debug logging
+      
+      return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['tracks'], 'readwrite');
+          const store = transaction.objectStore('tracks');
+          
+          const trackData = {
+              id: new Date().getTime().toString(),
+              points: track.points,
+              totalDistance: track.totalDistance || 0,
+              startTime: track.startTime,
+              endTime: track.endTime,
+              elapsedTime: track.endTime - track.startTime
+          };
+  
+          this.logger.debug('Track data prepared for save:', trackData);
+  
+          const request = store.add(trackData);
+  
+          request.onsuccess = () => {
+              this.logger.debug('Track saved successfully with ID:', trackData.id);
+              resolve(trackData.id);
+          };
+          request.onerror = () => reject(request.error);
+      });
   }
 
   // Load saved track
@@ -555,36 +564,39 @@ class GPSManager {
   }
 
   async loadLatestTrack() {
-    if (!this.db) await this.initializeDB();
-    
-    return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(['tracks'], 'readonly');
-      const store = transaction.objectStore('tracks');
-      const index = store.index('startTime');
+      if (!this.db) await this.initializeDB();
       
-      // Get the most recent track
-      const request = index.openCursor(null, 'prev');
-
-      request.onsuccess = (event) => {
-        const cursor = event.target.result;
-        if (cursor) {
-          // Found the latest track
-          const track = cursor.value;
-          this.currentTrack = {
-            points: track.points,
-            totalDistance: track.totalDistance,
-            startTime: new Date(track.startTime).toISOString(),
-            endTime: new Date(track.endTime).toISOString()
+      return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['tracks'], 'readonly');
+          const store = transaction.objectStore('tracks');
+          const index = store.index('startTime');
+          
+          // Get the most recent track
+          const request = index.openCursor(null, 'prev');
+  
+          request.onsuccess = (event) => {
+              const cursor = event.target.result;
+              if (cursor) {
+                  // Found the latest track
+                  const track = cursor.value;
+                  this.logger.debug('Loaded latest track:', track); // Add debug logging
+                  
+                  this.currentTrack = {
+                      points: track.points,
+                      totalDistance: track.totalDistance || 0,
+                      startTime: track.startTime,
+                      endTime: track.endTime,
+                      elapsedTime: track.endTime - track.startTime
+                  };
+                  resolve(this.currentTrack);
+              } else {
+                  this.logger.debug('No tracks found');
+                  resolve(null);
+              }
           };
-          resolve(this.currentTrack);
-        } else {
-          // No tracks found
-          resolve(null);
-        }
-      };
-
-      request.onerror = () => reject(request.error);
-    });
+  
+          request.onerror = () => reject(request.error);
+      });
   }
 
   exportGPX() {
