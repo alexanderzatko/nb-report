@@ -1,4 +1,5 @@
 import Logger from '../utils/Logger.js';
+import i18next from '/node_modules/i18next/dist/esm/i18next.js';
 
 class PhotoManager {
   static instance = null;
@@ -248,9 +249,9 @@ class PhotoManager {
           const captionInput = document.createElement('input');
           captionInput.type = 'text';
           captionInput.className = 'photo-caption';
-          captionInput.placeholder = 'Add a caption...';
-          captionInput.maxLength = 200; // Set reasonable max length
-          
+          captionInput.placeholder = i18next.t('form.photos.captionPlaceholder', 'Add a caption...');
+          captionInput.maxLength = 200;
+                    
           // Restore caption if it exists
           if (this.photoCaptions.has(photoIndex)) {
             captionInput.value = this.photoCaptions.get(photoIndex);
