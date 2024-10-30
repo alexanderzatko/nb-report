@@ -695,39 +695,82 @@ class FormManager {
 
   collectFormData() {
     const formData = new FormData();
-    const selectValues = this.selectManager.getSelectedValues();
-
-    const gpsManager = GPSManager.getInstance();
-    const includeGPX = document.getElementById('include-gpx')?.checked;
-    if (includeGPX && gpsManager.hasExistingTrack()) {
-      formData.append('gpx', gpsManager.exportGPX());
-    }
     
-    // Add select values to form data
-    Object.entries(selectValues).forEach(([key, value]) => {
-      if (value) formData.append(key, value);
-    });
-    
-    // Add other form data
-    const noteElement = document.getElementById('report-note');
-    if (noteElement) formData.append('note', noteElement.value);
-    
+    // Determine which form type is visible
     const isAdmin = document.getElementById('admin-section')?.style.display !== 'none';
     
-    if (isAdmin) {
-      const snowDepthTotal = document.getElementById('snow-depth-total')?.value;
-      const snowDepthNew = document.getElementById('snow-depth-new')?.value;
-      
-      if (snowDepthTotal) formData.append('snowDepthTotal', snowDepthTotal);
-      if (snowDepthNew) formData.append('snowDepthNew', snowDepthNew); // Optional field
-      formData.append('trailConditions', JSON.stringify(this.trailConditions));
-    } else {
-      this.collectRegularUserFormData(formData);
+    // Get common fields that are visible
+    const visibleData = this.collectVisibleData(isAdmin);
+    
+    // Add each visible field to FormData
+    Object.entries(visibleData).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && value !== '') {
+            formData.append(key, value);
+        }
+    });
+
+    // Add trail conditions for admin
+    if (isAdmin && Object.keys(this.trailConditions).length > 0) {
+        formData.append('trailConditions', JSON.stringify(this.trailConditions));
     }
 
-    this.collectRewardsData(formData);
-    
+    // Add rewards data if rewards section is visible
+    if (document.getElementById('rewards-section')?.style.display !== 'none') {
+        this.collectRewardsData(formData);
+    }
+
     return formData;
+  }
+
+  collectVisibleData(isAdmin) {
+      const data = {};
+      
+      if (isAdmin) {
+          // Admin form fields
+          const snowDepthTotal = document.getElementById('snow-depth-total')?.value;
+          const snowDepthNew = document.getElementById('snow-depth-new')?.value;
+          const note = document.getElementById('report-note')?.value;
+          
+          if (snowDepthTotal) data.snowDepthTotal = snowDepthTotal;
+          if (snowDepthNew) data.snowDepthNew = snowDepthNew;
+          if (note) data.note = note;
+          
+          // Common dropdowns that are visible in admin form
+          const snowType = document.getElementById('snow-type')?.value;
+          if (snowType) data.snowType = snowType;
+          
+      } else {
+          // Regular user form fields
+          const fields = {
+              'report-title': 'reportTitle',
+              'report-date': 'reportDate',
+              'country': 'country',
+              'region': 'region',
+              'snow-depth250': 'snowDepth250',
+              'snow-depth500': 'snowDepth500',
+              'snow-depth750': 'snowDepth750',
+              'snow-depth1000': 'snowDepth1000',
+              'report-note': 'note'
+          };
+          
+          Object.entries(fields).forEach(([elementId, dataKey]) => {
+              const element = document.getElementById(elementId);
+              if (element && element.style.display !== 'none' && element.value) {
+                  data[dataKey] = element.value;
+              }
+          });
+          
+          // Add snow conditions for regular user form
+          const conditions = ['classic-style', 'free-style', 'snow-age', 'wetness'];
+          conditions.forEach(id => {
+              const element = document.getElementById(id);
+              if (element && element.style.display !== 'none' && element.value) {
+                  data[id.replace('-', '')] = element.value;
+              }
+          });
+      }
+      
+      return data;
   }
 
   collectAdminFormData(formData) {
@@ -750,69 +793,74 @@ class FormManager {
   }
 
   collectRewardsData(formData) {
-    const laborTime = document.getElementById('labor-time')?.value;
-    const rewardRequested = document.getElementById('reward-requested')?.value;
-    
-    if (laborTime) formData.append('laborTime', laborTime);
-    if (rewardRequested) formData.append('rewardRequested', rewardRequested);
+      const rewardsSection = document.getElementById('rewards-section');
+      if (rewardsSection?.style.display !== 'none') {
+          const laborTime = document.getElementById('labor-time')?.value;
+          const rewardRequested = document.getElementById('reward-requested')?.value;
+          
+          if (laborTime) formData.append('laborTime', laborTime);
+          if (rewardRequested) formData.append('rewardRequested', rewardRequested);
+      }
   }
   
   async submitFormData(formData) {
-    // Convert FormData to a regular object for logging
-    const formDataObject = {};
-    formData.forEach((value, key) => {
-      // Handle File objects specially
-      if (value instanceof File) {
-        formDataObject[key] = {
-          type: 'File',
-          name: value.name,
-          size: value.size,
-          lastModified: value.lastModified
-        };
-      } else {
-        // Handle regular form data
-        // If the key already exists, convert it to an array
-        if (formDataObject[key]) {
-          if (!Array.isArray(formDataObject[key])) {
-            formDataObject[key] = [formDataObject[key]];
+      // Convert FormData to a regular object for logging
+      const formDataObject = {};
+      formData.forEach((value, key) => {
+          // Handle File objects specially
+          if (value instanceof File) {
+              formDataObject[key] = {
+                  type: 'File',
+                  name: value.name,
+                  size: value.size,
+                  lastModified: value.lastModified
+              };
+          } else {
+              // Handle regular form data
+              formDataObject[key] = value;
           }
-          formDataObject[key].push(value);
-        } else {
-          formDataObject[key] = value;
-        }
+      });
+  
+      // Get photos if photo section is visible
+      const photoSection = document.querySelector('.photos-section');
+      const photoInfo = [];
+      if (photoSection?.style.display !== 'none') {
+          const photos = this.photoManager.getPhotos();
+          photos.forEach(photo => {
+              photoInfo.push({
+                  name: photo.file.name,
+                  size: photo.file.size,
+                  caption: photo.caption
+              });
+          });
       }
-    });
   
-    // Get photos from PhotoManager
-    const photos = this.photoManager.getPhotos();
-    const photoInfo = photos.map(photo => ({
-      name: photo.file.name,
-      size: photo.file.size,
-      caption: photo.caption
-    }));
-  
-    // Log the complete form submission data
-    console.group('Form Submission Data');
-    console.log('Form Fields:', formDataObject);
-    console.log('Trail Conditions:', this.trailConditions);
-    console.log('Photos:', photoInfo);
-    
-    // If GPS track is included, log it
-    const includeGPX = document.getElementById('include-gpx')?.checked;
-    if (includeGPX) {
-      const gpsManager = GPSManager.getInstance();
-      if (gpsManager.hasExistingTrack()) {
-        console.log('GPS Track included:', true);
-        console.log('GPX Data:', gpsManager.exportGPX());
+      // Log the complete form submission data
+      console.group('Form Submission Data');
+      console.log('Form Fields:', formDataObject);
+      if (formDataObject.trailConditions) {
+          console.log('Trail Conditions:', JSON.parse(formDataObject.trailConditions));
       }
-    }
-    console.groupEnd();
+      if (photoInfo.length > 0) {
+          console.log('Photos:', photoInfo);
+      }
+      
+      // If GPS track is included, log it
+      const includeGPX = document.getElementById('include-gpx');
+      if (includeGPX?.checked && includeGPX.style.display !== 'none') {
+          const gpsManager = GPSManager.getInstance();
+          if (gpsManager.hasExistingTrack()) {
+              console.log('GPS Track included:', true);
+              console.log('GPX Data:', gpsManager.exportGPX());
+          }
+      }
+      console.groupEnd();
   
-    // For now, return a successful response
-    return {
-      success: true,
-      message: 'Form data logged to console'
-    };
+      // For now, return a successful response
+      return {
+          success: true,
+          message: 'Form data logged to console'
+      };
   }
 
   handleCancel() {
