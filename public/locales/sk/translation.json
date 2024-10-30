@@ -288,6 +288,9 @@
     },
     "application": {
       "initFailed": "Inicializácia aplikácie zlyhala. Obnovte stránku."
+    },
+    "form": {
+      "loading": "Chyba pri načítavaní formulára"
     }
   },
   "offline": {
