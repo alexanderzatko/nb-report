@@ -127,26 +127,31 @@ class FormManager {
   }
   
   initializeForm(userData) {
-    console.log('Initializing form with user data:', userData);
-    const isAdmin = userData?.ski_center_admin === "1";
-    const hasTrails = userData?.trails && Array.isArray(userData.trails) && userData.trails.length > 0;
+    this.logger.debug('Initializing form with user data:', userData);
     
+    // Ensure we have the required elements
     const regularUserSection = document.getElementById('regular-user-section');
     const adminSection = document.getElementById('admin-section');
     const trailsSection = document.getElementById('trails-section');
+    const rewardsSection = document.getElementById('rewards-section');
 
-    if (regularUserSection) {
-      regularUserSection.style.display = isAdmin ? 'none' : 'block';
+    if (!regularUserSection || !adminSection) {
+      this.logger.error('Required form sections not found');
+      return;
     }
 
-    if (adminSection) {
-      adminSection.style.display = isAdmin ? 'block' : 'none';
-    }
-
-    // Initialize form fields based on user type
-    const config = isAdmin ? this.formConfig.admin : this.formConfig.regular;
-    this.initializeFormFields(config);
+    const isAdmin = userData?.ski_center_admin === "1";
+    const hasTrails = userData?.trails && Array.isArray(userData.trails) && userData.trails.length > 0;
     
+    this.logger.debug('User type:', { isAdmin, hasTrails });
+
+    // Set visibility for regular user section
+    regularUserSection.style.display = isAdmin ? 'none' : 'block';
+    
+    // Set visibility for admin section
+    adminSection.style.display = isAdmin ? 'block' : 'none';
+    
+    // Set visibility for trails section
     if (trailsSection) {
       trailsSection.style.display = 'none';
       if (isAdmin && hasTrails) {
@@ -154,6 +159,23 @@ class FormManager {
         this.initializeTrailsSection(userData.trails);
       }
     }
+
+    // Set visibility for rewards section based on rovas_uid
+    if (rewardsSection) {
+      rewardsSection.style.display = 
+        (userData?.rovas_uid && !isNaN(userData.rovas_uid)) ? 'block' : 'none';
+    }
+
+    // Initialize form fields based on user type
+    const config = isAdmin ? this.formConfig.admin : this.formConfig.regular;
+    this.initializeFormFields(config);
+
+    this.logger.debug('Form sections visibility:', {
+      regularUser: regularUserSection.style.display,
+      admin: adminSection.style.display,
+      trails: trailsSection?.style.display,
+      rewards: rewardsSection?.style.display
+    });
   }
 
   initializeFormFields(config) {
