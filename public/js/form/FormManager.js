@@ -299,6 +299,7 @@ class FormManager {
       }
   
       if (gpxFileInput) {
+          gpxFileInput.accept = '.gpx,application/gpx+xml,application/xml';
           gpxFileInput.addEventListener('change', async (e) => {
               const file = e.target.files[0];
               if (!file) return;
