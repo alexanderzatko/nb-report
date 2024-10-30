@@ -99,6 +99,9 @@ class FormManager {
     if (document.getElementById('gps-track-section')) {
       await this.initializeGPSTrackSection();
     }
+
+    await this.initializeGPXSection();
+
   }
 
   setupEventListeners() {
@@ -808,6 +811,14 @@ class FormManager {
     // Add rewards data if rewards section is visible
     if (document.getElementById('rewards-section')?.style.display !== 'none') {
         this.collectRewardsData(formData);
+    }
+
+    const gpxOption = document.getElementById('gpx-option');
+    if (gpxOption && gpxOption.value !== 'none') {
+        const gpsManager = GPSManager.getInstance();
+        if (gpsManager.hasExistingTrack()) {
+            formData.append('gpx', gpsManager.exportGPX());
+        }
     }
 
     return formData;
