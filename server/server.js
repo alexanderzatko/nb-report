@@ -214,13 +214,10 @@ app.get('/api/auth-status', (req, res) => {
 });
 
 app.post('/api/submit-snow-report', (req, res) => {
-  if (req.session.accessToken) {
-    // Process the snow report submission
-    console.log('Snow report received:', req.body);
-    res.json({ message: 'Snow report submitted successfully' });
-  } else {
-    res.status(401).json({ error: 'Not authenticated' });
-  }
+  // Log the received data
+  console.log('Snow report received:', req.body);
+  // Send success response
+  res.json({ message: 'Snow report received successfully' });
 });
 
 app.post('/api/initiate-oauth', (req, res) => {
