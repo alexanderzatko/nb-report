@@ -600,6 +600,60 @@ class GPSManager {
       });
   }
 
+  async importGPXFile(content) {
+      try {
+          const parser = new DOMParser();
+          const gpxDoc = parser.parseFromString(content, "text/xml");
+          
+          const trackPoints = Array.from(gpxDoc.getElementsByTagName('trkpt')).map(point => ({
+              lat: parseFloat(point.getAttribute('lat')),
+              lon: parseFloat(point.getAttribute('lon')),
+              ele: parseFloat(point.querySelector('ele')?.textContent) || null,
+              time: point.querySelector('time')?.textContent || new Date().toISOString()
+          }));
+  
+          if (trackPoints.length === 0) {
+              throw new Error('No track points found in GPX file');
+          }
+  
+          this.trackPoints = trackPoints;
+          this.calculateTrackStats();
+          
+          const track = {
+              points: this.trackPoints,
+              totalDistance: this.totalDistance,
+              startTime: trackPoints[0].time,
+              endTime: trackPoints[trackPoints.length - 1].time,
+              elapsedTime: new Date(trackPoints[trackPoints.length - 1].time) - new Date(trackPoints[0].time)
+          };
+  
+          await this.saveTrack(track);
+          this.currentTrack = track;
+          
+          // Emit event for UI updates
+          const event = new CustomEvent('gpx-imported', { detail: track });
+          window.dispatchEvent(event);
+          
+          return true;
+      } catch (error) {
+          this.logger.error('Error importing GPX file:', error);
+          throw error;
+      }
+  }
+  
+  calculateTrackStats() {
+      this.totalDistance = 0;
+      for (let i = 1; i < this.trackPoints.length; i++) {
+          const distance = this.calculateDistance(
+              this.trackPoints[i-1].lat,
+              this.trackPoints[i-1].lon,
+              this.trackPoints[i].lat,
+              this.trackPoints[i].lon
+          );
+          this.totalDistance += distance;
+      }
+  }
+
   exportGPX() {
     if (!this.currentTrack) return null;
 
