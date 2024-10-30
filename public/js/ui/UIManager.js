@@ -397,7 +397,7 @@ class UIManager {
   
     } catch (error) {
       this.logger.error('Error showing snow report form:', error);
-      this.showError(this.i18next.t('form.error.loading', 'Error loading form'));
+      this.showError(this.i18next.t('errors.form.loading', 'Error loading form'));
       // Revert to dashboard on error
       this.showDashboard();
     }
