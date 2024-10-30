@@ -264,6 +264,97 @@ class FormManager {
     }
   }
 
+  async initializeGPXSection() {
+      const gpxSelect = document.getElementById('gpx-option');
+      const existingOption = document.getElementById('existing-gpx-option');
+      const uploadContainer = document.getElementById('gpx-upload-container');
+      const gpsManager = GPSManager.getInstance();
+  
+      if (gpsManager.hasExistingTrack()) {
+          existingOption.style.display = 'block';
+      }
+  
+      gpxSelect.addEventListener('change', (e) => {
+          uploadContainer.style.display = e.target.value === 'upload' ? 'block' : 'none';
+      });
+  
+      this.setupGPXUpload();
+  }
+  
+  setupGPXUpload() {
+      const gpxUploadBtn = document.getElementById('gpx-upload-btn');
+      const gpxFileInput = document.getElementById('gpx-file-input');
+      const confirmDialog = document.getElementById('gpx-confirm-dialog');
+      const confirmReplace = document.getElementById('gpx-confirm-replace');
+      const confirmCancel = document.getElementById('gpx-confirm-cancel');
+      let pendingGPXFile = null;
+  
+      if (gpxUploadBtn) {
+          gpxUploadBtn.addEventListener('click', () => {
+              gpxFileInput.click();
+          });
+      }
+  
+      if (gpxFileInput) {
+          gpxFileInput.addEventListener('change', async (e) => {
+              const file = e.target.files[0];
+              if (!file) return;
+  
+              if (!file.name.endsWith('.gpx')) {
+                  document.getElementById('gpx-error').textContent = 
+                      this.i18next.t('form.gpx.errors.invalidFile');
+                  return;
+              }
+  
+              const gpsManager = GPSManager.getInstance();
+              if (gpsManager.hasExistingTrack()) {
+                  pendingGPXFile = file;
+                  const trackStats = gpsManager.getTrackStats();
+                  document.getElementById('existing-track-info').innerHTML = `
+                      <p><strong>${this.i18next.t('form.gpx.currentTrack')}</strong><br>
+                      ${trackStats.startTime.toLocaleDateString()} at ${trackStats.startTime.toLocaleTimeString()}<br>
+                      Distance: ${trackStats.distance} km</p>
+                  `;
+                  confirmDialog.style.display = 'block';
+              } else {
+                  await this.processGPXFile(file);
+              }
+          });
+      }
+  
+      if (confirmReplace) {
+          confirmReplace.addEventListener('click', async () => {
+              if (pendingGPXFile) {
+                  await this.processGPXFile(pendingGPXFile);
+                  pendingGPXFile = null;
+              }
+              confirmDialog.style.display = 'none';
+          });
+      }
+  
+      if (confirmCancel) {
+          confirmCancel.addEventListener('click', () => {
+              pendingGPXFile = null;
+              confirmDialog.style.display = 'none';
+              gpxFileInput.value = '';
+          });
+      }
+  }
+  
+  async processGPXFile(file) {
+      try {
+          const content = await file.text();
+          const gpsManager = GPSManager.getInstance();
+          await gpsManager.importGPXFile(content);
+          document.getElementById('gpx-filename').textContent = file.name;
+          document.getElementById('gpx-error').textContent = '';
+          document.getElementById('existing-gpx-option').style.display = 'block';
+      } catch (error) {
+          document.getElementById('gpx-error').textContent = 
+              this.i18next.t('form.gpx.errors.processingError');
+          document.getElementById('gpx-file-input').value = '';
+      }
+  }
   formatDuration(ms) {
       const hours = Math.floor(ms / (1000 * 60 * 60));
       const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
