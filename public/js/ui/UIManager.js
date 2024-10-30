@@ -121,40 +121,38 @@ class UIManager {
 
       const gpsCard = document.querySelector('[data-feature="gps-recording"]');
       if (gpsCard) {
-        gpsCard.addEventListener('click', async (e) => {
-          e.preventDefault();
-          const gpsManager = GPSManager.getInstance();
-          
-          if (gpsManager.isRecording) {
-              try {
-                const track = await gpsManager.stopRecording();
-                if (track) {
-                  await new Promise(resolve => setTimeout(resolve, 100));  // Small delay to ensure data is set
-                  this.showGPSTrackCard();
-                  this.updateGPSCardForStandby(gpsCard);
-                }
-              } catch (error) {
-                this.logger.error('Error stopping GPS recording:', error);
-                this.updateGPSCardForStandby(gpsCard);
+          gpsCard.addEventListener('click', async (e) => {
+              e.preventDefault();
+              const gpsManager = GPSManager.getInstance();
+              
+              if (gpsManager.isRecording) {
+                  try {
+                      const track = await gpsManager.stopRecording();
+                      if (track) {
+                          await new Promise(resolve => setTimeout(resolve, 100));
+                          this.showGPSTrackCard();
+                          this.updateGPSCardForStandby(gpsCard);
+                      }
+                  } catch (error) {
+                      this.logger.error('Error stopping GPS recording:', error);
+                      this.updateGPSCardForStandby(gpsCard);
+                  }
+              } else {
+                  if (gpsManager.hasExistingTrack()) {
+                      const confirm = window.confirm(
+                          this.i18next.t('dashboard.confirmOverwriteTrack')
+                      );
+                      if (!confirm) return;
+                      gpsManager.clearTrack();
+                      this.removeGPSTrackCard();
+                  }
+                  
+                  const started = await gpsManager.startRecording();
+                  if (started) {
+                      this.updateGPSCardForRecording(gpsCard);
+                  }
               }
-            } else {
-            if (gpsManager.hasExistingTrack()) {
-              const confirm = window.confirm(
-                this.i18next.t('dashboard.confirmOverwriteTrack')
-              );
-              if (!confirm) return;
-              gpsManager.clearTrack();
-              this.removeGPSTrackCard();
-            }
-            
-            try {
-              await gpsManager.startRecording();
-              this.updateGPSCardForRecording(gpsCard);
-            } catch (error) {
-              alert(error.message);
-            }
-          }
-        });
+          });
       }
 
       // Listen for GPS updates
