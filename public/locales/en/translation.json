@@ -116,6 +116,24 @@
       "attachLabel": "Attach GPS record from {{date}}",
       "details": "Track length: {{distance}} km, Time elapsed: {{duration}}"
     },
+    "gpx": {
+      "groupLabel": "Trip record GPX file",
+      "options": {
+    	"none": "No record",
+    	"existing": "Include recorded track",
+    	"upload": "Upload new GPX file"
+      },
+      "uploadButton": "Select GPX file",
+      "confirmReplace": "Replace Existing Track?",
+      "currentTrack": "Current track recorded on:",
+      "replaceQuestion": "Do you want to replace it with the new track?",
+      "cancel": "Cancel",
+      "replace": "Replace",
+      "errors": {
+    	"invalidFile": "Please select a valid GPX file",
+    	"processingError": "Error processing GPX file"
+      }
+    },
     "rewards": {
       "sectionTitle": "Rewards",
       "timeElapsed": "Time since opening this form:",
