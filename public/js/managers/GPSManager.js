@@ -31,6 +31,12 @@ class GPSManager {
     this.initializeDB();
 
     GPSManager.instance = this;
+
+    this.recordingMetadata = {
+        startTime: null,
+        distance: 0,
+        elapsedTime: 0
+    };
   }
 
   static getInstance() {
@@ -128,6 +134,15 @@ class GPSManager {
         }
       );
 
+        this.recordingMetadata = {
+            startTime: new Date().toISOString(),
+            distance: 0,
+            elapsedTime: 0
+        };
+
+        // Save initial metadata
+        await this.saveTrackMetadata(this.recordingMetadata);
+
       return true;
     } catch (error) {
       this.logger.error('Error starting GPS recording:', error);
@@ -135,6 +150,23 @@ class GPSManager {
     }
   }
 
+  async saveTrackMetadata(metadata) {
+      if (!this.db) await this.initializeDB();
+      
+      return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['trackMetadata'], 'readwrite');
+          const store = transaction.objectStore('trackMetadata');
+          
+          const request = store.put({
+              id: 'current',
+              ...metadata
+          });
+  
+          request.onsuccess = () => resolve();
+          request.onerror = () => reject(request.error);
+      });
+  }
+  
   async requestLocationPermission() {
     try {
       const result = await navigator.permissions.query({ name: 'geolocation' });
@@ -178,6 +210,12 @@ class GPSManager {
       this.totalDistance += distance;
     }
 
+    // Update metadata
+    this.recordingMetadata.distance = this.totalDistance;
+    this.recordingMetadata.elapsedTime = 
+        new Date() - new Date(this.recordingMetadata.startTime);
+    await this.saveTrackMetadata(this.recordingMetadata);
+
     this.trackPoints.push(point);
     this.lastPoint = point;
     this.lastElevation = point.ele;
@@ -199,6 +237,32 @@ class GPSManager {
     window.dispatchEvent(event);
   }
 
+  async loadTrackMetadata() {
+      if (!this.db) await this.initializeDB();
+      
+      return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['trackMetadata'], 'readonly');
+          const store = transaction.objectStore('trackMetadata');
+          const request = store.get('current');
+  
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+      });
+  }
+
+  async clearTrackMetadata() {
+      if (!this.db) await this.initializeDB();
+      
+      return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(['trackMetadata'], 'readwrite');
+          const store = transaction.objectStore('trackMetadata');
+          const request = store.delete('current');
+  
+          request.onsuccess = () => resolve();
+          request.onerror = () => reject(request.error);
+      });
+  }
+  
   handleError(error) {
     this.logger.error('GPS Error:', error);
     // Emit error event
@@ -260,6 +324,29 @@ class GPSManager {
       this.logger.error('Failed to save completed track:', error);
       throw error;
     }
+
+    const metadata = await this.loadTrackMetadata();
+    const track = {
+        points: this.trackPoints,
+        totalDistance: this.totalDistance,
+        startTime: metadata.startTime,
+        endTime: new Date().toISOString(),
+        elapsedTime: metadata.elapsedTime
+    };
+
+    try {
+        const trackId = await this.saveTrack(track);
+        this.currentTrack = track;
+        
+        // Clear metadata after successful save
+        await this.clearTrackMetadata();
+        
+        return track;
+    } catch (error) {
+        this.logger.error('Failed to save completed track:', error);
+        throw error;
+    }
+
   }
 
   getTrackStats() {
@@ -350,6 +437,12 @@ class GPSManager {
             const pointsStore = db.createObjectStore('activePoints', { keyPath: 'timestamp' });
             pointsStore.createIndex('timestamp', 'timestamp', { unique: false });
           }
+
+          // Store metadata like date, distance and time elapsed
+          if (!db.objectStoreNames.contains('trackMetadata')) {
+              db.createObjectStore('trackMetadata', { keyPath: 'id' });
+          }
+
         };
       });
     } catch (error) {
