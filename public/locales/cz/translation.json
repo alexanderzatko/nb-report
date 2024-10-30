@@ -116,6 +116,24 @@ port{
       "details": "Délka trasy: {{distance}} km, Trvání: {{duration}}"
     },
     "takePhoto": "Nafotit",
+    "gpx": {
+      "groupLabel": "GPX soubor záznamu trasy",
+      "options": {
+        "none": "Žádný záznam",
+        "existing": "Připojit zaznamenanou trasu",
+        "upload": "Nahrát nový GPX soubor"
+      },
+      "uploadButton": "Vybrat GPX soubor",
+      "confirmReplace": "Nahradit existující trasu?",
+      "currentTrack": "Aktuální trasa zaznamenaná dne:",
+      "replaceQuestion": "Chcete ji nahradit novou trasou?",
+      "cancel": "Zrušit",
+      "replace": "Nahradit",
+      "errors": {
+        "invalidFile": "Vyberte platný GPX soubor",
+        "processingError": "Chyba při zpracování GPX souboru"
+      }
+    },
     "rewards": {
       "sectionTitle": "Odměňování",
       "timeElapsed": "Čas od oteření táto formuláře:",
