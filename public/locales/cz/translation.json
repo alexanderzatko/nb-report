@@ -331,6 +331,9 @@ port{
     },
     "application": {
       "initFailed": "Inicializace aplikace selhala. Obnovte stránku."
+    },
+    "form": {
+      "loading": "Chyba při načítání formuláře"
     }
   },
   "offline": {
