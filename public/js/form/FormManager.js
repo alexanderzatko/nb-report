@@ -758,16 +758,61 @@ class FormManager {
   }
   
   async submitFormData(formData) {
-    const response = await fetch('/api/submit-snow-report', {
-      method: 'POST',
-      body: formData
+    // Convert FormData to a regular object for logging
+    const formDataObject = {};
+    formData.forEach((value, key) => {
+      // Handle File objects specially
+      if (value instanceof File) {
+        formDataObject[key] = {
+          type: 'File',
+          name: value.name,
+          size: value.size,
+          lastModified: value.lastModified
+        };
+      } else {
+        // Handle regular form data
+        // If the key already exists, convert it to an array
+        if (formDataObject[key]) {
+          if (!Array.isArray(formDataObject[key])) {
+            formDataObject[key] = [formDataObject[key]];
+          }
+          formDataObject[key].push(value);
+        } else {
+          formDataObject[key] = value;
+        }
+      }
     });
-
-    if (!response.ok) {
-      throw new Error('Failed to submit report');
+  
+    // Get photos from PhotoManager
+    const photos = this.photoManager.getPhotos();
+    const photoInfo = photos.map(photo => ({
+      name: photo.file.name,
+      size: photo.file.size,
+      caption: photo.caption
+    }));
+  
+    // Log the complete form submission data
+    console.group('Form Submission Data');
+    console.log('Form Fields:', formDataObject);
+    console.log('Trail Conditions:', this.trailConditions);
+    console.log('Photos:', photoInfo);
+    
+    // If GPS track is included, log it
+    const includeGPX = document.getElementById('include-gpx')?.checked;
+    if (includeGPX) {
+      const gpsManager = GPSManager.getInstance();
+      if (gpsManager.hasExistingTrack()) {
+        console.log('GPS Track included:', true);
+        console.log('GPX Data:', gpsManager.exportGPX());
+      }
     }
-
-    return response.json();
+    console.groupEnd();
+  
+    // For now, return a successful response
+    return {
+      success: true,
+      message: 'Form data logged to console'
+    };
   }
 
   handleCancel() {
