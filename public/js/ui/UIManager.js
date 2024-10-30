@@ -355,9 +355,32 @@ class UIManager {
     const snowReportForm = document.getElementById('snow-report-form');
     
     if (dashboardContainer && snowReportForm) {
+      // Reset form sections visibility before showing the form
+      const regularUserSection = document.getElementById('regular-user-section');
+      const adminSection = document.getElementById('admin-section');
+      const trailsSection = document.getElementById('trails-section');
+      const rewardsSection = document.getElementById('rewards-section');
+
+      // Hide all sections first
+      if (regularUserSection) regularUserSection.style.display = 'none';
+      if (adminSection) adminSection.style.display = 'none';
+      if (trailsSection) trailsSection.style.display = 'none';
+      if (rewardsSection) rewardsSection.style.display = 'none';
+
+      // Show the form and initialize it
       dashboardContainer.style.display = 'none';
       snowReportForm.style.display = 'block';
-      this.formManager.startTrackingFormTime();
+      
+      // Re-initialize form to ensure proper section visibility
+      if (window.app) {
+        window.app.refreshUserData().then(() => {
+          this.formManager.startTrackingFormTime();
+        }).catch(error => {
+          this.logger.error('Error refreshing user data:', error);
+        });
+      } else {
+        this.formManager.startTrackingFormTime();
+      }
     } else {
       this.logger.error('Required DOM elements not found');
     }
@@ -367,36 +390,22 @@ class UIManager {
       const dashboardContainer = document.getElementById('dashboard-container');
       const settingsContainer = document.getElementById('settings-container');
       const snowReportForm = document.getElementById('snow-report-form');
-      const regularUserSection = document.getElementById('regular-user-section');
-      const adminSection = document.getElementById('admin-section');
-      const trailsSection = document.getElementById('trails-section');
-      const rewardsSection = document.getElementById('rewards-section');
       
+      // Only toggle the main containers, don't touch form sections
       if (dashboardContainer) dashboardContainer.style.display = 'block';
       if (settingsContainer) settingsContainer.style.display = 'none';
       if (snowReportForm) snowReportForm.style.display = 'none';
-      if (regularUserSection) regularUserSection.style.display = 'none';
-      if (adminSection) adminSection.style.display = 'none';
-      if (trailsSection) trailsSection.style.display = 'none';
-      if (rewardsSection) rewardsSection.style.display = 'none';
   }
 
   showSettings() {
       const dashboardContainer = document.getElementById('dashboard-container');
       const settingsContainer = document.getElementById('settings-container');
       const snowReportForm = document.getElementById('snow-report-form');
-      const regularUserSection = document.getElementById('regular-user-section');
-      const adminSection = document.getElementById('admin-section');
-      const trailsSection = document.getElementById('trails-section');
-      const rewardsSection = document.getElementById('rewards-section');
       
+      // Only toggle the main containers, don't touch form sections
       if (dashboardContainer) dashboardContainer.style.display = 'none';
       if (settingsContainer) settingsContainer.style.display = 'block';
       if (snowReportForm) snowReportForm.style.display = 'none';
-      if (regularUserSection) regularUserSection.style.display = 'none';
-      if (adminSection) adminSection.style.display = 'none';
-      if (trailsSection) trailsSection.style.display = 'none';
-      if (rewardsSection) rewardsSection.style.display = 'none';
   }
 
   async updateUIWithUserData(userData) {
