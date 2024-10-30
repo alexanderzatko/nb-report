@@ -345,98 +345,99 @@ class UIManager {
     }
   }
   
-  showSnowReportForm() {
-    if (!this.formManager) {
-      this.logger.error('FormManager not initialized');
-      return;
-    }
-
-    const dashboardContainer = document.getElementById('dashboard-container');
-    const snowReportForm = document.getElementById('snow-report-form');
-    
-    if (dashboardContainer && snowReportForm) {
-      // Reset form sections visibility before showing the form
-      const regularUserSection = document.getElementById('regular-user-section');
-      const adminSection = document.getElementById('admin-section');
-      const trailsSection = document.getElementById('trails-section');
-      const rewardsSection = document.getElementById('rewards-section');
-
-      // Hide all sections first
-      if (regularUserSection) regularUserSection.style.display = 'none';
-      if (adminSection) adminSection.style.display = 'none';
-      if (trailsSection) trailsSection.style.display = 'none';
-      if (rewardsSection) rewardsSection.style.display = 'none';
-
-      // Show the form and initialize it
-      dashboardContainer.style.display = 'none';
-      snowReportForm.style.display = 'block';
-      
-      // Re-initialize form to ensure proper section visibility
-      if (window.app) {
-        window.app.refreshUserData().then(() => {
-          this.formManager.startTrackingFormTime();
-        }).catch(error => {
-          this.logger.error('Error refreshing user data:', error);
-        });
-      } else {
-        this.formManager.startTrackingFormTime();
+    async showSnowReportForm() {
+      if (!this.formManager) {
+        this.logger.error('FormManager not initialized');
+        return;
       }
-    } else {
-      this.logger.error('Required DOM elements not found');
-    }
-  }
-
-  showDashboard() {
-      const dashboardContainer = document.getElementById('dashboard-container');
-      const settingsContainer = document.getElementById('settings-container');
-      const snowReportForm = document.getElementById('snow-report-form');
-      
-      // Only toggle the main containers, don't touch form sections
-      if (dashboardContainer) dashboardContainer.style.display = 'block';
-      if (settingsContainer) settingsContainer.style.display = 'none';
-      if (snowReportForm) snowReportForm.style.display = 'none';
-  }
-
-  showSettings() {
-      const dashboardContainer = document.getElementById('dashboard-container');
-      const settingsContainer = document.getElementById('settings-container');
-      const snowReportForm = document.getElementById('snow-report-form');
-      
-      // Only toggle the main containers, don't touch form sections
-      if (dashboardContainer) dashboardContainer.style.display = 'none';
-      if (settingsContainer) settingsContainer.style.display = 'block';
-      if (snowReportForm) snowReportForm.style.display = 'none';
-  }
-
-  async updateUIWithUserData(userData) {
-    this.logger.debug('Updating UI with user data:', userData);
-    
-    if (userData.language) {
+  
       try {
-        // Ensure i18next is initialized before changing language
-        if (!this.i18next.isInitialized) {
-          this.logger.debug('Waiting for i18next initialization before language change...');
-          await new Promise((resolve) => {
-            this.i18next.on('initialized', resolve);
-          });
+        const dashboardContainer = document.getElementById('dashboard-container');
+        const snowReportForm = document.getElementById('snow-report-form');
+        
+        if (!dashboardContainer || !snowReportForm) {
+          this.logger.error('Required DOM elements not found');
+          return;
         }
-
-        await this.i18next.changeLanguage(userData.language);
-        this.logger.debug('Language changed successfully to:', userData.language);
+  
+        // Show the form container first
+        dashboardContainer.style.display = 'none';
+        snowReportForm.style.display = 'block';
+  
+        // Fetch fresh user data and initialize form
+        const response = await fetch('/api/user-data', {
+          credentials: 'include'
+        });
+  
+        if (!response.ok) {
+          throw new Error('Failed to fetch user data');
+        }
+  
+        const userData = await response.json();
+        this.logger.debug('Fetched user data for form:', userData);
+  
+        // Initialize form with fresh user data
+        this.formManager.initializeForm(userData);
+        this.formManager.startTrackingFormTime();
+  
       } catch (error) {
-        this.logger.error('Error changing language:', error);
-        // Continue with other updates even if language change fails
+        this.logger.error('Error showing snow report form:', error);
+        this.showError(this.i18next.t('form.error.loading', 'Error loading form'));
+        // Revert to dashboard on error
+        this.showDashboard();
       }
     }
-    
-    // Update UI components that don't depend on translations
-    this.updateRewardsSection(userData);
-    
-    // Update translated content if i18next is ready
-    if (this.i18next.isInitialized) {
-      this.updatePageContent();
+
+    showDashboard() {
+        const dashboardContainer = document.getElementById('dashboard-container');
+        const settingsContainer = document.getElementById('settings-container');
+        const snowReportForm = document.getElementById('snow-report-form');
+        
+        // Only toggle the main containers, don't touch form sections
+        if (dashboardContainer) dashboardContainer.style.display = 'block';
+        if (settingsContainer) settingsContainer.style.display = 'none';
+        if (snowReportForm) snowReportForm.style.display = 'none';
     }
-  }
+
+    showSettings() {
+        const dashboardContainer = document.getElementById('dashboard-container');
+        const settingsContainer = document.getElementById('settings-container');
+        const snowReportForm = document.getElementById('snow-report-form');
+        
+        // Only toggle the main containers, don't touch form sections
+        if (dashboardContainer) dashboardContainer.style.display = 'none';
+        if (settingsContainer) settingsContainer.style.display = 'block';
+        if (snowReportForm) snowReportForm.style.display = 'none';
+    }
+
+    async updateUIWithUserData(userData) {
+      this.logger.debug('Updating UI with user data:', userData);
+      
+      if (userData.language) {
+        try {
+          if (!this.i18next.isInitialized) {
+            await new Promise(resolve => {
+              this.i18next.on('initialized', resolve);
+            });
+          }
+          await this.i18next.changeLanguage(userData.language);
+        } catch (error) {
+          this.logger.error('Error changing language:', error);
+        }
+      }
+      
+      // Initialize form if it's currently visible
+      const snowReportForm = document.getElementById('snow-report-form');
+      if (snowReportForm && snowReportForm.style.display === 'block') {
+        this.formManager.initializeForm(userData);
+      }
+      
+      this.updateRewardsSection(userData);
+      
+      if (this.i18next.isInitialized) {
+        this.updatePageContent();
+      }
+    }
 
     updatePageContent() {
     if (!this.i18next.isInitialized) {
