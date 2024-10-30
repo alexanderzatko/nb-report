@@ -24,20 +24,20 @@ class GPSManager {
     this.wakeLock = null;
     this.hasWakeLock = 'wakeLock' in navigator;
 
-    // IndexedDB initialization
+    // Update dbVersion to trigger onupgradeneeded
     this.dbName = 'GPSTrackerDB';
-    this.dbVersion = 1;
+    this.dbVersion = 2;  // Increment this from 1 to 2
     this.db = null;
     this.initializeDB();
-
-    GPSManager.instance = this;
 
     this.recordingMetadata = {
         startTime: null,
         distance: 0,
         elapsedTime: 0
     };
-  }
+
+    GPSManager.instance = this;
+}
 
   static getInstance() {
     if (!GPSManager.instance) {
@@ -408,30 +408,29 @@ class GPSManager {
         request.onupgradeneeded = (event) => {
           const db = event.target.result;
           
-          // Create tracks store
+          // Create tracks store if it doesn't exist
           if (!db.objectStoreNames.contains('tracks')) {
             const trackStore = db.createObjectStore('tracks', { keyPath: 'id' });
             trackStore.createIndex('startTime', 'startTime', { unique: false });
           }
           
-          // Create points store for active recording
+          // Create points store for active recording if it doesn't exist
           if (!db.objectStoreNames.contains('activePoints')) {
             const pointsStore = db.createObjectStore('activePoints', { keyPath: 'timestamp' });
             pointsStore.createIndex('timestamp', 'timestamp', { unique: false });
           }
 
-          // Store metadata like date, distance and time elapsed
+          // Create trackMetadata store if it doesn't exist
           if (!db.objectStoreNames.contains('trackMetadata')) {
-              db.createObjectStore('trackMetadata', { keyPath: 'id' });
+            db.createObjectStore('trackMetadata', { keyPath: 'id' });
           }
-
         };
       });
     } catch (error) {
       this.logger.error('Failed to initialize IndexedDB:', error);
       throw error;
     }
-  }
+}
 
   // Save point during recording
   async savePoint(point) {
