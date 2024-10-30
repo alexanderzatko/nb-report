@@ -116,6 +116,24 @@
       "attachLabel": "Priložiť GPS záznam z {{date}}",
       "details": "Dĺžka trasy: {{distance}} km, Trvanie: {{duration}}"
     },
+    "gpx": {
+      "groupLabel": "GPX súbor záznamu trasy",
+      "options": {
+        "none": "Žiaden záznam",
+        "existing": "Pripojiť zaznamenanú trasu",
+        "upload": "Nahrať nový GPX súbor"
+      },
+      "uploadButton": "Vybrať GPX súbor",
+      "confirmReplace": "Nahradiť existujúcu trasu?",
+      "currentTrack": "Existujúca trasa zaznamenaná dňa:",
+      "replaceQuestion": "Chcete ju nahradiť novou trasou?",
+      "cancel": "Zrušiť",
+      "replace": "Nahradiť",
+      "errors": {
+        "invalidFile": "Vyberte platný GPX súbor",
+        "processingError": "Chyba pri spracovaní GPX súboru"
+      }
+    }
     "rewards": {
       "sectionTitle": "Odmeňovanie",
       "timeElapsed": "Čas od otvorenia tejto stránky:",
