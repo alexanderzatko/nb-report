@@ -203,16 +203,37 @@ class FormManager {
     const trackDetails = document.getElementById('gps-track-details');
     
     if (track && gpsTrackSection && trackLabel && trackDetails) {
+        this.logger.debug('Track data:', track);  // Add debug logging
+        
         const startDate = new Date(track.startTime);
-        const duration = this.formatDuration(track.elapsedTime);
+        const endDate = new Date(track.endTime);
+        
+        // Format date properly
+        const formattedDate = startDate.toLocaleDateString(this.i18next.language, {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+        
+        // Calculate duration in milliseconds
+        const durationMs = endDate.getTime() - startDate.getTime();
+        const hours = Math.floor(durationMs / (1000 * 60 * 60));
+        const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+        const formattedDuration = `${hours}:${String(minutes).padStart(2, '0')}`;
+
+        this.logger.debug('Formatted values:', {
+            date: formattedDate,
+            duration: formattedDuration,
+            distance: Math.round(track.totalDistance)
+        });
         
         trackLabel.textContent = this.i18next.t('form.gpsTrack.attachLabel', {
-            date: startDate.toLocaleDateString()
+            date: formattedDate
         });
         
         trackDetails.textContent = this.i18next.t('form.gpsTrack.details', {
             distance: Math.round(track.totalDistance),
-            duration: duration
+            duration: formattedDuration
         });
         
         gpsTrackSection.style.display = 'block';
