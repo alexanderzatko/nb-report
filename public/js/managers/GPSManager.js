@@ -95,61 +95,60 @@ class GPSManager {
   }
 
   async startRecording() {
-    try {
-      const capability = this.checkGPSCapability();
-      if (!capability.supported) {
-        alert(capability.reason);
-        return false;
+      try {
+          const capability = this.checkGPSCapability();
+          if (!capability.supported) {
+              alert(capability.reason);
+              return false;
+          }
+  
+          const permission = await this.requestLocationPermission();
+          if (!permission) {
+              throw new Error(this.i18next.t('errors.gps.permissionDenied'));
+          }
+  
+          // Clear any existing active points
+          await this.clearActivePoints();
+  
+          this.trackPoints = [];
+          this.totalDistance = 0;
+          this.lastPoint = null;
+          this.lastElevation = null;
+          this.isRecording = true;
+  
+          if (this.hasWakeLock) {
+              try {
+                  this.wakeLock = await navigator.wakeLock.request('screen');
+                  this.logger.debug('Wake Lock acquired');
+              } catch (err) {
+                  this.logger.warn('Failed to acquire wake lock:', err);
+              }
+          }
+  
+          this.watchId = navigator.geolocation.watchPosition(
+              (position) => this.handlePosition(position),
+              (error) => this.handleError(error),
+              {
+                  enableHighAccuracy: true,
+                  timeout: 30000,
+                  maximumAge: 0
+              }
+          );
+  
+          this.recordingMetadata = {
+              startTime: new Date().toISOString(),
+              distance: 0,
+              elapsedTime: 0
+          };
+  
+          // Save initial metadata
+          await this.saveTrackMetadata(this.recordingMetadata);
+          return true;
+  
+      } catch (error) {
+          this.logger.error('Error starting GPS recording:', error);
+          throw error;
       }
-
-    try {
-        const permission = await this.requestLocationPermission();
-        if (!permission) {
-            throw new Error(this.i18next.t('errors.gps.permissionDenied'));
-        }
-
-        // Clear any existing active points
-        await this.clearActivePoints();
-  
-        this.trackPoints = [];
-        this.totalDistance = 0;
-        this.lastPoint = null;
-        this.lastElevation = null;
-        this.isRecording = true;
-  
-        if (this.hasWakeLock) {
-          try {
-            this.wakeLock = await navigator.wakeLock.request('screen');
-            this.logger.debug('Wake Lock acquired');
-          } catch (err) {
-            this.logger.warn('Failed to acquire wake lock:', err);
-          }
-        }
-  
-        this.watchId = navigator.geolocation.watchPosition(
-          (position) => this.handlePosition(position),
-          (error) => this.handleError(error),
-          {
-            enableHighAccuracy: true,
-            timeout: 30000,
-            maximumAge: 0
-          }
-        );
-  
-        this.recordingMetadata = {
-            startTime: new Date().toISOString(),
-            distance: 0,
-            elapsedTime: 0
-        };
-
-        // Save initial metadata
-        await this.saveTrackMetadata(this.recordingMetadata);
-
-        return true;
-    } catch (error) {
-      this.logger.error('Error starting GPS recording:', error);
-      throw error;
-    }
   }
 
   async saveTrackMetadata(metadata) {
