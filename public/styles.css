@@ -648,6 +648,10 @@ textarea:invalid + .validation-message {
     font-size: 16px;
 }
 
+.form-buttons > .cancel-button {
+    margin-top: 50px;
+}
+
 .cancel-button:hover {
     background-color: #5a6268;
 }
