@@ -48,7 +48,10 @@ self.addEventListener('fetch', function(event) {
         }
         return fetch(event.request)
           .catch(function() {
-            return caches.match(OFFLINE_PAGE);
+            if (event.request.mode === 'navigate') {
+              return caches.match('/index.html');
+            }
+            return caches.match('/offline.html');
           });
       })
   );
