@@ -50,16 +50,7 @@ class App {
 
   async initializeApp() {
     try {
-      // Initialize service worker first
-      if ('serviceWorker' in navigator) {
-        await this.managers.serviceWorker.initialize();
-      }
-  
-      // Initialize i18next
-      await resetI18next();
-      await initI18next();
-
-      // Initialize core managers
+      // Initialize managers object first
       this.managers = {
         config: ConfigManager.getInstance(),
         event: EventManager.getInstance(),
@@ -68,25 +59,31 @@ class App {
         state: StateManager.getInstance(),
         auth: AuthManager.getInstance(),
         ui: UIManager.getInstance(),
-        serviceWorker: ServiceWorkerManager.getInstance(),
+        serviceWorker: ServiceWorkerManager.getInstance(), // Add this here
         gps: GPSManager.getInstance()
       };
-
-      // Initialize form-related managers early
-      await this.initializeFormManagers();
-
-      await this.managers.ui.initialize();
-
+  
+      // Now you can safely initialize service worker
       if ('serviceWorker' in navigator) {
         await this.managers.serviceWorker.initialize();
       }
-
+  
+      // Initialize i18next
+      await resetI18next();
+      await initI18next();
+  
+      // Initialize form-related managers early
+      await this.initializeFormManagers();
+  
+      await this.managers.ui.initialize();
+  
       if (this.i18next.isInitialized) {
         await this.managers.ui.updateGPSCardVisibility();
       }
-      
-      this.managers.gps = GPSManager.getInstance();
-
+  
+      // Remove this as it's already initialized above
+      // this.managers.gps = GPSManager.getInstance();
+  
       const hasActiveRecording = await this.managers.gps.checkForActiveRecording();
       if (hasActiveRecording) {
         this.logger.debug('Restored active GPS recording');
@@ -99,7 +96,7 @@ class App {
           await this.managers.ui.showGPSTrackCard();
         }
       }
-
+  
       await this.initializeAppState();
       
       this.initialized = true;
