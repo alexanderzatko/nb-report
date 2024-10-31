@@ -30,15 +30,7 @@ class ServiceWorkerManager {
       console.log('[ServiceWorkerManager] Service Worker not supported');
       return false;
     }
-
-    // Wait for i18next to be ready
-    if (!this.i18next.isInitialized) {
-      console.log('[ServiceWorkerManager] Waiting for i18next initialization');
-      await new Promise(resolve => {
-        this.i18next.on('initialized', resolve);
-      });
-    }
-
+  
     try {
       await this.registerServiceWorker();
       console.log('[ServiceWorkerManager] Initialization complete');
