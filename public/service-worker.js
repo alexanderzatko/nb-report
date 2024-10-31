@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v149';  // Should match ConfigManager.js version
+const CACHE_VERSION = 'v150';  // Should match ConfigManager.js version
 const CACHE_NAME = 'snow-report-cache';
 const FULL_CACHE_NAME = `${CACHE_NAME}-${CACHE_VERSION}`;
 
@@ -26,6 +26,10 @@ const urlsToCache = [
   '/js/utils/Logger.js',
   '/js/ui/UIManager.js',
   '/js/validation/ValidationManager.js',
+  '/node_modules/i18next/dist/esm/i18next.js',
+  '/node_modules/i18next-http-backend/esm/index.js',
+  '/node_modules/i18next-browser-languagedetector/dist/esm/i18nextBrowserLanguageDetector.js',
+  '/offline.html'
 ];
 
 const OFFLINE_PAGE = '/offline.html';
