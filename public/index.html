@@ -162,44 +162,6 @@
             <!-- Options populated dynamically -->
           </select>
 
-          <div class="form-group gpx-section">
-              <label data-i18n="form.gpx.groupLabel">Trip record GPX file</label>
-              <select id="gpx-option" class="gpx-select">
-                  <option value="none" data-i18n="form.gpx.options.none">No record</option>
-                  <option value="existing" id="existing-gpx-option" style="display: none;" data-i18n="form.gpx.options.existing">Include recorded track</option>
-                  <option value="upload" data-i18n="form.gpx.options.upload">Upload new GPX file</option>
-              </select>
-              
-              <div id="gpx-upload-container" style="display: none;" class="gpx-upload-controls">
-                  <input type="file" id="gpx-file-input" accept=".gpx,application/gpx+xml" style="display: none;">
-                  <button type="button" id="gpx-upload-btn" class="photo-button" data-i18n="form.gpx.uploadButton">Select GPX file</button>
-                  <span id="gpx-filename" class="gpx-filename"></span>
-                  <div id="gpx-error" class="validation-message"></div>
-              </div>
-          </div>
-          
-          <div id="gpx-confirm-dialog" class="modal" style="display: none;">
-              <div class="modal-content">
-                  <h3 data-i18n="form.gpx.confirmReplace">Replace Existing Track?</h3>
-                  <div id="existing-track-info"></div>
-                  <p data-i18n="form.gpx.replaceQuestion">Do you want to replace it with the new track?</p>
-                  <div class="modal-buttons">
-                      <button type="button" id="gpx-confirm-cancel" class="cancel-button" data-i18n="form.gpx.cancel">Cancel</button>
-                      <button type="button" id="gpx-confirm-replace" class="photo-button" data-i18n="form.gpx.replace">Replace</button>
-                  </div>
-              </div>
-          </div>
-          
-          <div id="gps-track-section" class="gps-track-section" style="display: none;">
-            <div class="form-group">
-              <label class="checkbox-label">
-                <input type="checkbox" id="attach-gps-track">
-                <span id="gps-track-label"></span>
-              </label>
-              <div class="help-text" id="gps-track-details"></div>
-            </div>
-          </div>
-
         </div>
 
         <!-- Admin Section -->
@@ -235,6 +197,36 @@
           <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
         </div>
 
+        <!-- Regular User Section 2 -->
+        <div id="regular-user-section" class="form-section">
+          <div class="form-group gpx-section">
+        	  <label data-i18n="form.gpx.groupLabel">Trip record GPX file</label>
+        	  <select id="gpx-option" class="gpx-select">
+        		  <option value="none" data-i18n="form.gpx.options.none">No record</option>
+        		  <option value="existing" id="existing-gpx-option" style="display: none;" data-i18n="form.gpx.options.existing">Include recorded track</option>
+        		  <option value="upload" data-i18n="form.gpx.options.upload">Upload new GPX file</option>
+        	  </select>
+        	  
+        	  <div id="gpx-upload-container" style="display: none;" class="gpx-upload-controls">
+        		  <input type="file" id="gpx-file-input" accept=".gpx,application/gpx+xml" style="display: none;">
+        		  <button type="button" id="gpx-upload-btn" class="photo-button" data-i18n="form.gpx.uploadButton">Select GPX file</button>
+        		  <span id="gpx-filename" class="gpx-filename"></span>
+        		  <div id="gpx-error" class="validation-message"></div>
+        	  </div>
+          </div>
+          
+          <div id="gpx-confirm-dialog" class="modal" style="display: none;">
+        	  <div class="modal-content">
+        		  <h3 data-i18n="form.gpx.confirmReplace">Replace Existing Track?</h3>
+        		  <div id="existing-track-info"></div>
+        		  <p data-i18n="form.gpx.replaceQuestion">Do you want to replace it with the new track?</p>
+        		  <div class="modal-buttons">
+        			  <button type="button" id="gpx-confirm-cancel" class="cancel-button" data-i18n="form.gpx.cancel">Cancel</button>
+        			  <button type="button" id="gpx-confirm-replace" class="photo-button" data-i18n="form.gpx.replace">Replace</button>
+        		  </div>
+        	  </div>
+          </div>
+        </div>
         <div class="form-group">
           <label for="report-note" class="required-field" data-i18n="form.reportNote">Report</label>
           <textarea id="report-note" required name="report_note" data-i18n-validate="form.validation.required"></textarea>
