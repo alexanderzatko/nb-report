@@ -15,8 +15,6 @@ class AuthManager {
     this.exchangingToken = false;
     this.stateCheckInProgress = false;
     this.tokenRefreshInterval = null;
-    this.isNewLogin = false;
-    this.hasLoggedOut = false;
     AuthManager.instance = this;
   }
 
@@ -28,49 +26,36 @@ class AuthManager {
   }
 
   async checkAuthStatus() {
-      try {
-          const storedSessionId = localStorage.getItem(AuthManager.SESSION_KEY);
-          
-          if (!storedSessionId) {
-              return false;
-          }
-  
-          // If we've just logged in or haven't logged out, trust the session
-          if (this.isNewLogin || !this.hasLoggedOut) {
-              return true;
-          }
-  
-          // Only verify with server if we've previously logged out
-          const response = await fetch('/api/auth-status', {
-              credentials: 'include',
-              headers: {
-                  'X-Session-ID': storedSessionId
-              }
-          });
-          
-          if (!response.ok) {
-              await this.clearAuthData();
-              return false;
-          }
-  
-          const data = await response.json();
-          
-          if (!data.isAuthenticated) {
-              await this.clearAuthData();
-              return false;
-          }
-  
-          // Set up token refresh if authenticated
-          if (data.isAuthenticated && !this.tokenRefreshInterval) {
-              this.setupTokenRefresh();
-          }
-          
-          return data.isAuthenticated;
-      } catch (error) {
-          this.logger.error('Error checking auth status:', error);
-          await this.clearAuthData();
-          return false;
+    try {
+      // First check if we have a stored session ID
+      const storedSessionId = localStorage.getItem(AuthManager.SESSION_KEY);
+      
+      if (!storedSessionId) {
+        return false;
       }
+  
+      const response = await fetch('/api/auth-status', {
+        credentials: 'include',
+        headers: {
+          'X-Session-ID': storedSessionId
+        }
+      });
+      
+      const data = await response.json();
+      console.log('Auth status response:', data);
+      
+      if (data.isAuthenticated && !this.tokenRefreshInterval) {
+        this.setupTokenRefresh();
+      } else if (!data.isAuthenticated) {
+        // Clear stored session if it's invalid
+        this.clearAuthData();
+      }
+      
+      return data.isAuthenticated;  // Keep returning the original boolean from server
+    } catch (error) {
+      console.error('Error checking auth status:', error);
+      return false;
+    }
   }
 
   setupTokenRefresh() {
@@ -92,133 +77,117 @@ class AuthManager {
   }
 
   async handleOAuthCallback(code, state) {
-      console.log('handleOAuthCallback called');
-      console.log('Code:', code, 'State:', state);
+    console.log('handleOAuthCallback called');
+    console.log('Code:', code, 'State:', state);
   
-      if (this.exchangingToken) {
-          console.log('Token exchange already in progress');
+    if (this.exchangingToken) {
+      console.log('Token exchange already in progress');
+      return false;
+    }
+  
+    this.exchangingToken = true;
+  
+    try {
+      if (state) {
+        const storedState = sessionStorage.getItem(AuthManager.STATE_KEY);
+        console.log('Stored state:', storedState);
+        
+        if (!storedState || !state) {
+          console.error('Missing state');
           return false;
-      }
+        }
   
-      this.exchangingToken = true;
-  
-      try {
-          if (state) {
-              const storedState = sessionStorage.getItem(AuthManager.STATE_KEY);
-              console.log('Stored state:', storedState);
-              
-              if (!storedState || !state) {
-                  console.error('Missing state');
-                  return false;
-              }
-  
-              // Parse timestamps from states
-              const [returnedTimestamp] = state.split('.');
-              const [storedTimestamp] = storedState.split('.');
-              
-              console.log('Timestamps - Returned:', returnedTimestamp, 'Stored:', storedTimestamp);
-              
-              // Allow for small timing differences (within 5 seconds)
-              const timeDiff = Math.abs(parseInt(returnedTimestamp) - parseInt(storedTimestamp));
-              if (timeDiff > 5000) {
-                  console.error('Timestamp difference too large:', timeDiff);
-                  return false;
-              }
-  
-              // Verify the complete state if timestamps are close
-              if (state === storedState) {
-                  console.log('Exact state match');
-              } else {
-                  console.log('States differ but timestamps are within tolerance');
-              }
-          }
-  
-          if (code) {
-              console.log('Exchanging token');
-              try {
-                  const success = await this.exchangeToken(code);
-                  if (success) {
-                      // Store the session ID we got from the response
-                      const sessionId = localStorage.getItem(AuthManager.SESSION_KEY);
-                      if (sessionId) {
-                          console.log('Storing session ID:', sessionId);
-                          localStorage.setItem(AuthManager.SESSION_KEY, sessionId);
-                      }
-                      console.log('Token exchanged successfully');
-
-                      // Set new login flag and schedule its reset
-                      this.isNewLogin = true;
-                      setTimeout(() => {
-                          this.isNewLogin = false;
-                      }, 5000);
-
-                      await this.checkAuthStatus(); // Ensure we get the latest auth status
-                      return true;
-                  }
-              } catch (error) {
-                  console.error('Error exchanging token:', error);
-              }
-          }
-  
+        // Parse timestamps from states
+        const [returnedTimestamp] = state.split('.');
+        const [storedTimestamp] = storedState.split('.');
+        
+        console.log('Timestamps - Returned:', returnedTimestamp, 'Stored:', storedTimestamp);
+        
+        // Allow for small timing differences (within 5 seconds)
+        const timeDiff = Math.abs(parseInt(returnedTimestamp) - parseInt(storedTimestamp));
+        if (timeDiff > 5000) {
+          console.error('Timestamp difference too large:', timeDiff);
           return false;
-      } finally {
-          this.exchangingToken = false;
-          // Clear OAuth-specific data but keep session if successful
-          sessionStorage.removeItem(AuthManager.STATE_KEY);
-          sessionStorage.removeItem('oauth_initiated_at');
-      }
-  }
-
-  async clearAuthData() {
-      // Clear all authentication-related storage
-      const itemsToClear = [
-          // Session Storage
-          { type: 'sessionStorage', keys: [
-              AuthManager.STATE_KEY,
-              'oauth_initiated_at'
-          ]},
-          // Local Storage
-          { type: 'localStorage', keys: [
-              AuthManager.SESSION_KEY,
-              AuthManager.AUTH_DATA_KEY,
-              'i18nextLng',
-              'appState'
-          ]},
-          // Cookies (using path and domain)
-          { type: 'cookie', keys: [
-              { name: 'nb_report_cookie', path: '/', domain: '.nabezky.sk' },
-              { name: 'connect.sid', path: '/', domain: '.nabezky.sk' }
-          ]}
-      ];
+        }
   
-      // Clear all storage types
-      itemsToClear.forEach(storage => {
-          if (storage.type === 'cookie') {
-              storage.keys.forEach(cookie => {
-                  document.cookie = `${cookie.name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${cookie.path}; domain=${cookie.domain}`;
-              });
-          } else {
-              storage.keys.forEach(key => {
-                  window[storage.type].removeItem(key);
-              });
+        // Verify the complete state if timestamps are close
+        if (state === storedState) {
+          console.log('Exact state match');
+        } else {
+          console.log('States differ but timestamps are within tolerance');
+        }
+      }
+  
+      if (code) {
+        console.log('Exchanging token');
+        try {
+          const success = await this.exchangeToken(code);
+          if (success) {
+            // Store the session ID we got from the response
+            const sessionId = localStorage.getItem(AuthManager.SESSION_KEY);
+            if (sessionId) {
+              console.log('Storing session ID:', sessionId);
+              localStorage.setItem(AuthManager.SESSION_KEY, sessionId);
+            }
+            console.log('Token exchanged successfully');
+            await this.checkAuthStatus(); // Ensure we get the latest auth status
+            return true;
           }
-      });
-  
-      // Clear any running token refresh intervals
-      if (this.tokenRefreshInterval) {
-          clearInterval(this.tokenRefreshInterval);
-          this.tokenRefreshInterval = null;
+        } catch (error) {
+          console.error('Error exchanging token:', error);
+        }
       }
   
-    // Set logged out flag
-    this.hasLoggedOut = true;
-
-    // Reset instance state
+      return false;
+    } finally {
       this.exchangingToken = false;
-      this.stateCheckInProgress = false;
+      // Clear OAuth-specific data but keep session if successful
+      sessionStorage.removeItem(AuthManager.STATE_KEY);
+      sessionStorage.removeItem('oauth_initiated_at');
+    }
+  }
+
+  clearAuthData() {
+    console.log('Clearing auth data...');
+    const beforeClear = {
+      sessionStorage: {
+        state: sessionStorage.getItem(AuthManager.STATE_KEY),
+        initiatedAt: sessionStorage.getItem('oauth_initiated_at')
+      },
+      localStorage: {
+        sessionId: localStorage.getItem(AuthManager.SESSION_KEY),
+        authData: localStorage.getItem(AuthManager.AUTH_DATA_KEY)
+      }
+    };
+    console.log('Before clearing:', beforeClear);
+
+    sessionStorage.removeItem(AuthManager.STATE_KEY);
+    sessionStorage.removeItem('oauth_initiated_at');
+    localStorage.removeItem(AuthManager.SESSION_KEY);
+    localStorage.removeItem(AuthManager.AUTH_DATA_KEY);
+    
+    document.cookie = 'nb_report_cookie=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+    document.cookie = 'connect.sid=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+    
+    if (this.tokenRefreshInterval) {
+      clearInterval(this.tokenRefreshInterval);
+      this.tokenRefreshInterval = null;
+    }
+
+    const afterClear = {
+      sessionStorage: {
+        state: sessionStorage.getItem(AuthManager.STATE_KEY),
+        initiatedAt: sessionStorage.getItem('oauth_initiated_at')
+      },
+      localStorage: {
+        sessionId: localStorage.getItem(AuthManager.SESSION_KEY),
+        authData: localStorage.getItem(AuthManager.AUTH_DATA_KEY)
+      }
+    };
+    console.log('After clearing:', afterClear);
   }
   
-  async initiateOAuth() {
+async initiateOAuth() {
     console.log('InitiateOAuth called');
     try {
       // Clear any existing auth data before starting new auth flow
@@ -280,55 +249,50 @@ class AuthManager {
     }
   }
 
-async exchangeToken(code) {
+  async exchangeToken(code) {
     console.log('Attempting to exchange token with code:', code);
     try {
-        const response = await fetch('/api/exchange-token', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ 
-                code,
-                redirect_uri: window.location.origin + '/api/nblogin/',
-                grant_type: 'authorization_code'
-            }),
-            credentials: 'include'
-        });
+      const response = await fetch('/api/exchange-token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          code,
+          redirect_uri: window.location.origin + '/api/nblogin/',
+          grant_type: 'authorization_code'
+        }),
+        credentials: 'include'
+      });
   
-        console.log('Exchange token response status:', response.status);
-        
-        if (!response.ok) {
-            const errorData = await response.text();
-            console.error('Server error response:', errorData);
-            
-            if (response.status === 401) {
-                await this.clearAuthData();
-            }
-            
-            throw new Error('Failed to exchange token');
-        }
+      console.log('Exchange token response status:', response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Server error response:', errorData);
+        throw new Error('Failed to exchange token');
+      }
   
-        const data = await response.json();
-        console.log('Exchange token response:', data);
+      const data = await response.json();
+      console.log('Exchange token response:', data);
+      
+      if (data.success) {
+        console.log('Token exchange successful');
         
-        if (data.success) {
-            console.log('Token exchange successful');
-            
-            if (data.sessionId) {
-                console.log('Storing session ID:', data.sessionId);
-                localStorage.setItem(AuthManager.SESSION_KEY, data.sessionId);
-            }
-            
-            return true;
-        } else {
-            throw new Error('Token exchange failed');
+        if (data.sessionId) {
+          console.log('Storing session ID:', data.sessionId);
+          localStorage.setItem(AuthManager.SESSION_KEY, data.sessionId);
         }
+        
+        return true;
+      } else {
+        throw new Error('Token exchange failed');
+      }
     } catch (error) {
-        console.error('Error exchanging token:', error);
-        return false;
+      console.error('Error exchanging token:', error);
+      return false;
     }
-}
+  }
 
   async checkAndRefreshToken() {
     console.log('Checking if token needs refresh...');
