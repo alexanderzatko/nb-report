@@ -137,6 +137,7 @@ class FormManager {
     const adminSection = document.getElementById('admin-section');
     const trailsSection = document.getElementById('trails-section');
     const rewardsSection = document.getElementById('rewards-section');
+    const gpxSection = document.querySelector('.gpx-section');
 
     if (!regularUserSection || !adminSection) {
       this.logger.error('Required form sections not found');
@@ -148,9 +149,11 @@ class FormManager {
     
     this.logger.debug('User type:', { isAdmin, hasTrails });
 
-    // Set visibility for regular user section
+    // Set visibility for regular user section and its components
     regularUserSection.style.display = isAdmin ? 'none' : 'block';
-    
+    if (gpxSection) {
+        gpxSection.style.display = isAdmin ? 'none' : 'block';
+    }    
     // Set visibility for admin section
     adminSection.style.display = isAdmin ? 'block' : 'none';
     
@@ -272,29 +275,26 @@ class FormManager {
       const existingOption = document.getElementById('existing-gpx-option');
       const uploadContainer = document.getElementById('gpx-upload-container');
       const gpsManager = GPSManager.getInstance();
-  
+
+/*
       if (!gpxSelect || !existingOption || !uploadContainer) {
           this.logger.error('Required GPX elements not found');
           return;
       }
-  
+*/
       // Show/hide existing track option based on whether there's a track
       if (gpsManager.hasExistingTrack()) {
           existingOption.style.display = 'block';
-      } else {
-          existingOption.style.display = 'none';
-          // Reset to "none" if "existing" was selected but there's no track
-          if (gpxSelect.value === 'existing') {
-              gpxSelect.value = 'none';
-          }
       }
   
       // Handle upload container visibility
       gpxSelect.addEventListener('change', (e) => {
-          uploadContainer.style.display = e.target.value === 'upload' ? 'block' : 'none';
+        uploadContainer.style.display = e.target.value === 'upload' ? 'block' : 'none';
+        this.updateGPXInfo();
       });
   
       this.setupGPXUpload();
+      this.updateGPXInfo();
   }
   
   setupGPXUpload() {
@@ -372,6 +372,37 @@ class FormManager {
           document.getElementById('gpx-file-input').value = '';
       }
   }
+
+  updateGPXInfo() {
+      const gpxSelect = document.getElementById('gpx-option');
+      const gpxInfoDisplay = document.getElementById('gpx-info-display');
+      const gpsManager = GPSManager.getInstance();
+  
+      if (!gpxInfoDisplay || !gpxSelect) return;
+  
+      if (gpxSelect.value === 'existing' && gpsManager.hasExistingTrack()) {
+          const stats = gpsManager.getTrackStats();
+          if (stats) {
+              const dateStr = stats.startTime.toLocaleDateString(this.i18next.language, {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit'
+              });
+              
+              gpxInfoDisplay.innerHTML = this.i18next.t('form.gpx.trackInfo', {
+                  date: dateStr,
+                  distance: stats.distance,
+                  duration: `${stats.duration.hours}:${String(stats.duration.minutes).padStart(2, '0')}`
+              });
+              gpxInfoDisplay.style.display = 'block';
+          }
+      } else {
+          gpxInfoDisplay.style.display = 'none';
+      }
+  }
+
   formatDuration(ms) {
       const hours = Math.floor(ms / (1000 * 60 * 60));
       const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
