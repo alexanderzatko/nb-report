@@ -124,23 +124,27 @@ class App {
     this.managers.event.emit('APP_INIT_START');
   
     try {
-      // Always try to restore session first
-      const isAuthenticated = await this.managers.auth.checkAuthStatus();
-      
-      if (!isAuthenticated) {
+        // First check if we have a stored session
+        const storedSessionId = localStorage.getItem(this.managers.auth.constructor.SESSION_KEY);
+        
+        if (!storedSessionId) {
+            // No stored session, user must log in
+            await this.managers.ui.updateUIBasedOnAuthState(false);
+            return;
+        }
+
+        // We have a stored session, let's use it
         const didAuth = await this.checkForURLParameters();
         if (!didAuth) {
-          await this.managers.ui.updateUIBasedOnAuthState(false);
+            // No OAuth callback processing needed, trust the stored session
+            await this.managers.ui.updateUIBasedOnAuthState(true);
+            await this.refreshUserData();
         }
-      } else {
-        await this.managers.ui.updateUIBasedOnAuthState(true);
-        await this.refreshUserData();
-      }
     } catch (error) {
-      this.logger.error('Error in initializeAppState:', error);
-      throw error;
+        this.logger.error('Error in initializeAppState:', error);
+        throw error;
     }
-  }
+}
 
   async checkForURLParameters() {
       const urlParams = new URLSearchParams(window.location.search);
