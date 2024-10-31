@@ -16,6 +16,7 @@ class AuthManager {
     this.stateCheckInProgress = false;
     this.tokenRefreshInterval = null;
     this.isNewLogin = false;
+    this.hasLoggedOut = false;
     AuthManager.instance = this;
   }
 
@@ -26,46 +27,51 @@ class AuthManager {
     return AuthManager.instance;
   }
 
-async checkAuthStatus() {
-    try {
-        const storedSessionId = localStorage.getItem(AuthManager.SESSION_KEY);
-        
-        if (!storedSessionId) {
-            return false;
-        }
-
-        const response = await fetch('/api/auth-status', {
-            credentials: 'include',
-            headers: {
-                'X-Session-ID': storedSessionId
-            }
-        });
-        
-        if (!response.ok) {
-            await this.clearAuthData();
-            return false;
-        }
-
-        const data = await response.json();
-        
-        // If not authenticated, clear all auth data
-        if (!data.isAuthenticated) {
-            await this.clearAuthData();
-            return false;
-        }
-
-        // Set up token refresh if authenticated
-        if (data.isAuthenticated && !this.tokenRefreshInterval) {
-            this.setupTokenRefresh();
-        }
-        
-        return data.isAuthenticated;
-    } catch (error) {
-        this.logger.error('Error checking auth status:', error);
-        await this.clearAuthData();
-        return false;
-    }
-}
+  async checkAuthStatus() {
+      try {
+          const storedSessionId = localStorage.getItem(AuthManager.SESSION_KEY);
+          
+          if (!storedSessionId) {
+              return false;
+          }
+  
+          // If we've just logged in or haven't logged out, trust the session
+          if (this.isNewLogin || !this.hasLoggedOut) {
+              return true;
+          }
+  
+          // Only verify with server if we've previously logged out
+          const response = await fetch('/api/auth-status', {
+              credentials: 'include',
+              headers: {
+                  'X-Session-ID': storedSessionId
+              }
+          });
+          
+          if (!response.ok) {
+              await this.clearAuthData();
+              return false;
+          }
+  
+          const data = await response.json();
+          
+          if (!data.isAuthenticated) {
+              await this.clearAuthData();
+              return false;
+          }
+  
+          // Set up token refresh if authenticated
+          if (data.isAuthenticated && !this.tokenRefreshInterval) {
+              this.setupTokenRefresh();
+          }
+          
+          return data.isAuthenticated;
+      } catch (error) {
+          this.logger.error('Error checking auth status:', error);
+          await this.clearAuthData();
+          return false;
+      }
+  }
 
   setupTokenRefresh() {
     if (this.tokenRefreshInterval) {
@@ -204,12 +210,15 @@ async checkAuthStatus() {
           this.tokenRefreshInterval = null;
       }
   
-      // Reset instance state
+    // Set logged out flag
+    this.hasLoggedOut = true;
+
+    // Reset instance state
       this.exchangingToken = false;
       this.stateCheckInProgress = false;
   }
   
-async initiateOAuth() {
+  async initiateOAuth() {
     console.log('InitiateOAuth called');
     try {
       // Clear any existing auth data before starting new auth flow
