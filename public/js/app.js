@@ -50,7 +50,11 @@ class App {
 
   async initializeApp() {
     try {
-      // Initialize managers object first
+      // First initialize i18next
+      await resetI18next();
+      await initI18next();
+  
+      // Then initialize managers
       this.managers = {
         config: ConfigManager.getInstance(),
         event: EventManager.getInstance(),
@@ -59,18 +63,14 @@ class App {
         state: StateManager.getInstance(),
         auth: AuthManager.getInstance(),
         ui: UIManager.getInstance(),
-        serviceWorker: ServiceWorkerManager.getInstance(), // Add this here
+        serviceWorker: ServiceWorkerManager.getInstance(),
         gps: GPSManager.getInstance()
       };
   
-      // Now you can safely initialize service worker
+      // Initialize service worker after i18next is ready
       if ('serviceWorker' in navigator) {
         await this.managers.serviceWorker.initialize();
       }
-  
-      // Initialize i18next
-      await resetI18next();
-      await initI18next();
   
       // Initialize form-related managers early
       await this.initializeFormManagers();
@@ -81,15 +81,11 @@ class App {
         await this.managers.ui.updateGPSCardVisibility();
       }
   
-      // Remove this as it's already initialized above
-      // this.managers.gps = GPSManager.getInstance();
-  
       const hasActiveRecording = await this.managers.gps.checkForActiveRecording();
       if (hasActiveRecording) {
         this.logger.debug('Restored active GPS recording');
         await this.managers.ui.updateGPSCardVisibility();
       } else {
-        // Try to load the latest completed track
         const latestTrack = await this.managers.gps.loadLatestTrack();
         if (latestTrack) {
           this.logger.debug('Loaded latest completed track');
