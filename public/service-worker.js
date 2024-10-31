@@ -47,10 +47,26 @@ self.addEventListener('fetch', function(event) {
           return response;
         }
         return fetch(event.request)
-          .catch(function() {
-            if (event.request.mode === 'navigate') {
-              return caches.match('/index.html');
+          .then(function(response) {
+            // Optional: Add successful network requests to cache
+            if (response.status === 200) {
+              const responseClone = response.clone();
+              caches.open(FULL_CACHE_NAME)
+                .then(function(cache) {
+                  cache.put(event.request, responseClone);
+                });
             }
+            return response;
+          })
+          .catch(function() {
+            // For navigation requests, return index.html from cache
+            if (event.request.mode === 'navigate') {
+              return caches.match('/index.html')
+                .then(function(response) {
+                  return response || caches.match('/offline.html');
+                });
+            }
+            // For other resources that fail to load, try offline.html only if no cached version
             return caches.match('/offline.html');
           });
       })
