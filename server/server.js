@@ -207,12 +207,21 @@ app.post('/api/logout', async (req, res) => {
 app.get('/api/auth-status', async (req, res) => {
     logger.info('Auth status check request received');
 
+    // For new logins, trust the session without re-verification
+    if (req.session?.isNewLogin) {
+        req.session.isNewLogin = false; // Clear the flag
+        return res.json({ 
+            isAuthenticated: true,
+            sessionID: req.sessionID
+        });
+    }
+
     if (!req.session?.accessToken) {
         return res.json({ isAuthenticated: false });
     }
 
     try {
-        // Verify token with OAuth provider
+        // Only verify with OAuth provider for non-new sessions
         const response = await axios.get(`${OAUTH_PROVIDER_URL}/oauth2/verify`, {
             headers: {
                 'Authorization': `Bearer ${req.session.accessToken}`
@@ -220,20 +229,17 @@ app.get('/api/auth-status', async (req, res) => {
         });
 
         if (response.status === 200) {
-            // Refresh session expiry
             req.session.touch();
             res.json({ 
                 isAuthenticated: true,
                 sessionID: req.sessionID
             });
         } else {
-            // Clear invalid session
             req.session.destroy();
             res.json({ isAuthenticated: false });
         }
     } catch (error) {
         logger.error('Token verification failed:', error);
-        // Clear invalid session
         req.session.destroy();
         res.json({ isAuthenticated: false });
     }
@@ -263,53 +269,61 @@ app.get('/api/nblogin', (req, res) => {
 });
 
 app.post('/api/exchange-token', async (req, res) => {
-  logger.info('Token exchange request received', {
-    sessionID: req.sessionID,
-    hasSession: !!req.session
-  });
+    logger.info('Token exchange request received');
 
-  const { code } = req.body;
-  
-  try {
-    const response = await axios.post(TOKEN_URL, {
-      grant_type: 'authorization_code',
-      client_id: OAUTH_CLIENT_ID,
-      client_secret: OAUTH_CLIENT_SECRET,
-      code: code,
-      redirect_uri: OAUTH_REDIRECT_URI
-    });
+    const { code } = req.body;
     
-    if (response.data && response.data.access_token) {
-      req.session.accessToken = response.data.access_token;
-      req.session.refreshToken = response.data.refresh_token;
-      req.session.isNewLogin = true;
+    try {
+        const response = await axios.post(TOKEN_URL, {
+            grant_type: 'authorization_code',
+            client_id: OAUTH_CLIENT_ID,
+            client_secret: OAUTH_CLIENT_SECRET,
+            code: code,
+            redirect_uri: OAUTH_REDIRECT_URI
+        });
+        
+        if (response.data && response.data.access_token) {
+            // Set up session first
+            req.session.accessToken = response.data.access_token;
+            req.session.refreshToken = response.data.refresh_token;
+            req.session.isNewLogin = true;
 
-    logger.info('Session before save:', {
-      sessionID: req.sessionID,
-      session: req.session
-    });
-      
-      req.session.save((err) => {
-        if (err) {
-          logger.error('Session save error:', { error: err });
-          return res.status(500).json({ error: 'Failed to save session' });
+            // Wait for session to be saved
+            await new Promise((resolve, reject) => {
+                req.session.save((err) => {
+                    if (err) {
+                        logger.error('Session save error:', err);
+                        reject(err);
+                    }
+                    resolve();
+                });
+            });
+
+            // Now verify the token
+            try {
+                await axios.get(`${OAUTH_PROVIDER_URL}/oauth2/verify`, {
+                    headers: {
+                        'Authorization': `Bearer ${response.data.access_token}`
+                    }
+                });
+            } catch (verifyError) {
+                logger.error('Token verification failed:', verifyError);
+                req.session.destroy();
+                return res.status(401).json({ error: 'Invalid token' });
+            }
+
+            res.json({ 
+                success: true, 
+                sessionId: req.sessionID
+            });
+        } else {
+            logger.warn('Failed to obtain access token');
+            res.status(400).json({ error: 'Failed to obtain access token' });
         }
-        logger.info('Session saved successfully', {
-          sessionID: req.sessionID,
-          sessionContent: req.session
-          });
-        res.json({ success: true, sessionId: req.sessionID });
-      });
-    } else {
-      logger.warn('Failed to obtain access token');
-      res.status(400).json({ error: 'Failed to obtain access token' });
+    } catch (error) {
+        logger.error('Error exchanging token:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
-  } catch (error) {
-    logger.error('Error exchanging token:', { 
-      error: error.response ? error.response.data : error.message 
-    });
-    res.status(500).json({ error: 'Internal server error' });
-  }
 });
 
 app.post('/api/refresh-token', async (req, res) => {
