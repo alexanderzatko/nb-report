@@ -273,10 +273,23 @@ class FormManager {
       const uploadContainer = document.getElementById('gpx-upload-container');
       const gpsManager = GPSManager.getInstance();
   
-      if (gpsManager.hasExistingTrack()) {
-          existingOption.style.display = 'block';
+      if (!gpxSelect || !existingOption || !uploadContainer) {
+          this.logger.error('Required GPX elements not found');
+          return;
       }
   
+      // Show/hide existing track option based on whether there's a track
+      if (gpsManager.hasExistingTrack()) {
+          existingOption.style.display = 'block';
+      } else {
+          existingOption.style.display = 'none';
+          // Reset to "none" if "existing" was selected but there's no track
+          if (gpxSelect.value === 'existing') {
+              gpxSelect.value = 'none';
+          }
+      }
+  
+      // Handle upload container visibility
       gpxSelect.addEventListener('change', (e) => {
           uploadContainer.style.display = e.target.value === 'upload' ? 'block' : 'none';
       });
