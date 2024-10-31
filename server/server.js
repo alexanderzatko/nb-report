@@ -70,7 +70,7 @@ app.set('trust proxy', 1);
 app.use(session({
   key: 'nb_report_cookie',
   secret: process.env.SESSION_SECRET,
-  resave: true,
+  resave: false,
   saveUninitialized: false,
   store: sessionStore,
   cookie: {
@@ -156,11 +156,6 @@ const OAUTH_REDIRECT_URI = 'https://report.nabezky.sk/api/nblogin/';
 const OAUTH_PROVIDER_URL = 'https://nabezky.sk';
 const TOKEN_URL = process.env.TOKEN_URL || 'https://nabezky.sk/oauth2/token';
 
-if (!OAUTH_CLIENT_ID || !OAUTH_CLIENT_SECRET) {
-    logger.error('Missing required OAuth configuration');
-    throw new Error('Missing required OAuth configuration');
-}
-
 const authenticateUser = (req, res, next) => {
   const token = req.headers.authorization;
   if (!token && (!req.session || !req.session.accessToken)) {
@@ -169,85 +164,53 @@ const authenticateUser = (req, res, next) => {
   next();
 };
 
-app.post('/api/logout', async (req, res) => {
-    logger.info('Logout request received');
-    
-    try {
-        // If we have an access token, revoke it at the OAuth provider
-        if (req.session?.accessToken) {
-            try {
-                await axios.post(`${OAUTH_PROVIDER_URL}/oauth2/revoke`, {
-                    token: req.session.accessToken,
-                    client_id: OAUTH_CLIENT_ID,
-                    client_secret: OAUTH_CLIENT_SECRET
-                });
-            } catch (error) {
-                logger.error('Error revoking token:', error);
-            }
-        }
-
-        // Clear session
-        if (req.session) {
-            await new Promise((resolve, reject) => {
-                req.session.destroy((err) => {
-                    if (err) {
-                        reject(err);
-                        return;
-                    }
-                    resolve();
-                });
-            });
-        }
-
-        // Clear cookie
-        res.clearCookie('nb_report_cookie');
-        
-        res.status(200).json({ message: 'Logged out successfully' });
-    } catch (error) {
-        logger.error('Error during logout:', error);
-        res.status(500).json({ error: 'Logout failed' });
-    }
+app.post('/api/logout', (req, res) => {
+    logger.info('Logout request received', { 
+        sessionID: req.sessionID,
+        headers: req.headers,
+        cookies: req.cookies
+    });
+    logger.debug('Session before logout:', req.session);
+  
+  if (req.session) {
+    req.session.destroy((err) => {
+      if (err) {
+        logger.error('Session destruction error:', err);
+        return res.status(500).json({ error: 'Failed to destroy session' });
+      }
+      res.clearCookie('nb_report_cookie'); 
+      logger.info('Session destroyed and cookie cleared');
+      res.status(200).json({ message: 'Logged out successfully' });
+    });
+  } else {
+    logger.info('No active session found');
+    res.status(200).json({ message: 'No active session to logout' });
+  }
 });
 
-app.get('/api/auth-status', async (req, res) => {
-    logger.info('Auth status check request received');
+app.get('/api/auth-status', (req, res) => {
+  logger.info('Auth status check request received', { 
+    sessionID: req.sessionID,
+    hasSession: !!req.session,
+    hasAccessToken: req.session && !!req.session.accessToken
+  });
 
-    // For new logins, trust the session without re-verification
-    if (req.session?.isNewLogin) {
-        req.session.isNewLogin = false; // Clear the flag
-        return res.json({ 
-            isAuthenticated: true,
-            sessionID: req.sessionID
-        });
-    }
+  // Check if session exists and has valid tokens
+  const isAuthenticated = !!(req.session && req.session.accessToken);
+  
+  if (isAuthenticated) {
+    // Refresh the session expiry
+    req.session.touch();
+  }
 
-    if (!req.session?.accessToken) {
-        return res.json({ isAuthenticated: false });
-    }
-
-    try {
-        // Only verify with OAuth provider for non-new sessions
-        const response = await axios.get(`${OAUTH_PROVIDER_URL}/oauth2/verify`, {
-            headers: {
-                'Authorization': `Bearer ${req.session.accessToken}`
-            }
-        });
-
-        if (response.status === 200) {
-            req.session.touch();
-            res.json({ 
-                isAuthenticated: true,
-                sessionID: req.sessionID
-            });
-        } else {
-            req.session.destroy();
-            res.json({ isAuthenticated: false });
-        }
-    } catch (error) {
-        logger.error('Token verification failed:', error);
-        req.session.destroy();
-        res.json({ isAuthenticated: false });
-    }
+  res.json({ 
+    isAuthenticated,
+    sessionID: req.sessionID,
+    // Only include non-sensitive user info here
+    userInfo: isAuthenticated ? {
+      // e.g., username: req.session.username,
+    } : null
+  });
 });
 
 app.post('/api/submit-snow-report', (req, res) => {
@@ -274,107 +237,53 @@ app.get('/api/nblogin', (req, res) => {
 });
 
 app.post('/api/exchange-token', async (req, res) => {
-    logger.info('Token exchange request received', {
-        sessionID: req.sessionID,
-        hasSession: !!req.session
+  logger.info('Token exchange request received', {
+    sessionID: req.sessionID,
+    hasSession: !!req.session
+  });
+
+  const { code } = req.body;
+  
+  try {
+    const response = await axios.post(TOKEN_URL, {
+      grant_type: 'authorization_code',
+      client_id: OAUTH_CLIENT_ID,
+      client_secret: OAUTH_CLIENT_SECRET,
+      code: code,
+      redirect_uri: OAUTH_REDIRECT_URI
     });
-
-    const { code } = req.body;
     
-    if (!code) {
-        logger.error('No code provided in token exchange request');
-        return res.status(400).json({ error: 'No code provided' });
-    }
+    if (response.data && response.data.access_token) {
+      req.session.accessToken = response.data.access_token;
+      req.session.refreshToken = response.data.refresh_token;
+      req.session.isNewLogin = true;
 
-    try {
-        // Log the request we're about to make for debugging
-        logger.debug('Making token request to OAuth provider', {
-            url: TOKEN_URL,
-            code: code,
-            redirect_uri: OAUTH_REDIRECT_URI
-        });
-
-        const tokenResponse = await axios.post(TOKEN_URL, 
-            new URLSearchParams({
-                grant_type: 'authorization_code',
-                client_id: OAUTH_CLIENT_ID,
-                client_secret: OAUTH_CLIENT_SECRET,
-                code: code,
-                redirect_uri: OAUTH_REDIRECT_URI
-            }), {
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                }
-            }
-        );
-
-        logger.debug('Token response received', {
-            status: tokenResponse.status,
-            hasAccessToken: !!tokenResponse.data.access_token
-        });
-        
-        if (tokenResponse.data && tokenResponse.data.access_token) {
-            // Initialize session if it doesn't exist
-            if (!req.session) {
-                req.session = {};
-            }
-
-            // Store tokens in session
-            req.session.accessToken = tokenResponse.data.access_token;
-            req.session.refreshToken = tokenResponse.data.refresh_token;
-            req.session.tokenType = tokenResponse.data.token_type;
-            req.session.isNewLogin = true;
-
-            // Save session
-            await new Promise((resolve, reject) => {
-                req.session.save((err) => {
-                    if (err) {
-                        logger.error('Session save error:', err);
-                        reject(err);
-                        return;
-                    }
-                    resolve();
-                });
-            });
-
-            logger.info('Session saved successfully', {
-                sessionID: req.sessionID,
-                hasAccessToken: !!req.session.accessToken
-            });
-
-            // Set cookie with proper options
-            res.cookie('nb_report_cookie', req.sessionID, {
-                httpOnly: true,
-                secure: true,
-                sameSite: 'none',
-                maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-                domain: '.nabezky.sk'
-            });
-
-            res.json({
-                success: true,
-                sessionId: req.sessionID
-            });
-        } else {
-            logger.warn('No access token in response', tokenResponse.data);
-            res.status(400).json({ error: 'No access token in response' });
+    logger.info('Session before save:', {
+      sessionID: req.sessionID,
+      session: req.session
+    });
+      
+      req.session.save((err) => {
+        if (err) {
+          logger.error('Session save error:', { error: err });
+          return res.status(500).json({ error: 'Failed to save session' });
         }
-    } catch (error) {
-        logger.error('Token exchange error:', {
-            error: error.response?.data || error.message,
-            status: error.response?.status
-        });
-
-        // Return appropriate error response
-        if (error.response?.status === 401) {
-            res.status(401).json({ error: 'Invalid token' });
-        } else {
-            res.status(500).json({ 
-                error: 'Internal server error',
-                details: error.response?.data || error.message
-            });
-        }
+        logger.info('Session saved successfully', {
+          sessionID: req.sessionID,
+          sessionContent: req.session
+          });
+        res.json({ success: true, sessionId: req.sessionID });
+      });
+    } else {
+      logger.warn('Failed to obtain access token');
+      res.status(400).json({ error: 'Failed to obtain access token' });
     }
+  } catch (error) {
+    logger.error('Error exchanging token:', { 
+      error: error.response ? error.response.data : error.message 
+    });
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 app.post('/api/refresh-token', async (req, res) => {
