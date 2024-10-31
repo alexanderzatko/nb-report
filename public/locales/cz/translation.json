@@ -121,7 +121,8 @@ port{
       "options": {
         "none": "Žádný záznam",
         "existing": "Připojit zaznamenanou trasu",
-        "upload": "Nahrát nový GPX soubor"
+        "upload": "Nahrát nový GPX soubor",
+        "trackInfo": "Záznam vytvořen dne {{date}}\nVzdálenost: {{distance}} km\nčas: {{duration}}"
       },
       "uploadButton": "Vybrat GPX soubor",
       "confirmReplace": "Nahradit existující trasu?",
