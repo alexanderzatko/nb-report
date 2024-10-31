@@ -15,6 +15,7 @@ class AuthManager {
     this.exchangingToken = false;
     this.stateCheckInProgress = false;
     this.tokenRefreshInterval = null;
+    this.isNewLogin = false;
     AuthManager.instance = this;
   }
 
@@ -85,121 +86,128 @@ async checkAuthStatus() {
   }
 
   async handleOAuthCallback(code, state) {
-    console.log('handleOAuthCallback called');
-    console.log('Code:', code, 'State:', state);
+      console.log('handleOAuthCallback called');
+      console.log('Code:', code, 'State:', state);
   
-    if (this.exchangingToken) {
-      console.log('Token exchange already in progress');
-      return false;
-    }
-  
-    this.exchangingToken = true;
-  
-    try {
-      if (state) {
-        const storedState = sessionStorage.getItem(AuthManager.STATE_KEY);
-        console.log('Stored state:', storedState);
-        
-        if (!storedState || !state) {
-          console.error('Missing state');
+      if (this.exchangingToken) {
+          console.log('Token exchange already in progress');
           return false;
-        }
-  
-        // Parse timestamps from states
-        const [returnedTimestamp] = state.split('.');
-        const [storedTimestamp] = storedState.split('.');
-        
-        console.log('Timestamps - Returned:', returnedTimestamp, 'Stored:', storedTimestamp);
-        
-        // Allow for small timing differences (within 5 seconds)
-        const timeDiff = Math.abs(parseInt(returnedTimestamp) - parseInt(storedTimestamp));
-        if (timeDiff > 5000) {
-          console.error('Timestamp difference too large:', timeDiff);
-          return false;
-        }
-  
-        // Verify the complete state if timestamps are close
-        if (state === storedState) {
-          console.log('Exact state match');
-        } else {
-          console.log('States differ but timestamps are within tolerance');
-        }
       }
   
-      if (code) {
-        console.log('Exchanging token');
-        try {
-          const success = await this.exchangeToken(code);
-          if (success) {
-            // Store the session ID we got from the response
-            const sessionId = localStorage.getItem(AuthManager.SESSION_KEY);
-            if (sessionId) {
-              console.log('Storing session ID:', sessionId);
-              localStorage.setItem(AuthManager.SESSION_KEY, sessionId);
-            }
-            console.log('Token exchanged successfully');
-            await this.checkAuthStatus(); // Ensure we get the latest auth status
-            return true;
+      this.exchangingToken = true;
+  
+      try {
+          if (state) {
+              const storedState = sessionStorage.getItem(AuthManager.STATE_KEY);
+              console.log('Stored state:', storedState);
+              
+              if (!storedState || !state) {
+                  console.error('Missing state');
+                  return false;
+              }
+  
+              // Parse timestamps from states
+              const [returnedTimestamp] = state.split('.');
+              const [storedTimestamp] = storedState.split('.');
+              
+              console.log('Timestamps - Returned:', returnedTimestamp, 'Stored:', storedTimestamp);
+              
+              // Allow for small timing differences (within 5 seconds)
+              const timeDiff = Math.abs(parseInt(returnedTimestamp) - parseInt(storedTimestamp));
+              if (timeDiff > 5000) {
+                  console.error('Timestamp difference too large:', timeDiff);
+                  return false;
+              }
+  
+              // Verify the complete state if timestamps are close
+              if (state === storedState) {
+                  console.log('Exact state match');
+              } else {
+                  console.log('States differ but timestamps are within tolerance');
+              }
           }
-        } catch (error) {
-          console.error('Error exchanging token:', error);
-        }
-      }
   
-      return false;
-    } finally {
-      this.exchangingToken = false;
-      // Clear OAuth-specific data but keep session if successful
-      sessionStorage.removeItem(AuthManager.STATE_KEY);
-      sessionStorage.removeItem('oauth_initiated_at');
-    }
+          if (code) {
+              console.log('Exchanging token');
+              try {
+                  const success = await this.exchangeToken(code);
+                  if (success) {
+                      // Store the session ID we got from the response
+                      const sessionId = localStorage.getItem(AuthManager.SESSION_KEY);
+                      if (sessionId) {
+                          console.log('Storing session ID:', sessionId);
+                          localStorage.setItem(AuthManager.SESSION_KEY, sessionId);
+                      }
+                      console.log('Token exchanged successfully');
+
+                      // Set new login flag and schedule its reset
+                      this.isNewLogin = true;
+                      setTimeout(() => {
+                          this.isNewLogin = false;
+                      }, 5000);
+
+                      await this.checkAuthStatus(); // Ensure we get the latest auth status
+                      return true;
+                  }
+              } catch (error) {
+                  console.error('Error exchanging token:', error);
+              }
+          }
+  
+          return false;
+      } finally {
+          this.exchangingToken = false;
+          // Clear OAuth-specific data but keep session if successful
+          sessionStorage.removeItem(AuthManager.STATE_KEY);
+          sessionStorage.removeItem('oauth_initiated_at');
+      }
   }
 
-async clearAuthData() {
-    // Clear all authentication-related storage
-    const itemsToClear = [
-        // Session Storage
-        { type: 'sessionStorage', keys: [
-            AuthManager.STATE_KEY,
-            'oauth_initiated_at'
-        ]},
-        // Local Storage
-        { type: 'localStorage', keys: [
-            AuthManager.SESSION_KEY,
-            AuthManager.AUTH_DATA_KEY,
-            'i18nextLng',
-            'appState'
-        ]},
-        // Cookies (using path and domain)
-        { type: 'cookie', keys: [
-            { name: 'nb_report_cookie', path: '/', domain: '.nabezky.sk' },
-            { name: 'connect.sid', path: '/', domain: '.nabezky.sk' }
-        ]}
-    ];
-
-    // Clear all storage types
-    itemsToClear.forEach(storage => {
-        if (storage.type === 'cookie') {
-            storage.keys.forEach(cookie => {
-                document.cookie = `${cookie.name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${cookie.path}; domain=${cookie.domain}`;
-            });
-        } else {
-            storage.keys.forEach(key => {
-                window[storage.type].removeItem(key);
-            });
-        }
-    });
-
-    // Clear any running token refresh intervals
-    if (this.tokenRefreshInterval) {
-        clearInterval(this.tokenRefreshInterval);
-        this.tokenRefreshInterval = null;
-    }
-
-    // Reset instance state
-    this.exchangingToken = false;
-    this.stateCheckInProgress = false;
-}
+  async clearAuthData() {
+      // Clear all authentication-related storage
+      const itemsToClear = [
+          // Session Storage
+          { type: 'sessionStorage', keys: [
+              AuthManager.STATE_KEY,
+              'oauth_initiated_at'
+          ]},
+          // Local Storage
+          { type: 'localStorage', keys: [
+              AuthManager.SESSION_KEY,
+              AuthManager.AUTH_DATA_KEY,
+              'i18nextLng',
+              'appState'
+          ]},
+          // Cookies (using path and domain)
+          { type: 'cookie', keys: [
+              { name: 'nb_report_cookie', path: '/', domain: '.nabezky.sk' },
+              { name: 'connect.sid', path: '/', domain: '.nabezky.sk' }
+          ]}
+      ];
+  
+      // Clear all storage types
+      itemsToClear.forEach(storage => {
+          if (storage.type === 'cookie') {
+              storage.keys.forEach(cookie => {
+                  document.cookie = `${cookie.name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${cookie.path}; domain=${cookie.domain}`;
+              });
+          } else {
+              storage.keys.forEach(key => {
+                  window[storage.type].removeItem(key);
+              });
+          }
+      });
+  
+      // Clear any running token refresh intervals
+      if (this.tokenRefreshInterval) {
+          clearInterval(this.tokenRefreshInterval);
+          this.tokenRefreshInterval = null;
+      }
+  
+      // Reset instance state
+      this.exchangingToken = false;
+      this.stateCheckInProgress = false;
+  }
   
 async initiateOAuth() {
     console.log('InitiateOAuth called');
