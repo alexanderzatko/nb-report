@@ -121,9 +121,9 @@
       "options": {
     	"none": "No record",
     	"existing": "Include recorded track",
-    	"upload": "Upload new GPX file",
-      "trackInfo": "Track recorded on {{date}}\nDistance: {{distance}} km\nDuration: {{duration}}"
+    	"upload": "Upload new GPX file"
       },
+      "trackInfo": "Track recorded on {{date}}\nDistance: {{distance}} km\nDuration: {{duration}}",
       "uploadButton": "Select GPX file",
       "confirmReplace": "Replace Existing Track?",
       "currentTrack": "Current track recorded on:",
