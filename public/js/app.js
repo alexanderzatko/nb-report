@@ -50,7 +50,12 @@ class App {
 
   async initializeApp() {
     try {
-      // Initialize i18next first
+      // Initialize service worker first
+      if ('serviceWorker' in navigator) {
+        await this.managers.serviceWorker.initialize();
+      }
+  
+      // Initialize i18next
       await resetI18next();
       await initI18next();
 
@@ -70,7 +75,6 @@ class App {
       // Initialize form-related managers early
       await this.initializeFormManagers();
 
-      // Initialize UI manager after i18next
       await this.managers.ui.initialize();
 
       if ('serviceWorker' in navigator) {
