@@ -25,38 +25,46 @@ class AuthManager {
     return AuthManager.instance;
   }
 
-  async checkAuthStatus() {
+async checkAuthStatus() {
     try {
-      // First check if we have a stored session ID
-      const storedSessionId = localStorage.getItem(AuthManager.SESSION_KEY);
-      
-      if (!storedSessionId) {
-        return false;
-      }
-  
-      const response = await fetch('/api/auth-status', {
-        credentials: 'include',
-        headers: {
-          'X-Session-ID': storedSessionId
+        const storedSessionId = localStorage.getItem(AuthManager.SESSION_KEY);
+        
+        if (!storedSessionId) {
+            return false;
         }
-      });
-      
-      const data = await response.json();
-      console.log('Auth status response:', data);
-      
-      if (data.isAuthenticated && !this.tokenRefreshInterval) {
-        this.setupTokenRefresh();
-      } else if (!data.isAuthenticated) {
-        // Clear stored session if it's invalid
-        this.clearAuthData();
-      }
-      
-      return data.isAuthenticated;  // Keep returning the original boolean from server
+
+        const response = await fetch('/api/auth-status', {
+            credentials: 'include',
+            headers: {
+                'X-Session-ID': storedSessionId
+            }
+        });
+        
+        if (!response.ok) {
+            await this.clearAuthData();
+            return false;
+        }
+
+        const data = await response.json();
+        
+        // If not authenticated, clear all auth data
+        if (!data.isAuthenticated) {
+            await this.clearAuthData();
+            return false;
+        }
+
+        // Set up token refresh if authenticated
+        if (data.isAuthenticated && !this.tokenRefreshInterval) {
+            this.setupTokenRefresh();
+        }
+        
+        return data.isAuthenticated;
     } catch (error) {
-      console.error('Error checking auth status:', error);
-      return false;
+        this.logger.error('Error checking auth status:', error);
+        await this.clearAuthData();
+        return false;
     }
-  }
+}
 
   setupTokenRefresh() {
     if (this.tokenRefreshInterval) {
@@ -147,45 +155,51 @@ class AuthManager {
     }
   }
 
-  clearAuthData() {
-    console.log('Clearing auth data...');
-    const beforeClear = {
-      sessionStorage: {
-        state: sessionStorage.getItem(AuthManager.STATE_KEY),
-        initiatedAt: sessionStorage.getItem('oauth_initiated_at')
-      },
-      localStorage: {
-        sessionId: localStorage.getItem(AuthManager.SESSION_KEY),
-        authData: localStorage.getItem(AuthManager.AUTH_DATA_KEY)
-      }
-    };
-    console.log('Before clearing:', beforeClear);
+async clearAuthData() {
+    // Clear all authentication-related storage
+    const itemsToClear = [
+        // Session Storage
+        { type: 'sessionStorage', keys: [
+            AuthManager.STATE_KEY,
+            'oauth_initiated_at'
+        ]},
+        // Local Storage
+        { type: 'localStorage', keys: [
+            AuthManager.SESSION_KEY,
+            AuthManager.AUTH_DATA_KEY,
+            'i18nextLng',
+            'appState'
+        ]},
+        // Cookies (using path and domain)
+        { type: 'cookie', keys: [
+            { name: 'nb_report_cookie', path: '/', domain: '.nabezky.sk' },
+            { name: 'connect.sid', path: '/', domain: '.nabezky.sk' }
+        ]}
+    ];
 
-    sessionStorage.removeItem(AuthManager.STATE_KEY);
-    sessionStorage.removeItem('oauth_initiated_at');
-    localStorage.removeItem(AuthManager.SESSION_KEY);
-    localStorage.removeItem(AuthManager.AUTH_DATA_KEY);
-    
-    document.cookie = 'nb_report_cookie=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
-    document.cookie = 'connect.sid=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
-    
+    // Clear all storage types
+    itemsToClear.forEach(storage => {
+        if (storage.type === 'cookie') {
+            storage.keys.forEach(cookie => {
+                document.cookie = `${cookie.name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${cookie.path}; domain=${cookie.domain}`;
+            });
+        } else {
+            storage.keys.forEach(key => {
+                window[storage.type].removeItem(key);
+            });
+        }
+    });
+
+    // Clear any running token refresh intervals
     if (this.tokenRefreshInterval) {
-      clearInterval(this.tokenRefreshInterval);
-      this.tokenRefreshInterval = null;
+        clearInterval(this.tokenRefreshInterval);
+        this.tokenRefreshInterval = null;
     }
 
-    const afterClear = {
-      sessionStorage: {
-        state: sessionStorage.getItem(AuthManager.STATE_KEY),
-        initiatedAt: sessionStorage.getItem('oauth_initiated_at')
-      },
-      localStorage: {
-        sessionId: localStorage.getItem(AuthManager.SESSION_KEY),
-        authData: localStorage.getItem(AuthManager.AUTH_DATA_KEY)
-      }
-    };
-    console.log('After clearing:', afterClear);
-  }
+    // Reset instance state
+    this.exchangingToken = false;
+    this.stateCheckInProgress = false;
+}
   
 async initiateOAuth() {
     console.log('InitiateOAuth called');
