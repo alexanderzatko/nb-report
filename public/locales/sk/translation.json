@@ -121,9 +121,9 @@
       "options": {
         "none": "Žiaden záznam",
         "existing": "Pripojiť zaznamenanú trasu",
-        "upload": "Nahrať nový GPX súbor",
-        "trackInfo": "Záznam vytvorený dňa {{date}}\nVzdialenosť: {{distance}} km\nčas: {{duration}}"
+        "upload": "Nahrať nový GPX súbor"
       },
+      "trackInfo": "Záznam vytvorený dňa {{date}}\nVzdialenosť: {{distance}} km\nčas: {{duration}}",
       "uploadButton": "Vybrať GPX súbor",
       "confirmReplace": "Nahradiť existujúcu trasu?",
       "currentTrack": "Existujúca trasa zaznamenaná dňa:",
