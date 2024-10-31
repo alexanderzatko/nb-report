@@ -59,46 +59,43 @@ class NetworkManager {
   }
 
   async executeRequest(config, requestId) {
-      const { method = 'GET', url, data, headers = {}, timeout = this.defaultTimeout } = config;
-  
-      const fullUrl = this.resolveUrl(url);
-      const requestConfig = {
-          method,
-          credentials: 'include',
-          headers: {
-              'Content-Type': 'application/json',
-              ...headers
-          }
-      };
-  
-      if (data) {
-          requestConfig.body = data instanceof FormData ? data : JSON.stringify(data);
+    const { method = 'GET', url, data, headers = {}, timeout = this.defaultTimeout } = config;
+
+    const fullUrl = this.resolveUrl(url);
+    const requestConfig = {
+      method,
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...headers
       }
-  
-      try {
-          const response = await fetch(fullUrl, requestConfig);
-          
-          if (response.status === 401) {
-              // Only try token refresh if it's not a new login
-              const authManager = await import('../auth/AuthManager.js')
-                  .then(m => m.default.getInstance());
-              
-              if (!authManager.isNewLogin) {
-                  const refreshed = await authManager.checkAndRefreshToken();
-                  if (refreshed) {
-                      return this.executeRequest(config, requestId);
-                  }
-              }
-          }
-  
-          if (!response.ok) {
-              throw await this.createErrorFromResponse(response);
-          }
-  
-          return await this.parseResponse(response);
-      } catch (error) {
-          throw error;
+    };
+
+    if (data) {
+      requestConfig.body = data instanceof FormData ? data : JSON.stringify(data);
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    requestConfig.signal = controller.signal;
+
+    this.pendingRequests.set(requestId, { controller, config });
+
+    try {
+      const response = await fetch(fullUrl, requestConfig);
+      clearTimeout(timeoutId);
+      this.pendingRequests.delete(requestId);
+
+      if (!response.ok) {
+        throw await this.createErrorFromResponse(response);
       }
+
+      return await this.parseResponse(response);
+    } catch (error) {
+      clearTimeout(timeoutId);
+      this.pendingRequests.delete(requestId);
+      throw error;
+    }
   }
 
   async parseResponse(response) {
