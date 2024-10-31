@@ -38,10 +38,17 @@ class NetworkManager {
       this.eventManager.emit(this.eventManager.EVENT_TYPES.NETWORK_ONLINE);
       this.retryPendingRequests();
     });
-
+  
     window.addEventListener('offline', () => {
       this.eventManager.emit(this.eventManager.EVENT_TYPES.NETWORK_OFFLINE);
+      // Show offline UI notification
+      document.body.classList.add('offline');
     });
+  
+    // Check initial status
+    if (!navigator.onLine) {
+      document.body.classList.add('offline');
+    }
   }
 
   async request(config) {
