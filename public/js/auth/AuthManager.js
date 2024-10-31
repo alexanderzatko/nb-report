@@ -271,50 +271,55 @@ async initiateOAuth() {
     }
   }
 
-  async exchangeToken(code) {
+async exchangeToken(code) {
     console.log('Attempting to exchange token with code:', code);
     try {
-      const response = await fetch('/api/exchange-token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          code,
-          redirect_uri: window.location.origin + '/api/nblogin/',
-          grant_type: 'authorization_code'
-        }),
-        credentials: 'include'
-      });
+        const response = await fetch('/api/exchange-token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                code,
+                redirect_uri: window.location.origin + '/api/nblogin/',
+                grant_type: 'authorization_code'
+            }),
+            credentials: 'include'
+        });
   
-      console.log('Exchange token response status:', response.status);
-      
-      if (!response.ok) {
-        const errorData = await response.text();
-        console.error('Server error response:', errorData);
-        throw new Error('Failed to exchange token');
-      }
-  
-      const data = await response.json();
-      console.log('Exchange token response:', data);
-      
-      if (data.success) {
-        console.log('Token exchange successful');
+        console.log('Exchange token response status:', response.status);
         
-        if (data.sessionId) {
-          console.log('Storing session ID:', data.sessionId);
-          localStorage.setItem(AuthManager.SESSION_KEY, data.sessionId);
+        if (!response.ok) {
+            const errorData = await response.text();
+            console.error('Server error response:', errorData);
+            
+            if (response.status === 401) {
+                await this.clearAuthData();
+            }
+            
+            throw new Error('Failed to exchange token');
         }
+  
+        const data = await response.json();
+        console.log('Exchange token response:', data);
         
-        return true;
-      } else {
-        throw new Error('Token exchange failed');
-      }
+        if (data.success) {
+            console.log('Token exchange successful');
+            
+            if (data.sessionId) {
+                console.log('Storing session ID:', data.sessionId);
+                localStorage.setItem(AuthManager.SESSION_KEY, data.sessionId);
+            }
+            
+            return true;
+        } else {
+            throw new Error('Token exchange failed');
+        }
     } catch (error) {
-      console.error('Error exchanging token:', error);
-      return false;
+        console.error('Error exchanging token:', error);
+        return false;
     }
-  }
+}
 
   async checkAndRefreshToken() {
     console.log('Checking if token needs refresh...');
