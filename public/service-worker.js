@@ -14,15 +14,42 @@ const urlsToCache = [
   '/data/xc_dropdowns.json',
   '/data/countries-regions.json',
   '/vendor/exif.js',
+  '/js/auth/AuthManager.js',
+  '/js/events/EventManager.js',
+  '/js/form/FormManager.js',
+  '/js/managers/GPSManager.js',
+  '/js/managers/SelectManager.js',
+  '/js/media/PhotoManager.js',
+  '/js/network/NetworkManager.js',
+  '/js/services/ServiceWorkerManager.js',
+  '/js/state/StateManager.js',
+  '/js/utils/Logger.js',
+  '/js/ui/UIManager.js',
+  '/js/validation/ValidationManager.js',
 ];
 
+const OFFLINE_PAGE = '/offline.html';
+
 self.addEventListener('install', function(event) {
-  console.log('[ServiceWorker] Installing new version:', CACHE_VERSION);
   event.waitUntil(
     caches.open(FULL_CACHE_NAME)
       .then(function(cache) {
-        console.log('Opened cache:', FULL_CACHE_NAME);
-        return cache.addAll(urlsToCache);
+        return cache.addAll([...urlsToCache, OFFLINE_PAGE]);
+      })
+  );
+});
+
+self.addEventListener('fetch', function(event) {
+  event.respondWith(
+    caches.match(event.request)
+      .then(function(response) {
+        if (response) {
+          return response;
+        }
+        return fetch(event.request)
+          .catch(function() {
+            return caches.match(OFFLINE_PAGE);
+          });
       })
   );
 });
@@ -45,9 +72,24 @@ self.addEventListener('activate', function(event) {
 
 self.addEventListener('fetch', function(event) {
   event.respondWith(
-    fetch(event.request).catch(function() {
-      return caches.match(event.request);
-    })
+    caches.match(event.request)
+      .then(function(response) {
+        if (response) {
+          return response; // Return cached response if found
+        }
+        return fetch(event.request) // Only fetch from network if not in cache
+          .then(function(response) {
+            // Optional: Add successful network requests to cache
+            if (response.status === 200) {
+              const responseClone = response.clone();
+              caches.open(FULL_CACHE_NAME)
+                .then(function(cache) {
+                  cache.put(event.request, responseClone);
+                });
+            }
+            return response;
+          });
+      })
   );
 });
 
