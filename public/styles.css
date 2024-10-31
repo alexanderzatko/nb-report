@@ -167,6 +167,7 @@ input#report-date {
 
 .gpx-section {
     margin-top: 20px;
+    margin-bottom: 20px;
 }
 
 .gpx-select {
@@ -713,17 +714,6 @@ textarea:invalid + .validation-message {
   margin-top: 15px;
   padding-top: 15px;
   border-top: 1px solid #eee;
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
-.checkbox-label input[type="checkbox"] {
-  width: auto;
 }
 
 #gps-track-details {
