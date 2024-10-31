@@ -70,7 +70,7 @@ app.set('trust proxy', 1);
 app.use(session({
   key: 'nb_report_cookie',
   secret: process.env.SESSION_SECRET,
-  resave: false,
+  resave: true,
   saveUninitialized: false,
   store: sessionStore,
   cookie: {
@@ -155,6 +155,11 @@ const OAUTH_CLIENT_SECRET = process.env.OAUTH_CLIENT_SECRET;
 const OAUTH_REDIRECT_URI = 'https://report.nabezky.sk/api/nblogin/';
 const OAUTH_PROVIDER_URL = 'https://nabezky.sk';
 const TOKEN_URL = process.env.TOKEN_URL || 'https://nabezky.sk/oauth2/token';
+
+if (!OAUTH_CLIENT_ID || !OAUTH_CLIENT_SECRET) {
+    logger.error('Missing required OAuth configuration');
+    throw new Error('Missing required OAuth configuration');
+}
 
 const authenticateUser = (req, res, next) => {
   const token = req.headers.authorization;
@@ -269,60 +274,106 @@ app.get('/api/nblogin', (req, res) => {
 });
 
 app.post('/api/exchange-token', async (req, res) => {
-    logger.info('Token exchange request received');
+    logger.info('Token exchange request received', {
+        sessionID: req.sessionID,
+        hasSession: !!req.session
+    });
 
     const { code } = req.body;
     
+    if (!code) {
+        logger.error('No code provided in token exchange request');
+        return res.status(400).json({ error: 'No code provided' });
+    }
+
     try {
-        const response = await axios.post(TOKEN_URL, {
-            grant_type: 'authorization_code',
-            client_id: OAUTH_CLIENT_ID,
-            client_secret: OAUTH_CLIENT_SECRET,
+        // Log the request we're about to make for debugging
+        logger.debug('Making token request to OAuth provider', {
+            url: TOKEN_URL,
             code: code,
             redirect_uri: OAUTH_REDIRECT_URI
         });
+
+        const tokenResponse = await axios.post(TOKEN_URL, 
+            new URLSearchParams({
+                grant_type: 'authorization_code',
+                client_id: OAUTH_CLIENT_ID,
+                client_secret: OAUTH_CLIENT_SECRET,
+                code: code,
+                redirect_uri: OAUTH_REDIRECT_URI
+            }), {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            }
+        );
+
+        logger.debug('Token response received', {
+            status: tokenResponse.status,
+            hasAccessToken: !!tokenResponse.data.access_token
+        });
         
-        if (response.data && response.data.access_token) {
-            // Set up session first
-            req.session.accessToken = response.data.access_token;
-            req.session.refreshToken = response.data.refresh_token;
+        if (tokenResponse.data && tokenResponse.data.access_token) {
+            // Initialize session if it doesn't exist
+            if (!req.session) {
+                req.session = {};
+            }
+
+            // Store tokens in session
+            req.session.accessToken = tokenResponse.data.access_token;
+            req.session.refreshToken = tokenResponse.data.refresh_token;
+            req.session.tokenType = tokenResponse.data.token_type;
             req.session.isNewLogin = true;
 
-            // Wait for session to be saved
+            // Save session
             await new Promise((resolve, reject) => {
                 req.session.save((err) => {
                     if (err) {
                         logger.error('Session save error:', err);
                         reject(err);
+                        return;
                     }
                     resolve();
                 });
             });
 
-            // Now verify the token
-            try {
-                await axios.get(`${OAUTH_PROVIDER_URL}/oauth2/verify`, {
-                    headers: {
-                        'Authorization': `Bearer ${response.data.access_token}`
-                    }
-                });
-            } catch (verifyError) {
-                logger.error('Token verification failed:', verifyError);
-                req.session.destroy();
-                return res.status(401).json({ error: 'Invalid token' });
-            }
+            logger.info('Session saved successfully', {
+                sessionID: req.sessionID,
+                hasAccessToken: !!req.session.accessToken
+            });
 
-            res.json({ 
-                success: true, 
+            // Set cookie with proper options
+            res.cookie('nb_report_cookie', req.sessionID, {
+                httpOnly: true,
+                secure: true,
+                sameSite: 'none',
+                maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+                domain: '.nabezky.sk'
+            });
+
+            res.json({
+                success: true,
                 sessionId: req.sessionID
             });
         } else {
-            logger.warn('Failed to obtain access token');
-            res.status(400).json({ error: 'Failed to obtain access token' });
+            logger.warn('No access token in response', tokenResponse.data);
+            res.status(400).json({ error: 'No access token in response' });
         }
     } catch (error) {
-        logger.error('Error exchanging token:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        logger.error('Token exchange error:', {
+            error: error.response?.data || error.message,
+            status: error.response?.status
+        });
+
+        // Return appropriate error response
+        if (error.response?.status === 401) {
+            res.status(401).json({ error: 'Invalid token' });
+        } else {
+            res.status(500).json({ 
+                error: 'Internal server error',
+                details: error.response?.data || error.message
+            });
+        }
     }
 });
 
