@@ -316,6 +316,8 @@ class FormManager {
   }
   
   setupGPXUpload() {
+      const gpxSelect = document.getElementById('gpx-option');
+      const uploadContainer = document.getElementById('gpx-upload-container');
       const gpxUploadBtn = document.getElementById('gpx-upload-btn');
       const gpxFileInput = document.getElementById('gpx-file-input');
       const confirmDialog = document.getElementById('gpx-confirm-dialog');
@@ -323,21 +325,30 @@ class FormManager {
       const confirmCancel = document.getElementById('gpx-confirm-cancel');
       let pendingGPXFile = null;
   
-      if (gpxUploadBtn) {
-          gpxUploadBtn.addEventListener('click', (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              gpxFileInput.click();
+      // Handle GPX option selection
+      if (gpxSelect) {
+          gpxSelect.addEventListener('change', (e) => {
+              if (e.target.value === 'upload') {
+                  uploadContainer.style.display = 'block';
+              } else {
+                  uploadContainer.style.display = 'none';
+              }
+              this.updateGPXInfo();
           });
       }
   
-      if (gpxFileInput) {
-          gpxFileInput.accept = '.gpx,application/gpx+xml,application/xml';
-          gpxFileInput.addEventListener('change', async (e) => {
-              // Prevent the event from bubbling up to the form
+      // Handle upload button click
+      if (gpxUploadBtn && gpxFileInput) {
+          gpxUploadBtn.addEventListener('click', (e) => {
               e.preventDefault();
               e.stopPropagation();
-
+              gpxFileInput.click();  // Trigger the hidden file input
+          });
+      }
+  
+      // Handle file selection
+      if (gpxFileInput) {
+          gpxFileInput.addEventListener('change', async (e) => {
               const file = e.target.files[0];
               if (!file) return;
   
@@ -348,7 +359,7 @@ class FormManager {
               }
   
               const gpsManager = GPSManager.getInstance();
-              if (gpsManager.hasExistingTrack()) {
+              if (await gpsManager.hasExistingTrack()) {
                   pendingGPXFile = file;
                   const trackStats = gpsManager.getTrackStats();
                   document.getElementById('existing-track-info').innerHTML = `
@@ -363,26 +374,26 @@ class FormManager {
           });
       }
   
-    // Prevent form submission in the confirmation dialog buttons
-    if (confirmReplace) {
-        confirmReplace.addEventListener('click', async (e) => {
-            e.preventDefault();
-            if (pendingGPXFile) {
-                await this.processGPXFile(pendingGPXFile);
-                pendingGPXFile = null;
-            }
-            confirmDialog.style.display = 'none';
-        });
-    }
-    
-    if (confirmCancel) {
-        confirmCancel.addEventListener('click', (e) => {
-            e.preventDefault();
-            pendingGPXFile = null;
-            confirmDialog.style.display = 'none';
-            gpxFileInput.value = '';
-        });
-    }
+      // Handle confirmation dialog
+      if (confirmReplace) {
+          confirmReplace.addEventListener('click', async (e) => {
+              e.preventDefault();
+              if (pendingGPXFile) {
+                  await this.processGPXFile(pendingGPXFile);
+                  pendingGPXFile = null;
+              }
+              confirmDialog.style.display = 'none';
+          });
+      }
+  
+      if (confirmCancel) {
+          confirmCancel.addEventListener('click', (e) => {
+              e.preventDefault();
+              pendingGPXFile = null;
+              confirmDialog.style.display = 'none';
+              gpxFileInput.value = '';
+          });
+      }
   }
   
   async processGPXFile(file) {
