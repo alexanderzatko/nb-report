@@ -49,6 +49,7 @@ port{
     "formTitleRegular": "Vytvořiť zprávu",
     "formTitleAdmin": "Vytvořiť zprávu",
     "reportTitle": "Název:",
+    "skicenterName": "Středisko:",
     "country": "Krajina:",
     "selectCountry": "Vyberte krajinu",
     "region": "Oblast:",
