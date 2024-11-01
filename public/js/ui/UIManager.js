@@ -387,7 +387,7 @@ class UIManager {
       this.logger.debug('Fetched user data for form:', userData);
   
       // First initialize form with user data
-      this.formManager.initializeForm(userData);
+      await this.formManager.initializeForm(userData);
   
       // Then ensure select fields are populated with proper state
       await this.selectManager.refreshAllDropdowns();
@@ -444,7 +444,7 @@ class UIManager {
     // Initialize form if it's currently visible
     const snowReportForm = document.getElementById('snow-report-form');
     if (snowReportForm && snowReportForm.style.display === 'block') {
-      this.formManager.initializeForm(userData);
+      await this.formManager.initializeForm(userData);
     }
     
     this.updateRewardsSection(userData);
