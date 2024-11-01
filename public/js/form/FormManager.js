@@ -189,6 +189,10 @@ class FormManager {
       trails: trailsSection?.style.display,
       rewards: rewardsSection?.style.display
     });
+
+    const gpsManager = GPSManager.getInstance();
+    await gpsManager.loadLatestTrack(); // Ensure track is loaded
+    await this.initializeGPXSection();
   }
 
   initializeFormFields(config) {
@@ -284,17 +288,15 @@ class FormManager {
       const gpsManager = GPSManager.getInstance();
   
       if (gpxSelect && existingOption) {
-          // Check if there's an existing track
-          if (gpsManager.hasExistingTrack()) {
-              // Make the option visible and selectable
+          // Make this check async
+          const hasTrack = await gpsManager.hasExistingTrack();
+          if (hasTrack) {
               existingOption.style.display = '';
               existingOption.removeAttribute('disabled');
           } else {
-              // Hide and disable the option
               existingOption.style.display = 'none';
               existingOption.setAttribute('disabled', 'disabled');
               
-              // If it was selected, switch to 'none'
               if (gpxSelect.value === 'existing') {
                   gpxSelect.value = 'none';
               }
