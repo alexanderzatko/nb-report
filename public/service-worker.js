@@ -1,6 +1,7 @@
-const CACHE_VERSION = 'v154';  // Should match ConfigManager.js version
+const CACHE_VERSION = 'v155';  // Should match ConfigManager.js version
 const CACHE_NAME = 'snow-report-cache';
 const FULL_CACHE_NAME = `${CACHE_NAME}-${CACHE_VERSION}`;
+const OFFLINE_PAGE = '/offline.html';
 
 const urlsToCache = [
   '/',
@@ -28,8 +29,7 @@ const urlsToCache = [
   '/js/validation/ValidationManager.js',
   '/node_modules/i18next/dist/esm/i18next.js',
   '/node_modules/i18next-http-backend/esm/index.js',
-  '/node_modules/i18next-browser-languagedetector/dist/esm/i18nextBrowserLanguageDetector.js',
-  '/offline.html'
+  '/node_modules/i18next-browser-languagedetector/dist/esm/i18nextBrowserLanguageDetector.js'
 ];
 
 const OFFLINE_PAGE = '/offline.html';
@@ -40,7 +40,8 @@ self.addEventListener('install', function(event) {
     caches.open(FULL_CACHE_NAME)
       .then(function(cache) {
         console.log('[ServiceWorker] Caching app shell');
-        return cache.addAll([...urlsToCache, OFFLINE_PAGE])
+        return cache.addAll(urlsToCache)
+          .then(() => cache.add(OFFLINE_PAGE))
           .then(() => {
             console.log('[ServiceWorker] All resources cached');
           })
