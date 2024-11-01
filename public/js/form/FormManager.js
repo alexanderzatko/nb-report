@@ -321,8 +321,9 @@ class FormManager {
       let pendingGPXFile = null;
   
       if (gpxUploadBtn) {
-          gpxUploadBtn.addEventListener('click', () => {
-              e.preventDefault(); // Prevent form submission on file upload
+          gpxUploadBtn.addEventListener('click', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
               gpxFileInput.click();
           });
       }
@@ -359,16 +360,6 @@ class FormManager {
           });
       }
   
-      if (confirmReplace) {
-          confirmReplace.addEventListener('click', async () => {
-              if (pendingGPXFile) {
-                  await this.processGPXFile(pendingGPXFile);
-                  pendingGPXFile = null;
-              }
-              confirmDialog.style.display = 'none';
-          });
-      }
-
     // Prevent form submission in the confirmation dialog buttons
     if (confirmReplace) {
         confirmReplace.addEventListener('click', async (e) => {
@@ -382,7 +373,8 @@ class FormManager {
     }
     
     if (confirmCancel) {
-        confirmCancel.addEventListener('click', () => {
+        confirmCancel.addEventListener('click', (e) => {
+            e.preventDefault();
             pendingGPXFile = null;
             confirmDialog.style.display = 'none';
             gpxFileInput.value = '';
