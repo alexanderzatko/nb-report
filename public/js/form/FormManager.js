@@ -347,10 +347,12 @@ class FormManager {
   
       // Handle upload button click
       if (gpxUploadBtn && gpxFileInput) {
+          console.log('File input element:', gpxFileInput); // Add this line
           gpxUploadBtn.addEventListener('click', (e) => {
               e.preventDefault();
               e.stopPropagation();
               this.logger.debug('Upload button clicked, triggering file input');
+              console.log('About to click file input:', gpxFileInput); // Add this line
               gpxFileInput.click();
           });
       }
