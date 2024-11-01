@@ -138,6 +138,7 @@ class FormManager {
     const rewardsSection = document.getElementById('rewards-section');
     const gpxSection = document.querySelector('.gpx-section');
     const skiCenterNameElement = document.getElementById('ski-center-name');
+    const skiCenterIdElement = document.getElementById('ski-center-id');
 
     if (!regularUserSection || !adminSection) {
       this.logger.error('Required form sections not found');
@@ -158,6 +159,9 @@ class FormManager {
     adminSection.style.display = isAdmin ? 'block' : 'none';
     if (isAdmin && skiCenterNameElement) {
         skiCenterNameElement.textContent = userData.ski_center_name || '';
+    }
+    if (isAdmin && skiCenterIdElement) {
+        skiCenterIdElement.textContent = userData.ski_center_id || '';
     }
    
     // Set visibility for trails section
