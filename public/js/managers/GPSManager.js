@@ -11,6 +11,11 @@ class GPSManager {
       return GPSManager.instance;
     }
 
+    this.backgroundSync = false;
+    if ('serviceWorker' in navigator && 'SyncManager' in window) {
+        this.backgroundSync = true;
+    }
+    
     this.logger = Logger.getInstance();
     this.i18next = i18next;
     this.isRecording = false;
@@ -101,12 +106,17 @@ class GPSManager {
               alert(capability.reason);
               return false;
           }
-  
+
           const permission = await this.requestLocationPermission();
           if (!permission) {
               throw new Error(this.i18next.t('errors.gps.permissionDenied'));
           }
-  
+
+          if (this.backgroundSync) {
+              await navigator.serviceWorker.ready;
+              await navigator.serviceWorker.sync.register('gps-sync');
+          }
+
           // Clear any existing active points
           await this.clearActivePoints();
   
