@@ -888,10 +888,12 @@ class FormManager {
           const snowDepthTotal = document.getElementById('snow-depth-total')?.value;
           const snowDepthNew = document.getElementById('snow-depth-new')?.value;
           const note = document.getElementById('report-note')?.value;
-          
+          const skiCenterId = document.getElementById('ski-center-id')?.textContent;
+
           if (snowDepthTotal) data.snowDepthTotal = snowDepthTotal;
           if (snowDepthNew) data.snowDepthNew = snowDepthNew;
           if (note) data.note = note;
+          if (skiCenterId) data.skiCenterId = skiCenterId;
           
           // Common dropdowns that are visible in admin form
           const snowType = document.getElementById('snow-type')?.value;
