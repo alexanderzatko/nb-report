@@ -183,6 +183,17 @@ input#report-date {
     gap: 10px;
 }
 
+#gpx-upload-btn {
+    font-size: 14px;
+    padding: 10px 20px;
+    background-color: #789f98;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+
+}
+
 .gpx-filename {
     color: #666;
     font-size: 14px;
@@ -414,12 +425,16 @@ div#photo-preview-container {
 }
 
 .photo-button {
+    font-size: 14px;
     padding: 10px 20px;
     background-color: #0078d4;
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    font-size: 14px;
+    border-bottom: unset;
+    border-right: unset;
 }
 
 .photo-button:hover {
