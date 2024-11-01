@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v153';  // Should match ConfigManager.js version
+const CACHE_VERSION = 'v154';  // Should match ConfigManager.js version
 const CACHE_NAME = 'snow-report-cache';
 const FULL_CACHE_NAME = `${CACHE_NAME}-${CACHE_VERSION}`;
 
@@ -35,10 +35,23 @@ const urlsToCache = [
 const OFFLINE_PAGE = '/offline.html';
 
 self.addEventListener('install', function(event) {
+  console.log('[ServiceWorker] Install event');
   event.waitUntil(
     caches.open(FULL_CACHE_NAME)
       .then(function(cache) {
-        return cache.addAll([...urlsToCache, OFFLINE_PAGE]);
+        console.log('[ServiceWorker] Caching app shell');
+        return cache.addAll([...urlsToCache, OFFLINE_PAGE])
+          .then(() => {
+            console.log('[ServiceWorker] All resources cached');
+          })
+          .catch(error => {
+            console.error('[ServiceWorker] Cache addAll failed:', error);
+            throw error;
+          });
+      })
+      .catch(function(error) {
+        console.error('[ServiceWorker] Install failed:', error);
+        throw error;
       })
   );
 });
@@ -80,16 +93,25 @@ self.addEventListener('fetch', function(event) {
 self.addEventListener('activate', function(event) {
   console.log('[ServiceWorker] Activate');
   event.waitUntil(
-    caches.keys().then(function(cacheNames) {
-      return Promise.all(
-        cacheNames.map(function(cacheName) {
-          if (cacheName.startsWith(CACHE_NAME) && cacheName !== FULL_CACHE_NAME) {
-            console.log('[ServiceWorker] Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    caches.keys()
+      .then(function(cacheNames) {
+        console.log('[ServiceWorker] Checking caches:', cacheNames);
+        return Promise.all(
+          cacheNames.map(function(cacheName) {
+            if (cacheName.startsWith(CACHE_NAME) && cacheName !== FULL_CACHE_NAME) {
+              console.log('[ServiceWorker] Deleting old cache:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      })
+      .then(() => {
+        console.log('[ServiceWorker] Activation complete');
+      })
+      .catch(error => {
+        console.error('[ServiceWorker] Activation failed:', error);
+        throw error;
+      })
   );
 });
 
