@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v155';  // Should match ConfigManager.js version
+const CACHE_VERSION = 'v156';  // Should match ConfigManager.js version
 const CACHE_NAME = 'snow-report-cache';
 const FULL_CACHE_NAME = `${CACHE_NAME}-${CACHE_VERSION}`;
 const OFFLINE_PAGE = '/offline.html';
@@ -31,8 +31,6 @@ const urlsToCache = [
   '/node_modules/i18next-http-backend/esm/index.js',
   '/node_modules/i18next-browser-languagedetector/dist/esm/i18nextBrowserLanguageDetector.js'
 ];
-
-const OFFLINE_PAGE = '/offline.html';
 
 self.addEventListener('install', function(event) {
   console.log('[ServiceWorker] Install event');
