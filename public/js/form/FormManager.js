@@ -129,70 +129,71 @@ class FormManager {
     }
   }
   
-  initializeForm(userData) {
-    this.logger.debug('Initializing form with user data:', userData);
-    
-    const regularUserSection = document.getElementById('regular-user-section');
-    const adminSection = document.getElementById('admin-section');
-    const trailsSection = document.getElementById('trails-section');
-    const rewardsSection = document.getElementById('rewards-section');
-    const gpxSection = document.querySelector('.gpx-section');
-    const skiCenterNameElement = document.getElementById('ski-center-name');
-    const skiCenterIdElement = document.getElementById('ski-center-id');
-
-    if (!regularUserSection || !adminSection) {
-      this.logger.error('Required form sections not found');
-      return;
-    }
-
-    const isAdmin = userData?.ski_center_admin === "1";
-    const hasTrails = userData?.trails && Array.isArray(userData.trails) && userData.trails.length > 0;
-    
-    this.logger.debug('User type:', { isAdmin, hasTrails });
-
-    // Set visibility for regular user section and its components
-    regularUserSection.style.display = isAdmin ? 'none' : 'block';
-    if (gpxSection) {
-        gpxSection.style.display = isAdmin ? 'none' : 'block';
-    }    
-    // Set visibility for admin section
-    adminSection.style.display = isAdmin ? 'block' : 'none';
-    if (isAdmin && skiCenterNameElement) {
-        skiCenterNameElement.textContent = userData.ski_center_name || '';
-    }
-    if (isAdmin && skiCenterIdElement) {
-        skiCenterIdElement.textContent = userData.ski_center_id || '';
-    }
-   
-    // Set visibility for trails section
-    if (trailsSection) {
-      trailsSection.style.display = 'none';
-      if (isAdmin && hasTrails) {
-        trailsSection.style.display = 'block';
-        this.initializeTrailsSection(userData.trails);
+  async initializeForm(userData) {
+      this.logger.debug('Initializing form with user data:', userData);
+      
+      const regularUserSection = document.getElementById('regular-user-section');
+      const adminSection = document.getElementById('admin-section');
+      const trailsSection = document.getElementById('trails-section');
+      const rewardsSection = document.getElementById('rewards-section');
+      const gpxSection = document.querySelector('.gpx-section');
+      const skiCenterNameElement = document.getElementById('ski-center-name');
+      const skiCenterIdElement = document.getElementById('ski-center-id');
+  
+      if (!regularUserSection || !adminSection) {
+        this.logger.error('Required form sections not found');
+        return;
       }
-    }
-
-    // Set visibility for rewards section based on rovas_uid
-    if (rewardsSection) {
-      rewardsSection.style.display = 
-        (userData?.rovas_uid && !isNaN(userData.rovas_uid)) ? 'block' : 'none';
-    }
-
-    // Initialize form fields based on user type
-    const config = isAdmin ? this.formConfig.admin : this.formConfig.regular;
-    this.initializeFormFields(config);
-
-    this.logger.debug('Form sections visibility:', {
-      regularUser: regularUserSection.style.display,
-      admin: adminSection.style.display,
-      trails: trailsSection?.style.display,
-      rewards: rewardsSection?.style.display
-    });
-
-    const gpsManager = GPSManager.getInstance();
-    await gpsManager.loadLatestTrack(); // Ensure track is loaded
-    await this.initializeGPXSection();
+  
+      const isAdmin = userData?.ski_center_admin === "1";
+      const hasTrails = userData?.trails && Array.isArray(userData.trails) && userData.trails.length > 0;
+      
+      this.logger.debug('User type:', { isAdmin, hasTrails });
+  
+      // Set visibility for regular user section and its components
+      regularUserSection.style.display = isAdmin ? 'none' : 'block';
+      if (gpxSection) {
+          gpxSection.style.display = isAdmin ? 'none' : 'block';
+      }    
+  
+      // Set visibility for admin section
+      adminSection.style.display = isAdmin ? 'block' : 'none';
+      if (isAdmin && skiCenterNameElement) {
+          skiCenterNameElement.textContent = userData.ski_center_name || '';
+      }
+      if (isAdmin && skiCenterIdElement) {
+          skiCenterIdElement.textContent = userData.ski_center_id || '';
+      }
+     
+      // Set visibility for trails section
+      if (trailsSection) {
+        trailsSection.style.display = 'none';
+        if (isAdmin && hasTrails) {
+          trailsSection.style.display = 'block';
+          this.initializeTrailsSection(userData.trails);
+        }
+      }
+  
+      // Set visibility for rewards section based on rovas_uid
+      if (rewardsSection) {
+        rewardsSection.style.display = 
+          (userData?.rovas_uid && !isNaN(userData.rovas_uid)) ? 'block' : 'none';
+      }
+  
+      // Initialize form fields based on user type
+      const config = isAdmin ? this.formConfig.admin : this.formConfig.regular;
+      this.initializeFormFields(config);
+  
+      this.logger.debug('Form sections visibility:', {
+        regularUser: regularUserSection.style.display,
+        admin: adminSection.style.display,
+        trails: trailsSection?.style.display,
+        rewards: rewardsSection?.style.display
+      });
+  
+      const gpsManager = GPSManager.getInstance();
+      await gpsManager.loadLatestTrack(); // Ensure track is loaded
+      await this.initializeGPXSection();
   }
 
   initializeFormFields(config) {
