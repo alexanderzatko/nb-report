@@ -51,7 +51,6 @@ class ServiceWorkerManager {
       if (this.registration.waiting) {
         console.log('[ServiceWorkerManager] Found waiting worker on initial registration');
         this.updateFound = true;
-        // Remove delay, show immediately since DOM is ready
         this.notifyUpdateReady();
       }
   
@@ -62,19 +61,36 @@ class ServiceWorkerManager {
         
         newWorker.addEventListener('statechange', () => {
           console.log('[ServiceWorker] Worker state changed to:', newWorker.state);
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            console.log('[ServiceWorker] New version ready to activate');
-            this.updateFound = true;
-            this.notifyUpdateReady();
+          
+          switch (newWorker.state) {
+            case 'installed':
+              if (navigator.serviceWorker.controller) {
+                console.log('[ServiceWorker] New version ready to activate');
+                this.updateFound = true;
+                this.notifyUpdateReady();
+              } else {
+                console.log('[ServiceWorker] Service Worker installed for the first time');
+              }
+              break;
+            case 'redundant':
+              console.log('[ServiceWorker] Worker became redundant');
+              break;
+            default:
+              console.log('[ServiceWorker] Worker state:', newWorker.state);
           }
         });
       });
   
-      // Handle page reload after service worker takes control
+      // Activation check
+      if (this.registration.active) {
+        console.log('[ServiceWorker] Active worker found:', this.registration.active.state);
+      }
+  
       let refreshing = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (refreshing) return;
         refreshing = true;
+        console.log('[ServiceWorker] Controlling service worker changed');
         window.location.reload();
       });
   
