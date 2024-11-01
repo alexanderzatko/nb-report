@@ -132,12 +132,12 @@ class FormManager {
   initializeForm(userData) {
     this.logger.debug('Initializing form with user data:', userData);
     
-    // Ensure we have the required elements
     const regularUserSection = document.getElementById('regular-user-section');
     const adminSection = document.getElementById('admin-section');
     const trailsSection = document.getElementById('trails-section');
     const rewardsSection = document.getElementById('rewards-section');
     const gpxSection = document.querySelector('.gpx-section');
+    const skiCenterNameElement = document.getElementById('ski-center-name');
 
     if (!regularUserSection || !adminSection) {
       this.logger.error('Required form sections not found');
@@ -156,7 +156,10 @@ class FormManager {
     }    
     // Set visibility for admin section
     adminSection.style.display = isAdmin ? 'block' : 'none';
-    
+    if (isAdmin && skiCenterNameElement) {
+        skiCenterNameElement.textContent = userData.ski_center_name || '';
+    }
+   
     // Set visibility for trails section
     if (trailsSection) {
       trailsSection.style.display = 'none';
