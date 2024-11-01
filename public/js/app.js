@@ -172,7 +172,7 @@ class App {
       const userData = await this.managers.network.get('/api/user-data');
       if (userData) {
         await this.managers.ui.updateUIWithUserData(userData);
-        this.managers.form.initializeForm(userData);
+        await this.managers.form.initializeForm(userData);
         return userData;
       }
     } catch (error) {
