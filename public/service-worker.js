@@ -64,8 +64,8 @@ self.addEventListener('fetch', function(event) {
         }
         return fetch(event.request)
           .then(function(response) {
-            // Optional: Add successful network requests to cache
-            if (response.status === 200) {
+            // Only cache successful GET requests
+            if (response.status === 200 && event.request.method === 'GET') {
               const responseClone = response.clone();
               caches.open(FULL_CACHE_NAME)
                 .then(function(cache) {
@@ -110,29 +110,6 @@ self.addEventListener('activate', function(event) {
       .catch(error => {
         console.error('[ServiceWorker] Activation failed:', error);
         throw error;
-      })
-  );
-});
-
-self.addEventListener('fetch', function(event) {
-  event.respondWith(
-    caches.match(event.request)
-      .then(function(response) {
-        if (response) {
-          return response; // Return cached response if found
-        }
-        return fetch(event.request) // Only fetch from network if not in cache
-          .then(function(response) {
-            // Optional: Add successful network requests to cache
-            if (response.status === 200) {
-              const responseClone = response.clone();
-              caches.open(FULL_CACHE_NAME)
-                .then(function(cache) {
-                  cache.put(event.request, responseClone);
-                });
-            }
-            return response;
-          });
       })
   );
 });
