@@ -51,7 +51,7 @@ class ServiceWorkerManager {
       if (this.registration.waiting) {
         console.log('[ServiceWorkerManager] Found waiting worker on initial registration');
         this.updateFound = true;
-        this.notifyUpdateReady();
+        await this.notifyUpdateReady();
       }
   
       // Watch for new updates
@@ -59,21 +59,50 @@ class ServiceWorkerManager {
         const newWorker = this.registration.installing;
         console.log('[ServiceWorker] Update found, new worker installing');
         
+        if (!newWorker) {
+          console.log('[ServiceWorker] No installing worker found');
+          return;
+        }
+  
+        // Add error handling for the installing worker
+        newWorker.addEventListener('error', (error) => {
+          console.error('[ServiceWorker] Worker installation error:', error);
+        });
+        
         newWorker.addEventListener('statechange', () => {
           console.log('[ServiceWorker] Worker state changed to:', newWorker.state);
           
           switch (newWorker.state) {
             case 'installed':
               if (navigator.serviceWorker.controller) {
-                console.log('[ServiceWorker] New version ready to activate');
-                this.updateFound = true;
-                this.notifyUpdateReady();
+                // Ensure we don't proceed if already redundant
+                if (newWorker.state !== 'redundant') {
+                  console.log('[ServiceWorker] New version ready to activate');
+                  this.updateFound = true;
+                  this.notifyUpdateReady();
+                }
               } else {
                 console.log('[ServiceWorker] Service Worker installed for the first time');
               }
               break;
+            case 'activating':
+              console.log('[ServiceWorker] Worker activating');
+              break;
+            case 'activated':
+              console.log('[ServiceWorker] Worker activated');
+              break;
             case 'redundant':
               console.log('[ServiceWorker] Worker became redundant');
+              // Log additional information about why it became redundant
+              if (this.registration.installing) {
+                console.log('[ServiceWorker] New worker is installing');
+              }
+              if (this.registration.waiting) {
+                console.log('[ServiceWorker] New worker is waiting');
+              }
+              if (this.registration.active) {
+                console.log('[ServiceWorker] Active worker state:', this.registration.active.state);
+              }
               break;
             default:
               console.log('[ServiceWorker] Worker state:', newWorker.state);
@@ -81,17 +110,13 @@ class ServiceWorkerManager {
         });
       });
   
-      // Activation check
-      if (this.registration.active) {
-        console.log('[ServiceWorker] Active worker found:', this.registration.active.state);
-      }
-  
-      let refreshing = false;
+      // Listen for install completion
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (refreshing) return;
-        refreshing = true;
-        console.log('[ServiceWorker] Controlling service worker changed');
-        window.location.reload();
+        console.log('[ServiceWorker] Controller changed');
+        if (!this.refreshing) {
+          this.refreshing = true;
+          window.location.reload();
+        }
       });
   
       return true;
