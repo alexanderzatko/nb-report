@@ -111,8 +111,13 @@ class GPSManager {
     };
   }
 
-  hasExistingTrack() {
-    return this.currentTrack !== null;
+  async hasExistingTrack() {
+      if (this.currentTrack) {
+          return true;
+      }
+      // Try loading the latest track if none is in memory
+      const latestTrack = await this.loadLatestTrack();
+      return latestTrack !== null;
   }
 
   calculateDistance(lat1, lon1, lat2, lon2) {
