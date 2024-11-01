@@ -432,7 +432,6 @@ div#photo-preview-container {
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 14px;
     border-bottom: unset;
     border-right: unset;
 }
