@@ -152,6 +152,13 @@ input#report-title {
     font-size: 14px;
 }
 
+#ski-center-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    padding: 8px 0;
+}
+
 input, select {
   width: fit-content;
   padding: 10px;
