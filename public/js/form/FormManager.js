@@ -389,7 +389,7 @@ class FormManager {
                   this.logger.debug('No existing track, processing file directly');
                   await this.processGPXFile(file);
               }
-          });
+          };
         this.logger.debug('Change handler attached:', !!gpxFileInput.onchange);
       }
   
