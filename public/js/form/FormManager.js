@@ -359,7 +359,7 @@ class FormManager {
   
       // Handle file selection
       if (gpxFileInput) {
-          gpxFileInput.onchange = (e) => {
+          gpxFileInput.onchange = async (e) => {
               this.logger.debug('File input change event triggered');
               const file = e.target.files[0];
               this.logger.debug('Selected file', file);
