@@ -273,9 +273,16 @@ class FormManager {
       const uploadContainer = document.getElementById('gpx-upload-container');
       const gpsManager = GPSManager.getInstance();
   
-      // Initialize visibility
+      // Load latest track before checking visibility
+      await gpsManager.loadLatestTrack();
+  
+      // Now check track existence and set visibility
       if (existingOption) {
           existingOption.hidden = !gpsManager.hasExistingTrack();
+          this.logger.debug('GPX option visibility:', {
+              hasTrack: gpsManager.hasExistingTrack(),
+              isHidden: existingOption.hidden
+          });
       }
   
       if (gpxSelect) {
@@ -285,13 +292,6 @@ class FormManager {
               }
           });
       }
-  
-      // Also update visibility when track status changes
-      window.addEventListener('gpx-imported', () => {
-          if (existingOption) {
-              existingOption.hidden = false;
-          }
-      });
   
       this.setupGPXUpload();
   }
