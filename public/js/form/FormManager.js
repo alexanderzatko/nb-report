@@ -131,6 +131,12 @@ class FormManager {
   
   async initializeForm(userData) {
       this.logger.debug('Initializing form with user data:', userData);
+
+      if (this._formInitialized) {
+          return;
+      }
+
+      this._formInitialized = true;
       
       const regularUserSection = document.getElementById('regular-user-section');
       const adminSection = document.getElementById('admin-section');
@@ -283,6 +289,13 @@ class FormManager {
   }
 
   async initializeGPXSection() {
+      // Check if already initialized
+      if (this._gpxSectionInitialized) {
+          await this.updateGPXInfo();
+          return;
+      }
+      this._gpxSectionInitialized = true;
+  
       const gpxSelect = document.getElementById('gpx-option');
       const existingOption = document.getElementById('existing-gpx-option');
       const uploadContainer = document.getElementById('gpx-upload-container');
@@ -305,14 +318,19 @@ class FormManager {
       }
   
       if (gpxSelect && uploadContainer) {
-          gpxSelect.addEventListener('change', (e) => {
+          // Remove any existing listeners by cloning
+          const newSelect = gpxSelect.cloneNode(true);
+          gpxSelect.parentNode.replaceChild(newSelect, gpxSelect);
+          
+          // Add new listener
+          newSelect.addEventListener('change', (e) => {
               uploadContainer.style.display = e.target.value === 'upload' ? 'block' : 'none';
               this.updateGPXInfo();
           });
       }
   
       this.setupGPXUpload();
-      this.updateGPXInfo();
+      await this.updateGPXInfo();
   }
   
   setupGPXUpload() {
@@ -325,50 +343,49 @@ class FormManager {
       const confirmCancel = document.getElementById('gpx-confirm-cancel');
       let pendingGPXFile = null;
   
-      this.logger.debug('Setting up GPX upload with elements:', {
-          select: !!gpxSelect,
-          container: !!uploadContainer,
-          button: !!gpxUploadBtn,
-          fileInput: !!gpxFileInput
-      });
+      // Remove existing input if it exists and create a new one
+      if (gpxFileInput) {
+          gpxFileInput.remove();
+      }
+      
+      // Create new file input
+      const newFileInput = document.createElement('input');
+      newFileInput.type = 'file';
+      newFileInput.id = 'gpx-file-input';
+      newFileInput.accept = '.gpx';
+      newFileInput.style.display = 'none';
+      document.body.appendChild(newFileInput);
   
-      // Handle GPX option selection
+      // Update reference to new input
+      const fileInput = document.getElementById('gpx-file-input');
+
       if (gpxSelect) {
-          gpxSelect.addEventListener('change', (e) => {
+          gpxSelect.onchange = (e) => {
               this.logger.debug('GPX option changed:', e.target.value);
-              if (e.target.value === 'upload') {
-                  uploadContainer.style.display = 'block';
-              } else {
-                  uploadContainer.style.display = 'none';
-              }
+              uploadContainer.style.display = e.target.value === 'upload' ? 'block' : 'none';
               this.updateGPXInfo();
-          });
+          };
       }
   
-      // Handle upload button click
-      if (gpxUploadBtn && gpxFileInput) {
-          console.log('File input element:', gpxFileInput);
-          gpxUploadBtn.addEventListener('click', (e) => {
+      if (gpxUploadBtn && fileInput) {
+          gpxUploadBtn.onclick = (e) => {
               e.preventDefault();
               e.stopPropagation();
               this.logger.debug('Upload button clicked, triggering file input');
-              console.log('About to click file input:', gpxFileInput);
-              gpxFileInput.click();
-          });
+              fileInput.click();
+          };
       }
   
       // Handle file selection
-      if (gpxFileInput) {
-          gpxFileInput.onchange = async (e) => {
+      if (fileInput) {
+          fileInput.onchange = async (e) => {
               this.logger.debug('File input change event triggered');
-              const file = e.target.files[0];
-              this.logger.debug('Selected file', file);
-
-              if (!file) {
-                  return;
-              }
+              const file = e.target.files?.[0];
+              if (!file) return;
   
-              if (!file.name.endsWith('.gpx')) {
+              this.logger.debug('Selected file:', file);
+  
+              if (!file.name.toLowerCase().endsWith('.gpx')) {
                   document.getElementById('gpx-error').textContent = 
                       this.i18next.t('form.gpx.errors.invalidFile');
                   return;
@@ -376,7 +393,6 @@ class FormManager {
   
               const gpsManager = GPSManager.getInstance();
               if (await gpsManager.hasExistingTrack()) {
-                  this.logger.debug('Existing track found, showing confirmation dialog');
                   pendingGPXFile = file;
                   const trackStats = gpsManager.getTrackStats();
                   document.getElementById('existing-track-info').innerHTML = `
@@ -386,11 +402,15 @@ class FormManager {
                   `;
                   confirmDialog.style.display = 'block';
               } else {
-                  this.logger.debug('No existing track, processing file directly');
                   await this.processGPXFile(file);
               }
+  
+              // Update filename display
+              const filenameElement = document.getElementById('gpx-filename');
+              if (filenameElement) {
+                  filenameElement.textContent = file.name;
+              }
           };
-        this.logger.debug('Change handler attached:', !!gpxFileInput.onchange);
       }
   
       // Handle confirmation dialog
