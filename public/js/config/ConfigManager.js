@@ -114,15 +114,6 @@ class ConfigManager {
           sessionId: 'sessionId',
           language: 'i18nextLng',
           theme: 'theme'
-        },
-        indexedDB: {
-          name: 'SnowReportDB',
-          version: 1,
-          stores: {
-            photos: 'photos',
-            reports: 'reports',
-            tracks: 'tracks'
-          }
         }
       },
 
