@@ -988,34 +988,106 @@ class FormManager {
           });
       }
   
-      // Log the complete form submission data
-      console.group('Form Submission Data');
-      console.log('Form Fields:', formDataObject);
-      if (formDataObject.trailConditions) {
-          console.log('Trail Conditions:', JSON.parse(formDataObject.trailConditions));
-      }
-      if (photoInfo.length > 0) {
-          console.log('Photos:', photoInfo);
-      }
-      
-      // If GPS track is included, log it
-      const includeGPX = document.getElementById('include-gpx');
-      if (includeGPX?.checked && includeGPX.style.display !== 'none') {
-          const gpsManager = GPSManager.getInstance();
-          if (gpsManager.hasExistingTrack()) {
-              console.log('GPS Track included:', true);
-              console.log('GPX Data:', gpsManager.exportGPX());
+      try {
+          // Log the complete form submission data
+          console.group('Form Submission Data');
+          console.log('Form Fields:', formDataObject);
+          if (formDataObject.trailConditions) {
+              console.log('Trail Conditions:', JSON.parse(formDataObject.trailConditions));
           }
-      }
-      console.groupEnd();
+          if (photoInfo.length > 0) {
+              console.log('Photos:', photoInfo);
+          }
+          
+          // If GPS track is included, log it
+          const gpxOption = document.getElementById('gpx-option');
+          const includeGPX = document.getElementById('include-gpx');
+          if (gpxOption && gpxOption.value !== 'none') {
+              const gpsManager = GPSManager.getInstance();
+              if (gpsManager.hasExistingTrack()) {
+                  console.log('GPS Track included:', true);
+                  console.log('GPX Data:', gpsManager.exportGPX());
+              }
+          }
+          console.groupEnd();
   
-      // For now, return a successful response
-      return {
-          success: true,
-          message: 'Form data logged to console'
-      };
+          // Make the API call to submit the form data
+          const response = await fetch('/api/submit-snow-report', {
+              method: 'POST',
+              body: formData
+          });
+  
+          if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+          }
+  
+          // If submission was successful, clear GPX data if it was included
+          if (gpxOption && gpxOption.value !== 'none') {
+              const gpsManager = GPSManager.getInstance();
+              await this.clearGPXData(gpsManager);
+              
+              // Reset the GPX option select to 'none'
+              gpxOption.value = 'none';
+              
+              // Hide the existing GPX option
+              const existingOption = document.getElementById('existing-gpx-option');
+              if (existingOption) {
+                  existingOption.hidden = true;
+              }
+  
+              // Clear info display
+              const infoDisplay = document.getElementById('gpx-info-display');
+              if (infoDisplay) {
+                  infoDisplay.style.display = 'none';
+                  infoDisplay.innerHTML = '';
+              }
+          }
+  
+          return {
+              success: true,
+              message: 'Form data submitted successfully'
+          };
+  
+      } catch (error) {
+          this.logger.error('Error submitting form data:', error);
+          throw error;
+      }
   }
 
+  async clearGPXData(gpsManager) {
+      try {
+          // Clear the current track
+          gpsManager.clearTrack();
+  
+          // Clear data from IndexedDB
+          if (gpsManager.db) {
+              // Clear tracks store
+              const tracksStore = gpsManager.db
+                  .transaction(['tracks'], 'readwrite')
+                  .objectStore('tracks');
+              await new Promise((resolve, reject) => {
+                  const request = tracksStore.clear();
+                  request.onsuccess = resolve;
+                  request.onerror = reject;
+              });
+  
+              // Clear track metadata
+              const metadataStore = gpsManager.db
+                  .transaction(['trackMetadata'], 'readwrite')
+                  .objectStore('trackMetadata');
+              await new Promise((resolve, reject) => {
+                  const request = metadataStore.clear();
+                  request.onsuccess = resolve;
+                  request.onerror = reject;
+              });
+          }
+  
+          this.logger.debug('GPX data cleared successfully');
+      } catch (error) {
+          this.logger.error('Error clearing GPX data:', error);
+          throw error;
+      }
+  }
   handleCancel() {
     this.stopTrackingFormTime();
     this.resetForm();
