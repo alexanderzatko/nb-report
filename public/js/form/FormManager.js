@@ -271,6 +271,7 @@ class FormManager {
       const gpxSelect = document.getElementById('gpx-option');
       const existingOption = document.getElementById('existing-gpx-option');
       const uploadContainer = document.getElementById('gpx-upload-container');
+      const infoDisplay = document.getElementById('gpx-info-display');
       const gpsManager = GPSManager.getInstance();
   
       // Load latest track before checking visibility
@@ -283,12 +284,42 @@ class FormManager {
               hasTrack: gpsManager.hasExistingTrack(),
               isHidden: existingOption.hidden
           });
+  
+          // If there's a track, prepare the info display
+          if (gpsManager.hasExistingTrack()) {
+              const trackStats = gpsManager.getTrackStats();
+              if (trackStats && infoDisplay) {
+                  infoDisplay.innerHTML = this.i18next.t('form.gpx.trackInfo', {
+                      date: new Date(trackStats.startTime).toLocaleDateString(),
+                      distance: trackStats.distance,
+                      duration: this.formatDuration(trackStats.duration)
+                  });
+              }
+          }
       }
   
       if (gpxSelect) {
           gpxSelect.addEventListener('change', (e) => {
               if (uploadContainer) {
                   uploadContainer.style.display = e.target.value === 'upload' ? 'block' : 'none';
+              }
+              
+              // Handle info display visibility
+              if (infoDisplay) {
+                  if (e.target.value === 'existing') {
+                      const gpsManager = GPSManager.getInstance();
+                      const trackStats = gpsManager.getTrackStats();
+                      if (trackStats) {
+                          infoDisplay.innerHTML = this.i18next.t('form.gpx.trackInfo', {
+                              date: new Date(trackStats.startTime).toLocaleDateString(),
+                              distance: trackStats.distance,
+                              duration: this.formatDuration(trackStats.duration)
+                          });
+                          infoDisplay.style.display = 'block';
+                      }
+                  } else {
+                      infoDisplay.style.display = 'none';
+                  }
               }
           });
       }
@@ -378,10 +409,10 @@ class FormManager {
           document.getElementById('gpx-file-input').value = '';
       }
   }
-  formatDuration(ms) {
-      const hours = Math.floor(ms / (1000 * 60 * 60));
-      const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
-      return `${hours}:${String(minutes).padStart(2, '0')}`;
+
+  formatDuration(duration) {
+      if (!duration) return '0:00';
+      return `${duration.hours}:${String(duration.minutes).padStart(2, '0')}`;
   }
   
   initializeTrailsSection(trails) {
