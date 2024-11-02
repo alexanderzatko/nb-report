@@ -11,11 +11,6 @@ class GPSManager {
       return GPSManager.instance;
     }
 
-    this.backgroundSync = false;
-    if ('serviceWorker' in navigator && 'SyncManager' in window) {
-        this.backgroundSync = true;
-    }
-    
     this.logger = Logger.getInstance();
     this.i18next = i18next;
     this.isRecording = false;
@@ -31,7 +26,7 @@ class GPSManager {
 
     // Update dbVersion to trigger onupgradeneeded
     this.dbName = 'GPSTrackerDB';
-    this.dbVersion = 2;
+    this.dbVersion = 2;  // Increment this from 1 to 2
     this.db = null;
     this.initializeDB();
 
@@ -41,8 +36,6 @@ class GPSManager {
         elapsedTime: 0
     };
 
-    this.requestPersistentStorage();
-
     GPSManager.instance = this;
 }
 
@@ -51,35 +44,6 @@ class GPSManager {
       GPSManager.instance = new GPSManager();
     }
     return GPSManager.instance;
-  }
-
-  async requestPersistentStorage() {
-    try {
-      if (navigator.storage && navigator.storage.persist) {
-        const isPersisted = await navigator.storage.persist();
-        this.logger.debug('Persistent storage request result:', isPersisted);
-        
-        // Check if we got persistence
-        if (isPersisted) {
-          this.logger.debug('Persistent storage granted');
-        } else {
-          this.logger.warn('Persistent storage denied');
-        }
-        
-        // Also check available space
-        if (navigator.storage && navigator.storage.estimate) {
-          const estimate = await navigator.storage.estimate();
-          this.logger.debug('Storage estimate:', {
-            usage: `${Math.round(estimate.usage / 1024 / 1024)} MB`,
-            quota: `${Math.round(estimate.quota / 1024 / 1024)} MB`,
-            percentageUsed: `${Math.round((estimate.usage / estimate.quota) * 100)}%`
-          });
-        }
-      }
-    } catch (error) {
-      this.logger.error('Error requesting persistent storage:', error);
-      // Don't throw the error - we can still function without persistence
-    }
   }
 
   checkGPSCapability() {
@@ -111,13 +75,8 @@ class GPSManager {
     };
   }
 
-  async hasExistingTrack() {
-      if (this.currentTrack) {
-          return true;
-      }
-      // Try loading the latest track if none is in memory
-      const latestTrack = await this.loadLatestTrack();
-      return latestTrack !== null;
+  hasExistingTrack() {
+    return this.currentTrack !== null;
   }
 
   calculateDistance(lat1, lon1, lat2, lon2) {
@@ -142,17 +101,12 @@ class GPSManager {
               alert(capability.reason);
               return false;
           }
-
+  
           const permission = await this.requestLocationPermission();
           if (!permission) {
               throw new Error(this.i18next.t('errors.gps.permissionDenied'));
           }
-
-          if (this.backgroundSync) {
-              await navigator.serviceWorker.ready;
-              await navigator.serviceWorker.sync.register('gps-sync');
-          }
-
+  
           // Clear any existing active points
           await this.clearActivePoints();
   
