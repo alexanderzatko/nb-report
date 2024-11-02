@@ -275,23 +275,31 @@ class FormManager {
       const existingOption = document.getElementById('existing-gpx-option');
       const uploadContainer = document.getElementById('gpx-upload-container');
       const gpsManager = GPSManager.getInstance();
-
-/*
-      if (!gpxSelect || !existingOption || !uploadContainer) {
-          this.logger.error('Required GPX elements not found');
-          return;
-      }
-*/
-      // Show/hide existing track option based on whether there's a track
-      if (gpsManager.hasExistingTrack()) {
-          existingOption.style.display = 'block';
+  
+      if (gpxSelect && existingOption) {
+          // Check if there's an existing track
+          if (gpsManager.hasExistingTrack()) {
+              // Make the option visible and selectable
+              existingOption.style.display = '';
+              existingOption.removeAttribute('disabled');
+          } else {
+              // Hide and disable the option
+              existingOption.style.display = 'none';
+              existingOption.setAttribute('disabled', 'disabled');
+              
+              // If it was selected, switch to 'none'
+              if (gpxSelect.value === 'existing') {
+                  gpxSelect.value = 'none';
+              }
+          }
       }
   
-      // Handle upload container visibility
-      gpxSelect.addEventListener('change', (e) => {
-        uploadContainer.style.display = e.target.value === 'upload' ? 'block' : 'none';
-        this.updateGPXInfo();
-      });
+      if (gpxSelect && uploadContainer) {
+          gpxSelect.addEventListener('change', (e) => {
+              uploadContainer.style.display = e.target.value === 'upload' ? 'block' : 'none';
+              this.updateGPXInfo();
+          });
+      }
   
       this.setupGPXUpload();
       this.updateGPXInfo();
