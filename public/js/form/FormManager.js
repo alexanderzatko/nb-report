@@ -324,9 +324,19 @@ class FormManager {
           
           // Add new listener
           newSelect.addEventListener('change', (e) => {
-              uploadContainer.style.display = e.target.value === 'upload' ? 'block' : 'none';
+              this.logger.debug('GPX select changed to:', e.target.value);
+              if (uploadContainer) {
+                  uploadContainer.style.display = e.target.value === 'upload' ? 'block' : 'none';
+                  this.logger.debug('Upload container display set to:', uploadContainer.style.display);
+              }
               this.updateGPXInfo();
           });
+      
+          // Set initial visibility based on current selection
+          if (uploadContainer) {
+              uploadContainer.style.display = newSelect.value === 'upload' ? 'block' : 'none';
+              this.logger.debug('Initial upload container display set to:', uploadContainer.style.display);
+          }
       }
   
       this.setupGPXUpload();
@@ -373,6 +383,7 @@ class FormManager {
               e.stopPropagation();
               this.logger.debug('Upload button clicked, triggering file input');
               fileInput.click();
+              return false;
           };
       }
   
