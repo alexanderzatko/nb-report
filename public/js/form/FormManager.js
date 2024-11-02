@@ -80,50 +80,28 @@ class FormManager {
   }
 
   async initialize() {
-      console.log('Initializing FormManager');
-      
-      // Wait for i18next first
-      if (!this.i18next.isInitialized) {
-          console.log('Waiting for i18next to initialize...');
-          await new Promise(resolve => {
-              this.i18next.on('initialized', resolve);
-          });
-      }
-  
-      // Initialize core form functionality
-      this.initializeFormValidation();
-      this.initializeDatePicker();
-      
-      // Add the form click handler with more robust checking
-      const form = document.getElementById('snow-report-form');
-      if (form) {
-          form.addEventListener('click', (e) => {
-              const target = e.target;
-              if (target && target.id === 'gpx-upload-btn') {
-                  this.logger.debug('Intercepted gpx-upload-btn click in form capture phase');
-                  e.preventDefault();
-                  e.stopPropagation();
-                  e.stopImmediatePropagation();
-                  return false;
-              }
-          }, true);  // Use capture phase
-      }
-      
-      // Setup other event listeners
-      this.setupEventListeners();
-      
-      // Initialize media-related functionality
-      this.photoManager.initializePhotoUpload();
-      
-      // Initialize GPS and GPX sections if they exist
-      const gpsTrackSection = document.getElementById('gps-track-section');
-      if (gpsTrackSection) {
-          await this.initializeGPSTrackSection();
-      }
-      
-      await this.initializeGPXSection();
-      
-      this.logger.debug('FormManager initialization completed');
+    console.log('Initializing FormManager');
+    
+    if (!this.i18next.isInitialized) {
+      console.log('Waiting for i18next to initialize...');
+      await new Promise(resolve => {
+        this.i18next.on('initialized', resolve);
+      });
+    }
+    
+    this.initializeFormValidation();
+    this.initializeDatePicker();
+    this.setupEventListeners();
+    
+    // Initialize photo upload functionality
+    this.photoManager.initializePhotoUpload();
+
+    if (document.getElementById('gps-track-section')) {
+      await this.initializeGPSTrackSection();
+    }
+
+    await this.initializeGPXSection();
+
   }
 
   setupEventListeners() {
@@ -151,77 +129,56 @@ class FormManager {
     }
   }
   
-  async initializeForm(userData) {
-      this.logger.debug('Initializing form with user data:', userData);
+  initializeForm(userData) {
+    this.logger.debug('Initializing form with user data:', userData);
+    
+    // Ensure we have the required elements
+    const regularUserSection = document.getElementById('regular-user-section');
+    const adminSection = document.getElementById('admin-section');
+    const trailsSection = document.getElementById('trails-section');
+    const rewardsSection = document.getElementById('rewards-section');
 
-      if (this._formInitialized) {
-          return;
-      }
+    if (!regularUserSection || !adminSection) {
+      this.logger.error('Required form sections not found');
+      return;
+    }
 
-      this._formInitialized = true;
-      
-      const regularUserSection = document.getElementById('regular-user-section');
-      const adminSection = document.getElementById('admin-section');
-      const trailsSection = document.getElementById('trails-section');
-      const rewardsSection = document.getElementById('rewards-section');
-      const gpxSection = document.querySelector('.gpx-section');
-      const skiCenterNameElement = document.getElementById('ski-center-name');
-      const skiCenterIdElement = document.getElementById('ski-center-id');
-  
-      if (!regularUserSection || !adminSection) {
-        this.logger.error('Required form sections not found');
-        return;
+    const isAdmin = userData?.ski_center_admin === "1";
+    const hasTrails = userData?.trails && Array.isArray(userData.trails) && userData.trails.length > 0;
+    
+    this.logger.debug('User type:', { isAdmin, hasTrails });
+
+    // Set visibility for regular user section
+    regularUserSection.style.display = isAdmin ? 'none' : 'block';
+    
+    // Set visibility for admin section
+    adminSection.style.display = isAdmin ? 'block' : 'none';
+    
+    // Set visibility for trails section
+    if (trailsSection) {
+      trailsSection.style.display = 'none';
+      if (isAdmin && hasTrails) {
+        trailsSection.style.display = 'block';
+        this.initializeTrailsSection(userData.trails);
       }
-  
-      const isAdmin = userData?.ski_center_admin === "1";
-      const hasTrails = userData?.trails && Array.isArray(userData.trails) && userData.trails.length > 0;
-      
-      this.logger.debug('User type:', { isAdmin, hasTrails });
-  
-      // Set visibility for regular user section and its components
-      regularUserSection.style.display = isAdmin ? 'none' : 'block';
-      if (gpxSection) {
-          gpxSection.style.display = isAdmin ? 'none' : 'block';
-      }    
-  
-      // Set visibility for admin section
-      adminSection.style.display = isAdmin ? 'block' : 'none';
-      if (isAdmin && skiCenterNameElement) {
-          skiCenterNameElement.textContent = userData.ski_center_name || '';
-      }
-      if (isAdmin && skiCenterIdElement) {
-          skiCenterIdElement.textContent = userData.ski_center_id || '';
-      }
-     
-      // Set visibility for trails section
-      if (trailsSection) {
-        trailsSection.style.display = 'none';
-        if (isAdmin && hasTrails) {
-          trailsSection.style.display = 'block';
-          this.initializeTrailsSection(userData.trails);
-        }
-      }
-  
-      // Set visibility for rewards section based on rovas_uid
-      if (rewardsSection) {
-        rewardsSection.style.display = 
-          (userData?.rovas_uid && !isNaN(userData.rovas_uid)) ? 'block' : 'none';
-      }
-  
-      // Initialize form fields based on user type
-      const config = isAdmin ? this.formConfig.admin : this.formConfig.regular;
-      this.initializeFormFields(config);
-  
-      this.logger.debug('Form sections visibility:', {
-        regularUser: regularUserSection.style.display,
-        admin: adminSection.style.display,
-        trails: trailsSection?.style.display,
-        rewards: rewardsSection?.style.display
-      });
-  
-      const gpsManager = GPSManager.getInstance();
-      await gpsManager.loadLatestTrack(); // Ensure track is loaded
-      await this.initializeGPXSection();
+    }
+
+    // Set visibility for rewards section based on rovas_uid
+    if (rewardsSection) {
+      rewardsSection.style.display = 
+        (userData?.rovas_uid && !isNaN(userData.rovas_uid)) ? 'block' : 'none';
+    }
+
+    // Initialize form fields based on user type
+    const config = isAdmin ? this.formConfig.admin : this.formConfig.regular;
+    this.initializeFormFields(config);
+
+    this.logger.debug('Form sections visibility:', {
+      regularUser: regularUserSection.style.display,
+      admin: adminSection.style.display,
+      trails: trailsSection?.style.display,
+      rewards: rewardsSection?.style.display
+    });
   }
 
   initializeFormFields(config) {
@@ -311,265 +268,97 @@ class FormManager {
   }
 
   async initializeGPXSection() {
-      // Check if already initialized to prevent duplicate initialization
-      if (this._gpxSectionInitialized) {
-          await this.updateGPXInfo();
-          return;
-      }
-      this._gpxSectionInitialized = true;
-  
       const gpxSelect = document.getElementById('gpx-option');
       const existingOption = document.getElementById('existing-gpx-option');
       const uploadContainer = document.getElementById('gpx-upload-container');
       const gpsManager = GPSManager.getInstance();
   
-      this.logger.debug('Initializing GPX section with elements:', {
-          select: !!gpxSelect,
-          existingOption: !!existingOption,
-          uploadContainer: !!uploadContainer
+      if (gpsManager.hasExistingTrack()) {
+          existingOption.style.display = 'block';
+      }
+  
+      gpxSelect.addEventListener('change', (e) => {
+          uploadContainer.style.display = e.target.value === 'upload' ? 'block' : 'none';
       });
   
-      if (!gpxSelect || !existingOption) {
-          this.logger.error('Required GPX select elements not found');
-          return;
-      }
-  
-      // Check for existing track and update UI accordingly
-      const hasTrack = await gpsManager.hasExistingTrack();
-      if (hasTrack) {
-          existingOption.style.display = '';
-          existingOption.removeAttribute('disabled');
-      } else {
-          existingOption.style.display = 'none';
-          existingOption.setAttribute('disabled', 'disabled');
-          if (gpxSelect.value === 'existing') {
-              gpxSelect.value = 'none';
-          }
-      }
-  
-      // Setup change handler for the select dropdown
-      // Remove existing listener if any
-      const newSelect = gpxSelect.cloneNode(true);
-      gpxSelect.parentNode.replaceChild(newSelect, gpxSelect);
-      
-      newSelect.addEventListener('change', (e) => {
-          this.logger.debug('GPX option changed to:', e.target.value);
-          const container = document.getElementById('gpx-upload-container');
-          if (container) {
-              container.style.display = e.target.value === 'upload' ? 'block' : 'none';
-              this.logger.debug('Upload container display set to:', container.style.display);
-          }
-          this.updateGPXInfo();
-      });
-  
-      // Initial UI state
-      if (uploadContainer) {
-          uploadContainer.style.display = newSelect.value === 'upload' ? 'block' : 'none';
-          this.logger.debug('Initial upload container display:', uploadContainer.style.display);
-      }
-  
-      // Setup file upload functionality
-      await this.setupGPXUpload();
-      await this.updateGPXInfo();
+      this.setupGPXUpload();
   }
   
   setupGPXUpload() {
-      this.logger.debug('Setting up GPX upload handlers');
-      
-      // Find or create file input
-      let fileInput = document.getElementById('gpx-file-input');
-      if (!fileInput) {
-          fileInput = document.createElement('input');
-          fileInput.type = 'file';
-          fileInput.id = 'gpx-file-input';
-          fileInput.accept = '.gpx';
-          fileInput.style.display = 'none';
-          document.body.appendChild(fileInput);
+      const gpxUploadBtn = document.getElementById('gpx-upload-btn');
+      const gpxFileInput = document.getElementById('gpx-file-input');
+      const confirmDialog = document.getElementById('gpx-confirm-dialog');
+      const confirmReplace = document.getElementById('gpx-confirm-replace');
+      const confirmCancel = document.getElementById('gpx-confirm-cancel');
+      let pendingGPXFile = null;
+  
+      if (gpxUploadBtn) {
+          gpxUploadBtn.addEventListener('click', () => {
+              gpxFileInput.click();
+          });
       }
   
-      // Get upload button
-      const uploadBtn = document.getElementById('gpx-upload-btn');
-      if (!uploadBtn) {
-          this.logger.error('Upload button not found');
-          return;
-      }
+      if (gpxFileInput) {
+          gpxFileInput.accept = '.gpx,application/gpx+xml,application/xml';
+          gpxFileInput.addEventListener('change', async (e) => {
+              const file = e.target.files[0];
+              if (!file) return;
   
-      // Ensure button is configured correctly
-      uploadBtn.setAttribute('type', 'button');
-      this.logger.debug('Upload button configured');
-  
-      // Remove existing click listeners and add new one
-      const newUploadBtn = uploadBtn.cloneNode(true);
-      uploadBtn.parentNode.replaceChild(newUploadBtn, uploadBtn);
-      
-      newUploadBtn.addEventListener('click', (e) => {
-          this.logger.debug('Upload button clicked');
-          e.preventDefault();
-          e.stopPropagation();
-          fileInput.click();
-          return false;
-      });
-  
-      // Setup file input change handler
-      const newFileInput = fileInput.cloneNode(true);
-      fileInput.parentNode.replaceChild(newFileInput, fileInput);
-      
-      newFileInput.addEventListener('change', async (e) => {
-          const file = e.target.files?.[0];
-          if (!file) {
-              this.logger.debug('No file selected');
-              return;
-          }
-  
-          this.logger.debug('File selected:', file.name);
-  
-          if (!file.name.toLowerCase().endsWith('.gpx')) {
-              const errorMsg = this.i18next.t('form.gpx.errors.invalidFile');
-              const errorElement = document.getElementById('gpx-error');
-              if (errorElement) {
-                  errorElement.textContent = errorMsg;
+              if (!file.name.endsWith('.gpx')) {
+                  document.getElementById('gpx-error').textContent = 
+                      this.i18next.t('form.gpx.errors.invalidFile');
+                  return;
               }
-              newFileInput.value = '';
-              return;
-          }
   
-          const gpsManager = GPSManager.getInstance();
-          const hasExistingTrack = await gpsManager.hasExistingTrack();
-          
-          if (hasExistingTrack) {
-              // Show confirmation dialog
-              const confirmDialog = document.getElementById('gpx-confirm-dialog');
-              const trackStats = gpsManager.getTrackStats();
-              
-              if (confirmDialog && trackStats) {
-                  const trackInfo = document.getElementById('existing-track-info');
-                  if (trackInfo) {
-                      trackInfo.innerHTML = `
-                          <p><strong>${this.i18next.t('form.gpx.currentTrack')}</strong><br>
-                          ${trackStats.startTime.toLocaleDateString()} at ${trackStats.startTime.toLocaleTimeString()}<br>
-                          ${this.i18next.t('dashboard.trackStats', {
-                              distance: trackStats.distance,
-                              hours: trackStats.duration.hours,
-                              minutes: trackStats.duration.minutes
-                          })}</p>
-                      `;
-                  }
+              const gpsManager = GPSManager.getInstance();
+              if (gpsManager.hasExistingTrack()) {
+                  pendingGPXFile = file;
+                  const trackStats = gpsManager.getTrackStats();
+                  document.getElementById('existing-track-info').innerHTML = `
+                      <p><strong>${this.i18next.t('form.gpx.currentTrack')}</strong><br>
+                      ${trackStats.startTime.toLocaleDateString()} at ${trackStats.startTime.toLocaleTimeString()}<br>
+                      Distance: ${trackStats.distance} km</p>
+                  `;
                   confirmDialog.style.display = 'block';
-  
-                  // Setup confirmation dialog buttons
-                  const confirmReplace = document.getElementById('gpx-confirm-replace');
-                  const confirmCancel = document.getElementById('gpx-confirm-cancel');
-  
-                  if (confirmReplace) {
-                      const newConfirmReplace = confirmReplace.cloneNode(true);
-                      confirmReplace.parentNode.replaceChild(newConfirmReplace, confirmReplace);
-                      newConfirmReplace.addEventListener('click', async (e) => {
-                          e.preventDefault();
-                          await this.processGPXFile(file);
-                          confirmDialog.style.display = 'none';
-                      });
-                  }
-  
-                  if (confirmCancel) {
-                      const newConfirmCancel = confirmCancel.cloneNode(true);
-                      confirmCancel.parentNode.replaceChild(newConfirmCancel, confirmCancel);
-                      newConfirmCancel.addEventListener('click', (e) => {
-                          e.preventDefault();
-                          confirmDialog.style.display = 'none';
-                          newFileInput.value = '';
-                      });
-                  }
+              } else {
+                  await this.processGPXFile(file);
               }
-          } else {
-              await this.processGPXFile(file);
-          }
-      });
+          });
+      }
   
-      this.logger.debug('GPX upload handlers setup completed');
+      if (confirmReplace) {
+          confirmReplace.addEventListener('click', async () => {
+              if (pendingGPXFile) {
+                  await this.processGPXFile(pendingGPXFile);
+                  pendingGPXFile = null;
+              }
+              confirmDialog.style.display = 'none';
+          });
+      }
+  
+      if (confirmCancel) {
+          confirmCancel.addEventListener('click', () => {
+              pendingGPXFile = null;
+              confirmDialog.style.display = 'none';
+              gpxFileInput.value = '';
+          });
+      }
   }
   
   async processGPXFile(file) {
       try {
-          this.logger.debug('Processing GPX file:', file.name);
           const content = await file.text();
-          
           const gpsManager = GPSManager.getInstance();
           await gpsManager.importGPXFile(content);
-          
-          // Update UI elements
-          const filenameElement = document.getElementById('gpx-filename');
-          const errorElement = document.getElementById('gpx-error');
-          const existingOption = document.getElementById('existing-gpx-option');
-          const gpxSelect = document.getElementById('gpx-option');
-          const uploadContainer = document.getElementById('gpx-upload-container');
-          
-          if (filenameElement) {
-              filenameElement.textContent = file.name;
-          }
-          
-          if (errorElement) {
-              errorElement.textContent = '';
-          }
-  
-          // Update dropdown to show existing track option
-          if (existingOption) {
-              existingOption.style.display = '';
-              existingOption.removeAttribute('disabled');
-          }
-  
-          if (gpxSelect) {
-              gpxSelect.value = 'existing';
-          }
-  
-          if (uploadContainer) {
-              uploadContainer.style.display = 'none';
-          }
-  
-          await this.updateGPXInfo();
-          
+          document.getElementById('gpx-filename').textContent = file.name;
+          document.getElementById('gpx-error').textContent = '';
+          document.getElementById('existing-gpx-option').style.display = 'block';
       } catch (error) {
-          this.logger.error('Error processing GPX file:', error);
-          const errorElement = document.getElementById('gpx-error');
-          if (errorElement) {
-              errorElement.textContent = this.i18next.t('form.gpx.errors.processingError');
-          }
-          const fileInput = document.getElementById('gpx-file-input');
-          if (fileInput) {
-              fileInput.value = '';
-          }
+          document.getElementById('gpx-error').textContent = 
+              this.i18next.t('form.gpx.errors.processingError');
+          document.getElementById('gpx-file-input').value = '';
       }
   }
-  
-  async updateGPXInfo() {
-      const gpxSelect = document.getElementById('gpx-option');
-      const gpxInfoDisplay = document.getElementById('gpx-info-display');
-      const gpsManager = GPSManager.getInstance();
-  
-      if (!gpxInfoDisplay || !gpxSelect) return;
-  
-      if (gpxSelect.value === 'existing' && await gpsManager.hasExistingTrack()) {
-          const stats = gpsManager.getTrackStats();
-          if (stats) {
-              const dateStr = stats.startTime.toLocaleDateString(this.i18next.language, {
-                  year: 'numeric',
-                  month: '2-digit',
-                  day: '2-digit',
-                  hour: '2-digit',
-                  minute: '2-digit'
-              });
-              
-              gpxInfoDisplay.innerHTML = this.i18next.t('form.gpx.trackInfo', {
-                  date: dateStr,
-                  distance: stats.distance,
-                  duration: `${stats.duration.hours}:${String(stats.duration.minutes).padStart(2, '0')}`
-              });
-              gpxInfoDisplay.style.display = 'block';
-          }
-      } else {
-          gpxInfoDisplay.style.display = 'none';
-      }
-  }
-  
   formatDuration(ms) {
       const hours = Math.floor(ms / (1000 * 60 * 60));
       const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
@@ -1044,12 +833,10 @@ class FormManager {
           const snowDepthTotal = document.getElementById('snow-depth-total')?.value;
           const snowDepthNew = document.getElementById('snow-depth-new')?.value;
           const note = document.getElementById('report-note')?.value;
-          const skiCenterId = document.getElementById('ski-center-id')?.textContent;
-
+          
           if (snowDepthTotal) data.snowDepthTotal = snowDepthTotal;
           if (snowDepthNew) data.snowDepthNew = snowDepthNew;
           if (note) data.note = note;
-          if (skiCenterId) data.skiCenterId = skiCenterId;
           
           // Common dropdowns that are visible in admin form
           const snowType = document.getElementById('snow-type')?.value;
