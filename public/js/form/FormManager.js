@@ -301,6 +301,12 @@ class FormManager {
       const uploadContainer = document.getElementById('gpx-upload-container');
       const gpsManager = GPSManager.getInstance();
   
+      this.logger.debug('GPX Section elements:', {
+          select: gpxSelect,
+          existingOption: existingOption,
+          uploadContainer: uploadContainer
+      });
+  
       if (gpxSelect && existingOption) {
           // Make this check async
           const hasTrack = await gpsManager.hasExistingTrack();
@@ -317,30 +323,110 @@ class FormManager {
           }
       }
   
-      if (gpxSelect && uploadContainer) {
-          // Remove any existing listeners by cloning
+      if (gpxSelect) {
+          // Remove existing listeners by cloning
           const newSelect = gpxSelect.cloneNode(true);
           gpxSelect.parentNode.replaceChild(newSelect, gpxSelect);
           
-          // Add new listener
-          newSelect.addEventListener('change', (e) => {
-              this.logger.debug('GPX select changed to:', e.target.value);
+          newSelect.onchange = (e) => {
+              this.logger.debug('GPX select changed:', e.target.value);
               if (uploadContainer) {
                   uploadContainer.style.display = e.target.value === 'upload' ? 'block' : 'none';
-                  this.logger.debug('Upload container display set to:', uploadContainer.style.display);
+                  this.logger.debug('Upload container display:', uploadContainer.style.display);
               }
               this.updateGPXInfo();
-          });
-      
+          };
+  
           // Set initial visibility based on current selection
           if (uploadContainer) {
               uploadContainer.style.display = newSelect.value === 'upload' ? 'block' : 'none';
-              this.logger.debug('Initial upload container display set to:', uploadContainer.style.display);
+              this.logger.debug('Initial container display:', uploadContainer.style.display);
           }
       }
   
       this.setupGPXUpload();
       await this.updateGPXInfo();
+  }
+  
+  setupGPXUpload() {
+      const gpxUploadBtn = document.getElementById('gpx-upload-btn');
+      const fileInput = document.getElementById('gpx-file-input');
+      const confirmDialog = document.getElementById('gpx-confirm-dialog');
+      const confirmReplace = document.getElementById('gpx-confirm-replace');
+      const confirmCancel = document.getElementById('gpx-confirm-cancel');
+      let pendingGPXFile = null;
+  
+      this.logger.debug('Setting up GPX upload with elements:', {
+          uploadBtn: gpxUploadBtn,
+          fileInput: fileInput
+      });
+  
+      if (gpxUploadBtn && fileInput) {
+          gpxUploadBtn.onclick = (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              this.logger.debug('Upload button clicked, triggering file input');
+              fileInput.click();
+          };
+  
+          fileInput.onchange = async (e) => {
+              this.logger.debug('File input change event triggered');
+              const file = e.target.files?.[0];
+              if (!file) return;
+  
+              this.logger.debug('Selected file:', file);
+  
+              if (!file.name.toLowerCase().endsWith('.gpx')) {
+                  document.getElementById('gpx-error').textContent = 
+                      this.i18next.t('form.gpx.errors.invalidFile');
+                  return;
+              }
+  
+              const gpsManager = GPSManager.getInstance();
+              if (await gpsManager.hasExistingTrack()) {
+                  pendingGPXFile = file;
+                  const trackStats = gpsManager.getTrackStats();
+                  if (confirmDialog) {
+                      document.getElementById('existing-track-info').innerHTML = `
+                          <p><strong>${this.i18next.t('form.gpx.currentTrack')}</strong><br>
+                          ${trackStats.startTime.toLocaleDateString()} at ${trackStats.startTime.toLocaleTimeString()}<br>
+                          Distance: ${trackStats.distance} km</p>
+                      `;
+                      confirmDialog.style.display = 'block';
+                  } else {
+                      await this.processGPXFile(file);
+                  }
+              } else {
+                  await this.processGPXFile(file);
+              }
+  
+              // Update filename display
+              const filenameElement = document.getElementById('gpx-filename');
+              if (filenameElement) {
+                  filenameElement.textContent = file.name;
+              }
+          };
+      }
+  
+      if (confirmReplace) {
+          confirmReplace.onclick = async (e) => {
+              e.preventDefault();
+              if (pendingGPXFile) {
+                  await this.processGPXFile(pendingGPXFile);
+                  pendingGPXFile = null;
+              }
+              confirmDialog.style.display = 'none';
+          };
+      }
+  
+      if (confirmCancel) {
+          confirmCancel.onclick = (e) => {
+              e.preventDefault();
+              pendingGPXFile = null;
+              confirmDialog.style.display = 'none';
+              fileInput.value = '';
+          };
+      }
   }
   
   setupGPXUpload() {
