@@ -273,14 +273,24 @@ class FormManager {
       const uploadContainer = document.getElementById('gpx-upload-container');
       const gpsManager = GPSManager.getInstance();
   
-      if (gpsManager.hasExistingTrack()) {
-          existingOption.hidden = false;  // Use hidden property instead of display style
-      } else {
-          existingOption.hidden = true;   // Hide the option when no track exists
+      // Initialize visibility
+      if (existingOption) {
+          existingOption.hidden = !gpsManager.hasExistingTrack();
       }
   
-      gpxSelect.addEventListener('change', (e) => {
-          uploadContainer.style.display = e.target.value === 'upload' ? 'block' : 'none';
+      if (gpxSelect) {
+          gpxSelect.addEventListener('change', (e) => {
+              if (uploadContainer) {
+                  uploadContainer.style.display = e.target.value === 'upload' ? 'block' : 'none';
+              }
+          });
+      }
+  
+      // Also update visibility when track status changes
+      window.addEventListener('gpx-imported', () => {
+          if (existingOption) {
+              existingOption.hidden = false;
+          }
       });
   
       this.setupGPXUpload();
@@ -292,6 +302,7 @@ class FormManager {
       const confirmDialog = document.getElementById('gpx-confirm-dialog');
       const confirmReplace = document.getElementById('gpx-confirm-replace');
       const confirmCancel = document.getElementById('gpx-confirm-cancel');
+      const existingOption = document.getElementById('existing-gpx-option');
       let pendingGPXFile = null;
   
       if (gpxUploadBtn) {
@@ -324,6 +335,9 @@ class FormManager {
                   confirmDialog.style.display = 'block';
               } else {
                   await this.processGPXFile(file);
+                  if (existingOption) {
+                      existingOption.hidden = false;
+                  }
               }
           });
       }
@@ -333,6 +347,9 @@ class FormManager {
               if (pendingGPXFile) {
                   await this.processGPXFile(pendingGPXFile);
                   pendingGPXFile = null;
+                  if (existingOption) {
+                      existingOption.hidden = false;
+                  }
               }
               confirmDialog.style.display = 'none';
           });
