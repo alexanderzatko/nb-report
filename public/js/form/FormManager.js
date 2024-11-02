@@ -347,30 +347,28 @@ class FormManager {
   
       // Handle upload button click
       if (gpxUploadBtn && gpxFileInput) {
-          console.log('File input element:', gpxFileInput); // Add this line
+          console.log('File input element:', gpxFileInput);
           gpxUploadBtn.addEventListener('click', (e) => {
               e.preventDefault();
               e.stopPropagation();
               this.logger.debug('Upload button clicked, triggering file input');
-              console.log('About to click file input:', gpxFileInput); // Add this line
+              console.log('About to click file input:', gpxFileInput);
               gpxFileInput.click();
           });
       }
   
       // Handle file selection
       if (gpxFileInput) {
-          gpxFileInput.addEventListener('change', async (e) => {
+          gpxFileInput.onchange = (e) => {
               this.logger.debug('File input change event triggered');
               const file = e.target.files[0];
+              this.logger.debug('Selected file', file);
+
               if (!file) {
-                  this.logger.debug('No file selected');
                   return;
               }
   
-              this.logger.debug('File selected:', file.name);
-  
               if (!file.name.endsWith('.gpx')) {
-                  this.logger.debug('Invalid file type');
                   document.getElementById('gpx-error').textContent = 
                       this.i18next.t('form.gpx.errors.invalidFile');
                   return;
@@ -392,6 +390,7 @@ class FormManager {
                   await this.processGPXFile(file);
               }
           });
+        this.logger.debug('Change handler attached:', !!gpxFileInput.onchange);
       }
   
       // Handle confirmation dialog
