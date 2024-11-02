@@ -274,7 +274,9 @@ class FormManager {
       const gpsManager = GPSManager.getInstance();
   
       if (gpsManager.hasExistingTrack()) {
-          existingOption.style.display = 'block';
+          existingOption.hidden = false;  // Use hidden property instead of display style
+      } else {
+          existingOption.hidden = true;   // Hide the option when no track exists
       }
   
       gpxSelect.addEventListener('change', (e) => {
