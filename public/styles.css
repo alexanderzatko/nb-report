@@ -152,13 +152,6 @@ input#report-title {
     font-size: 14px;
 }
 
-#ski-center-name {
-    font-size: 16px;
-    font-weight: 600;
-    color: #333;
-    padding: 8px 0;
-}
-
 input, select {
   width: fit-content;
   padding: 10px;
@@ -174,7 +167,6 @@ input#report-date {
 
 .gpx-section {
     margin-top: 20px;
-    margin-bottom: 20px;
 }
 
 .gpx-select {
@@ -190,38 +182,9 @@ input#report-date {
     gap: 10px;
 }
 
-#gpx-upload-container {
-    display: none; /* Hidden by default */
-}
-
-#gpx-upload-container.visible {
-    display: block;
-}
-
-#gpx-upload-btn {
-    font-size: 14px;
-    padding: 10px 20px;
-    background-color: #789f98;
-    color: #ffffff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-
-}
-
 .gpx-filename {
     color: #666;
     font-size: 14px;
-    margin-left: 8px;
-}
-
-.gpx-info {
-    margin-top: 10px;
-    padding: 10px;
-    background-color: #f8f9fa;
-    border-radius: 4px;
-    font-size: 14px;
-    color: #666;
 }
 
 .modal {
@@ -441,15 +404,12 @@ div#photo-preview-container {
 }
 
 .photo-button {
-    font-size: 14px;
     padding: 10px 20px;
     background-color: #0078d4;
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    border-bottom: unset;
-    border-right: unset;
 }
 
 .photo-button:hover {
@@ -669,6 +629,7 @@ textarea:invalid + .validation-message {
 }
 
 .cancel-button {
+    margin-top: 50px;
     padding: 10px 20px;
     background-color: #6c757d;
     color: white;
@@ -676,10 +637,6 @@ textarea:invalid + .validation-message {
     border-radius: 4px;
     cursor: pointer;
     font-size: 16px;
-}
-
-.form-buttons > .cancel-button {
-    margin-top: 50px;
 }
 
 .cancel-button:hover {
@@ -756,6 +713,17 @@ textarea:invalid + .validation-message {
   margin-top: 15px;
   padding-top: 15px;
   border-top: 1px solid #eee;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: auto;
 }
 
 #gps-track-details {
