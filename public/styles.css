@@ -190,6 +190,14 @@ input#report-date {
     gap: 10px;
 }
 
+#gpx-upload-container {
+    display: none; /* Hidden by default */
+}
+
+#gpx-upload-container.visible {
+    display: block;
+}
+
 #gpx-upload-btn {
     font-size: 14px;
     padding: 10px 20px;
@@ -204,6 +212,7 @@ input#report-date {
 .gpx-filename {
     color: #666;
     font-size: 14px;
+    margin-left: 8px;
 }
 
 .gpx-info {
