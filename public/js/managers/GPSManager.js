@@ -2,6 +2,7 @@
 
 import Logger from '../utils/Logger.js';
 import i18next from '/node_modules/i18next/dist/esm/i18next.js';
+import DatabaseManager from './DatabaseManager.js';
 
 class GPSManager {
   static instance = null;
@@ -27,7 +28,7 @@ class GPSManager {
     this.dbName = 'AppDB';
     this.dbVersion = 2;  // Increment this from 1 to 2
     this.db = null;
-    this.initializeDB();
+    this.dbManager = DatabaseManager.getInstance();
 
     this.recordingMetadata = {
         startTime: null,
@@ -151,7 +152,7 @@ class GPSManager {
   }
 
   async saveTrackMetadata(metadata) {
-      if (!this.db) await this.initializeDB();
+      const db = await this.dbManager.getDatabase();
       
       return new Promise((resolve, reject) => {
           const transaction = this.db.transaction(['trackMetadata'], 'readwrite');
@@ -238,7 +239,7 @@ class GPSManager {
   }
 
   async loadTrackMetadata() {
-      if (!this.db) await this.initializeDB();
+      const db = await this.dbManager.getDatabase();
       
       return new Promise((resolve, reject) => {
           const transaction = this.db.transaction(['trackMetadata'], 'readonly');
@@ -251,7 +252,7 @@ class GPSManager {
   }
 
   async clearTrackMetadata() {
-      if (!this.db) await this.initializeDB();
+      const db = await this.dbManager.getDatabase();
       
       return new Promise((resolve, reject) => {
           const transaction = this.db.transaction(['trackMetadata'], 'readwrite');
@@ -442,7 +443,7 @@ class GPSManager {
 
   // Save point during recording
   async savePoint(point) {
-    if (!this.db) await this.initializeDB();
+    const db = await this.dbManager.getDatabase();
     
     return new Promise((resolve, reject) => {
       const transaction = this.db.transaction(['activePoints'], 'readwrite');
@@ -460,7 +461,7 @@ class GPSManager {
 
   // Load active recording points
   async loadActivePoints() {
-    if (!this.db) await this.initializeDB();
+    const db = await this.dbManager.getDatabase();
     
     return new Promise((resolve, reject) => {
       const transaction = this.db.transaction(['activePoints'], 'readonly');
@@ -477,7 +478,7 @@ class GPSManager {
 
   // Clear active recording points
   async clearActivePoints() {
-    if (!this.db) await this.initializeDB();
+    const db = await this.dbManager.getDatabase();
     
     return new Promise((resolve, reject) => {
       const transaction = this.db.transaction(['activePoints'], 'readwrite');
@@ -491,7 +492,7 @@ class GPSManager {
 
   // Save completed track
   async saveTrack(track) {
-      if (!this.db) await this.initializeDB();
+      const db = await this.dbManager.getDatabase();
       
       this.logger.debug('Saving track with data:', track); // Add debug logging
       
@@ -522,7 +523,7 @@ class GPSManager {
 
   // Load saved track
   async loadTrack(trackId) {
-    if (!this.db) await this.initializeDB();
+    const db = await this.dbManager.getDatabase();
     
     return new Promise((resolve, reject) => {
       const transaction = this.db.transaction(['tracks'], 'readonly');
@@ -572,7 +573,7 @@ class GPSManager {
   }
 
   async loadLatestTrack() {
-      if (!this.db) await this.initializeDB();
+      const db = await this.dbManager.getDatabase();
       
       return new Promise((resolve, reject) => {
           const transaction = this.db.transaction(['tracks'], 'readonly');
