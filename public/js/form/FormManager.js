@@ -293,26 +293,21 @@ class FormManager {
       if (existingOption) {
           const hasTrack = gpsManager.hasExistingTrack();
           this.logger.debug('Track existence check:', {
-            hasTrack,
-            optionHidden: existingOption.hidden
+              hasTrack,
+              optionHidden: existingOption.hidden
           });
-          existingOption.hidden = !hasTrack;
-          this.logger.debug('GPX option visibility:', {
-              hasTrack: gpsManager.hasExistingTrack(),
+          
+          // Set hidden attribute explicitly
+          if (!hasTrack) {
+              existingOption.setAttribute('hidden', '');
+          } else {
+              existingOption.removeAttribute('hidden');
+          }
+  
+          this.logger.debug('GPX option visibility after update:', {
+              hasTrack,
               isHidden: existingOption.hidden
           });
-  
-          // If there's a track, prepare the info display
-          if (gpsManager.hasExistingTrack()) {
-              const trackStats = gpsManager.getTrackStats();
-              if (trackStats && infoDisplay) {
-                  infoDisplay.innerHTML = this.i18next.t('form.gpx.trackInfo', {
-                      date: new Date(trackStats.startTime).toLocaleDateString(),
-                      distance: trackStats.distance,
-                      duration: this.formatDuration(trackStats.duration)
-                  });
-              }
-          }
       }
   
       if (gpxSelect) {
