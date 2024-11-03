@@ -24,8 +24,7 @@ class GPSManager {
     this.wakeLock = null;
     this.hasWakeLock = 'wakeLock' in navigator;
 
-    // Update dbVersion to trigger onupgradeneeded
-    this.dbName = 'GPSTrackerDB';
+    this.dbName = 'AppDB';
     this.dbVersion = 2;  // Increment this from 1 to 2
     this.db = null;
     this.initializeDB();
@@ -390,48 +389,56 @@ class GPSManager {
     this.lastElevation = null;
   }
 
-  async initializeDB() {
-    try {
-      return new Promise((resolve, reject) => {
-        const request = indexedDB.open(this.dbName, this.dbVersion);
+    async initializeDB() {
+        try {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(this.dbName, this.dbVersion);
 
-        request.onerror = (event) => {
-          this.logger.error('IndexedDB error:', event.target.error);
-          reject(event.target.error);
-        };
+                request.onerror = (event) => {
+                    this.logger.error('IndexedDB error:', event.target.error);
+                    reject(event.target.error);
+                };
 
-        request.onsuccess = (event) => {
-          this.db = event.target.result;
-          this.logger.debug('IndexedDB initialized successfully');
-          resolve();
-        };
+                request.onsuccess = (event) => {
+                    this.db = event.target.result;
+                    this.logger.debug('IndexedDB initialized successfully');
+                    resolve();
+                };
 
-        request.onupgradeneeded = (event) => {
-          const db = event.target.result;
-          
-          // Create tracks store if it doesn't exist
-          if (!db.objectStoreNames.contains('tracks')) {
-            const trackStore = db.createObjectStore('tracks', { keyPath: 'id' });
-            trackStore.createIndex('startTime', 'startTime', { unique: false });
-          }
-          
-          // Create points store for active recording if it doesn't exist
-          if (!db.objectStoreNames.contains('activePoints')) {
-            const pointsStore = db.createObjectStore('activePoints', { keyPath: 'timestamp' });
-            pointsStore.createIndex('timestamp', 'timestamp', { unique: false });
-          }
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    
+                    // GPS tracking stores
+                    if (!db.objectStoreNames.contains('tracks')) {
+                        const trackStore = db.createObjectStore('tracks', { keyPath: 'id' });
+                        trackStore.createIndex('startTime', 'startTime', { unique: false });
+                    }
+                    
+                    if (!db.objectStoreNames.contains('activePoints')) {
+                        const pointsStore = db.createObjectStore('activePoints', { keyPath: 'timestamp' });
+                        pointsStore.createIndex('timestamp', 'timestamp', { unique: false });
+                    }
 
-          // Create trackMetadata store if it doesn't exist
-          if (!db.objectStoreNames.contains('trackMetadata')) {
-            db.createObjectStore('trackMetadata', { keyPath: 'id' });
-          }
-        };
-      });
-    } catch (error) {
-      this.logger.error('Failed to initialize IndexedDB:', error);
-      throw error;
+                    if (!db.objectStoreNames.contains('trackMetadata')) {
+                        db.createObjectStore('trackMetadata', { keyPath: 'id' });
+                    }
+
+                    // Add schema version info store
+                    if (!db.objectStoreNames.contains('metadata')) {
+                        const metaStore = db.createObjectStore('metadata', { keyPath: 'key' });
+                        metaStore.put({
+                            key: 'schemaVersion',
+                            value: this.dbVersion,
+                            lastUpdated: new Date().toISOString()
+                        });
+                    }
+                };
+            });
+        } catch (error) {
+            this.logger.error('Failed to initialize IndexedDB:', error);
+            throw error;
+        }
     }
-}
 
   // Save point during recording
   async savePoint(point) {
