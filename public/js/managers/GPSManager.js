@@ -155,7 +155,7 @@ class GPSManager {
       const db = await this.dbManager.getDatabase();
       
       return new Promise((resolve, reject) => {
-          const transaction = this.db.transaction(['trackMetadata'], 'readwrite');
+          const transaction = db.transaction(['trackMetadata'], 'readwrite');
           const store = transaction.objectStore('trackMetadata');
           
           const request = store.put({
@@ -242,7 +242,7 @@ class GPSManager {
       const db = await this.dbManager.getDatabase();
       
       return new Promise((resolve, reject) => {
-          const transaction = this.db.transaction(['trackMetadata'], 'readonly');
+          const transaction = db.transaction(['trackMetadata'], 'readonly');
           const store = transaction.objectStore('trackMetadata');
           const request = store.get('current');
   
@@ -255,7 +255,7 @@ class GPSManager {
       const db = await this.dbManager.getDatabase();
       
       return new Promise((resolve, reject) => {
-          const transaction = this.db.transaction(['trackMetadata'], 'readwrite');
+          const transaction = db.transaction(['trackMetadata'], 'readwrite');
           const store = transaction.objectStore('trackMetadata');
           const request = store.delete('current');
   
@@ -446,7 +446,7 @@ class GPSManager {
     const db = await this.dbManager.getDatabase();
     
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(['activePoints'], 'readwrite');
+      const transaction = db.transaction(['activePoints'], 'readwrite');
       const store = transaction.objectStore('activePoints');
       
       const request = store.add({
@@ -464,7 +464,7 @@ class GPSManager {
     const db = await this.dbManager.getDatabase();
     
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(['activePoints'], 'readonly');
+      const transaction = db.transaction(['activePoints'], 'readonly');
       const store = transaction.objectStore('activePoints');
       const request = store.getAll();
 
@@ -481,7 +481,7 @@ class GPSManager {
     const db = await this.dbManager.getDatabase();
     
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(['activePoints'], 'readwrite');
+      const transaction = db.transaction(['activePoints'], 'readwrite');
       const store = transaction.objectStore('activePoints');
       const request = store.clear();
 
@@ -497,7 +497,7 @@ class GPSManager {
       this.logger.debug('Saving track with data:', track); // Add debug logging
       
       return new Promise((resolve, reject) => {
-          const transaction = this.db.transaction(['tracks'], 'readwrite');
+          const transaction = db.transaction(['tracks'], 'readwrite');
           const store = transaction.objectStore('tracks');
           
           const trackData = {
@@ -526,7 +526,7 @@ class GPSManager {
     const db = await this.dbManager.getDatabase();
     
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(['tracks'], 'readonly');
+      const transaction = db.transaction(['tracks'], 'readonly');
       const store = transaction.objectStore('tracks');
       const request = store.get(trackId);
 
@@ -576,7 +576,7 @@ class GPSManager {
       const db = await this.dbManager.getDatabase();
       
       return new Promise((resolve, reject) => {
-          const transaction = this.db.transaction(['tracks'], 'readonly');
+          const transaction = db.transaction(['tracks'], 'readonly');
           const store = transaction.objectStore('tracks');
           const index = store.index('startTime');
           
