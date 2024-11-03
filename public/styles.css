@@ -176,10 +176,15 @@ input#report-date {
 }
 
 .gpx-upload-controls {
+    display: none;
     margin-top: 10px;
     display: flex;
     align-items: center;
     gap: 10px;
+}
+
+.gpx-upload-controls.show {
+    display: block;
 }
 
 .gpx-filename {
