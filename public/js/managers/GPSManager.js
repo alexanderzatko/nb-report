@@ -573,6 +573,7 @@ class GPSManager {
   }
 
   async loadLatestTrack() {
+      this.logger.debug('Loading latest track from DB');
       const db = await this.dbManager.getDatabase();
       
       return new Promise((resolve, reject) => {
