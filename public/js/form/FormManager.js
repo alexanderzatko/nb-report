@@ -313,7 +313,7 @@ class FormManager {
                       } else {
                           gpxSelect.appendChild(existingOption);
                       }
-                      existingOption.style.display = 'block';  // Make sure it's visible
+                      existingOption.style.display = 'block';
                   }
   
                   // Update track info if there's a track
@@ -330,36 +330,48 @@ class FormManager {
                   }
               }
   
-              // Add change listener for the select
+              // Add change listener for the select and ensure proper display toggling
               gpxSelect.addEventListener('change', (e) => {
+                  const selectedValue = e.target.value;
+                  
+                  // Toggle info display
                   if (infoDisplay) {
-                      infoDisplay.style.display = e.target.value === 'existing' ? 'block' : 'none';
-                      
-                      if (e.target.value === 'existing') {
-                          const trackStats = gpsManager.getTrackStats();
-                          if (trackStats) {
-                              infoDisplay.innerHTML = this.i18next.t('form.gpx.trackInfo', {
-                                  date: new Date(trackStats.startTime).toLocaleDateString(),
-                                  distance: trackStats.distance.toFixed(1),
-                                  duration: `${trackStats.duration.hours}:${String(trackStats.duration.minutes).padStart(2, '0')}`
-                              });
-                          }
-                      }
+                      infoDisplay.style.display = selectedValue === 'existing' ? 'block' : 'none';
                   }
                   
-                  // Show/hide upload container based on selection
+                  // Toggle upload container
                   if (uploadContainer) {
-                      uploadContainer.style.display = e.target.value === 'upload' ? 'block' : 'none';
+                      uploadContainer.style.display = selectedValue === 'upload' ? 'block' : 'none';
+                  }
+  
+                  // Update track info when 'existing' is selected
+                  if (selectedValue === 'existing') {
+                      const trackStats = gpsManager.getTrackStats();
+                      if (trackStats && infoDisplay) {
+                          infoDisplay.innerHTML = this.i18next.t('form.gpx.trackInfo', {
+                              date: new Date(trackStats.startTime).toLocaleDateString(),
+                              distance: trackStats.distance.toFixed(1),
+                              duration: `${trackStats.duration.hours}:${String(trackStats.duration.minutes).padStart(2, '0')}`
+                          });
+                      }
                   }
               });
-          } else {
-              this.logger.warn('Required GPX section elements not found', {
-                  gpxSelect: !!gpxSelect,
-                  existingOption: !!existingOption
-              });
+  
+              // Initialize GPX upload handlers
+              this.setupGPXUpload();
+              
+              // Set initial visibility states
+              if (uploadContainer) {
+                  uploadContainer.style.display = gpxSelect.value === 'upload' ? 'block' : 'none';
+              }
+              if (infoDisplay) {
+                  infoDisplay.style.display = gpxSelect.value === 'existing' ? 'block' : 'none';
+              }
           }
+  
       } catch (error) {
           this.logger.error('Error initializing GPX section:', error);
+          throw error;
       }
   }
   
