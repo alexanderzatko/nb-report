@@ -270,74 +270,87 @@ class FormManager {
     }
   }
 
-  async initializeGPXSection() {
-      this.logger.debug('Starting GPX section initialization');
-      const gpxSelect = document.getElementById('gpx-option');
-      const existingOption = document.getElementById('existing-gpx-option');
-      this.logger.debug('Found DOM elements:', {
-        gpxSelect: !!gpxSelect,
-        existingOption: !!existingOption,
-        existingOptionId: existingOption?.id,
-        existingOptionHidden: existingOption?.hidden
-      });
-      const uploadContainer = document.getElementById('gpx-upload-container');
-      const infoDisplay = document.getElementById('gpx-info-display');
-      const gpsManager = GPSManager.getInstance();
-      this.logger.debug('About to load latest track');
+async initializeGPXSection() {
+    this.logger.debug('Starting GPX section initialization');
+    const gpxSelect = document.getElementById('gpx-option');
+    const existingOption = document.getElementById('existing-gpx-option');
+    const uploadContainer = document.getElementById('gpx-upload-container');
+    const infoDisplay = document.getElementById('gpx-info-display');
+    const gpsManager = GPSManager.getInstance();
 
-      // Load latest track before checking visibility
-      const track = await gpsManager.loadLatestTrack();
-      this.logger.debug('Loaded track result:', track);
-  
-      // Now check track existence and set visibility
-      if (existingOption) {
-          const hasTrack = gpsManager.hasExistingTrack();
-          this.logger.debug('Track existence check:', {
-              hasTrack,
-              optionHidden: existingOption.hidden
-          });
-          
-          // Set hidden attribute explicitly
-          if (!hasTrack) {
-              existingOption.setAttribute('hidden', '');
-          } else {
-              existingOption.removeAttribute('hidden');
-          }
-  
-          this.logger.debug('GPX option visibility after update:', {
-              hasTrack,
-              isHidden: existingOption.hidden
-          });
-      }
-  
-      if (gpxSelect) {
-          gpxSelect.addEventListener('change', (e) => {
-              if (uploadContainer) {
-                  uploadContainer.style.display = e.target.value === 'upload' ? 'block' : 'none';
-              }
-              
-              // Handle info display visibility
-              if (infoDisplay) {
-                  if (e.target.value === 'existing') {
-                      const gpsManager = GPSManager.getInstance();
-                      const trackStats = gpsManager.getTrackStats();
-                      if (trackStats) {
-                          infoDisplay.innerHTML = this.i18next.t('form.gpx.trackInfo', {
-                              date: new Date(trackStats.startTime).toLocaleDateString(),
-                              distance: trackStats.distance,
-                              duration: this.formatDuration(trackStats.duration)
-                          });
-                          infoDisplay.style.display = 'block';
-                      }
-                  } else {
-                      infoDisplay.style.display = 'none';
-                  }
-              }
-          });
-      }
-  
-      this.setupGPXUpload();
-  }
+    // Load latest track before checking visibility
+    await gpsManager.loadLatestTrack();
+
+    // Now check track existence and set visibility
+    if (existingOption && gpxSelect) {
+        const hasTrack = gpsManager.hasExistingTrack();
+        this.logger.debug('Track existence check:', {
+            hasTrack,
+            optionPresent: existingOption !== null
+        });
+        
+        // Either remove or add the option based on track existence
+        if (!hasTrack) {
+            if (existingOption.parentNode === gpxSelect) {
+                gpxSelect.removeChild(existingOption);
+            }
+            if (infoDisplay) {
+                infoDisplay.style.display = 'none';
+            }
+        } else {
+            // Add the option if it's not already there
+            if (existingOption.parentNode !== gpxSelect) {
+                const firstOption = gpxSelect.querySelector('option');
+                if (firstOption) {
+                    gpxSelect.insertBefore(existingOption, firstOption.nextSibling);
+                } else {
+                    gpxSelect.appendChild(existingOption);
+                }
+            }
+
+            // Update track info if there's a track
+            if (infoDisplay) {
+                const trackStats = gpsManager.getTrackStats();
+                if (trackStats) {
+                    infoDisplay.innerHTML = this.i18next.t('form.gpx.trackInfo', {
+                        date: new Date(trackStats.startTime).toLocaleDateString(),
+                        distance: trackStats.distance.toFixed(1),
+                        duration: `${trackStats.duration.hours}:${String(trackStats.duration.minutes).padStart(2, '0')}`
+                    });
+                }
+            }
+        }
+
+        // Add change listener for the select
+        gpxSelect.addEventListener('change', (e) => {
+            if (infoDisplay) {
+                if (e.target.value === 'existing') {
+                    const trackStats = gpsManager.getTrackStats();
+                    if (trackStats) {
+                        infoDisplay.innerHTML = this.i18next.t('form.gpx.trackInfo', {
+                            date: new Date(trackStats.startTime).toLocaleDateString(),
+                            distance: trackStats.distance.toFixed(1),
+                            duration: `${trackStats.duration.hours}:${String(trackStats.duration.minutes).padStart(2, '0')}`
+                        });
+                        infoDisplay.style.display = 'block';
+                    }
+                } else {
+                    infoDisplay.style.display = 'none';
+                }
+            }
+            
+            // Show/hide upload container based on selection
+            if (uploadContainer) {
+                uploadContainer.style.display = e.target.value === 'upload' ? 'block' : 'none';
+            }
+        });
+
+        this.logger.debug('GPX option visibility after update:', {
+            hasTrack,
+            isInSelect: existingOption.parentNode === gpxSelect
+        });
+    }
+}
   
   setupGPXUpload() {
       const gpxUploadBtn = document.getElementById('gpx-upload-btn');
