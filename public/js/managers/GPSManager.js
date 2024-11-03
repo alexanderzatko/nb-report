@@ -308,24 +308,27 @@ class GPSManager {
       endTime: track.endTime
     });
 
-    // Save completed track
+    // Save completed track and explicitly set it as current
     try {
-      const trackId = await this.saveTrack(track);
-      this.currentTrack = track;
+        const trackId = await this.saveTrack(track);
+        this.currentTrack = {
+            ...track,
+            id: trackId
+        };
 
-      this.logger.debug('Track saved and set as currentTrack:', {
-        id: trackId,
-        currentTrackSet: !!this.currentTrack,
-        currentTrackDistance: this.currentTrack?.totalDistance
-      });
+        this.logger.debug('Track saved and set as currentTrack:', {
+            id: trackId,
+            currentTrackSet: !!this.currentTrack,
+            currentTrackDistance: this.currentTrack?.totalDistance
+        });
           
-      // Clear metadata after successful save
-      await this.clearTrackMetadata();
+        // Clear metadata after successful save
+        await this.clearTrackMetadata();
 
-      // Clear active points after successful save
-      await this.clearActivePoints();
-      
-      return track;
+        // Clear active points after successful save
+        await this.clearActivePoints();
+        
+        return track;
     } catch (error) {
       this.logger.error('Failed to save completed track:', error);
       throw error;
