@@ -151,12 +151,22 @@ class FormManager {
     
     this.logger.debug('User type:', { isAdmin, hasTrails });
 
-    // Set visibility for regular user section
     regularUserSection.style.display = isAdmin ? 'none' : 'block';
-    
-    // Set visibility for admin section
     adminSection.style.display = isAdmin ? 'block' : 'none';
+
+    // Get the active section
+    const activeSection = isAdmin ? adminSection : regularUserSection;
     
+    // Get common elements
+    const commonElements = document.getElementById('common-section');
+    
+    // Place common elements in their placeholders
+    activeSection.querySelectorAll('.common-section-placeholder').forEach(placeholder => {
+        const position = placeholder.dataset.position;
+        const commonElement = commonElements.content.cloneNode(true);
+        placeholder.replaceWith(commonElement);
+    });
+
     // Set visibility for trails section
     if (trailsSection) {
       trailsSection.style.display = 'none';
@@ -271,12 +281,6 @@ class FormManager {
   }
 
   async initializeGPXSection() {
-      const isAdmin = document.getElementById('admin-section')?.style.display !== 'none';
-      
-      // If admin user, don't initialize GPX section
-      if (isAdmin) {
-          return;
-      }
 
     this.logger.debug('Starting GPX section initialization');
       const gpxSelect = document.getElementById('gpx-option');
