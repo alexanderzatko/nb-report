@@ -123,28 +123,22 @@ app.use((req, res, next) => {
 });
 
 app.post('/api/log-error', (req, res) => {
-  const { level = 'error', message, data } = req.body;
-  
-  // Validate the log level
-  const validLevels = ['error', 'warn', 'info', 'debug'];
-  const safeLevel = validLevels.includes(level) ? level : 'error';
-  
-  const logData = {
-    timestamp: new Date().toISOString(),
-    clientIP: req.ip,
-    userAgent: req.get('User-Agent'),
-    sessionID: req.sessionID,
-    message: message || 'No message provided',
-    ...data
-  };
-
   try {
-    // Log using appropriate level
-    logger[safeLevel](message, logData);
+    const { level = 'error', message, data } = req.body;
+    
+    logger.error('Client-side error', {
+      message,
+      data,
+      timestamp: new Date().toISOString(),
+      clientIP: req.ip,
+      userAgent: req.get('User-Agent'),
+      sessionID: req.sessionID
+    });
+    
     res.status(200).json({ status: 'logged' });
   } catch (err) {
-    console.error('Error writing to log:', err);
-    res.status(500).json({ status: 'error', message: 'Failed to write log' });
+    logger.error('Error in log-error endpoint:', err);
+    res.status(500).json({ error: 'Failed to log error' });
   }
 });
 
