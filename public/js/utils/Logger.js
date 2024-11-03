@@ -147,10 +147,10 @@ class Logger {
   }
 
   async reportError(logEntry) {
-    // Implementation for sending errors to your backend or error tracking service
     try {
       const response = await fetch('/api/log-error', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
