@@ -278,8 +278,12 @@ class FormManager {
       const infoDisplay = document.getElementById('gpx-info-display');
       const gpsManager = GPSManager.getInstance();
   
+      // First, remove the inline style from the upload container
+      if (uploadContainer) {
+          uploadContainer.removeAttribute('style');
+      }
+  
       try {
-          // First try to load the track from IndexedDB if not already in memory
           if (!gpsManager.currentTrack) {
               const loadedTrack = await gpsManager.loadLatestTrack();
               if (loadedTrack) {
@@ -287,36 +291,40 @@ class FormManager {
               }
           }
   
-          // Now check track existence and set visibility
           if (existingOption && gpxSelect) {
               const hasTrack = gpsManager.hasExistingTrack();
               this.logger.debug('Track existence check:', {
                   hasTrack,
                   optionPresent: existingOption !== null,
-                  currentTrack: gpsManager.currentTrack
+                  currentTrack: gpsManager.currentTrack,
+                  uploadContainerPresent: uploadContainer !== null
               });
               
-              // Either remove or add the option based on track existence
+              // Remove existing event listeners by cloning the select
+              const newGpxSelect = gpxSelect.cloneNode(true);
+              gpxSelect.parentNode.replaceChild(newGpxSelect, gpxSelect);
+              
+              // Update our reference to the new element
+              const gpxSelectElement = newGpxSelect;
+  
               if (!hasTrack) {
-                  if (existingOption.parentNode === gpxSelect) {
-                      gpxSelect.removeChild(existingOption);
+                  if (existingOption.parentNode === gpxSelectElement) {
+                      gpxSelectElement.removeChild(existingOption);
                   }
                   if (infoDisplay) {
                       infoDisplay.style.display = 'none';
                   }
               } else {
-                  // Add the option if it's not already there
-                  if (existingOption.parentNode !== gpxSelect) {
-                      const firstOption = gpxSelect.querySelector('option');
+                  if (existingOption.parentNode !== gpxSelectElement) {
+                      const firstOption = gpxSelectElement.querySelector('option');
                       if (firstOption) {
-                          gpxSelect.insertBefore(existingOption, firstOption.nextSibling);
+                          gpxSelectElement.insertBefore(existingOption, firstOption.nextSibling);
                       } else {
-                          gpxSelect.appendChild(existingOption);
+                          gpxSelectElement.appendChild(existingOption);
                       }
-                      existingOption.style.display = 'block';
+                      existingOption.style.display = '';
                   }
   
-                  // Update track info if there's a track
                   if (infoDisplay) {
                       const trackStats = gpsManager.getTrackStats();
                       if (trackStats) {
@@ -325,47 +333,38 @@ class FormManager {
                               distance: trackStats.distance.toFixed(1),
                               duration: `${trackStats.duration.hours}:${String(trackStats.duration.minutes).padStart(2, '0')}`
                           });
-                          infoDisplay.style.display = 'block';
                       }
                   }
               }
   
-              // Add change listener for the select and ensure proper display toggling
-              gpxSelect.addEventListener('change', (e) => {
+              // Add change listener
+              gpxSelectElement.addEventListener('change', (e) => {
                   const selectedValue = e.target.value;
+                  this.logger.debug('GPX select changed:', {
+                      selectedValue,
+                      uploadContainerDisplay: uploadContainer?.style.display
+                  });
                   
-                  // Toggle info display
                   if (infoDisplay) {
-                      infoDisplay.style.display = selectedValue === 'existing' ? 'block' : 'none';
+                      infoDisplay.style.display = selectedValue === 'existing' ? '' : 'none';
                   }
                   
-                  // Toggle upload container
                   if (uploadContainer) {
-                      uploadContainer.style.display = selectedValue === 'upload' ? 'block' : 'none';
-                  }
-  
-                  // Update track info when 'existing' is selected
-                  if (selectedValue === 'existing') {
-                      const trackStats = gpsManager.getTrackStats();
-                      if (trackStats && infoDisplay) {
-                          infoDisplay.innerHTML = this.i18next.t('form.gpx.trackInfo', {
-                              date: new Date(trackStats.startTime).toLocaleDateString(),
-                              distance: trackStats.distance.toFixed(1),
-                              duration: `${trackStats.duration.hours}:${String(trackStats.duration.minutes).padStart(2, '0')}`
-                          });
-                      }
+                      uploadContainer.style.display = selectedValue === 'upload' ? '' : 'none';
+                      this.logger.debug('Upload container display after change:', uploadContainer.style.display);
                   }
               });
   
-              // Initialize GPX upload handlers
+              // Initialize file upload handlers
               this.setupGPXUpload();
               
-              // Set initial visibility states
+              // Set initial visibility based on current selection
+              const initialValue = gpxSelectElement.value;
               if (uploadContainer) {
-                  uploadContainer.style.display = gpxSelect.value === 'upload' ? 'block' : 'none';
+                  uploadContainer.style.display = initialValue === 'upload' ? '' : 'none';
               }
               if (infoDisplay) {
-                  infoDisplay.style.display = gpxSelect.value === 'existing' ? 'block' : 'none';
+                  infoDisplay.style.display = initialValue === 'existing' ? '' : 'none';
               }
           }
   
