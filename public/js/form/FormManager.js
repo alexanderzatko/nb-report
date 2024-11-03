@@ -80,6 +80,7 @@ class FormManager {
   }
 
   async initialize() {
+    this.logger.debug('FormManager initialize starting');
     console.log('Initializing FormManager');
     
     if (!this.i18next.isInitialized) {
@@ -100,7 +101,9 @@ class FormManager {
       await this.initializeGPSTrackSection();
     }
 
+    this.logger.debug('About to initialize GPX section');
     await this.initializeGPXSection();
+    this.logger.debug('GPX section initialization complete');
 
   }
 
@@ -273,7 +276,9 @@ class FormManager {
       const existingOption = document.getElementById('existing-gpx-option');
       this.logger.debug('Found DOM elements:', {
         gpxSelect: !!gpxSelect,
-        existingOption: !!existingOption
+        existingOption: !!existingOption,
+        existingOptionId: existingOption?.id,
+        existingOptionHidden: existingOption?.hidden
       });
       const uploadContainer = document.getElementById('gpx-upload-container');
       const infoDisplay = document.getElementById('gpx-info-display');
