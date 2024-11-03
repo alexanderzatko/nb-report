@@ -271,7 +271,14 @@ class FormManager {
   }
 
   async initializeGPXSection() {
-      this.logger.debug('Starting GPX section initialization');
+      const isAdmin = document.getElementById('admin-section')?.style.display !== 'none';
+      
+      // If admin user, don't initialize GPX section
+      if (isAdmin) {
+          return;
+      }
+
+    this.logger.debug('Starting GPX section initialization');
       const gpxSelect = document.getElementById('gpx-option');
       const existingOption = document.getElementById('existing-gpx-option');
       const uploadContainer = document.getElementById('gpx-upload-container');
