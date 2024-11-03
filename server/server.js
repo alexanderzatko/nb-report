@@ -122,6 +122,32 @@ app.use((req, res, next) => {
   next();
 });
 
+app.post('/api/log-error', (req, res) => {
+  const { level = 'error', message, data } = req.body;
+  
+  // Validate the log level
+  const validLevels = ['error', 'warn', 'info', 'debug'];
+  const safeLevel = validLevels.includes(level) ? level : 'error';
+  
+  const logData = {
+    timestamp: new Date().toISOString(),
+    clientIP: req.ip,
+    userAgent: req.get('User-Agent'),
+    sessionID: req.sessionID,
+    message: message || 'No message provided',
+    ...data
+  };
+
+  try {
+    // Log using appropriate level
+    logger[safeLevel](message, logData);
+    res.status(200).json({ status: 'logged' });
+  } catch (err) {
+    console.error('Error writing to log:', err);
+    res.status(500).json({ status: 'error', message: 'Failed to write log' });
+  }
+});
+
 //logging errors
 app.use((err, req, res, next) => {
   logger.error('Unhandled error', {
