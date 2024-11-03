@@ -2,6 +2,7 @@
 
 import Logger from '../utils/Logger.js';
 import ConfigManager from '../config/ConfigManager.js';
+import DatabaseManager from '../managers/DatabaseManager.js';
 
 class StorageManager {
   static instance = null;
@@ -14,11 +15,8 @@ class StorageManager {
     this.logger = Logger.getInstance();
     this.configManager = ConfigManager.getInstance();
     this.storageKeys = this.configManager.getStorageKeys();
-    this.dbConfig = this.configManager.get('storage.indexedDB');
+    this.dbManager = DatabaseManager.getInstance();
     this.db = null;
-    
-    // Initialize IndexedDB connection
-    this.initializeDB();
 
     StorageManager.instance = this;
   }
@@ -30,68 +28,14 @@ class StorageManager {
     return StorageManager.instance;
   }
 
-  // IndexedDB initialization
-  async initializeDB() {
-    try {
-      this.db = await this.openDatabase(
-        this.dbConfig.name,
-        this.dbConfig.version,
-        this.setupDatabase.bind(this)
-      );
-      this.logger.info('IndexedDB initialized successfully');
-    } catch (error) {
-      this.logger.error('Failed to initialize IndexedDB:', error);
-      throw error;
-    }
-  }
-
-  openDatabase(name, version, upgradeCallback) {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(name, version);
-
-      request.onerror = () => {
-        this.logger.error('Error opening database:', request.error);
-        reject(request.error);
-      };
-
-      request.onsuccess = () => {
-        resolve(request.result);
-      };
-
-      request.onupgradeneeded = (event) => {
-        upgradeCallback(event.target.result);
-      };
-    });
-  }
-
-  setupDatabase(db) {
-    const { stores } = this.dbConfig;
-
-    // Create object stores if they don't exist
-    if (!db.objectStoreNames.contains(stores.photos)) {
-      db.createObjectStore(stores.photos, { keyPath: 'id', autoIncrement: true });
-    }
-
-    if (!db.objectStoreNames.contains(stores.reports)) {
-      const reportStore = db.createObjectStore(stores.reports, { keyPath: 'id', autoIncrement: true });
-      reportStore.createIndex('date', 'date');
-      reportStore.createIndex('status', 'status');
-    }
-
-    if (!db.objectStoreNames.contains(stores.tracks)) {
-      const trackStore = db.createObjectStore(stores.tracks, { keyPath: 'id', autoIncrement: true });
-      trackStore.createIndex('date', 'date');
-      trackStore.createIndex('type', 'type');
-    }
-  }
-
   // IndexedDB operations
   async saveToStore(storeName, data) {
     try {
-      const store = await this.getObjectStore(storeName, 'readwrite');
-      const request = store.add(data);
+      const db = await this.dbManager.getDatabase();
+      const store = db.transaction(storeName, 'readwrite').objectStore(storeName);
       
       return new Promise((resolve, reject) => {
+        const request = store.add(data);
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
       });
@@ -103,10 +47,11 @@ class StorageManager {
 
   async getFromStore(storeName, key) {
     try {
-      const store = await this.getObjectStore(storeName, 'readonly');
-      const request = store.get(key);
+      const db = await this.dbManager.getDatabase();
+      const store = db.transaction(storeName, 'readwrite').objectStore(storeName);
       
       return new Promise((resolve, reject) => {
+        const request = store.get(key);
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
       });
@@ -118,10 +63,11 @@ class StorageManager {
 
   async getAllFromStore(storeName) {
     try {
-      const store = await this.getObjectStore(storeName, 'readonly');
-      const request = store.getAll();
+      const db = await this.dbManager.getDatabase();
+      const store = db.transaction(storeName, 'readwrite').objectStore(storeName);
       
       return new Promise((resolve, reject) => {
+        const request = store.get(key);
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
       });
@@ -133,10 +79,11 @@ class StorageManager {
 
   async updateInStore(storeName, key, data) {
     try {
-      const store = await this.getObjectStore(storeName, 'readwrite');
-      const request = store.put({ ...data, id: key });
+      const db = await this.dbManager.getDatabase();
+      const store = db.transaction(storeName, 'readwrite').objectStore(storeName);
       
       return new Promise((resolve, reject) => {
+        const request = store.get(key);
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
       });
@@ -148,10 +95,11 @@ class StorageManager {
 
   async deleteFromStore(storeName, key) {
     try {
-      const store = await this.getObjectStore(storeName, 'readwrite');
-      const request = store.delete(key);
+      const db = await this.dbManager.getDatabase();
+      const store = db.transaction(storeName, 'readwrite').objectStore(storeName);
       
       return new Promise((resolve, reject) => {
+        const request = store.get(key);
         request.onsuccess = () => resolve();
         request.onerror = () => reject(request.error);
       });
@@ -163,10 +111,11 @@ class StorageManager {
 
   async clearStore(storeName) {
     try {
-      const store = await this.getObjectStore(storeName, 'readwrite');
-      const request = store.clear();
+      const db = await this.dbManager.getDatabase();
+      const store = db.transaction(storeName, 'readwrite').objectStore(storeName);
       
       return new Promise((resolve, reject) => {
+        const request = store.get(key);
         request.onsuccess = () => resolve();
         request.onerror = () => reject(request.error);
       });
