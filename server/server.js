@@ -126,14 +126,19 @@ app.post('/api/log-error', (req, res) => {
   try {
     const { level = 'error', message, data } = req.body;
     
-    logger.error('Client-side error', {
+    // Log with session context if available
+    const logData = {
       message,
       data,
       timestamp: new Date().toISOString(),
       clientIP: req.ip,
       userAgent: req.get('User-Agent'),
-      sessionID: req.sessionID
-    });
+      sessionID: req.session?.id || 'no-session',
+      isAuthenticated: !!req.session?.accessToken
+    };
+
+    // Log even if there's no session - these could be important startup errors
+    logger.error('Client-side error', logData);
     
     res.status(200).json({ status: 'logged' });
   } catch (err) {
