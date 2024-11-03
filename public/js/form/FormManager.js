@@ -268,18 +268,30 @@ class FormManager {
   }
 
   async initializeGPXSection() {
+      this.logger.debug('Starting GPX section initialization');
       const gpxSelect = document.getElementById('gpx-option');
       const existingOption = document.getElementById('existing-gpx-option');
+      this.logger.debug('Found DOM elements:', {
+        gpxSelect: !!gpxSelect,
+        existingOption: !!existingOption
+      });
       const uploadContainer = document.getElementById('gpx-upload-container');
       const infoDisplay = document.getElementById('gpx-info-display');
       const gpsManager = GPSManager.getInstance();
-  
+      this.logger.debug('About to load latest track');
+
       // Load latest track before checking visibility
       await gpsManager.loadLatestTrack();
+      this.logger.debug('Loaded track result:', track);
   
       // Now check track existence and set visibility
       if (existingOption) {
-          existingOption.hidden = !gpsManager.hasExistingTrack();
+          const hasTrack = gpsManager.hasExistingTrack();
+          this.logger.debug('Track existence check:', {
+            hasTrack,
+            optionHidden: existingOption.hidden
+          });
+          existingOption.hidden = !hasTrack;
           this.logger.debug('GPX option visibility:', {
               hasTrack: gpsManager.hasExistingTrack(),
               isHidden: existingOption.hidden
