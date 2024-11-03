@@ -281,7 +281,7 @@ class FormManager {
       this.logger.debug('About to load latest track');
 
       // Load latest track before checking visibility
-      await gpsManager.loadLatestTrack();
+      const track = await gpsManager.loadLatestTrack();
       this.logger.debug('Loaded track result:', track);
   
       // Now check track existence and set visibility
