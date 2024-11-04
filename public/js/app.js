@@ -54,11 +54,11 @@ class App {
       // Initialize only essential managers
       this.managers = {
         state: StateManager.getInstance(),
-        auth: AuthManager.getInstance()
+        auth: AuthManager.getInstance(),
+        ui: UIManager.getInstance()
       };
 
       // Initialize minimal UI (login screen only)
-      this.managers.ui = UIManager.getInstance();
       await this.managers.ui.initializeLoginUI();
 
       // Initialize service worker for PWA functionality
@@ -81,7 +81,7 @@ class App {
       if (isAuthenticated) {
         await this.initializeFeatureManagers();
       } else {
-        this.managers.ui.showLoginScreen();
+        this.managers.ui.initializeLoginUI();
       }
 
       this.initialized = true;
