@@ -118,20 +118,24 @@ class Logger {
   }
 
   debug(message, data = null) {
-    if (!this.shouldLog('debug')) return;
-    
-    const location = this.getStack();
-    const logEntry = this.formatMessage('debug', message, data, location);
-    this.addToHistory(logEntry);
-    
-    if (this.debugMode) {
-      console.debug(
-        `%c${logEntry.timestamp} [DEBUG] ${logEntry.location} ${message}`, 
-        'color: #6c757d',
-        data
-      );
+      if (!this.shouldLog('debug')) return;
+      
+      const location = this.getStack();
+      const logEntry = this.formatMessage('debug', message, data, location);
+      this.addToHistory(logEntry);
+      
+      if (this.debugMode) {
+        const caller = location.file !== 'unknown' ? 
+          ` [${location.file}:${location.line}]` : '';
+        
+        console.debug(
+          `%c${logEntry.timestamp} [DEBUG]${caller} ${message}`, 
+          'color: #6c757d',
+          data,
+          location.fullPath ? `\nCalled from: ${location.fullPath}` : ''
+        );
+      }
     }
-  }
 
   info(message, data = null) {
     if (!this.shouldLog('info')) return;
