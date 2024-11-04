@@ -41,22 +41,63 @@ class Logger {
   }
 
   getStack() {
-    const stack = new Error().stack;
-    const stackLines = stack.split('\n');
-    // Skip the first 3 lines (Error, getStack, and logging method)
-    const callerLine = stackLines[3];
-    
-    if (!callerLine) return { file: 'unknown', line: '?' };
-    
-    // Extract file name and line number
-    const match = callerLine.match(/at\s+(?:\w+\s+)?\(?(.+):(\d+):(\d+)/);
-    if (!match) return { file: 'unknown', line: '?' };
-    
-    const fullPath = match[1];
-    const fileName = fullPath.split('/').pop();
-    const lineNumber = match[2];
-    
-    return { file: fileName, line: lineNumber };
+    try {
+      const err = new Error();
+      Error.captureStackTrace(err, this.getStack);
+      
+      // Get the stack trace
+      const stackLines = err.stack.split('\n');
+      
+      // Find the first non-Logger.js line
+      let callerLine = null;
+      for (const line of stackLines) {
+        if (!line.includes('Logger.js') && line.includes('at ')) {
+          callerLine = line;
+          break;
+        }
+      }
+      
+      if (!callerLine) return { file: 'unknown', line: '?' };
+
+      // Try different regex patterns for different stack trace formats
+      let matches = callerLine.match(/\((.+?):(\d+):(\d+)\)/);  // Format: at Function (file:line:col)
+      if (!matches) {
+        matches = callerLine.match(/at\s+(.+?):(\d+):(\d+)/);   // Format: at file:line:col
+      }
+      if (!matches) return { file: 'unknown', line: '?' };
+
+      const fullPath = matches[1];
+      const lineNumber = matches[2];
+      
+      // Extract filename, handling both URLs and filesystem paths
+      let fileName = fullPath;
+      if (fullPath.includes('/')) {
+        fileName = fullPath.split('/').pop();
+      } else if (fullPath.includes('\\')) {
+        fileName = fullPath.split('\\').pop();
+      }
+      
+      // Clean up the filename
+      fileName = fileName.replace(/\?.*$/, ''); // Remove URL parameters
+      
+      // Handle webpack-style names
+      if (fileName.includes('webpack')) {
+        // Try to find the original file name in the line
+        const originalFileMatch = callerLine.match(/\/([\w-]+\.js)/);
+        if (originalFileMatch) {
+          fileName = originalFileMatch[1];
+        }
+      }
+
+      return {
+        file: fileName,
+        line: lineNumber,
+        fullPath: fullPath  // Keep the full path for debugging
+      };
+    } catch (error) {
+      console.warn('Error getting stack trace:', error);
+      return { file: 'unknown', line: '?' };
+    }
   }
 
   formatMessage(level, message, data, location = null) {
