@@ -43,37 +43,40 @@ class Logger {
   getStack() {
     try {
       const err = new Error();
-      console.log('Raw stack trace:', err.stack);  // Debug log
+      const stack = err.stack || '';
+      const stackLines = stack.split('\n');
       
-      const stackLines = err.stack.split('\n');
-      console.log('Stack lines:', stackLines);     // Debug log
-      
-      // Find the first relevant line that's not from Logger.js
+      // Skip the first line as it's from Logger itself
       let callerLine = null;
-      for (const line of stackLines) {
-        if (!line.includes('Logger.js') && line.includes('at ')) {
+      for (let i = 0; i < stackLines.length; i++) {
+        const line = stackLines[i];
+        if (!line.includes('Logger.js') && (line.includes('.js:') || line.includes('.js '))) {
           callerLine = line.trim();
-          console.log('Found caller line:', callerLine);  // Debug log
           break;
         }
       }
       
       if (!callerLine) return { file: 'unknown', line: '?' };
 
-      // Match different stack trace formats
+      // Different browser formats:
       const patterns = [
-        /at\s+(?:.*?\s+\()?(?:.*\/)?([^/:]+):(\d+):(\d+)/,  // Standard format
-        /at\s+(?:.*?\s+\()?(?:.*\/)?([^/:]+):(\d+)/,        // Simplified format
-        /\/?([^/:]+):(\d+)/                                  // Minimal format
+        // Firefox: "functionName@https://domain/path/file.js:line:col"
+        /@.+\/(.+?\.js):(\d+):\d+/,
+        
+        // Chrome/Edge: "    at functionName (https://domain/path/file.js:line:col)"
+        /at\s+(?:\S+\s+)?\(?(?:https?:\/\/[^/]+)?\/[^/]+\/(.+?\.js):(\d+):\d+\)?/,
+        
+        // Safari: "functionName@file.js:line:col"
+        /(?:@|\s+at\s+)\(?(.+?\.js):(\d+):\d+\)?$/,
+        
+        // Generic fallback
+        /[/@\s]([^/\s]+\.js):(\d+)/
       ];
 
       let matches = null;
       for (const pattern of patterns) {
         matches = callerLine.match(pattern);
-        if (matches) {
-          console.log('Pattern matched:', pattern, 'Matches:', matches);  // Debug log
-          break;
-        }
+        if (matches) break;
       }
 
       if (!matches) return { file: 'unknown', line: '?' };
@@ -81,16 +84,10 @@ class Logger {
       const fileName = matches[1];
       const lineNumber = matches[2];
 
-      // Get the full path for debugging
-      const fullPathMatch = callerLine.match(/\((.+)\)/) || callerLine.match(/at\s+(.+)/);
-      const fullPath = fullPathMatch ? fullPathMatch[1] : callerLine;
-
-      console.log('Extracted info:', { fileName, lineNumber, fullPath });  // Debug log
-
       return {
         file: fileName,
         line: lineNumber,
-        fullPath: fullPath
+        fullPath: callerLine
       };
     } catch (error) {
       console.warn('Error getting stack trace:', error);
@@ -165,14 +162,19 @@ class Logger {
     this.addToHistory(logEntry);
     
     if (this.debugMode) {
-      const locationInfo = logEntry.location ? ` ${logEntry.location}` : '';
+      const locationInfo = location.file !== 'unknown' ? 
+        ` [${location.file}:${location.line}]` : '';
       
-      console.debug(
+      const args = [
         `%c${logEntry.timestamp} [DEBUG]${locationInfo} ${message}`,
-        'color: #6c757d',
-        data,
-        location.file !== 'unknown' ? `\nSource: ${location.fullPath}` : ''
-      );
+        'color: #6c757d; font-weight: normal'
+      ];
+      
+      if (data !== null && data !== undefined) {
+        args.push(data);
+      }
+      
+      console.debug.apply(console, args);
     }
   }
 
