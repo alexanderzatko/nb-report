@@ -2,18 +2,14 @@ import i18next from '/node_modules/i18next/dist/esm/i18next.js';
 import Logger from './utils/Logger.js';
 import AuthManager from './auth/AuthManager.js';
 import UIManager from './ui/UIManager.js';
-import FormManager from './form/FormManager.js';
-import PhotoManager from './media/PhotoManager.js';
-import SelectManager from './managers/SelectManager.js';
-import ValidationManager from './validation/ValidationManager.js';
-import StorageManager from './storage/StorageManager.js';
-import NetworkManager from './network/NetworkManager.js';
-import ConfigManager from './config/ConfigManager.js';
-import EventManager from './events/EventManager.js';
-import ServiceWorkerManager from './services/ServiceWorkerManager.js';
 import StateManager from './state/StateManager.js';
+import ServiceWorkerManager from './services/ServiceWorkerManager.js';
 import { initI18next, resetI18next } from './i18n.js';
+import FormManager from './form/FormManager.js';
+import SelectManager from './managers/SelectManager.js';
+import PhotoManager from './media/PhotoManager.js';
 import GPSManager from './managers/GPSManager.js';
+import DatabaseManager from './managers/DatabaseManager.js';
 
 class App {
   constructor() {
@@ -23,8 +19,9 @@ class App {
     
     this.logger = Logger.getInstance();
     this.initialized = false;
-    this.managers = {};  // Initialize empty managers object
+    this.managers = {};
     this.i18next = i18next;
+    this.featureManagersInitialized = false;
     App.instance = this;
   }
 
@@ -41,155 +38,185 @@ class App {
     }
     
     try {
-      await this.initializeApp();
+      await this.initializeCoreSystem();
     } catch (error) {
-      this.logger.error('Initialization failed:', error);
+      this.logger.error('Core initialization failed:', error);
       this.handleInitializationError(error);
     }
   }
 
-  async initializeApp() {
+  async initializeCoreSystem() {
     try {
-      // First initialize i18next
+      // Initialize minimal i18next with only core translations
       await resetI18next();
-      await initI18next();
-  
-      // Then initialize managers
+      await this.initializeCorei18n();
+
+      // Initialize only essential managers
       this.managers = {
-        config: ConfigManager.getInstance(),
-        event: EventManager.getInstance(),
-        network: NetworkManager.getInstance(),
-        storage: StorageManager.getInstance(),
         state: StateManager.getInstance(),
-        auth: AuthManager.getInstance(),
-        ui: UIManager.getInstance(),
-        serviceWorker: ServiceWorkerManager.getInstance(),
-        gps: GPSManager.getInstance()
+        auth: AuthManager.getInstance()
       };
-  
-      // Initialize service worker after i18next is ready
+
+      // Initialize minimal UI (login screen only)
+      this.managers.ui = UIManager.getInstance();
+      await this.managers.ui.initializeLoginUI();
+
+      // Initialize service worker for PWA functionality
       if ('serviceWorker' in navigator) {
+        this.managers.serviceWorker = ServiceWorkerManager.getInstance();
         await this.managers.serviceWorker.initialize();
       }
-  
-      // Initialize form-related managers early
-      await this.initializeFormManagers();
-  
-      await this.managers.ui.initialize();
-  
-      if (this.i18next.isInitialized) {
-        await this.managers.ui.updateGPSCardVisibility();
-      }
-  
-      const hasActiveRecording = await this.managers.gps.checkForActiveRecording();
-      if (hasActiveRecording) {
-        this.logger.debug('Restored active GPS recording');
-        await this.managers.ui.updateGPSCardVisibility();
-      } else {
-        const latestTrack = await this.managers.gps.loadLatestTrack();
-        if (latestTrack) {
-          this.logger.debug('Loaded latest completed track');
-          await this.managers.ui.showGPSTrackCard();
+
+      // Subscribe to auth state changes
+      this.managers.auth.subscribe('authStateChange', async (isAuthenticated) => {
+        if (isAuthenticated) {
+          await this.initializeFeatureManagers();
+        } else {
+          await this.deactivateFeatureManagers();
         }
-      }
-  
-      await this.initializeAppState();
-      
-      this.initialized = true;
-      this.managers.event.emit('APP_INIT_COMPLETE');
-    } catch (error) {
-      this.logger.error('Failed to initialize application:', error);
-      throw error;
-    }
-  }
+      });
 
-  async initializeFormManagers() {
-    // Initialize all form-related managers
-    this.managers.select = SelectManager.getInstance();
-    this.managers.form = FormManager.getInstance();
-    this.managers.photo = PhotoManager.getInstance();
-    this.managers.validation = ValidationManager.getInstance();
-  
-    // Initialize them in parallel
-    await Promise.all([
-      this.managers.select.initialize(),
-      this.managers.form.initialize()
-    ]);
-  }
-
-  async initializeAppState() {
-    this.managers.event.emit('APP_INIT_START');
-  
-    try {
-      // Always try to restore session first
+      // Check initial auth state
       const isAuthenticated = await this.managers.auth.checkAuthStatus();
-      
-      if (!isAuthenticated) {
-        const didAuth = await this.checkForURLParameters();
-        if (!didAuth) {
-          await this.managers.ui.updateUIBasedOnAuthState(false);
-        }
+      if (isAuthenticated) {
+        await this.initializeFeatureManagers();
       } else {
-        await this.managers.ui.updateUIBasedOnAuthState(true);
-        await this.refreshUserData();
+        this.managers.ui.showLoginScreen();
       }
+
+      this.initialized = true;
+      this.logger.debug('Core system initialized');
+
     } catch (error) {
-      this.logger.error('Error in initializeAppState:', error);
+      this.logger.error('Failed to initialize core system:', error);
       throw error;
     }
   }
 
-  async checkForURLParameters() {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.has('code') && !this.processingAuth) {
-          this.processingAuth = true;
-          try {
-              console.log('Processing OAuth callback...');
-              const success = await this.managers.auth.handleOAuthCallback(
-                  urlParams.get('code'),
-                  urlParams.get('state')
-              );
-              window.history.replaceState({}, document.title, '/');
-              
-              if (success) {
-                  console.log('OAuth callback successful, updating UI...');
-                  await this.managers.ui.updateUIBasedOnAuthState(true);
-                  await this.refreshUserData();
-                  return true;
-              } else {
-                  console.log('OAuth callback failed, showing login...');
-                  await this.managers.ui.updateUIBasedOnAuthState(false);
-              }
-          } finally {
-              this.processingAuth = false;
-          }
+  async initializeCorei18n() {
+    const coreTranslations = {
+      'auth': true,
+      'errors': true,
+      'common': true
+    };
+
+    // Filter translation files to only load core translations initially
+    const currentTranslations = await fetch('/locales/en/translation.json')
+      .then(response => response.json());
+    
+    const filteredTranslations = Object.keys(currentTranslations)
+      .filter(key => coreTranslations[key])
+      .reduce((obj, key) => {
+        obj[key] = currentTranslations[key];
+        return obj;
+      }, {});
+
+    await i18next.init({
+      lng: 'en',
+      resources: {
+        en: {
+          translation: filteredTranslations
+        }
       }
-      return false;
+    });
   }
 
-  async refreshUserData() {
+  async initializeFeatureManagers() {
+    if (this.featureManagersInitialized) {
+      return;
+    }
+
+    this.logger.debug('Initializing feature managers');
+
     try {
-      const userData = await this.managers.network.get('/api/user-data');
-      if (userData) {
-        await this.managers.ui.updateUIWithUserData(userData);
-        await this.managers.form.initializeForm(userData);
-        return userData;
+      // Now load complete translations
+      await initI18next();
+
+      // Initialize feature managers in correct order
+      this.managers.database = DatabaseManager.getInstance();
+      await this.managers.database.initialize();
+
+      this.managers.select = SelectManager.getInstance();
+      this.managers.form = FormManager.getInstance();
+      this.managers.photo = PhotoManager.getInstance();
+      this.managers.gps = GPSManager.getInstance();
+
+      // Initialize remaining managers
+      await this.managers.select.initialize();
+      await this.managers.form.initialize();
+      
+      // Initialize full UI features
+      await this.managers.ui.initializeAuthenticatedUI();
+
+      // Check GPS features last
+      if (this.managers.gps.isSupported()) {
+        const hasActiveRecording = await this.managers.gps.checkForActiveRecording();
+        if (hasActiveRecording) {
+          await this.managers.ui.updateGPSCardVisibility();
+        } else {
+          const latestTrack = await this.managers.gps.loadLatestTrack();
+          if (latestTrack) {
+            await this.managers.ui.showGPSTrackCard();
+          }
+        }
       }
+
+      this.featureManagersInitialized = true;
+      this.logger.debug('Feature managers initialized successfully');
+
     } catch (error) {
-      this.logger.error('Error refreshing user data:', error);
+      this.logger.error('Failed to initialize feature managers:', error);
       throw error;
     }
   }
 
-  async handleInvalidSession() {
-    this.logger.info('Handling invalid session');
-    await this.managers.auth.logout();
-    this.managers.ui.showLoginPrompt();
+  async deactivateFeatureManagers() {
+    if (!this.featureManagersInitialized) {
+      return;
+    }
+
+    this.logger.debug('Deactivating feature managers');
+
+    try {
+      // Clean up each manager
+      if (this.managers.gps) {
+        this.managers.gps.stopRecording();
+        this.managers.gps.clearTrack();
+      }
+
+      if (this.managers.form) {
+        this.managers.form.resetForm();
+      }
+
+      if (this.managers.photo) {
+        this.managers.photo.clearPhotos();
+      }
+
+      if (this.managers.select) {
+        this.managers.select.clearState();
+      }
+
+      if (this.managers.database) {
+        await this.managers.database.clearStores();
+      }
+
+      // Reset UI to login state
+      await this.managers.ui.resetToLoginState();
+
+      this.featureManagersInitialized = false;
+      this.logger.debug('Feature managers deactivated');
+
+    } catch (error) {
+      this.logger.error('Error deactivating feature managers:', error);
+    }
   }
 
   handleInitializationError(error) {
     this.logger.error('Initialization error:', error);
-    alert(this.i18next.t('errors.application.initFailed'));
+    const errorMessage = this.i18next.isInitialized ? 
+      this.i18next.t('errors.application.initFailed') : 
+      'Application initialization failed. Please try again.';
+    alert(errorMessage);
   }
 }
 
