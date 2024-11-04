@@ -8,12 +8,19 @@ class Logger {
       return Logger.instance;
     }
     
-    this.debugMode = true;
+    this.debugMode = this.detectDebugMode();
     this.logLevel = 'debug';
     this.logHistory = [];
     this.maxHistorySize = 1000;
     
     Logger.instance = this;
+  }
+
+  detectDebugMode() {
+    return window.location.hostname === 'localhost' || 
+           window.location.hostname === '127.0.0.1' ||
+           window.location.search.includes('debug=true') ||
+           true; // Keep your default debug mode enabled
   }
 
   static getInstance() {
@@ -33,12 +40,33 @@ class Logger {
     localStorage.setItem('logLevel', level);
   }
 
-  formatMessage(level, message, data) {
+  getStack() {
+    const stack = new Error().stack;
+    const stackLines = stack.split('\n');
+    // Skip the first 3 lines (Error, getStack, and logging method)
+    const callerLine = stackLines[3];
+    
+    if (!callerLine) return { file: 'unknown', line: '?' };
+    
+    // Extract file name and line number
+    const match = callerLine.match(/at\s+(?:\w+\s+)?\(?(.+):(\d+):(\d+)/);
+    if (!match) return { file: 'unknown', line: '?' };
+    
+    const fullPath = match[1];
+    const fileName = fullPath.split('/').pop();
+    const lineNumber = match[2];
+    
+    return { file: fileName, line: lineNumber };
+  }
+
+  formatMessage(level, message, data, location = null) {
     const timestamp = new Date().toISOString();
+    const locationInfo = location ? `[${location.file}:${location.line}]` : '';
     const formattedData = data ? JSON.stringify(data, this.jsonReplacer) : '';
     return {
       timestamp,
       level,
+      location: locationInfo,
       message,
       data: formattedData
     };
@@ -92,12 +120,13 @@ class Logger {
   debug(message, data = null) {
     if (!this.shouldLog('debug')) return;
     
-    const logEntry = this.formatMessage('debug', message, data);
+    const location = this.getStack();
+    const logEntry = this.formatMessage('debug', message, data, location);
     this.addToHistory(logEntry);
     
     if (this.debugMode) {
       console.debug(
-        `%c${logEntry.timestamp} [DEBUG] ${message}`, 
+        `%c${logEntry.timestamp} [DEBUG] ${logEntry.location} ${message}`, 
         'color: #6c757d',
         data
       );
@@ -107,11 +136,12 @@ class Logger {
   info(message, data = null) {
     if (!this.shouldLog('info')) return;
     
-    const logEntry = this.formatMessage('info', message, data);
+    const location = this.getStack();
+    const logEntry = this.formatMessage('info', message, data, location);
     this.addToHistory(logEntry);
     
     console.info(
-      `%c${logEntry.timestamp} [INFO] ${message}`,
+      `%c${logEntry.timestamp} [INFO] ${logEntry.location} ${message}`,
       'color: #0077cc',
       data
     );
@@ -120,11 +150,12 @@ class Logger {
   warn(message, data = null) {
     if (!this.shouldLog('warn')) return;
     
-    const logEntry = this.formatMessage('warn', message, data);
+    const location = this.getStack();
+    const logEntry = this.formatMessage('warn', message, data, location);
     this.addToHistory(logEntry);
     
     console.warn(
-      `%c${logEntry.timestamp} [WARN] ${message}`,
+      `%c${logEntry.timestamp} [WARN] ${logEntry.location} ${message}`,
       'color: #ffc107',
       data
     );
@@ -133,11 +164,12 @@ class Logger {
   error(message, error = null) {
     if (!this.shouldLog('error')) return;
     
-    const logEntry = this.formatMessage('error', message, error);
+    const location = this.getStack();
+    const logEntry = this.formatMessage('error', message, error, location);
     this.addToHistory(logEntry);
     
     console.error(
-      `%c${logEntry.timestamp} [ERROR] ${message}`,
+      `%c${logEntry.timestamp} [ERROR] ${logEntry.location} ${message}`,
       'color: #dc3545',
       error
     );
@@ -205,7 +237,8 @@ class Logger {
   trace(message, data = null) {
     if (!this.shouldLog('debug')) return;
     
-    const logEntry = this.formatMessage('trace', message, data);
+    const location = this.getStack();
+    const logEntry = this.formatMessage('trace', message, data, location);
     this.addToHistory(logEntry);
     
     console.trace(message, data);
