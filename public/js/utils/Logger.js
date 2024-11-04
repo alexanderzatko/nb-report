@@ -41,64 +41,56 @@ class Logger {
   }
 
   getStack() {
-    try {
-      const err = new Error();
-      Error.captureStackTrace(err, this.getStack);
-      
-      // Get the stack trace
-      const stackLines = err.stack.split('\n');
-      
-      // Find the first non-Logger.js line
-      let callerLine = null;
-      for (const line of stackLines) {
-        if (!line.includes('Logger.js') && line.includes('at ')) {
-          callerLine = line;
-          break;
+      try {
+        const err = new Error();
+        const stack = err.stack || '';
+        const stackLines = stack.split('\n');
+        
+        // Find the first relevant line that's not from Logger.js
+        let callerLine = null;
+        for (const line of stackLines) {
+          if (!line.includes('Logger.js') && line.includes('at ')) {
+            callerLine = line.trim();
+            break;
+          }
         }
-      }
-      
-      if (!callerLine) return { file: 'unknown', line: '?' };
-
-      // Try different regex patterns for different stack trace formats
-      let matches = callerLine.match(/\((.+?):(\d+):(\d+)\)/);  // Format: at Function (file:line:col)
-      if (!matches) {
-        matches = callerLine.match(/at\s+(.+?):(\d+):(\d+)/);   // Format: at file:line:col
-      }
-      if (!matches) return { file: 'unknown', line: '?' };
-
-      const fullPath = matches[1];
-      const lineNumber = matches[2];
-      
-      // Extract filename, handling both URLs and filesystem paths
-      let fileName = fullPath;
-      if (fullPath.includes('/')) {
-        fileName = fullPath.split('/').pop();
-      } else if (fullPath.includes('\\')) {
-        fileName = fullPath.split('\\').pop();
-      }
-      
-      // Clean up the filename
-      fileName = fileName.replace(/\?.*$/, ''); // Remove URL parameters
-      
-      // Handle webpack-style names
-      if (fileName.includes('webpack')) {
-        // Try to find the original file name in the line
-        const originalFileMatch = callerLine.match(/\/([\w-]+\.js)/);
-        if (originalFileMatch) {
-          fileName = originalFileMatch[1];
+        
+        if (!callerLine) return { file: 'unknown', line: '?' };
+  
+        // Match different stack trace formats
+        let matches = null;
+        
+        // Try various formats
+        const patterns = [
+          /at\s+(?:.*?\s+\()?(?:.*\/)?([^/:]+):(\d+):(\d+)/,  // Standard format
+          /at\s+(?:.*?\s+\()?(?:.*\/)?([^/:]+):(\d+)/,        // Simplified format
+          /\/?([^/:]+):(\d+)/                                  // Minimal format
+        ];
+  
+        for (const pattern of patterns) {
+          matches = callerLine.match(pattern);
+          if (matches) break;
         }
+  
+        if (!matches) return { file: 'unknown', line: '?' };
+  
+        const fileName = matches[1];
+        const lineNumber = matches[2];
+  
+        // Get the full path for debugging
+        const fullPathMatch = callerLine.match(/\((.+)\)/) || callerLine.match(/at\s+(.+)/);
+        const fullPath = fullPathMatch ? fullPathMatch[1] : callerLine;
+  
+        return {
+          file: fileName,
+          line: lineNumber,
+          fullPath: fullPath
+        };
+      } catch (error) {
+        console.warn('Error getting stack trace:', error);
+        return { file: 'unknown', line: '?' };
       }
-
-      return {
-        file: fileName,
-        line: lineNumber,
-        fullPath: fullPath  // Keep the full path for debugging
-      };
-    } catch (error) {
-      console.warn('Error getting stack trace:', error);
-      return { file: 'unknown', line: '?' };
     }
-  }
 
   formatMessage(level, message, data, location = null) {
     const timestamp = new Date().toISOString();
@@ -166,14 +158,13 @@ class Logger {
       this.addToHistory(logEntry);
       
       if (this.debugMode) {
-        const caller = location.file !== 'unknown' ? 
+        const locationInfo = location.file !== 'unknown' ? 
           ` [${location.file}:${location.line}]` : '';
         
         console.debug(
-          `%c${logEntry.timestamp} [DEBUG]${caller} ${message}`, 
+          `%c${logEntry.timestamp} [DEBUG]${locationInfo} ${message}`, 
           'color: #6c757d',
-          data,
-          location.fullPath ? `\nCalled from: ${location.fullPath}` : ''
+          data
         );
       }
     }
