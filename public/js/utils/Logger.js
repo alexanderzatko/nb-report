@@ -41,56 +41,62 @@ class Logger {
   }
 
   getStack() {
-      try {
-        const err = new Error();
-        const stack = err.stack || '';
-        const stackLines = stack.split('\n');
-        
-        // Find the first relevant line that's not from Logger.js
-        let callerLine = null;
-        for (const line of stackLines) {
-          if (!line.includes('Logger.js') && line.includes('at ')) {
-            callerLine = line.trim();
-            break;
-          }
+    try {
+      const err = new Error();
+      console.log('Raw stack trace:', err.stack);  // Debug log
+      
+      const stackLines = err.stack.split('\n');
+      console.log('Stack lines:', stackLines);     // Debug log
+      
+      // Find the first relevant line that's not from Logger.js
+      let callerLine = null;
+      for (const line of stackLines) {
+        if (!line.includes('Logger.js') && line.includes('at ')) {
+          callerLine = line.trim();
+          console.log('Found caller line:', callerLine);  // Debug log
+          break;
         }
-        
-        if (!callerLine) return { file: 'unknown', line: '?' };
-  
-        // Match different stack trace formats
-        let matches = null;
-        
-        // Try various formats
-        const patterns = [
-          /at\s+(?:.*?\s+\()?(?:.*\/)?([^/:]+):(\d+):(\d+)/,  // Standard format
-          /at\s+(?:.*?\s+\()?(?:.*\/)?([^/:]+):(\d+)/,        // Simplified format
-          /\/?([^/:]+):(\d+)/                                  // Minimal format
-        ];
-  
-        for (const pattern of patterns) {
-          matches = callerLine.match(pattern);
-          if (matches) break;
-        }
-  
-        if (!matches) return { file: 'unknown', line: '?' };
-  
-        const fileName = matches[1];
-        const lineNumber = matches[2];
-  
-        // Get the full path for debugging
-        const fullPathMatch = callerLine.match(/\((.+)\)/) || callerLine.match(/at\s+(.+)/);
-        const fullPath = fullPathMatch ? fullPathMatch[1] : callerLine;
-  
-        return {
-          file: fileName,
-          line: lineNumber,
-          fullPath: fullPath
-        };
-      } catch (error) {
-        console.warn('Error getting stack trace:', error);
-        return { file: 'unknown', line: '?' };
       }
+      
+      if (!callerLine) return { file: 'unknown', line: '?' };
+
+      // Match different stack trace formats
+      const patterns = [
+        /at\s+(?:.*?\s+\()?(?:.*\/)?([^/:]+):(\d+):(\d+)/,  // Standard format
+        /at\s+(?:.*?\s+\()?(?:.*\/)?([^/:]+):(\d+)/,        // Simplified format
+        /\/?([^/:]+):(\d+)/                                  // Minimal format
+      ];
+
+      let matches = null;
+      for (const pattern of patterns) {
+        matches = callerLine.match(pattern);
+        if (matches) {
+          console.log('Pattern matched:', pattern, 'Matches:', matches);  // Debug log
+          break;
+        }
+      }
+
+      if (!matches) return { file: 'unknown', line: '?' };
+
+      const fileName = matches[1];
+      const lineNumber = matches[2];
+
+      // Get the full path for debugging
+      const fullPathMatch = callerLine.match(/\((.+)\)/) || callerLine.match(/at\s+(.+)/);
+      const fullPath = fullPathMatch ? fullPathMatch[1] : callerLine;
+
+      console.log('Extracted info:', { fileName, lineNumber, fullPath });  // Debug log
+
+      return {
+        file: fileName,
+        line: lineNumber,
+        fullPath: fullPath
+      };
+    } catch (error) {
+      console.warn('Error getting stack trace:', error);
+      return { file: 'unknown', line: '?' };
     }
+  }
 
   formatMessage(level, message, data, location = null) {
     const timestamp = new Date().toISOString();
