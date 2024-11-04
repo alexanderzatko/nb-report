@@ -15,6 +15,7 @@ class AuthManager {
     this.exchangingToken = false;
     this.stateCheckInProgress = false;
     this.tokenRefreshInterval = null;
+    this.subscribers = []; // Array to store subscribers for auth state changes
     AuthManager.instance = this;
   }
 
@@ -25,12 +26,29 @@ class AuthManager {
     return AuthManager.instance;
   }
 
+  // Subscribe method for auth state changes
+  subscribe(event, callback) {
+    if (event === 'authStateChange' && typeof callback === 'function') {
+      this.subscribers.push(callback);
+    }
+  }
+
+  // Unsubscribe method for auth state changes
+  unsubscribe(callback) {
+    this.subscribers = this.subscribers.filter(sub => sub !== callback);
+  }
+
+  // Notify all subscribers of auth state changes
+  notifyAuthStateChange(isAuthenticated) {
+    this.subscribers.forEach(callback => callback(isAuthenticated));
+  }
+
   async checkAuthStatus() {
     try {
-      // First check if we have a stored session ID
       const storedSessionId = localStorage.getItem(AuthManager.SESSION_KEY);
       
       if (!storedSessionId) {
+        this.notifyAuthStateChange(false);
         return false;
       }
   
@@ -47,13 +65,14 @@ class AuthManager {
       if (data.isAuthenticated && !this.tokenRefreshInterval) {
         this.setupTokenRefresh();
       } else if (!data.isAuthenticated) {
-        // Clear stored session if it's invalid
         this.clearAuthData();
       }
       
-      return data.isAuthenticated;  // Keep returning the original boolean from server
+      this.notifyAuthStateChange(data.isAuthenticated); // Notify subscribers of the auth state
+      return data.isAuthenticated;
     } catch (error) {
       console.error('Error checking auth status:', error);
+      this.notifyAuthStateChange(false); // Notify subscribers of the auth state failure
       return false;
     }
   }
