@@ -94,14 +94,15 @@ class Logger {
 
   formatMessage(level, message, data, location = null) {
     const timestamp = new Date().toISOString();
-    const locationInfo = location ? `[${location.file}:${location.line}]` : '';
-    const formattedData = data ? JSON.stringify(data, this.jsonReplacer) : '';
+    const locationInfo = location && location.file !== 'unknown' ? 
+      `[${location.file}:${location.line}]` : '';
     return {
       timestamp,
       level,
       location: locationInfo,
       message,
-      data: formattedData
+      data: data ? JSON.stringify(data, this.jsonReplacer) : null,
+      sourceLocation: location // Keep the original location object
     };
   }
 
@@ -151,23 +152,23 @@ class Logger {
   }
 
   debug(message, data = null) {
-      if (!this.shouldLog('debug')) return;
+    if (!this.shouldLog('debug')) return;
+    
+    const location = this.getStack();
+    const logEntry = this.formatMessage('debug', message, data, location);
+    this.addToHistory(logEntry);
+    
+    if (this.debugMode) {
+      const locationInfo = logEntry.location ? ` ${logEntry.location}` : '';
       
-      const location = this.getStack();
-      const logEntry = this.formatMessage('debug', message, data, location);
-      this.addToHistory(logEntry);
-      
-      if (this.debugMode) {
-        const locationInfo = location.file !== 'unknown' ? 
-          ` [${location.file}:${location.line}]` : '';
-        
-        console.debug(
-          `%c${logEntry.timestamp} [DEBUG]${locationInfo} ${message}`, 
-          'color: #6c757d',
-          data
-        );
-      }
+      console.debug(
+        `%c${logEntry.timestamp} [DEBUG]${locationInfo} ${message}`,
+        'color: #6c757d',
+        data,
+        location.file !== 'unknown' ? `\nSource: ${location.fullPath}` : ''
+      );
     }
+  }
 
   info(message, data = null) {
     if (!this.shouldLog('info')) return;
@@ -176,10 +177,13 @@ class Logger {
     const logEntry = this.formatMessage('info', message, data, location);
     this.addToHistory(logEntry);
     
+    const locationInfo = logEntry.location ? ` ${logEntry.location}` : '';
+    
     console.info(
-      `%c${logEntry.timestamp} [INFO] ${logEntry.location} ${message}`,
+      `%c${logEntry.timestamp} [INFO]${locationInfo} ${message}`,
       'color: #0077cc',
-      data
+      data,
+      location.file !== 'unknown' ? `\nSource: ${location.fullPath}` : ''
     );
   }
 
@@ -190,10 +194,13 @@ class Logger {
     const logEntry = this.formatMessage('warn', message, data, location);
     this.addToHistory(logEntry);
     
+    const locationInfo = logEntry.location ? ` ${logEntry.location}` : '';
+    
     console.warn(
-      `%c${logEntry.timestamp} [WARN] ${logEntry.location} ${message}`,
+      `%c${logEntry.timestamp} [WARN]${locationInfo} ${message}`,
       'color: #ffc107',
-      data
+      data,
+      location.file !== 'unknown' ? `\nSource: ${location.fullPath}` : ''
     );
   }
 
@@ -204,13 +211,15 @@ class Logger {
     const logEntry = this.formatMessage('error', message, error, location);
     this.addToHistory(logEntry);
     
+    const locationInfo = logEntry.location ? ` ${logEntry.location}` : '';
+    
     console.error(
-      `%c${logEntry.timestamp} [ERROR] ${logEntry.location} ${message}`,
+      `%c${logEntry.timestamp} [ERROR]${locationInfo} ${message}`,
       'color: #dc3545',
-      error
+      error,
+      location.file !== 'unknown' ? `\nSource: ${location.fullPath}` : ''
     );
 
-    // Optional: Send to error tracking service
     this.reportError(logEntry);
   }
 
