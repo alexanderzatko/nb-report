@@ -68,6 +68,10 @@ class UIManager {
             console.log('Dashboard container is now visible');
         }
 
+        // Initialize select manager before setting up other UI elements
+        const selectManager = SelectManager.getInstance();
+        await selectManager.initialize();
+
         // Set up all interactive elements
         await this.setupDashboardCards();
         await this.setupSettingsButtons();
