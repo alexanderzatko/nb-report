@@ -27,10 +27,6 @@ class UIManager {
   }
 
   async initializeLoginUI() {
-    if (this.initialized) {
-      return;
-    }
-
     try {
       // Wait for i18next to be ready (only core translations at this point)
       if (!this.i18next.isInitialized) {
@@ -40,9 +36,7 @@ class UIManager {
         });
       }
 
-      this.logger.debug(`Initializing login UI with language: ${this.i18next.language}`);
-
-      // Set up core event listeners
+      this.logger.debug('Initializing login UI');
       this.setupLoginEventListeners();
 
       const loginContainer = document.getElementById('login-container');
@@ -50,10 +44,8 @@ class UIManager {
         loginContainer.classList.add('visible');
       }
 
-      this.logger.debug('Updating core page content...');
       this.updateCorePageContent();
       
-      this.initialized = true;
       this.logger.debug('Login UI initialized');
 
     } catch (error) {
@@ -62,11 +54,28 @@ class UIManager {
     }
   }
 
-  setupLoginEventListeners() {
-    // Remove any existing listeners first
-    this.removeExistingListeners();
+  async initializeAuthenticatedUI() {
+    this.logger.debug('Initializing authenticated UI');
 
-    // Add login container click handler
+    try {
+        const loginContainer = document.getElementById('login-container');
+        const dashboardContainer = document.getElementById('dashboard-container');
+        
+        if (loginContainer) loginContainer.style.display = 'none';
+        if (dashboardContainer) dashboardContainer.style.display = 'block';
+
+        this.setupAuthenticatedEventListeners();
+        this.updateFullPageContent();
+        
+        this.logger.debug('Authenticated UI initialized');
+
+    } catch (error) {
+        this.logger.error('Error initializing authenticated UI:', error);
+        throw error;
+    }
+  }
+
+  setupLoginEventListeners() {
     const loginContainer = document.getElementById('login-container');
     if (loginContainer) {
       const newContainer = loginContainer.cloneNode(true);
@@ -79,72 +88,95 @@ class UIManager {
     }
   }
 
-  async initializeAuthenticatedUI() {
-    this.logger.debug('Initializing authenticated UI');
+  setupAuthenticatedEventListeners() {
+    this.logger.debug('Setting up authenticated event listeners');
 
-    try {
-        // Hide login container, show dashboard
-        const loginContainer = document.getElementById('login-container');
-        const dashboardContainer = document.getElementById('dashboard-container');
-        
-        if (loginContainer) loginContainer.style.display = 'none';
-        if (dashboardContainer) dashboardContainer.style.display = 'block';
+    // Snow Report Link
+    const snowReportLink = document.getElementById('snow-report-link');
+    if (snowReportLink) {
+      snowReportLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.logger.debug('Snow report link clicked');
+        window.dispatchEvent(new Event('showSnowReport'));
+        this.showSnowReportForm();
+      });
+    }
 
-        // Set up authenticated state event listeners
-        this.setupAuthenticatedEventListeners();
+    // Settings Link
+    const settingsLink = document.getElementById('settings-link');
+    if (settingsLink) {
+      settingsLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.logger.debug('Settings link clicked');
+        window.dispatchEvent(new Event('showSettings'));
+        this.showSettings();
+      });
+    }
 
-        this.logger.debug(`Updating full page content with language: ${this.i18next.language}`);
-        this.updateFullPageContent();
-        
-        this.logger.debug('Authenticated UI initialized');
+    // Dashboard Button
+    const dashboardButton = document.getElementById('dashboard-button');
+    if (dashboardButton) {
+      dashboardButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.logger.debug('Dashboard button clicked');
+        window.dispatchEvent(new Event('showDashboard'));
+        this.showDashboard();
+      });
+    }
 
-    } catch (error) {
-        this.logger.error('Error initializing authenticated UI:', error);
-        throw error;
+    // Logout Button
+    const logoutButton = document.getElementById('logout-button');
+    if (logoutButton) {
+      logoutButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.logger.debug('Logout button clicked');
+        this.handleLogoutClick();
+      });
+    }
+
+    this.logger.debug('Authenticated event listeners setup complete');
+  }
+
+  showDashboard() {
+    this.logger.debug('Showing dashboard');
+    const containers = ['settings-container', 'snow-report-form'];
+    containers.forEach(id => {
+      const container = document.getElementById(id);
+      if (container) container.style.display = 'none';
+    });
+
+    const dashboardContainer = document.getElementById('dashboard-container');
+    if (dashboardContainer) {
+      dashboardContainer.style.display = 'block';
     }
   }
 
-  setupAuthenticatedEventListeners() {
-      // Define navigation handlers
-      const handlers = {
-          'snow-report-link': (e) => {
-              e.preventDefault();
-              window.dispatchEvent(new Event('showSnowReport'));
-          },
-          'settings-link': (e) => {
-              e.preventDefault();
-              window.dispatchEvent(new Event('showSettings'));
-              this.logger.debug('Settings link clicked, dispatched showSettings event');
-          },
-          'dashboard-button': (e) => {
-              e.preventDefault();
-              window.dispatchEvent(new Event('showDashboard'));
-          },
-          'logout-button': (e) => {
-              e.preventDefault();
-              this.handleLogoutClick();
-          }
-      };
-  
-      // Attach event listeners
-      Object.entries(handlers).forEach(([id, handler]) => {
-          const element = document.getElementById(id);
-          if (element) {
-              // Remove existing listeners by cloning
-              const newElement = element.cloneNode(true);
-              element.parentNode.replaceChild(newElement, element);
-              
-              // Add new click listener
-              newElement.addEventListener('click', handler);
-              
-              this.logger.debug(`Event listener attached to ${id}`);
-          } else {
-              this.logger.warn(`Element with id ${id} not found`);
-          }
-      });
-  
-      // Log all active event listeners
-      this.logger.debug('Authenticated event listeners setup complete');
+  showSettings() {
+    this.logger.debug('Showing settings');
+    const containers = ['dashboard-container', 'snow-report-form'];
+    containers.forEach(id => {
+      const container = document.getElementById(id);
+      if (container) container.style.display = 'none';
+    });
+
+    const settingsContainer = document.getElementById('settings-container');
+    if (settingsContainer) {
+      settingsContainer.style.display = 'block';
+    }
+  }
+
+  showSnowReportForm() {
+    this.logger.debug('Showing snow report form');
+    const containers = ['dashboard-container', 'settings-container'];
+    containers.forEach(id => {
+      const container = document.getElementById(id);
+      if (container) container.style.display = 'none';
+    });
+
+    const formContainer = document.getElementById('snow-report-form');
+    if (formContainer) {
+      formContainer.style.display = 'block';
+    }
   }
 
   removeExistingListeners() {
