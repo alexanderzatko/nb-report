@@ -7,10 +7,8 @@ let isInitialized = false;
 
 const initI18next = async () => {
   // Reset the initialization state if i18next was previously initialized
-  if (i18next.isInitialized) {
-    initPromise = null;
-    isInitialized = false;
-    await i18next.destroy();
+  if (isInitialized) {
+    return i18next;
   }
 
   initPromise = i18next
@@ -64,9 +62,19 @@ const initI18next = async () => {
 const resetI18next = async () => {
   initPromise = null;
   isInitialized = false;
-  if (i18next.isInitialized) {
-    await i18next.destroy();
-  }
+  // Instead of destroy, we'll just reinitialize with minimal config
+  await i18next
+    .use(HttpBackend)
+    .use(LanguageDetector)
+    .init({
+      fallbackLng: 'en',
+      load: 'languageOnly',
+      debug: true,
+      ns: ['translation'],
+      backend: {
+        loadPath: '/locales/{{lng}}/{{ns}}.json'
+      }
+    });
 };
 
 export { i18next, initI18next, resetI18next };
