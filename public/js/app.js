@@ -155,15 +155,6 @@ class App {
               
               if (success) {
                   console.log('OAuth callback successful, updating UI...');
-                  console.log('Managers state during callback:', {
-                      managersExists: !!this.managers,
-                      availableManagers: this.managers ? Object.keys(this.managers) : [],
-                      uiManager: this.managers?.ui ? {
-                          exists: true,
-                          initialized: this.managers.ui.initialized,
-                          methods: Object.getOwnPropertyNames(Object.getPrototypeOf(this.managers.ui))
-                      } : 'not available'
-                  });
                   await this.managers.ui.updateUIBasedOnAuthState(true);
                   await this.refreshUserData();
                   return true;
@@ -179,17 +170,35 @@ class App {
   }
 
   async refreshUserData() {
-      try {
-          const response = await this.managers.network.get('/api/user-data');
-          if (response.ok) {
-              const userData = await response.json();
-              await this.managers.ui.updateUIBasedOnAuthState(true, userData);
-              return userData;
-          }
-      } catch (error) {
-          this.logger.error('Error refreshing user data:', error);
-          throw error;
+    try {
+      this.logger.debug('Fetching user data...');
+      const response = await this.managers.network.get('/api/user-data');
+      
+      if (!response || !response.ok) {
+        throw new Error('Failed to fetch user data');
       }
+  
+      const userData = await response.json();
+      this.logger.debug('User data received:', userData);
+  
+      // Handle language preference if present in user data
+      if (userData.language && userData.language !== this.i18next.language) {
+        this.logger.debug(`Changing language to user preference: ${userData.language}`);
+        await this.i18next.changeLanguage(userData.language);
+      }
+  
+      // Update UI with user data
+      await this.managers.ui.updateUIBasedOnAuthState(true, userData);
+      
+      if (this.managers.form) {
+        await this.managers.form.initializeForm(userData);
+      }
+  
+      return userData;
+    } catch (error) {
+      this.logger.error('Error refreshing user data:', error);
+      throw error;
+    }
   }
 
   async initializeFeatureManagers() {
