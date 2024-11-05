@@ -1,6 +1,7 @@
 import i18next from '/node_modules/i18next/dist/esm/i18next.js';
 import AuthManager from '../auth/AuthManager.js';
 import Logger from '../utils/Logger.js';
+import SelectManager from '../managers/SelectManager.js';
 
 class UIManager {
   static instance = null;
