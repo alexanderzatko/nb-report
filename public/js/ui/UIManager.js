@@ -56,15 +56,17 @@ class UIManager {
 
   async initializeAuthenticatedUI() {
     this.logger.debug('Initializing authenticated UI');
+    console.log('Initializing authenticated UI');
 
     try {
         const loginContainer = document.getElementById('login-container');
         const dashboardContainer = document.getElementById('dashboard-container');
         
-        this.logger.debug('Found containers:', { 
-            loginContainer: !!loginContainer, 
-            dashboardContainer: !!dashboardContainer 
-        });
+        if (loginContainer) loginContainer.style.display = 'none';
+        if (dashboardContainer) {
+            dashboardContainer.style.display = 'block';
+            console.log('Dashboard container is now visible'); // Direct console log
+        }
 
         if (loginContainer) loginContainer.style.display = 'none';
         if (dashboardContainer) {
@@ -72,15 +74,68 @@ class UIManager {
             this.logger.debug('Dashboard container is now visible');
         }
 
-        await this.setupAuthenticatedEventListeners();
+        await this.setupDashboardCards();
         this.updateFullPageContent();
-        
-        this.logger.debug('Authenticated UI initialized');
+        this.logger.debug('Authenticated UI initialization complete');
 
     } catch (error) {
         this.logger.error('Error initializing authenticated UI:', error);
         throw error;
     }
+  }
+
+  async setupDashboardCards() {
+    console.log('Setting up dashboard cards'); // Direct console log
+    
+    // Snow Report Card
+    const snowReportLink = document.getElementById('snow-report-link');
+    if (snowReportLink) {
+        console.log('Found snow report link');
+        // Remove existing href to prevent default behavior
+        snowReportLink.removeAttribute('href');
+        
+        snowReportLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Snow report card clicked');
+            this.showSnowReportForm();
+        });
+    } else {
+        console.log('Snow report link not found');
+    }
+
+    // Settings Card
+    const settingsLink = document.getElementById('settings-link');
+    if (settingsLink) {
+        console.log('Found settings link');
+        // Remove existing href to prevent default behavior
+        settingsLink.removeAttribute('href');
+        
+        settingsLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Settings card clicked');
+            this.showSettings();
+        });
+    } else {
+        console.log('Settings link not found');
+    }
+
+    // Make cards visually clickable
+    [snowReportLink, settingsLink].forEach(card => {
+        if (card) {
+            card.style.cursor = 'pointer';
+            // Add hover effect
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-3px)';
+                card.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'none';
+                card.style.boxShadow = 'none';
+            });
+        }
+    });
   }
 
   setupLoginEventListeners() {
@@ -194,31 +249,27 @@ class UIManager {
   }
 
   showSettings() {
-    this.logger.debug('Showing settings');
-    const containers = ['dashboard-container', 'snow-report-form'];
-    containers.forEach(id => {
-      const container = document.getElementById(id);
-      if (container) container.style.display = 'none';
-    });
-
+    console.log('Showing settings');
+    
+    const dashboardContainer = document.getElementById('dashboard-container');
+    const snowReportForm = document.getElementById('snow-report-form');
     const settingsContainer = document.getElementById('settings-container');
-    if (settingsContainer) {
-      settingsContainer.style.display = 'block';
-    }
+    
+    if (dashboardContainer) dashboardContainer.style.display = 'none';
+    if (snowReportForm) snowReportForm.style.display = 'none';
+    if (settingsContainer) settingsContainer.style.display = 'block';
   }
 
   showSnowReportForm() {
-    this.logger.debug('Showing snow report form');
-    const containers = ['dashboard-container', 'settings-container'];
-    containers.forEach(id => {
-      const container = document.getElementById(id);
-      if (container) container.style.display = 'none';
-    });
-
-    const formContainer = document.getElementById('snow-report-form');
-    if (formContainer) {
-      formContainer.style.display = 'block';
-    }
+    console.log('Showing snow report form'); // Direct console log
+    
+    const dashboardContainer = document.getElementById('dashboard-container');
+    const settingsContainer = document.getElementById('settings-container');
+    const snowReportForm = document.getElementById('snow-report-form');
+    
+    if (dashboardContainer) dashboardContainer.style.display = 'none';
+    if (settingsContainer) settingsContainer.style.display = 'none';
+    if (snowReportForm) snowReportForm.style.display = 'block';
   }
 
   removeExistingListeners() {
