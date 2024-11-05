@@ -100,25 +100,27 @@ class App {
       'common': true
     };
 
-    // Filter translation files to only load core translations initially
-    const currentTranslations = await fetch('/locales/en/translation.json')
-      .then(response => response.json());
-    
-    const filteredTranslations = Object.keys(currentTranslations)
-      .filter(key => coreTranslations[key])
-      .reduce((obj, key) => {
-        obj[key] = currentTranslations[key];
-        return obj;
-      }, {});
-
-    await i18next.init({
-      lng: 'en',
-      resources: {
-        en: {
-          translation: filteredTranslations
+    // Initialize i18next with language detection for core translations
+    await i18next
+      .use(HttpBackend)
+      .use(LanguageDetector)
+      .init({
+        fallbackLng: 'en',
+        load: 'languageOnly',
+        debug: true,
+        backend: {
+          loadPath: '/locales/{{lng}}/{{ns}}.json'
+        },
+        detection: {
+          order: ['querystring', 'cookie', 'localStorage', 'navigator', 'htmlTag'],
+          lookupQuerystring: 'lng',
+          lookupCookie: 'i18next',
+          lookupLocalStorage: 'i18nextLng',
+          caches: ['localStorage', 'cookie'],
         }
-      }
-    });
+      });
+
+    this.logger.debug(`Initialized core i18n with language: ${i18next.language}`);
   }
 
   async initializeFeatureManagers() {
