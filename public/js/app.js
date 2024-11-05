@@ -155,7 +155,15 @@ class App {
               
               if (success) {
                   console.log('OAuth callback successful, updating UI...');
-                  console.log(managers);
+                  console.log('Managers state during callback:', {
+                      managersExists: !!this.managers,
+                      availableManagers: this.managers ? Object.keys(this.managers) : [],
+                      uiManager: this.managers?.ui ? {
+                          exists: true,
+                          initialized: this.managers.ui.initialized,
+                          methods: Object.getOwnPropertyNames(Object.getPrototypeOf(this.managers.ui))
+                      } : 'not available'
+                  });
                   await this.managers.ui.updateUIBasedOnAuthState(true);
                   await this.refreshUserData();
                   return true;
