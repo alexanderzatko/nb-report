@@ -223,89 +223,6 @@ class UIManager {
     }
   }
 
-  setupAuthenticatedEventListeners() {
-    this.logger.debug('Setting up authenticated event listeners');
-    console.log('Setting up authenticated event listeners');
-
-    // Debug: Log all relevant elements
-    const elements = {
-        snowReportLink: document.getElementById('snow-report-link'),
-        settingsLink: document.getElementById('settings-link'),
-        dashboardButton: document.getElementById('dashboard-button'),
-        logoutButton: document.getElementById('logout-button')
-    };
-
-    this.logger.debug('Found elements:', {
-        snowReportLink: !!elements.snowReportLink,
-        settingsLink: !!elements.settingsLink,
-        dashboardButton: !!elements.dashboardButton,
-        logoutButton: !!elements.logoutButton
-    });
-    
-    // Snow Report Link
-    const snowReportLink = document.getElementById('snow-report-link');
-    if (elements.snowReportLink) {
-        this.logger.debug('Adding click listener to snow report link');
-        elements.snowReportLink.onclick = (e) => {
-            e.preventDefault();
-            console.log('Snow report link clicked');
-            this.logger.debug('Snow report link clicked');
-            this.showSnowReportForm();
-        };
-    }
-
-    // Settings Link
-    if (elements.settingsLink) {
-        this.logger.debug('Adding click listener to settings link');
-        elements.settingsLink.onclick = (e) => {
-            e.preventDefault();
-            console.log('Settings link clicked');
-            this.logger.debug('Settings link clicked');
-            this.showSettings();
-        };
-    }
-
-    // Dashboard Button
-    if (elements.dashboardButton) {
-        this.logger.debug('Adding click listener to dashboard button');
-        elements.dashboardButton.onclick = (e) => {
-            e.preventDefault();
-            console.log('Dashboard button clicked');
-            this.logger.debug('Dashboard button clicked');
-            this.showDashboard();
-        };
-    }
-
-    // Logout Button
-    if (elements.logoutButton) {
-        this.logger.debug('Adding click listener to logout button');
-        elements.logoutButton.onclick = (e) => {
-            e.preventDefault();
-            console.log('Logout button clicked');
-            this.logger.debug('Logout button clicked');
-            this.handleLogoutClick();
-        };
-    }
-
-    // Add debug class to all clickable elements
-    Object.values(elements).forEach(element => {
-        if (element) {
-            element.classList.add('debug-clickable');
-            element.style.cursor = 'pointer';
-            
-            // Add visual feedback on hover
-            element.onmouseover = () => {
-                element.style.outline = '2px solid red';
-            };
-            element.onmouseout = () => {
-                element.style.outline = 'none';
-            };
-        }
-    });
-    
-    this.logger.debug('Authenticated event listeners setup complete');
-  }
-
   showDashboard() {
     console.log('Showing dashboard');
     this.logger.debug('Showing dashboard');
@@ -356,17 +273,6 @@ class UIManager {
     if (dashboardContainer) dashboardContainer.style.display = 'none';
     if (settingsContainer) settingsContainer.style.display = 'none';
     if (snowReportForm) snowReportForm.style.display = 'block';
-  }
-
-  removeExistingListeners() {
-    const elements = ['login-container', 'logout-button'];
-    elements.forEach(id => {
-      const element = document.getElementById(id);
-      if (element) {
-        const newElement = element.cloneNode(true);
-        element.parentNode.replaceChild(newElement, element);
-      }
-    });
   }
 
   updateCorePageContent() {
@@ -428,44 +334,6 @@ class UIManager {
         });
       }
     }
-  }
-  
-  updateElementTranslation(element) {
-      const key = element.getAttribute('data-i18n');
-      const translation = this.i18next.t(key, { returnObjects: true });
-      this.logger.debug(`Translating ${key} to:`, translation);
-      
-      if (typeof translation === 'object') {
-          if (element.tagName.toLowerCase() === 'select') {
-              // Store current value to restore after populating options
-              const currentValue = element.value;
-              element.innerHTML = '';
-              
-              // Add translated options
-              Object.entries(translation).forEach(([value, text]) => {
-                  const option = document.createElement('option');
-                  option.value = value;
-                  option.textContent = text;
-                  element.appendChild(option);
-              });
-              
-              // Restore previously selected value if it exists
-              if (currentValue && element.querySelector(`option[value="${currentValue}"]`)) {
-                  element.value = currentValue;
-              }
-          } else {
-              // For non-select elements that received an object, log a warning
-              this.logger.warn(`Received object translation for non-select element with key: ${key}`);
-              element.textContent = key;
-          }
-      } else {
-          // Handle non-object translations
-          if (element.tagName.toLowerCase() === 'input' && element.type === 'submit') {
-              element.value = translation;
-          } else {
-              element.textContent = translation;
-          }
-      }
   }
   
   updateLoginText() {
