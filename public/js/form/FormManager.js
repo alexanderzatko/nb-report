@@ -119,28 +119,22 @@ class FormManager {
   }
 
   setupEventListeners() {
-    console.log('Setting up form event listeners');
-    // Clean up existing event listeners by cloning nodes
-    const form = document.getElementById('snow-report-form');
-    if (form) {
-      console.log('Form found, cloning...');
-      const newForm = form.cloneNode(true);
-      form.parentNode.replaceChild(newForm, form);
-      newForm.addEventListener('submit', (event) => this.handleFormSubmit(event));
-
-      console.log('About to initialize photo upload with force');
-      this.photoManager.initializePhotoUpload(true);
-
-      // Initialize photo manager with the new form
-//      setTimeout(() => this.photoManager.initializePhotoUpload(), 0);
-    }
+      console.log('Setting up form event listeners');
+      // Clean up existing event listeners by cloning nodes
+      const form = document.getElementById('snow-report-form');
+      if (form) {
+          console.log('Form found, cloning...');
+          const newForm = form.cloneNode(true);
+          form.parentNode.replaceChild(newForm, form);
+          newForm.addEventListener('submit', (event) => this.handleFormSubmit(event));
+      }
   
-    const cancelButton = document.getElementById('cancel-button');
-    if (cancelButton) {
-      const newCancelButton = cancelButton.cloneNode(true);
-      cancelButton.parentNode.replaceChild(newCancelButton, cancelButton);
-      newCancelButton.addEventListener('click', () => this.handleCancel());
-    }
+      const cancelButton = document.getElementById('cancel-button');
+      if (cancelButton) {
+          const newCancelButton = cancelButton.cloneNode(true);
+          cancelButton.parentNode.replaceChild(newCancelButton, cancelButton);
+          newCancelButton.addEventListener('click', () => this.handleCancel());
+      }
   }
 
   async replaceCommonSections(activeSection, commonTemplate) {
