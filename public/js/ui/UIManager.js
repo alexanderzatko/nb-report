@@ -406,7 +406,6 @@ class UIManager {
         this.updateUserSpecificElements(userData);
       }
   
-      this.updateFullPageContent();
     } else {
       if (loginContainer) {
         loginContainer.style.display = 'flex';
