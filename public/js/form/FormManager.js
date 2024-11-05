@@ -99,10 +99,7 @@ class FormManager {
           this.setupEventListeners();
           this.initializeFormValidation();
           this.initializeDatePicker();
-          
-          // Initialize photo upload functionality
-          this.photoManager.initializePhotoUpload();
-  
+            
           // Initialize GPS/GPX sections if present
           if (document.getElementById('gps-track-section')) {
               await this.initializeGPSTrackSection();
@@ -191,6 +188,10 @@ class FormManager {
 
       try {
           await this.replaceCommonSections(activeSection, commonTemplate);
+
+          // Initialize photo upload after common sections are loaded
+          this.photoManager.initializePhotoUpload(true);
+
       } catch (error) {
           this.logger.error('Failed to replace common sections:', error);
           throw error;
