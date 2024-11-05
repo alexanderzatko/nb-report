@@ -161,13 +161,12 @@ class App {
   async refreshUserData() {
     try {
       this.logger.debug('Fetching user data...');
-      const response = await this.managers.network.get('/api/user-data');
+      const userData = await this.managers.network.get('/api/user-data');
       
-      if (!response.ok) {
+      if (!userData) {
         throw new Error('Failed to fetch user data');
       }
   
-      const userData = await response.json();
       this.logger.debug('User data received:', userData);
   
       // Handle language preference before any UI updates
@@ -180,6 +179,7 @@ class App {
       await this.managers.ui.updateUIBasedOnAuthState(true, userData);
       
       return userData;
+  
     } catch (error) {
       this.logger.error('Error refreshing user data:', error);
       throw error;
