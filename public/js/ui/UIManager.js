@@ -55,7 +55,7 @@ class UIManager {
   }
 
   async initializeAuthenticatedUI() {
-    this.logger.debug('Initializing authenticated UI');
+    this.logger.debug('Starting initializeAuthenticatedUI');
     console.log('Initializing authenticated UI');
 
     try {
@@ -65,27 +65,26 @@ class UIManager {
         if (loginContainer) loginContainer.style.display = 'none';
         if (dashboardContainer) {
             dashboardContainer.style.display = 'block';
-            console.log('Dashboard container is now visible'); // Direct console log
+            console.log('Dashboard container is now visible');
         }
 
-        if (loginContainer) loginContainer.style.display = 'none';
-        if (dashboardContainer) {
-            dashboardContainer.style.display = 'block';
-            this.logger.debug('Dashboard container is now visible');
-        }
-
+        // Set up all interactive elements
         await this.setupDashboardCards();
+        await this.setupSettingsButtons();
+        await this.setupFormButtons();
+        
         this.updateFullPageContent();
+        
         this.logger.debug('Authenticated UI initialization complete');
-
     } catch (error) {
+        console.error('Error initializing authenticated UI:', error);
         this.logger.error('Error initializing authenticated UI:', error);
         throw error;
     }
   }
 
   async setupDashboardCards() {
-    console.log('Setting up dashboard cards'); // Direct console log
+    console.log('Setting up dashboard cards');
     
     // Snow Report Card
     const snowReportLink = document.getElementById('snow-report-link');
@@ -138,6 +137,74 @@ class UIManager {
     });
   }
 
+  async setupSettingsButtons() {
+    console.log('Setting up settings buttons');
+
+    // Dashboard Return Button
+    const dashboardButton = document.getElementById('dashboard-button');
+    if (dashboardButton) {
+        console.log('Found dashboard button');
+        dashboardButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Dashboard button clicked');
+            this.showDashboard();
+        });
+
+        // Add visual feedback
+        dashboardButton.style.cursor = 'pointer';
+        this.addButtonHoverEffects(dashboardButton);
+    }
+
+    // Logout Button
+    const logoutButton = document.getElementById('logout-button');
+    if (logoutButton) {
+        console.log('Found logout button');
+        logoutButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Logout button clicked');
+            this.handleLogoutClick();
+        });
+
+        // Add visual feedback
+        logoutButton.style.cursor = 'pointer';
+        this.addButtonHoverEffects(logoutButton);
+    }
+  }
+
+  async setupFormButtons() {
+    console.log('Setting up form buttons');
+
+    // Cancel Button
+    const cancelButton = document.getElementById('cancel-button');
+    if (cancelButton) {
+        console.log('Found cancel button');
+        cancelButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Cancel button clicked');
+            this.formManager?.resetForm(); // Optional form reset if formManager exists
+            this.showDashboard();
+        });
+
+        // Add visual feedback
+        cancelButton.style.cursor = 'pointer';
+        this.addButtonHoverEffects(cancelButton);
+    }
+  }
+
+  addButtonHoverEffects(button) {
+    button.addEventListener('mouseenter', () => {
+        button.style.opacity = '0.8';
+        button.style.transform = 'translateY(-1px)';
+    });
+    button.addEventListener('mouseleave', () => {
+        button.style.opacity = '1';
+        button.style.transform = 'none';
+    });
+  }
+
   setupLoginEventListeners() {
     const loginContainer = document.getElementById('login-container');
     if (loginContainer) {
@@ -176,7 +243,7 @@ class UIManager {
         this.logger.debug('Adding click listener to snow report link');
         elements.snowReportLink.onclick = (e) => {
             e.preventDefault();
-            console.log('Snow report link clicked'); // Direct console log
+            console.log('Snow report link clicked');
             this.logger.debug('Snow report link clicked');
             this.showSnowReportForm();
         };
@@ -187,7 +254,7 @@ class UIManager {
         this.logger.debug('Adding click listener to settings link');
         elements.settingsLink.onclick = (e) => {
             e.preventDefault();
-            console.log('Settings link clicked'); // Direct console log
+            console.log('Settings link clicked');
             this.logger.debug('Settings link clicked');
             this.showSettings();
         };
@@ -198,7 +265,7 @@ class UIManager {
         this.logger.debug('Adding click listener to dashboard button');
         elements.dashboardButton.onclick = (e) => {
             e.preventDefault();
-            console.log('Dashboard button clicked'); // Direct console log
+            console.log('Dashboard button clicked');
             this.logger.debug('Dashboard button clicked');
             this.showDashboard();
         };
@@ -209,7 +276,7 @@ class UIManager {
         this.logger.debug('Adding click listener to logout button');
         elements.logoutButton.onclick = (e) => {
             e.preventDefault();
-            console.log('Logout button clicked'); // Direct console log
+            console.log('Logout button clicked');
             this.logger.debug('Logout button clicked');
             this.handleLogoutClick();
         };
@@ -219,7 +286,7 @@ class UIManager {
     Object.values(elements).forEach(element => {
         if (element) {
             element.classList.add('debug-clickable');
-            element.style.cursor = 'pointer'; // Make sure cursor shows it's clickable
+            element.style.cursor = 'pointer';
             
             // Add visual feedback on hover
             element.onmouseover = () => {
@@ -235,33 +302,47 @@ class UIManager {
   }
 
   showDashboard() {
+    console.log('Showing dashboard');
     this.logger.debug('Showing dashboard');
+    
     const containers = ['settings-container', 'snow-report-form'];
     containers.forEach(id => {
       const container = document.getElementById(id);
-      if (container) container.style.display = 'none';
+      if (container) {
+          container.style.display = 'none';
+          console.log(`Hidden container: ${id}`);
+      }
     });
 
     const dashboardContainer = document.getElementById('dashboard-container');
     if (dashboardContainer) {
       dashboardContainer.style.display = 'block';
+      console.log('Dashboard container is now visible');
     }
   }
 
   showSettings() {
     console.log('Showing settings');
+    this.logger.debug('Showing settings');
     
-    const dashboardContainer = document.getElementById('dashboard-container');
-    const snowReportForm = document.getElementById('snow-report-form');
+    const containers = ['dashboard-container', 'snow-report-form'];
+    containers.forEach(id => {
+      const container = document.getElementById(id);
+      if (container) {
+          container.style.display = 'none';
+          console.log(`Hidden container: ${id}`);
+      }
+    });
+
     const settingsContainer = document.getElementById('settings-container');
-    
-    if (dashboardContainer) dashboardContainer.style.display = 'none';
-    if (snowReportForm) snowReportForm.style.display = 'none';
-    if (settingsContainer) settingsContainer.style.display = 'block';
+    if (settingsContainer) {
+      settingsContainer.style.display = 'block';
+      console.log('Settings container is now visible');
+    }
   }
 
   showSnowReportForm() {
-    console.log('Showing snow report form'); // Direct console log
+    console.log('Showing snow report form');
     
     const dashboardContainer = document.getElementById('dashboard-container');
     const settingsContainer = document.getElementById('settings-container');
@@ -285,7 +366,6 @@ class UIManager {
 
   updateCorePageContent() {
     this.logger.debug('Updating core translations...');
-    // Update only essential UI elements needed for login
     document.querySelectorAll('[data-i18n].core').forEach(element => {
       const key = element.getAttribute('data-i18n');
       const translation = this.i18next.t(key);
@@ -298,10 +378,9 @@ class UIManager {
 
   updateFullPageContent() {
       this.logger.debug('Starting full page content update...');
-      // Update all translatable elements now that we have full translations
       document.querySelectorAll('[data-i18n]').forEach(element => {
           const key = element.getAttribute('data-i18n');
-          this.updateElementTranslation(element);  // Remove translation here, let updateElementTranslation handle it
+          this.updateElementTranslation(element);
       });
   }
 
@@ -319,12 +398,10 @@ class UIManager {
       if (settingsContainer) settingsContainer.style.display = 'none';
       if (snowReportForm) snowReportForm.style.display = 'none';
   
-      // Update user-specific UI elements if userData is provided
       if (userData) {
         this.updateUserSpecificElements(userData);
       }
   
-      // Ensure translations are updated after language change
       this.updateFullPageContent();
     } else {
       if (loginContainer) {
@@ -338,8 +415,6 @@ class UIManager {
   }
 
   updateUserSpecificElements(userData) {
-    // Add any user-specific UI updates here
-    // For example, showing user name, role, etc.
     if (userData.name) {
       const welcomeElement = document.querySelector('[data-i18n="welcome"]');
       if (welcomeElement) {
