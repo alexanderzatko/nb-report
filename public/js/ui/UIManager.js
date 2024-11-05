@@ -161,26 +161,27 @@ class UIManager {
       });
   }
 
-  updateUIBasedOnAuthState(isAuthenticated) {
+  async updateUIBasedOnAuthState(isAuthenticated, userData = null) {
     this.logger.debug('Updating UI based on auth state:', isAuthenticated);
     
     const loginContainer = document.getElementById('login-container');
     const dashboardContainer = document.getElementById('dashboard-container');
     const settingsContainer = document.getElementById('settings-container');
     const snowReportForm = document.getElementById('snow-report-form');
-
+  
     if (isAuthenticated) {
       if (loginContainer) loginContainer.style.display = 'none';
       if (dashboardContainer) dashboardContainer.style.display = 'block';
       if (settingsContainer) settingsContainer.style.display = 'none';
       if (snowReportForm) snowReportForm.style.display = 'none';
-
-      // Ensure SelectManager is initialized after authentication
-      if (this.selectManager) {
-        this.selectManager.refreshAllDropdowns().catch(error => {
-          this.logger.error('Error refreshing dropdowns:', error);
-        });
+  
+      // Update user-specific UI elements if userData is provided
+      if (userData) {
+        this.updateUserSpecificElements(userData);
       }
+  
+      // Ensure translations are updated after language change
+      this.updateFullPageContent();
     } else {
       if (loginContainer) {
         loginContainer.style.display = 'flex';
@@ -189,6 +190,20 @@ class UIManager {
       if (dashboardContainer) dashboardContainer.style.display = 'none';
       if (settingsContainer) settingsContainer.style.display = 'none';
       if (snowReportForm) snowReportForm.style.display = 'none';
+    }
+  }
+
+  updateUserSpecificElements(userData) {
+    // Add any user-specific UI updates here
+    // For example, showing user name, role, etc.
+    if (userData.name) {
+      const welcomeElement = document.querySelector('[data-i18n="welcome"]');
+      if (welcomeElement) {
+        welcomeElement.textContent = this.i18next.t('welcome', {
+          name: userData.name,
+          role: userData.ski_center_admin === "1" ? "Admin" : "User"
+        });
+      }
     }
   }
   
