@@ -23,6 +23,7 @@ class App {
     this.initialized = false;
     this.managers = {};
     this.i18next = i18next;
+    this.processingAuth = false;
     this.featureManagersInitialized = false;
     App.instance = this;
   }
@@ -58,10 +59,24 @@ class App {
         state: StateManager.getInstance(),
         auth: AuthManager.getInstance(),
         ui: UIManager.getInstance()
+        network: NetworkManager.getInstance()
       };
 
-      // Initialize minimal UI (login screen only)
-      await this.managers.ui.initializeLoginUI();
+      // Check for OAuth callback first
+      const didAuth = await this.checkForURLParameters();
+      
+      if (!didAuth) {
+          // Only check session if we didn't just process an auth callback
+          const isAuthenticated = await this.managers.auth.checkAuthStatus();
+          
+          if (isAuthenticated) {
+              await this.managers.ui.updateUIBasedOnAuthState(true);
+              await this.refreshUserData();
+          } else {
+              // Initialize minimal UI (login screen only)
+              await this.managers.ui.initializeLoginUI();
+          }
+      }
 
       // Initialize service worker for PWA functionality
       if ('serviceWorker' in navigator) {
@@ -123,6 +138,48 @@ class App {
       });
 
     this.logger.debug(`Initialized core i18n with language: ${i18next.language}`);
+  }
+
+  async checkForURLParameters() {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('code') && !this.processingAuth) {
+          this.processingAuth = true;
+          try {
+              console.log('Processing OAuth callback...');
+              const success = await this.managers.auth.handleOAuthCallback(
+                  urlParams.get('code'),
+                  urlParams.get('state')
+              );
+              window.history.replaceState({}, document.title, '/');
+              
+              if (success) {
+                  console.log('OAuth callback successful, updating UI...');
+                  await this.managers.ui.updateUIBasedOnAuthState(true);
+                  await this.refreshUserData();
+                  return true;
+              } else {
+                  console.log('OAuth callback failed, showing login...');
+                  await this.managers.ui.updateUIBasedOnAuthState(false);
+              }
+          } finally {
+              this.processingAuth = false;
+          }
+      }
+      return false;
+  }
+
+  async refreshUserData() {
+      try {
+          const response = await this.managers.network.get('/api/user-data');
+          if (response.ok) {
+              const userData = await response.json();
+              await this.managers.ui.updateUIBasedOnAuthState(true, userData);
+              return userData;
+          }
+      } catch (error) {
+          this.logger.error('Error refreshing user data:', error);
+          throw error;
+      }
   }
 
   async initializeFeatureManagers() {
