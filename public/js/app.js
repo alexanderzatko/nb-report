@@ -4,6 +4,7 @@ import LanguageDetector from '/node_modules/i18next-browser-languagedetector/dis
 import Logger from './utils/Logger.js';
 import AuthManager from './auth/AuthManager.js';
 import UIManager from './ui/UIManager.js';
+import NetworkManager from './network/NetworkManager.js';
 import StateManager from './state/StateManager.js';
 import ServiceWorkerManager from './services/ServiceWorkerManager.js';
 import { initI18next, resetI18next } from './i18n.js';
