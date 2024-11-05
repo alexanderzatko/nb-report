@@ -40,6 +40,8 @@ class UIManager {
         });
       }
 
+      this.logger.debug(`Initializing login UI with language: ${this.i18next.language}`);
+
       // Set up core event listeners
       this.setupLoginEventListeners();
 
@@ -48,7 +50,7 @@ class UIManager {
         loginContainer.classList.add('visible');
       }
 
-      // Update basic page content (header, login text)
+      this.logger.debug('Updating core page content...');
       this.updateCorePageContent();
       
       this.initialized = true;
@@ -81,24 +83,24 @@ class UIManager {
     this.logger.debug('Initializing authenticated UI');
 
     try {
-      // Hide login container, show dashboard
-      const loginContainer = document.getElementById('login-container');
-      const dashboardContainer = document.getElementById('dashboard-container');
-      
-      if (loginContainer) loginContainer.style.display = 'none';
-      if (dashboardContainer) dashboardContainer.style.display = 'block';
+        // Hide login container, show dashboard
+        const loginContainer = document.getElementById('login-container');
+        const dashboardContainer = document.getElementById('dashboard-container');
+        
+        if (loginContainer) loginContainer.style.display = 'none';
+        if (dashboardContainer) dashboardContainer.style.display = 'block';
 
-      // Set up authenticated state event listeners
-      this.setupAuthenticatedEventListeners();
+        // Set up authenticated state event listeners
+        this.setupAuthenticatedEventListeners();
 
-      // Update all translations now that we have full i18n loaded
-      this.updateFullPageContent();
-      
-      this.logger.debug('Authenticated UI initialized');
+        this.logger.debug(`Updating full page content with language: ${this.i18next.language}`);
+        this.updateFullPageContent();
+        
+        this.logger.debug('Authenticated UI initialized');
 
     } catch (error) {
-      this.logger.error('Error initializing authenticated UI:', error);
-      throw error;
+        this.logger.error('Error initializing authenticated UI:', error);
+        throw error;
     }
   }
 
@@ -136,10 +138,12 @@ class UIManager {
   }
 
   updateCorePageContent() {
+    this.logger.debug('Updating core translations...');
     // Update only essential UI elements needed for login
     document.querySelectorAll('[data-i18n].core').forEach(element => {
       const key = element.getAttribute('data-i18n');
       const translation = this.i18next.t(key);
+      this.logger.debug(`Translating ${key} to: ${translation}`);
       this.updateElementTranslation(element, translation);
     });
     
@@ -147,12 +151,14 @@ class UIManager {
   }
 
   updateFullPageContent() {
-    // Update all translatable elements now that we have full translations
-    document.querySelectorAll('[data-i18n]').forEach(element => {
-      const key = element.getAttribute('data-i18n');
-      const translation = this.i18next.t(key);
-      this.updateElementTranslation(element, translation);
-    });
+      this.logger.debug('Starting full page content update...');
+      // Update all translatable elements now that we have full translations
+      document.querySelectorAll('[data-i18n]').forEach(element => {
+          const key = element.getAttribute('data-i18n');
+          const translation = this.i18next.t(key);
+          this.logger.debug(`Translating ${key} to: ${translation}`);
+          this.updateElementTranslation(element, translation);
+      });
   }
 
   updateElementTranslation(element, translation) {
@@ -164,10 +170,13 @@ class UIManager {
   }
 
   updateLoginText() {
-    const loginText = document.getElementById('login-text');
-    if (loginText) {
-      loginText.textContent = this.i18next.t('auth.loginText');
-    }
+      const loginText = document.getElementById('login-text');
+      if (loginText) {
+          const translationKey = 'auth.loginText';
+          const translation = this.i18next.t(translationKey);
+          this.logger.debug(`Setting login text translation (${translationKey}): ${translation}`);
+          loginText.textContent = translation;
+      }
   }
 
   async handleLoginClick(event) {
