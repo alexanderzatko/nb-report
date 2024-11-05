@@ -104,33 +104,29 @@ class App {
   }
 
   async initializeCorei18n() {
-    const coreTranslations = {
-      'auth': true,
-      'errors': true,
-      'common': true
-    };
-
-    // Initialize i18next with language detection for core translations
-    await i18next
-      .use(HttpBackend)
-      .use(LanguageDetector)
-      .init({
-        fallbackLng: 'en',
-        load: 'languageOnly',
-        debug: true,
-        backend: {
-          loadPath: '/locales/{{lng}}/{{ns}}.json'
-        },
-        detection: {
-          order: ['querystring', 'cookie', 'localStorage', 'navigator', 'htmlTag'],
-          lookupQuerystring: 'lng',
-          lookupCookie: 'i18next',
-          lookupLocalStorage: 'i18nextLng',
-          caches: ['localStorage', 'cookie'],
-        }
-      });
-
-    this.logger.debug(`Initialized core i18n with language: ${i18next.language}`);
+    // Only initialize if not already initialized
+    if (!this.i18next.isInitialized) {
+      await this.i18next
+        .use(HttpBackend)
+        .use(LanguageDetector)
+        .init({
+          fallbackLng: 'en',
+          load: 'languageOnly',
+          debug: true,
+          backend: {
+            loadPath: '/locales/{{lng}}/{{ns}}.json'
+          },
+          detection: {
+            order: ['querystring', 'cookie', 'localStorage', 'navigator', 'htmlTag'],
+            lookupQuerystring: 'lng',
+            lookupCookie: 'i18next',
+            lookupLocalStorage: 'i18nextLng',
+            caches: ['localStorage', 'cookie'],
+          }
+        });
+    }
+  
+    this.logger.debug(`Initialized core i18n with language: ${this.i18next.language}`);
   }
 
   async checkForURLParameters() {
