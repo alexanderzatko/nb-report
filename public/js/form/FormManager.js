@@ -80,31 +80,45 @@ class FormManager {
   }
 
   async initialize() {
-    this.logger.debug('FormManager initialize starting');
-    console.log('Initializing FormManager');
-    
-    if (!this.i18next.isInitialized) {
-      console.log('Waiting for i18next to initialize...');
-      await new Promise(resolve => {
-        this.i18next.on('initialized', resolve);
-      });
-    }
-    
-    this.initializeFormValidation();
-    this.initializeDatePicker();
-    this.setupEventListeners();
-    
-    // Initialize photo upload functionality
-    this.photoManager.initializePhotoUpload();
-
-    if (document.getElementById('gps-track-section')) {
-      await this.initializeGPSTrackSection();
-    }
-
-    this.logger.debug('About to initialize GPX section');
-    await this.initializeGPXSection();
-    this.logger.debug('GPX section initialization complete');
-
+      if (this.initialized) {
+          return;
+      }
+  
+      try {
+          this.logger.debug('FormManager initialize starting');
+          
+          // Wait for i18next to be ready
+          if (!this.i18next.isInitialized) {
+              this.logger.debug('Waiting for i18next to initialize...');
+              await new Promise(resolve => {
+                  this.i18next.on('initialized', resolve);
+              });
+          }
+  
+          // Initialize core form functionality
+          this.setupEventListeners();
+          this.initializeFormValidation();
+          this.initializeDatePicker();
+          
+          // Initialize photo upload functionality
+          this.photoManager.initializePhotoUpload();
+  
+          // Initialize GPS/GPX sections if present
+          if (document.getElementById('gps-track-section')) {
+              await this.initializeGPSTrackSection();
+          }
+  
+          this.logger.debug('About to initialize GPX section');
+          await this.initializeGPXSection();
+          this.logger.debug('GPX section initialization complete');
+          
+          this.initialized = true;
+          this.logger.debug('Form manager initialization complete');
+  
+      } catch (error) {
+          this.logger.error('Error initializing form manager:', error);
+          throw error;
+      }
   }
 
   setupEventListeners() {
@@ -130,6 +144,22 @@ class FormManager {
       cancelButton.parentNode.replaceChild(newCancelButton, cancelButton);
       newCancelButton.addEventListener('click', () => this.handleCancel());
     }
+  }
+
+  async replaceCommonSections(activeSection, commonTemplate) {
+      try {
+          const placeholders = activeSection.querySelectorAll('.common-section-placeholder');
+          this.logger.debug(`Found ${placeholders.length} placeholders to replace`);
+          
+          placeholders.forEach((placeholder, index) => {
+              this.logger.debug(`Replacing placeholder ${index}`);
+              const commonContent = commonTemplate.content.cloneNode(true);
+              placeholder.parentNode.replaceChild(commonContent, placeholder);
+          });
+      } catch (error) {
+          this.logger.error('Error replacing common sections:', error);
+          throw error;
+      }
   }
   
   async initializeForm(userData) {
@@ -158,7 +188,14 @@ class FormManager {
   
       // Handle common sections
       const activeSection = isAdmin ? adminSection : regularUserSection;
-      
+
+      try {
+          await this.replaceCommonSections(activeSection, commonTemplate);
+      } catch (error) {
+          this.logger.error('Failed to replace common sections:', error);
+          throw error;
+      }
+    
       // Replace all common section placeholders in the active section
       activeSection.querySelectorAll('.common-section-placeholder').forEach(placeholder => {
           // Clone the template content
@@ -166,7 +203,13 @@ class FormManager {
           // Replace the placeholder with the common content
           placeholder.parentNode.replaceChild(commonContent, placeholder);
       });
-  
+      
+      this.logger.debug('Setting form visibility for user:', {
+          isAdmin,
+          hasTrails,
+          hasRovasId: !!userData?.rovas_uid
+      });
+          
       // Set visibility for trails section
       if (trailsSection) {
           trailsSection.style.display = isAdmin && hasTrails ? 'block' : 'none';
@@ -180,7 +223,15 @@ class FormManager {
           rewardsSection.style.display = 
               (userData?.rovas_uid && !isNaN(userData.rovas_uid)) ? 'block' : 'none';
       }
-  
+
+      this.logger.debug('Form section visibility after changes:', {
+          regularSection: regularUserSection.style.display,
+          adminSection: adminSection.style.display,
+          trailsSection: trailsSection?.style.display,
+          rewardsSection: rewardsSection?.style.display,
+          placeholdersReplaced: activeSection.querySelectorAll('.common-section-placeholder').length
+      });
+    
       // Initialize form fields based on user type
       const config = isAdmin ? this.formConfig.admin : this.formConfig.regular;
       this.initializeFormFields(config);
