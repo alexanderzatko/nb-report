@@ -354,6 +354,44 @@ class UIManager {
     }
   }
 
+  updateElementTranslation(element) {
+      const key = element.getAttribute('data-i18n');
+      const translation = this.i18next.t(key, { returnObjects: true });
+      this.logger.debug(`Translating ${key} to:`, translation);
+      
+      if (typeof translation === 'object') {
+          if (element.tagName.toLowerCase() === 'select') {
+              // Store current value to restore after populating options
+              const currentValue = element.value;
+              element.innerHTML = '';
+              
+              // Add translated options
+              Object.entries(translation).forEach(([value, text]) => {
+                  const option = document.createElement('option');
+                  option.value = value;
+                  option.textContent = text;
+                  element.appendChild(option);
+              });
+              
+              // Restore previously selected value if it exists
+              if (currentValue && element.querySelector(`option[value="${currentValue}"]`)) {
+                  element.value = currentValue;
+              }
+          } else {
+              // For non-select elements that received an object, log a warning
+              this.logger.warn(`Received object translation for non-select element with key: ${key}`);
+              element.textContent = key;
+          }
+      } else {
+          // Handle non-object translations
+          if (element.tagName.toLowerCase() === 'input' && element.type === 'submit') {
+              element.value = translation;
+          } else {
+              element.textContent = translation;
+          }
+      }
+  }
+  
   updateUserSpecificElements(userData) {
     if (userData.name) {
       const welcomeElement = document.querySelector('[data-i18n="welcome"]');
