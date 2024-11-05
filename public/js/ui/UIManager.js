@@ -105,25 +105,46 @@ class UIManager {
   }
 
   setupAuthenticatedEventListeners() {
-    // All navigation buttons
-    const buttons = {
-      'snow-report-link': () => window.dispatchEvent(new Event('showSnowReport')),
-      'settings-link': () => window.dispatchEvent(new Event('showSettings')),
-      'dashboard-button': () => window.dispatchEvent(new Event('showDashboard')),
-      'logout-button': this.handleLogoutClick.bind(this)
-    };
-
-    Object.entries(buttons).forEach(([id, handler]) => {
-      const element = document.getElementById(id);
-      if (element) {
-        const newElement = element.cloneNode(true);
-        element.parentNode.replaceChild(newElement, element);
-        newElement.addEventListener('click', (e) => {
-          e.preventDefault();
-          handler();
-        });
-      }
-    });
+      // Define navigation handlers
+      const handlers = {
+          'snow-report-link': (e) => {
+              e.preventDefault();
+              window.dispatchEvent(new Event('showSnowReport'));
+          },
+          'settings-link': (e) => {
+              e.preventDefault();
+              window.dispatchEvent(new Event('showSettings'));
+              this.logger.debug('Settings link clicked, dispatched showSettings event');
+          },
+          'dashboard-button': (e) => {
+              e.preventDefault();
+              window.dispatchEvent(new Event('showDashboard'));
+          },
+          'logout-button': (e) => {
+              e.preventDefault();
+              this.handleLogoutClick();
+          }
+      };
+  
+      // Attach event listeners
+      Object.entries(handlers).forEach(([id, handler]) => {
+          const element = document.getElementById(id);
+          if (element) {
+              // Remove existing listeners by cloning
+              const newElement = element.cloneNode(true);
+              element.parentNode.replaceChild(newElement, element);
+              
+              // Add new click listener
+              newElement.addEventListener('click', handler);
+              
+              this.logger.debug(`Event listener attached to ${id}`);
+          } else {
+              this.logger.warn(`Element with id ${id} not found`);
+          }
+      });
+  
+      // Log all active event listeners
+      this.logger.debug('Authenticated event listeners setup complete');
   }
 
   removeExistingListeners() {
