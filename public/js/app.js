@@ -155,6 +155,7 @@ class App {
               
               if (success) {
                   console.log('OAuth callback successful, updating UI...');
+                  console.log(managers);
                   await this.managers.ui.updateUIBasedOnAuthState(true);
                   await this.refreshUserData();
                   return true;
