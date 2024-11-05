@@ -42,7 +42,12 @@ class UIManager {
 
       // Set up core event listeners
       this.setupLoginEventListeners();
-      
+
+      const loginContainer = document.getElementById('login-container');
+      if (loginContainer) {
+        loginContainer.classList.add('visible');
+      }
+
       // Update basic page content (header, login text)
       this.updateCorePageContent();
       
