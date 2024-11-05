@@ -132,68 +132,82 @@ class FormManager {
     }
   }
   
-  initializeForm(userData) {
-    this.logger.debug('Initializing form with user data:', userData);
-    
-    // Ensure we have the required elements
-    const regularUserSection = document.getElementById('regular-user-section');
-    const adminSection = document.getElementById('admin-section');
-    const trailsSection = document.getElementById('trails-section');
-    const rewardsSection = document.getElementById('rewards-section');
-
-    if (!regularUserSection || !adminSection) {
-      this.logger.error('Required form sections not found');
-      return;
-    }
-
-    const isAdmin = userData?.ski_center_admin === "1";
-    const hasTrails = userData?.trails && Array.isArray(userData.trails) && userData.trails.length > 0;
-    
-    this.logger.debug('User type:', { isAdmin, hasTrails });
-
-    regularUserSection.style.display = isAdmin ? 'none' : 'block';
-    adminSection.style.display = isAdmin ? 'block' : 'none';
-
-    // Get the active section
-    const activeSection = isAdmin ? adminSection : regularUserSection;
-    
-    // Get common elements
-    const commonElements = document.getElementById('common-section');
-    
-    // Place common elements in their placeholders
-    activeSection.querySelectorAll('.common-section-placeholder').forEach(placeholder => {
-        const position = placeholder.dataset.position;
-        const commonElement = commonElements.content.cloneNode(true);
-        placeholder.replaceWith(commonElement);
-    });
-
-    // Set visibility for trails section
-    if (trailsSection) {
-      trailsSection.style.display = 'none';
-      if (isAdmin && hasTrails) {
-        trailsSection.style.display = 'block';
-        this.initializeTrailsSection(userData.trails);
+  async initializeForm(userData) {
+      this.logger.debug('Initializing form with user data:', userData);
+      
+      // Get required elements
+      const regularUserSection = document.getElementById('regular-user-section');
+      const adminSection = document.getElementById('admin-section');
+      const trailsSection = document.getElementById('trails-section');
+      const rewardsSection = document.getElementById('rewards-section');
+      const commonTemplate = document.getElementById('common-section');
+  
+      if (!regularUserSection || !adminSection || !commonTemplate) {
+          this.logger.error('Required form sections not found');
+          return;
       }
-    }
-
-    // Set visibility for rewards section based on rovas_uid
-    if (rewardsSection) {
-      rewardsSection.style.display = 
-        (userData?.rovas_uid && !isNaN(userData.rovas_uid)) ? 'block' : 'none';
-    }
-
-    // Initialize form fields based on user type
-    const config = isAdmin ? this.formConfig.admin : this.formConfig.regular;
-    this.initializeFormFields(config);
-
-    this.logger.debug('Form sections visibility:', {
-      regularUser: regularUserSection.style.display,
-      admin: adminSection.style.display,
-      trails: trailsSection?.style.display,
-      rewards: rewardsSection?.style.display
-    });
+  
+      const isAdmin = userData?.ski_center_admin === "1";
+      const hasTrails = userData?.trails && Array.isArray(userData.trails) && userData.trails.length > 0;
+      
+      this.logger.debug('User type:', { isAdmin, hasTrails });
+  
+      // Clear existing content from sections to prevent duplication
+      regularUserSection.style.display = isAdmin ? 'none' : 'block';
+      adminSection.style.display = isAdmin ? 'block' : 'none';
+  
+      // Handle common sections
+      const activeSection = isAdmin ? adminSection : regularUserSection;
+      
+      // Replace all common section placeholders in the active section
+      activeSection.querySelectorAll('.common-section-placeholder').forEach(placeholder => {
+          // Clone the template content
+          const commonContent = commonTemplate.content.cloneNode(true);
+          // Replace the placeholder with the common content
+          placeholder.parentNode.replaceChild(commonContent, placeholder);
+      });
+  
+      // Set visibility for trails section
+      if (trailsSection) {
+          trailsSection.style.display = isAdmin && hasTrails ? 'block' : 'none';
+          if (isAdmin && hasTrails) {
+              await this.initializeTrailsSection(userData.trails);
+          }
+      }
+  
+      // Set visibility for rewards section based on rovas_uid
+      if (rewardsSection) {
+          rewardsSection.style.display = 
+              (userData?.rovas_uid && !isNaN(userData.rovas_uid)) ? 'block' : 'none';
+      }
+  
+      // Initialize form fields based on user type
+      const config = isAdmin ? this.formConfig.admin : this.formConfig.regular;
+      this.initializeFormFields(config);
+  
+      this.logger.debug('Form sections visibility:', {
+          regularUser: regularUserSection.style.display,
+          admin: adminSection.style.display,
+          trails: trailsSection?.style.display,
+          rewards: rewardsSection?.style.display
+      });
+  
+      // Initialize form components that need to be refreshed
+      await this.refreshFormComponents();
   }
 
+  async refreshFormComponents() {
+      // Re-initialize any components that need to be refreshed
+      const photoManager = PhotoManager.getInstance();
+      photoManager.initializePhotoUpload(true);
+  
+      // Refresh dropdowns if SelectManager is available
+      const selectManager = SelectManager.getInstance();
+      if (selectManager) {
+          await selectManager.refreshAllDropdowns();
+      }
+  }
+  
   initializeFormFields(config) {
     config.requiredFields.forEach(field => {
       const element = document.getElementById(field.id);
