@@ -91,7 +91,7 @@ class SelectManager {
     if (this.loadingPromises.locations) {
       return this.loadingPromises.locations;
     }
-
+  
     this.loadingPromises.locations = (async () => {
       try {
         this.logger.debug('Loading location data...');
@@ -99,14 +99,16 @@ class SelectManager {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        this.data.locations = await response.json();
+        const data = await response.json();
+        this.data.locations = data;
         this.logger.debug('Location data loaded successfully');
+        return data;  // Return the data so the promise resolves with it
       } catch (error) {
         this.logger.error('Error loading location data:', error);
         throw error;
       }
     })();
-
+  
     return this.loadingPromises.locations;
   }
 
@@ -158,40 +160,49 @@ class SelectManager {
   }
 
   async populateLocationDropdowns() {
-    const countrySelect = document.getElementById('country');
-    if (!countrySelect) {
-      this.logger.warn('Country select element not found');
-      return;
-    }
-
-    const currentValue = countrySelect.value || this.selectedValues.country;
-    
-    countrySelect.innerHTML = '';
-    const defaultOption = document.createElement('option');
-    defaultOption.value = '';
-    defaultOption.textContent = this.i18next.t('form.selectCountry');
-    countrySelect.appendChild(defaultOption);
-
-    if (!this.data.locations?.countries) {
-      this.logger.error('No countries data available');
-      return;
-    }
-
-    this.data.locations.countries.forEach(country => {
-      const option = document.createElement('option');
-      option.value = country.code;
-      option.textContent = this.i18next.t(country.nameKey);
-      countrySelect.appendChild(option);
-    });
-
-    // Use stored value, or infer from language if no value is stored
-    const valueToSet = currentValue || this.selectedValues.country || this.inferCountryFromLanguage();
-    countrySelect.value = valueToSet;
-    
-    // Store the selected value
-    this.selectedValues.country = valueToSet;
-    
-    await this.updateRegions();
+      const countrySelect = document.getElementById('country');
+      if (!countrySelect) {
+          this.logger.warn('Country select element not found');
+          return;
+      }
+  
+      // Make sure we have data - single check and data loading
+      if (!this.data.locations?.countries) {
+          this.logger.debug('Waiting for location data...');
+          await this.loadLocationData();
+          
+          // Check if data was successfully loaded
+          if (!this.data.locations?.countries) {
+              this.logger.error('Failed to load countries data');
+              return;
+          }
+      }
+  
+      const currentValue = countrySelect.value || this.selectedValues.country;
+      
+      // Clear and set default option
+      countrySelect.innerHTML = '';
+      const defaultOption = document.createElement('option');
+      defaultOption.value = '';
+      defaultOption.textContent = this.i18next.t('form.selectCountry');
+      countrySelect.appendChild(defaultOption);
+  
+      // Add country options
+      this.data.locations.countries.forEach(country => {
+          const option = document.createElement('option');
+          option.value = country.code;
+          option.textContent = this.i18next.t(country.nameKey);
+          countrySelect.appendChild(option);
+      });
+  
+      // Set the value using stored value, current value, or inferred value
+      const valueToSet = currentValue || this.selectedValues.country || this.inferCountryFromLanguage();
+      countrySelect.value = valueToSet;
+      
+      // Store the selected value
+      this.selectedValues.country = valueToSet;
+      
+      await this.updateRegions();
   }
 
   async updateRegions() {
