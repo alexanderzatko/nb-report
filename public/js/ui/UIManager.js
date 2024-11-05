@@ -4,7 +4,6 @@ import Logger from '../utils/Logger.js';
 import SelectManager from '../managers/SelectManager.js';
 import FormManager from '../form/FormManager.js';
 import StateManager from '../state/StateManager.js';
-import app from '../app.js';
 
 class UIManager {
   static instance = null;
@@ -278,9 +277,10 @@ class UIManager {
   
           // Use existing form data stored in state
           const stateManager = StateManager.getInstance();
-          const userData = app.getUserData();
-//          const userData = stateManager.getState('auth.user');
-  
+          const userData = stateManager.getState('auth.user');
+
+          this.logger.debug('Showing user data',userData);
+
           if (!userData) {
               this.logger.error('No user data available');
               await AuthManager.getInstance().logout();
