@@ -208,10 +208,47 @@ class UIManager {
   }
   
   updateElementTranslation(element, translation) {
-    if (element.tagName.toLowerCase() === 'input' && element.type === 'submit') {
-      element.value = translation;
+    const key = element.getAttribute('data-i18n');
+    this.logger.debug(`Translating ${key} to:`, translation);
+    
+    if (typeof translation === 'object') {
+      if (element.tagName.toLowerCase() === 'select') {
+        // Store current value to restore after populating options
+        const currentValue = element.value;
+        element.innerHTML = '';
+        
+        // Check if we need to add a default/placeholder option
+        if (element.hasAttribute('data-with-placeholder')) {
+          const placeholderOption = document.createElement('option');
+          placeholderOption.value = '';
+          placeholderOption.textContent = this.i18next.t('form.select' + key.split('.').pop());
+          element.appendChild(placeholderOption);
+        }
+        
+        // Add translated options
+        Object.entries(translation).forEach(([value, text]) => {
+          const option = document.createElement('option');
+          option.value = value;
+          option.textContent = text;
+          element.appendChild(option);
+        });
+        
+        // Restore previously selected value if it exists
+        if (currentValue && element.querySelector(`option[value="${currentValue}"]`)) {
+          element.value = currentValue;
+        }
+      } else {
+        // For non-select elements that received an object, log a warning
+        this.logger.warn(`Received object translation for non-select element with key: ${key}`);
+        element.textContent = key;
+      }
     } else {
-      element.textContent = translation;
+      // Handle non-object translations
+      if (element.tagName.toLowerCase() === 'input' && element.type === 'submit') {
+        element.value = translation;
+      } else {
+        element.textContent = translation;
+      }
     }
   }
 
