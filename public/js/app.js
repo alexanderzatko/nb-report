@@ -168,7 +168,10 @@ class App {
       }
   
       this.logger.debug('User data received:', userData);
-  
+
+      const stateManager = StateManager.getInstance();
+      stateManager.setState('auth.user', userData);
+
       // Handle language preference before any UI updates
       if (userData.language && userData.language !== this.i18next.language) {
         this.logger.debug(`Changing language to user preference: ${userData.language}`);
