@@ -58,7 +58,7 @@ class App {
       this.managers = {
         state: StateManager.getInstance(),
         auth: AuthManager.getInstance(),
-        ui: UIManager.getInstance()
+        ui: UIManager.getInstance(),
         network: NetworkManager.getInstance()
       };
 
