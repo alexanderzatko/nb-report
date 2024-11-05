@@ -1,4 +1,6 @@
 import i18next from '/node_modules/i18next/dist/esm/i18next.js';
+import HttpBackend from '/node_modules/i18next-http-backend/esm/index.js';
+import LanguageDetector from '/node_modules/i18next-browser-languagedetector/dist/esm/i18nextBrowserLanguageDetector.js';
 import Logger from './utils/Logger.js';
 import AuthManager from './auth/AuthManager.js';
 import UIManager from './ui/UIManager.js';
