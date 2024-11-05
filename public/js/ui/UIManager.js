@@ -161,6 +161,37 @@ class UIManager {
       });
   }
 
+  updateUIBasedOnAuthState(isAuthenticated) {
+    this.logger.debug('Updating UI based on auth state:', isAuthenticated);
+    
+    const loginContainer = document.getElementById('login-container');
+    const dashboardContainer = document.getElementById('dashboard-container');
+    const settingsContainer = document.getElementById('settings-container');
+    const snowReportForm = document.getElementById('snow-report-form');
+
+    if (isAuthenticated) {
+      if (loginContainer) loginContainer.style.display = 'none';
+      if (dashboardContainer) dashboardContainer.style.display = 'block';
+      if (settingsContainer) settingsContainer.style.display = 'none';
+      if (snowReportForm) snowReportForm.style.display = 'none';
+
+      // Ensure SelectManager is initialized after authentication
+      if (this.selectManager) {
+        this.selectManager.refreshAllDropdowns().catch(error => {
+          this.logger.error('Error refreshing dropdowns:', error);
+        });
+      }
+    } else {
+      if (loginContainer) {
+        loginContainer.style.display = 'flex';
+        this.updateLoginText();
+      }
+      if (dashboardContainer) dashboardContainer.style.display = 'none';
+      if (settingsContainer) settingsContainer.style.display = 'none';
+      if (snowReportForm) snowReportForm.style.display = 'none';
+    }
+  }
+  
   updateElementTranslation(element, translation) {
     if (element.tagName.toLowerCase() === 'input' && element.type === 'submit') {
       element.value = translation;
