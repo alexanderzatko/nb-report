@@ -62,19 +62,17 @@ const initI18next = async () => {
 const resetI18next = async () => {
   initPromise = null;
   isInitialized = false;
-  // Instead of destroy, we'll just reinitialize with minimal config
-  await i18next
-    .use(HttpBackend)
-    .use(LanguageDetector)
-    .init({
-      fallbackLng: 'en',
-      load: 'languageOnly',
-      debug: true,
-      ns: ['translation'],
-      backend: {
-        loadPath: '/locales/{{lng}}/{{ns}}.json'
-      }
+  
+  // Instead of doing another init, just clear resources and prepare for new init
+  if (i18next.isInitialized) {
+    Object.keys(i18next.services.resourceStore.data).forEach(lng => {
+      Object.keys(i18next.services.resourceStore.data[lng]).forEach(ns => {
+        i18next.removeResourceBundle(lng, ns);
+      });
     });
+  }
+  
+  return Promise.resolve();
 };
 
 export { i18next, initI18next, resetI18next };
