@@ -5,6 +5,7 @@ import SelectManager from '../managers/SelectManager.js';
 import PhotoManager from '../media/PhotoManager.js';
 import Logger from '../utils/Logger.js';
 import GPSManager from '../managers/GPSManager.js';
+import StateManager from '../state/StateManager.js';
 
 class FormManager {
   static instance = null;
