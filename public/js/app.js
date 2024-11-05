@@ -94,14 +94,6 @@ class App {
         }
       });
 
-      // Check initial auth state
-      const isAuthenticated = await this.managers.auth.checkAuthStatus();
-      if (isAuthenticated) {
-        await this.initializeFeatureManagers();
-      } else {
-        this.managers.ui.initializeLoginUI();
-      }
-
       this.initialized = true;
       this.logger.debug('Core system initialized');
 
@@ -153,15 +145,16 @@ class App {
               );
               window.history.replaceState({}, document.title, '/');
               
-              if (success) {
-                  console.log('OAuth callback successful, updating UI...');
-                  await this.managers.ui.updateUIBasedOnAuthState(true);
-                  await this.refreshUserData();
-                  return true;
-              } else {
-                  console.log('OAuth callback failed, showing login...');
-                  await this.managers.ui.updateUIBasedOnAuthState(false);
-              }
+            if (success) {
+              console.log('OAuth callback successful, fetching user data...');
+              // First fetch user data
+              await this.refreshUserData();
+              // Feature managers will be initialized via auth state change subscription
+              return true;
+            } else {
+              console.log('OAuth callback failed, showing login...');
+              await this.managers.ui.initializeLoginUI();
+            }
           } finally {
               this.processingAuth = false;
           }
@@ -174,26 +167,22 @@ class App {
       this.logger.debug('Fetching user data...');
       const response = await this.managers.network.get('/api/user-data');
       
-      if (!response || !response.ok) {
+      if (!response.ok) {
         throw new Error('Failed to fetch user data');
       }
   
       const userData = await response.json();
       this.logger.debug('User data received:', userData);
   
-      // Handle language preference if present in user data
+      // Handle language preference before any UI updates
       if (userData.language && userData.language !== this.i18next.language) {
         this.logger.debug(`Changing language to user preference: ${userData.language}`);
         await this.i18next.changeLanguage(userData.language);
       }
   
-      // Update UI with user data
+      // Now initialize UI with the user data
       await this.managers.ui.updateUIBasedOnAuthState(true, userData);
       
-      if (this.managers.form) {
-        await this.managers.form.initializeForm(userData);
-      }
-  
       return userData;
     } catch (error) {
       this.logger.error('Error refreshing user data:', error);
