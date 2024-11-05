@@ -61,10 +61,18 @@ class UIManager {
         const loginContainer = document.getElementById('login-container');
         const dashboardContainer = document.getElementById('dashboard-container');
         
-        if (loginContainer) loginContainer.style.display = 'none';
-        if (dashboardContainer) dashboardContainer.style.display = 'block';
+        this.logger.debug('Found containers:', { 
+            loginContainer: !!loginContainer, 
+            dashboardContainer: !!dashboardContainer 
+        });
 
-        this.setupAuthenticatedEventListeners();
+        if (loginContainer) loginContainer.style.display = 'none';
+        if (dashboardContainer) {
+            dashboardContainer.style.display = 'block';
+            this.logger.debug('Dashboard container is now visible');
+        }
+
+        await this.setupAuthenticatedEventListeners();
         this.updateFullPageContent();
         
         this.logger.debug('Authenticated UI initialized');
@@ -90,50 +98,84 @@ class UIManager {
 
   setupAuthenticatedEventListeners() {
     this.logger.debug('Setting up authenticated event listeners');
+    console.log('Setting up authenticated event listeners');
 
+    // Debug: Log all relevant elements
+    const elements = {
+        snowReportLink: document.getElementById('snow-report-link'),
+        settingsLink: document.getElementById('settings-link'),
+        dashboardButton: document.getElementById('dashboard-button'),
+        logoutButton: document.getElementById('logout-button')
+    };
+
+    this.logger.debug('Found elements:', {
+        snowReportLink: !!elements.snowReportLink,
+        settingsLink: !!elements.settingsLink,
+        dashboardButton: !!elements.dashboardButton,
+        logoutButton: !!elements.logoutButton
+    });
+    
     // Snow Report Link
     const snowReportLink = document.getElementById('snow-report-link');
-    if (snowReportLink) {
-      snowReportLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        this.logger.debug('Snow report link clicked');
-        window.dispatchEvent(new Event('showSnowReport'));
-        this.showSnowReportForm();
-      });
+    if (elements.snowReportLink) {
+        this.logger.debug('Adding click listener to snow report link');
+        elements.snowReportLink.onclick = (e) => {
+            e.preventDefault();
+            console.log('Snow report link clicked'); // Direct console log
+            this.logger.debug('Snow report link clicked');
+            this.showSnowReportForm();
+        };
     }
 
     // Settings Link
-    const settingsLink = document.getElementById('settings-link');
-    if (settingsLink) {
-      settingsLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        this.logger.debug('Settings link clicked');
-        window.dispatchEvent(new Event('showSettings'));
-        this.showSettings();
-      });
+    if (elements.settingsLink) {
+        this.logger.debug('Adding click listener to settings link');
+        elements.settingsLink.onclick = (e) => {
+            e.preventDefault();
+            console.log('Settings link clicked'); // Direct console log
+            this.logger.debug('Settings link clicked');
+            this.showSettings();
+        };
     }
 
     // Dashboard Button
-    const dashboardButton = document.getElementById('dashboard-button');
-    if (dashboardButton) {
-      dashboardButton.addEventListener('click', (e) => {
-        e.preventDefault();
-        this.logger.debug('Dashboard button clicked');
-        window.dispatchEvent(new Event('showDashboard'));
-        this.showDashboard();
-      });
+    if (elements.dashboardButton) {
+        this.logger.debug('Adding click listener to dashboard button');
+        elements.dashboardButton.onclick = (e) => {
+            e.preventDefault();
+            console.log('Dashboard button clicked'); // Direct console log
+            this.logger.debug('Dashboard button clicked');
+            this.showDashboard();
+        };
     }
 
     // Logout Button
-    const logoutButton = document.getElementById('logout-button');
-    if (logoutButton) {
-      logoutButton.addEventListener('click', (e) => {
-        e.preventDefault();
-        this.logger.debug('Logout button clicked');
-        this.handleLogoutClick();
-      });
+    if (elements.logoutButton) {
+        this.logger.debug('Adding click listener to logout button');
+        elements.logoutButton.onclick = (e) => {
+            e.preventDefault();
+            console.log('Logout button clicked'); // Direct console log
+            this.logger.debug('Logout button clicked');
+            this.handleLogoutClick();
+        };
     }
 
+    // Add debug class to all clickable elements
+    Object.values(elements).forEach(element => {
+        if (element) {
+            element.classList.add('debug-clickable');
+            element.style.cursor = 'pointer'; // Make sure cursor shows it's clickable
+            
+            // Add visual feedback on hover
+            element.onmouseover = () => {
+                element.style.outline = '2px solid red';
+            };
+            element.onmouseout = () => {
+                element.style.outline = 'none';
+            };
+        }
+    });
+    
     this.logger.debug('Authenticated event listeners setup complete');
   }
 
