@@ -263,16 +263,46 @@ class UIManager {
     }
   }
 
-  showSnowReportForm() {
-    console.log('Showing snow report form');
-    
-    const dashboardContainer = document.getElementById('dashboard-container');
-    const settingsContainer = document.getElementById('settings-container');
-    const snowReportForm = document.getElementById('snow-report-form');
-    
-    if (dashboardContainer) dashboardContainer.style.display = 'none';
-    if (settingsContainer) settingsContainer.style.display = 'none';
-    if (snowReportForm) snowReportForm.style.display = 'block';
+  async showSnowReportForm() {
+      this.logger.debug('Showing snow report form');
+      
+      try {
+          // Initialize form if it hasn't been initialized
+          if (!this.formManager) {
+              this.formManager = FormManager.getInstance();
+              await this.formManager.initialize();
+          }
+  
+          // Use existing form data stored in state
+          const stateManager = StateManager.getInstance();
+          const userData = stateManager.getState('auth.user');
+  
+          if (!userData) {
+              this.logger.error('No user data available');
+              await AuthManager.getInstance().logout();
+              this.showLoginPrompt();
+              return;
+          }
+  
+          this.logger.debug('Initializing form with user data:', userData);
+  
+          // Initialize form with user data
+          await this.formManager.initializeForm(userData);
+  
+          // Show the form container
+          const dashboardContainer = document.getElementById('dashboard-container');
+          const settingsContainer = document.getElementById('settings-container');
+          const snowReportForm = document.getElementById('snow-report-form');
+          
+          if (dashboardContainer) dashboardContainer.style.display = 'none';
+          if (settingsContainer) settingsContainer.style.display = 'none';
+          if (snowReportForm) snowReportForm.style.display = 'block';
+  
+      } catch (error) {
+          this.logger.error('Error showing snow report form:', error);
+          this.showError(this.i18next.t('errors.form.loading'));
+          this.showDashboard();
+      }
   }
 
   updateCorePageContent() {
