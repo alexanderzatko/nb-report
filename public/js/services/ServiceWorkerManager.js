@@ -132,13 +132,21 @@ class ServiceWorkerManager {
       return;
     }
 
-    // Quick check for i18next readiness
+    // Wait for i18next to be fully initialized
     if (!this.i18next.isInitialized) {
       console.log('[ServiceWorkerManager] Waiting for i18next');
-      await new Promise(resolve => this.i18next.on('initialized', resolve));
+      await new Promise(resolve => {
+        const checkInterval = setInterval(() => {
+          if (this.i18next.isInitialized) {
+            clearInterval(checkInterval);
+            resolve();
+          }
+        }, 100);
+      });
     }
 
-    console.log('[ServiceWorkerManager] Creating update notification');
+    console.log(`[ServiceWorkerManager] Creating update notification in language: ${this.i18next.language}`);
+
     this.notificationShown = true;
   
     // Create notification element
