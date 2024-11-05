@@ -176,6 +176,7 @@ class App {
       }
   
       // Now initialize UI with the user data
+      await this.managers.ui.initializeAuthenticatedUI();
       await this.managers.ui.updateUIBasedOnAuthState(true, userData);
       
       return userData;
