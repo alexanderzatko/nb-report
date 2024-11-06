@@ -169,16 +169,17 @@ class UIManager {
             e.stopPropagation();
             const gpsManager = GPSManager.getInstance();
             
-            // First check if GPS is supported
+            // Check if GPS is supported
             const capability = gpsManager.checkGPSCapability();
             if (!capability.supported) {
-                // Show non-Android message
-                const message = this.i18next.t('errors.gps.androidOnly');
-                alert(message);
+                this.showModalDialog({
+                    message: this.i18next.t('errors.gps.androidOnly'),
+                    showCancel: false,
+                    confirmText: 'OK'
+                });
                 return;
             }
             
-            // Only check for existing track if GPS is supported
             if (gpsManager.isRecording) {
                 try {
                     const track = await gpsManager.stopRecording();
@@ -193,12 +194,14 @@ class UIManager {
                 }
             } else {
                 if (await gpsManager.hasExistingTrack()) {
-                    const confirm = window.confirm(
-                        this.i18next.t('dashboard.confirmOverwriteTrack') + '\n\n' +
-                        this.i18next.t('dashboard.confirmButtons.confirm') + ' / ' + 
-                        this.i18next.t('dashboard.confirmButtons.cancel')
-                    );
-                    if (!confirm) return;
+                    const confirmed = await this.showModalDialog({
+                        message: this.i18next.t('dashboard.confirmOverwriteTrack'),
+                        confirmText: this.i18next.t('form.gpx.replace'),
+                        cancelText: this.i18next.t('form.gpx.cancel'),
+                        showCancel: true
+                    });
+                    
+                    if (!confirmed) return;
                     await gpsManager.clearTrack();
                     this.removeGPSTrackCard();
                 }
@@ -770,6 +773,54 @@ class UIManager {
 
   showSuccess(message) {
     alert(message);
+  }
+
+  async showModalDialog({ title = '', message, confirmText = 'OK', cancelText = null, showCancel = true }) {
+    return new Promise((resolve) => {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'block';
+        
+        const content = document.createElement('div');
+        content.className = 'modal-content';
+        
+        if (title) {
+            const titleElement = document.createElement('h3');
+            titleElement.textContent = title;
+            content.appendChild(titleElement);
+        }
+        
+        const messageElement = document.createElement('p');
+        messageElement.textContent = message;
+        content.appendChild(messageElement);
+        
+        const buttonContainer = document.createElement('div');
+        buttonContainer.className = 'modal-buttons';
+        
+        if (showCancel) {
+            const cancelButton = document.createElement('button');
+            cancelButton.className = 'cancel-button';
+            cancelButton.textContent = cancelText || this.i18next.t('dialog.cancel');
+            cancelButton.onclick = () => {
+                modal.remove();
+                resolve(false);
+            };
+            buttonContainer.appendChild(cancelButton);
+        }
+        
+        const confirmButton = document.createElement('button');
+        confirmButton.className = 'photo-button';
+        confirmButton.textContent = confirmText;
+        confirmButton.onclick = () => {
+            modal.remove();
+            resolve(true);
+        };
+        buttonContainer.appendChild(confirmButton);
+        
+        content.appendChild(buttonContainer);
+        modal.appendChild(content);
+        document.body.appendChild(modal);
+    });
   }
 }
 
