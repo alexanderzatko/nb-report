@@ -488,6 +488,15 @@ class UIManager {
     if (loginContainer) {
       loginContainer.style.display = 'flex';
       this.updateLoginText();
+
+      // Re-initialize login container with fresh event listeners
+      const newContainer = loginContainer.cloneNode(true);
+      loginContainer.parentNode.replaceChild(newContainer, loginContainer);
+  
+      newContainer.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.handleLoginClick(e);
+      });
     }
 
     this.loginInProgress = false;
