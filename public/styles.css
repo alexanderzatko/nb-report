@@ -670,6 +670,8 @@ textarea:invalid + .validation-message {
     text-decoration: none;
     color: inherit;
     transition: all 0.3s ease;
+    will-change: transform, box-shadow;
+    transform: translateZ(0);
 }
 
 .dashboard-card:not(.disabled):hover {
