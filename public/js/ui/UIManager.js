@@ -76,6 +76,14 @@ class UIManager {
         const gpsManager = GPSManager.getInstance();
         if (gpsManager.isSupported()) {
             await this.updateGPSCardVisibility();
+
+            window.addEventListener('gps-update', () => {
+                const gpsCard = document.querySelector('[data-feature="gps-recording"]');
+                if (gpsCard) {
+                    this.updateGPSCardForRecording(gpsCard);
+                }
+            });
+
             const hasActiveRecording = await gpsManager.checkForActiveRecording();
             if (hasActiveRecording) {
                 await this.updateGPSCardVisibility();
@@ -156,7 +164,7 @@ class UIManager {
                     const track = await gpsManager.stopRecording();
                     if (track) {
                         await new Promise(resolve => setTimeout(resolve, 100));
-                        this.showGPSTrackCard();
+                        await this.showGPSTrackCard(track);
                         this.updateGPSCardForStandby(gpsCard);
                     }
                 } catch (error) {
@@ -169,7 +177,7 @@ class UIManager {
                         this.i18next.t('dashboard.confirmOverwriteTrack')
                     );
                     if (!confirm) return;
-                    gpsManager.clearTrack();
+                    await gpsManager.clearTrack();
                     this.removeGPSTrackCard();
                 }
                 
