@@ -482,8 +482,10 @@ class UIManager {
       this.logger.debug('Formatted values:', { distance, elevation });
       
       card.querySelector('h3').textContent = this.i18next.t('dashboard.stopGpsRecording');
-      card.querySelector('p').textContent = this.i18next.t('dashboard.recordingStats', {
-          distance: distance,
+      card.querySelector('p').textContent = this.i18next.t('dashboard.recordingStatsDist', {
+          distance: distance
+      });
+      card.querySelector('p').textContent = this.i18next.t('dashboard.recordingStatsEle', {
           elevation: elevation
       });
   
