@@ -371,26 +371,23 @@ class FormManager {
               
               // Update our reference to the new element
               const gpxSelectElement = newGpxSelect;
-  
+
+              // First remove any existing "existing" options from the cloned select
+              const existingOptions = gpxSelectElement.querySelectorAll('option[value="existing"]');
+              existingOptions.forEach(opt => opt.remove());
+
               // Hide or show the existing track option based on actual track existence
               if (!hasTrack || !trackStats) {
-                  // If there's no track or no valid stats, ensure the option is removed
-                  const existingOptionElement = gpxSelectElement.querySelector('option[value="existing"]');
-                  if (existingOptionElement) {
-                      gpxSelectElement.removeChild(existingOptionElement);
-                  }
                   if (infoDisplay) {
                       infoDisplay.style.display = 'none';
                   }
               } else {
                   // We have confirmed we have both track and stats
-                  if (existingOption.parentNode !== gpxSelectElement) {
-                      const firstOption = gpxSelectElement.querySelector('option');
-                      if (firstOption) {
-                          gpxSelectElement.insertBefore(existingOption, firstOption.nextSibling);
-                      } else {
-                          gpxSelectElement.appendChild(existingOption);
-                      }
+                  const firstOption = gpxSelectElement.querySelector('option');
+                  if (firstOption) {
+                      gpxSelectElement.insertBefore(existingOption, firstOption.nextSibling);
+                  } else {
+                      gpxSelectElement.appendChild(existingOption);
                   }
                   existingOption.style.display = '';
   
