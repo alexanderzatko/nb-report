@@ -5,31 +5,16 @@ class PhotoManager {
   static instance = null;
 
   constructor() {
-    if (PhotoManager.instance) {
-      return PhotoManager.instance;
-    }
-    this.photos = [];
-    this.photoCaptions = new Map();
-    this.logger = Logger.getInstance();
-    this.initialized = false;
-
-    this.i18next.on('languageChanged', () => {
-        if (this.initialized) {
-            const selectPhotosBtn = document.getElementById('select-photos');
-            const takePhotoBtn = document.getElementById('take-photo');
-            
-            if (selectPhotosBtn) {
-                selectPhotosBtn.textContent = this.i18next.t('form.selectPhotos');
-            }
-            if (takePhotoBtn) {
-                takePhotoBtn.textContent = this.i18next.t('form.takePhoto');
-            }
-        }
-    });
-    
-    PhotoManager.instance = this;
+      if (PhotoManager.instance) {
+          return PhotoManager.instance;
+      }
+      this.photos = [];
+      this.photoCaptions = new Map();
+      this.logger = Logger.getInstance();
+      this.initialized = false;
+      this.i18next = i18next;
+      PhotoManager.instance = this;
   }
-
 
   static getInstance() {
     if (!PhotoManager.instance) {
@@ -45,7 +30,20 @@ class PhotoManager {
       console.log('PhotoManager already initialized');
       return;
     }
-    
+
+    if (!this.i18next.isInitialized) {
+        await new Promise(resolve => {
+            this.i18next.on('initialized', resolve);
+        });
+    }
+
+    // Set up language change listener after ensuring i18next is initialized
+    this.i18next.on('languageChanged', () => {
+        if (this.initialized) {
+            this.updateTranslations();
+        }
+    });
+
     this.initialized = false;  // Reset flag when forced
     console.log('Finding photo elements');
 
@@ -121,22 +119,31 @@ class PhotoManager {
       }
     };
 
-    if (this.i18next.isInitialized) {
-        const selectPhotosBtn = document.getElementById('select-photos');
-        const takePhotoBtn = document.getElementById('take-photo');
-        
-        if (selectPhotosBtn) {
-            selectPhotosBtn.textContent = this.i18next.t('form.selectPhotos');
-        }
-        if (takePhotoBtn) {
-            takePhotoBtn.textContent = this.i18next.t('form.takePhoto');
-        }
-    }
+    // Update translations
+    this.updateTranslations();
     
     this.initialized = true;
     this.logger.debug('PhotoManager initialization complete');
   }
 
+  updateTranslations() {
+      const selectPhotosBtn = document.getElementById('select-photos');
+      const takePhotoBtn = document.getElementById('take-photo');
+      
+      if (selectPhotosBtn) {
+          selectPhotosBtn.textContent = this.i18next.t('form.selectPhotos');
+      }
+      if (takePhotoBtn) {
+          takePhotoBtn.textContent = this.i18next.t('form.takePhoto');
+      }
+
+      // Also update any existing photo captions placeholder text
+      const captionInputs = document.querySelectorAll('.photo-caption');
+      captionInputs.forEach(input => {
+          input.placeholder = this.i18next.t('form.captionPlaceholder', 'Add a caption...');
+      });
+  }
+  
   createInputElements() {
     this.logger.debug('Creating file input elements');
     
