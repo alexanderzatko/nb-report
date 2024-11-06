@@ -12,6 +12,21 @@ class PhotoManager {
     this.photoCaptions = new Map();
     this.logger = Logger.getInstance();
     this.initialized = false;
+
+    this.i18next.on('languageChanged', () => {
+        if (this.initialized) {
+            const selectPhotosBtn = document.getElementById('select-photos');
+            const takePhotoBtn = document.getElementById('take-photo');
+            
+            if (selectPhotosBtn) {
+                selectPhotosBtn.textContent = this.i18next.t('form.selectPhotos');
+            }
+            if (takePhotoBtn) {
+                takePhotoBtn.textContent = this.i18next.t('form.takePhoto');
+            }
+        }
+    });
+    
     PhotoManager.instance = this;
   }
 
