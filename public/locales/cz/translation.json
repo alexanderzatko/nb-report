@@ -29,7 +29,7 @@ port{
     "confirmButtons": {
       "confirm": "Potvrdit",
       "cancel": "Zrušit"
-    },
+    }
   },
   "settings": {
     "title": "Settings",
