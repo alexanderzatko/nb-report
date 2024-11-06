@@ -193,7 +193,7 @@ class GPSManager {
             navigator.geolocation.clearWatch(this.watchId);
             this.watchId = null;
         }
-
+    
         if (this.wakeLock) {
             try {
                 await this.wakeLock.release();
@@ -203,9 +203,9 @@ class GPSManager {
                 this.logger.warn('Error releasing wake lock:', err);
             }
         }
-
+    
         this.isRecording = false;
-
+    
         try {
             // Save completed track
             const trackData = {
@@ -214,22 +214,22 @@ class GPSManager {
                 startTime: this.activeRecording.startTime,
                 endTime: new Date().toISOString()
             };
-
+    
             const trackId = await this.saveTrack(trackData);
             if (!trackId) {
                 throw new Error('Failed to save track');
             }
-
+    
             // Clear active recording data
             await this.clearActivePoints();
             this.resetActiveRecording();
-
+    
             // Update state
             this.stateManager.setState('gps.isRecording', false);
             this.stateManager.setState('gps.hasTrack', true);
             
             return trackData;
-
+    
         } catch (error) {
             this.logger.error('Error stopping recording:', error);
             return null;
