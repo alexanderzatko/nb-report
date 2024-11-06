@@ -497,6 +497,15 @@ class GPSManager {
         return { hours, minutes };
     }
 
+    getCurrentStats() {
+        if (!this.isRecording) return null;
+        
+        return {
+          distance: Math.round(this.totalDistance),
+          elevation: this.lastElevation
+        };
+    }
+    
     async importGPXFile(content) {
         try {
             const parser = new DOMParser();
