@@ -338,8 +338,7 @@ class FormManager {
   }
 
   async initializeGPXSection() {
-
-    this.logger.debug('Starting GPX section initialization');
+      this.logger.debug('Starting GPX section initialization');
       const gpxSelect = document.getElementById('gpx-option');
       const existingOption = document.getElementById('existing-gpx-option');
       const uploadContainer = document.getElementById('gpx-upload-container');
@@ -352,22 +351,17 @@ class FormManager {
       }
   
       try {
-          if (!gpsManager.currentTrack) {
-              const loadedTrack = await gpsManager.loadLatestTrack();
-              if (loadedTrack) {
-                  gpsManager.currentTrack = loadedTrack;
-              }
-          }
+          const hasTrack = await gpsManager.hasExistingTrack();
+          const trackStats = hasTrack ? await gpsManager.getTrackStats() : null;
   
+          this.logger.debug('Track existence check:', {
+              hasTrack,
+              optionPresent: existingOption !== null,
+              trackStats,
+              uploadContainerPresent: uploadContainer !== null
+          });
+          
           if (existingOption && gpxSelect) {
-              const hasTrack = gpsManager.hasExistingTrack();
-              this.logger.debug('Track existence check:', {
-                  hasTrack,
-                  optionPresent: existingOption !== null,
-                  currentTrack: gpsManager.currentTrack,
-                  uploadContainerPresent: uploadContainer !== null
-              });
-              
               // Remove existing event listeners by cloning the select
               const newGpxSelect = gpxSelect.cloneNode(true);
               gpxSelect.parentNode.replaceChild(newGpxSelect, gpxSelect);
@@ -393,15 +387,12 @@ class FormManager {
                       existingOption.style.display = '';
                   }
   
-                  if (infoDisplay) {
-                      const trackStats = gpsManager.getTrackStats();
-                      if (trackStats) {
-                          infoDisplay.innerHTML = this.i18next.t('form.gpx.trackInfo', {
-                              date: new Date(trackStats.startTime).toLocaleDateString(),
-                              distance: trackStats.distance.toFixed(1),
-                              duration: `${trackStats.duration.hours}:${String(trackStats.duration.minutes).padStart(2, '0')}`
-                          });
-                      }
+                  if (infoDisplay && trackStats) {
+                      infoDisplay.innerHTML = this.i18next.t('form.gpx.trackInfo', {
+                          date: new Date(trackStats.startTime).toLocaleDateString(),
+                          distance: trackStats.distance.toString(),
+                          duration: `${trackStats.duration.hours}:${String(trackStats.duration.minutes).padStart(2, '0')}`
+                      });
                   }
               }
   
