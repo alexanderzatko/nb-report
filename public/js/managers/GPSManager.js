@@ -222,7 +222,7 @@ class GPSManager {
             }
     
             // Set as current track for GPX export
-            this.currentTrack = trackData;  // Add this line
+            this.currentTrack = trackData;
     
             // Clear active recording data
             await this.clearActivePoints();
@@ -281,7 +281,7 @@ class GPSManager {
                     if (cursor) {
                         // Found the latest track
                         const track = cursor.value;
-                        this.currentTrack = track;  // Add this line
+                        this.currentTrack = track;
                         this.logger.debug('Loaded latest track:', track);
                         resolve(track);
                     } else {
