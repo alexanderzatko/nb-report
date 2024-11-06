@@ -106,6 +106,18 @@ class PhotoManager {
       }
     };
 
+    if (this.i18next.isInitialized) {
+        const selectPhotosBtn = document.getElementById('select-photos');
+        const takePhotoBtn = document.getElementById('take-photo');
+        
+        if (selectPhotosBtn) {
+            selectPhotosBtn.textContent = this.i18next.t('form.selectPhotos');
+        }
+        if (takePhotoBtn) {
+            takePhotoBtn.textContent = this.i18next.t('form.takePhoto');
+        }
+    }
+    
     this.initialized = true;
     this.logger.debug('PhotoManager initialization complete');
   }
