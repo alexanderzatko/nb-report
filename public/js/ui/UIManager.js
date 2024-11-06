@@ -443,38 +443,51 @@ class UIManager {
   }
 
   updateGPSCardForRecording(card) {
-      const gpsManager = GPSManager.getInstance();
-      const stats = gpsManager.getCurrentStats();
-      card.querySelector('h3').textContent = this.i18next.t('dashboard.stopGpsRecording');
-      card.querySelector('p').textContent = this.i18next.t('dashboard.recordingStats', {
-          distance: stats.distance,
-          elevation: stats.elevation ? Math.round(stats.elevation) : '–'
-      });
+    const gpsManager = GPSManager.getInstance();
+    const stats = gpsManager.getCurrentStats();
+    
+    // Format numbers properly
+    const distance = stats ? Number(stats.distance).toFixed(2) : '0.00';
+    const elevation = stats && stats.elevation ? Math.round(stats.elevation) : '–';
+    
+    card.querySelector('h3').textContent = this.i18next.t('dashboard.stopGpsRecording');
+    card.querySelector('p').textContent = this.i18next.t('dashboard.recordingStats', {
+      distance: distance,
+      elevation: elevation
+    });
+  
+    // Add recording class for animation
+    card.classList.add('recording');
   }
   
   updateGPSCardForStandby(card) {
-      card.querySelector('h3').textContent = this.i18next.t('dashboard.recordGps');
-      card.querySelector('p').textContent = this.i18next.t('dashboard.recordGpsDesc');
+    card.querySelector('h3').textContent = this.i18next.t('dashboard.recordGps');
+    card.querySelector('p').textContent = this.i18next.t('dashboard.recordGpsDesc');
+    // Remove recording class
+    card.classList.remove('recording');
   }
   
-  updateGPSCardVisibility() {
-      const gpsCard = document.querySelector('[data-feature="gps-recording"]');
-      if (!gpsCard) return;
+  async updateGPSCardVisibility() {
+    const gpsCard = document.querySelector('[data-feature="gps-recording"]');
+    if (!gpsCard) return;
   
-      const gpsManager = GPSManager.getInstance();
-      const capability = gpsManager.checkGPSCapability();
+    const gpsManager = GPSManager.getInstance();
+    const capability = gpsManager.checkGPSCapability();
   
-      if (capability.supported) {
-          gpsCard.classList.remove('disabled');
-          if (gpsManager.isRecording) {
-              this.updateGPSCardForRecording(gpsCard);
-          } else {
-              this.updateGPSCardForStandby(gpsCard);
-          }
+    if (capability.supported) {
+      gpsCard.classList.remove('disabled');
+      if (gpsManager.isRecording) {
+        this.updateGPSCardForRecording(gpsCard);
+        gpsCard.classList.add('recording'); // Add recording class when active
       } else {
-          gpsCard.classList.add('disabled');
-          gpsCard.querySelector('p').textContent = capability.reason;
+        this.updateGPSCardForStandby(gpsCard);
+        gpsCard.classList.remove('recording'); // Remove recording class when inactive
       }
+    } else {
+      gpsCard.classList.add('disabled');
+      gpsCard.classList.remove('recording');
+      gpsCard.querySelector('p').textContent = capability.reason;
+    }
   }
   
   showGPSTrackCard(track) {
