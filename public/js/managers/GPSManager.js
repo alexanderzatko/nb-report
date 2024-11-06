@@ -571,29 +571,29 @@ class GPSManager {
       }
   }
 
-  exportGPX() {
-    if (!this.currentTrack) return null;
-
-    const header = `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="NaBezky Report App">
-  <trk>
-    <name>NaBezky Track ${this.currentTrack.startTime}</name>
-    <trkseg>`;
-
-    const points = this.currentTrack.points.map(point => 
-      `      <trkpt lat="${point.lat}" lon="${point.lon}">
-        <ele>${point.ele || 0}</ele>
-        <time>${point.time}</time>
-      </trkpt>`
-    ).join('\n');
-
-    const footer = `
-    </trkseg>
-  </trk>
-</gpx>`;
-
-    return header + points + footer;
-  }
+    exportGPX() {
+        if (!this.currentTrack) return null;
+    
+        const header = `<?xml version="1.0" encoding="UTF-8"?>
+    <gpx version="1.1" creator="NaBezky Report App">
+      <trk>
+        <name>NaBezky Track ${new Date(this.currentTrack.startTime).toISOString()}</name>
+        <trkseg>`;
+    
+        const points = this.currentTrack.points.map(point => 
+          `      <trkpt lat="${point.lat}" lon="${point.lon}">
+            <ele>${point.ele || 0}</ele>
+            <time>${new Date(point.time).toISOString()}</time>
+          </trkpt>`
+        ).join('\n');
+    
+        const footer = `
+        </trkseg>
+      </trk>
+    </gpx>`;
+    
+        return header + points + footer;
+    }
 }
 
 export default GPSManager;
