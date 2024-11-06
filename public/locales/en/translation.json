@@ -25,7 +25,11 @@
     "preferences": "Preferences",
     "preferencesDesc": "Manage your preferences",
     "settings": "Nastavení",
-    "settingsDesc": "Správa nastavení a účtu"
+    "settingsDesc": "Správa nastavení a účtu",
+    "confirmButtons": {
+      "confirm": "OK",
+      "cancel": "Cancel"
+    },
   },
   "settings": {
     "title": "Nastavení",
