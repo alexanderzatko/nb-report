@@ -442,23 +442,29 @@ class UIManager {
       }
   }
 
-updateGPSCardForRecording(card) {
-    const stateManager = StateManager.getInstance();
-    const recordingState = stateManager.getState('gps.recording');
-    
-    // Format numbers properly
-    const distance = recordingState ? Number(recordingState.distance).toFixed(2) : '0.00';
-    const elevation = recordingState && recordingState.elevation ? Math.round(recordingState.elevation) : '–';
-    
-    card.querySelector('h3').textContent = this.i18next.t('dashboard.stopGpsRecording');
-    card.querySelector('p').textContent = this.i18next.t('dashboard.recordingStats', {
-        distance: distance,
-        elevation: elevation
-    });
-
-    // Ensure recording class is present
-    card.classList.add('recording');
-}
+  updateGPSCardForRecording(card) {
+      const stateManager = StateManager.getInstance();
+      const recordingState = stateManager.getState('gps.recording');
+      
+      // Add debug logging
+      this.logger.debug('GPS recording state:', recordingState);
+      
+      // Format numbers properly
+      const distance = recordingState ? Number(recordingState.distance).toFixed(2) : '0.00';
+      const elevation = recordingState && recordingState.elevation ? Math.round(recordingState.elevation) : '–';
+      
+      // Log formatted values
+      this.logger.debug('Formatted values:', { distance, elevation });
+      
+      card.querySelector('h3').textContent = this.i18next.t('dashboard.stopGpsRecording');
+      card.querySelector('p').textContent = this.i18next.t('dashboard.recordingStats', {
+          distance: distance,
+          elevation: elevation
+      });
+  
+      // Ensure recording class is present
+      card.classList.add('recording');
+  }
   
   updateGPSCardForStandby(card) {
     card.querySelector('h3').textContent = this.i18next.t('dashboard.recordGps');
