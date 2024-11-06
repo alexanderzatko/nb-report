@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v280';  // Should match ConfigManager.js version
+const CACHE_VERSION = 'v281';  // Should match ConfigManager.js version
 const CACHE_NAME = 'snow-report-cache';
 const FULL_CACHE_NAME = `${CACHE_NAME}-${CACHE_VERSION}`;
 const OFFLINE_PAGE = '/offline.html';
@@ -9,7 +9,7 @@ const urlsToCache = [
   '/styles.css',
   '/js/app.js',
   '/js/i18n.js',
-  '/manifest.json?v=4',
+  '/manifest.json?v=5',
   '/locales/en/translation.json',
   '/locales/sk/translation.json',
   '/data/xc_dropdowns.json',
