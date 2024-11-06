@@ -330,7 +330,6 @@ button:hover {
 }
 
 button[type=submit] {
-  margin-top: 50px;
   display: block;
   padding: 10px 20px;
   background-color: #02ba06;
