@@ -105,26 +105,6 @@ class UIManager {
         throw error;
     }
   }
-
-  async updateGPSCardVisibility() {
-      const gpsCard = document.querySelector('[data-feature="gps-recording"]');
-      if (!gpsCard) return;
-  
-      const gpsManager = GPSManager.getInstance();
-      const capability = gpsManager.checkGPSCapability();
-  
-      if (capability.supported) {
-          gpsCard.classList.remove('disabled');
-          if (gpsManager.isRecording) {
-              this.updateGPSCardForRecording(gpsCard);
-          } else {
-              this.updateGPSCardForStandby(gpsCard);
-          }
-      } else {
-          gpsCard.classList.add('disabled');
-          gpsCard.querySelector('p').textContent = capability.reason;
-      }
-  }
   
   async setupDashboardCards() {
     console.log('Setting up dashboard cards');
@@ -434,6 +414,141 @@ class UIManager {
     }
   }
 
+  async updateGPSCardVisibility() {
+      const gpsCard = document.querySelector('[data-feature="gps-recording"]');
+      if (!gpsCard) return;
+  
+      const gpsManager = GPSManager.getInstance();
+      const capability = gpsManager.checkGPSCapability();
+  
+      if (capability.supported) {
+          gpsCard.classList.remove('disabled');
+          if (gpsManager.isRecording) {
+              this.updateGPSCardForRecording(gpsCard);
+          } else {
+              this.updateGPSCardForStandby(gpsCard);
+          }
+      } else {
+          gpsCard.classList.add('disabled');
+          gpsCard.querySelector('p').textContent = capability.reason;
+      }
+  }
+
+  updateGPSCardForRecording(card) {
+      const gpsManager = GPSManager.getInstance();
+      const stats = gpsManager.getCurrentStats();
+      card.querySelector('h3').textContent = this.i18next.t('dashboard.stopGpsRecording');
+      card.querySelector('p').textContent = this.i18next.t('dashboard.recordingStats', {
+          distance: stats.distance,
+          elevation: stats.elevation ? Math.round(stats.elevation) : '–'
+      });
+  }
+  
+  updateGPSCardForStandby(card) {
+      card.querySelector('h3').textContent = this.i18next.t('dashboard.recordGps');
+      card.querySelector('p').textContent = this.i18next.t('dashboard.recordGpsDesc');
+  }
+  
+  updateGPSCardVisibility() {
+      const gpsCard = document.querySelector('[data-feature="gps-recording"]');
+      if (!gpsCard) return;
+  
+      const gpsManager = GPSManager.getInstance();
+      const capability = gpsManager.checkGPSCapability();
+  
+      if (capability.supported) {
+          gpsCard.classList.remove('disabled');
+          if (gpsManager.isRecording) {
+              this.updateGPSCardForRecording(gpsCard);
+          } else {
+              this.updateGPSCardForStandby(gpsCard);
+          }
+      } else {
+          gpsCard.classList.add('disabled');
+          gpsCard.querySelector('p').textContent = capability.reason;
+      }
+  }
+  
+  showGPSTrackCard(stats) {
+      if (!stats) {
+          this.logger.debug('No track stats available');
+          return;
+      }
+  
+      const container = document.querySelector('.dashboard-grid');
+      if (!container) {
+          this.logger.warn('Dashboard grid container not found');
+          return;
+      }
+  
+      // Remove existing track card if present
+      this.removeGPSTrackCard();
+  
+      const trackCard = document.createElement('div');
+      trackCard.className = 'dashboard-card';
+      trackCard.dataset.feature = 'gps-track';
+      
+      trackCard.innerHTML = `
+          <div class="card-icon"></div>
+          <h3>${this.i18next.t('dashboard.gpsTrack')}</h3>
+          <p>${this.i18next.t('dashboard.trackStats', {
+              distance: stats.distance,
+              hours: stats.duration.hours,
+              minutes: stats.duration.minutes
+          })}</p>
+          <a href="#" class="gpx-download">${this.i18next.t('dashboard.downloadGpx')}</a>
+      `;
+  
+      // Add click handler for the download link
+      trackCard.querySelector('.gpx-download').addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.handleGPXDownload();
+      });
+  
+      container.appendChild(trackCard);
+      this.logger.debug('GPS track card added to dashboard');
+  }
+  
+  removeGPSTrackCard() {
+      const trackCard = document.querySelector('[data-feature="gps-track"]');
+      if (trackCard) {
+          trackCard.remove();
+      }
+  }
+  
+  async handleGPXDownload() {
+      try {
+          const gpsManager = GPSManager.getInstance();
+          const gpxContent = gpsManager.exportGPX();
+          
+          if (!gpxContent) {
+              this.logger.error('No GPX content available for download');
+              return;
+          }
+  
+          // Create a date string for the filename
+          const stats = gpsManager.getTrackStats();
+          const dateStr = stats.startTime.toISOString().split('T')[0];
+          
+          // Create blob and download link
+          const blob = new Blob([gpxContent], { type: 'application/gpx+xml' });
+          const url = window.URL.createObjectURL(blob);
+          const tempLink = document.createElement('a');
+          tempLink.href = url;
+          tempLink.download = `track_${dateStr}.gpx`;
+  
+          // Append to document, click, and remove
+          document.body.appendChild(tempLink);
+          tempLink.click();
+          document.body.removeChild(tempLink);
+          window.URL.revokeObjectURL(url);
+      } catch (error) {
+          this.logger.error('Error downloading GPX:', error);
+          alert(this.i18next.t('dashboard.gpxDownloadError'));
+      }
+  }
+  
   updateElementTranslation(element) {
       const key = element.getAttribute('data-i18n');
       const translation = this.i18next.t(key, { returnObjects: true });
