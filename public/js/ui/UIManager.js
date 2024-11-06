@@ -517,7 +517,9 @@ class UIManager {
           this.logger.warn('Dashboard grid container not found');
           return;
       }
-  
+
+      this.logger.debug('Showing track card with data:', track);
+
       // Remove existing track card if present
       this.removeGPSTrackCard();
   
