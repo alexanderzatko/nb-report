@@ -1246,39 +1246,79 @@ class FormManager {
   }
 
   async clearGPXData(gpsManager) {
+      this.logger.debug('Starting GPX data cleanup');
       try {
-          // Clear the current track
-          gpsManager.clearTrack();
-  
-          // Clear data from IndexedDB
-          if (gpsManager.db) {
-              // Clear tracks store
-              const tracksStore = gpsManager.db
-                  .transaction(['tracks'], 'readwrite')
-                  .objectStore('tracks');
-              await new Promise((resolve, reject) => {
-                  const request = tracksStore.clear();
-                  request.onsuccess = resolve;
-                  request.onerror = reject;
-              });
-  
-              // Clear track metadata
-              const metadataStore = gpsManager.db
-                  .transaction(['trackMetadata'], 'readwrite')
-                  .objectStore('trackMetadata');
-              await new Promise((resolve, reject) => {
-                  const request = metadataStore.clear();
-                  request.onsuccess = resolve;
-                  request.onerror = reject;
-              });
+          // Clear all GPX data through GPS manager
+          const cleared = await gpsManager.clearTrack();
+          if (!cleared) {
+              throw new Error('Failed to clear track data');
           }
   
-          this.logger.debug('GPX data cleared successfully');
+          // Reset all GPX-related UI elements
+          this.resetGPXUI();
+          
+          this.logger.debug('GPX data cleanup completed successfully');
       } catch (error) {
-          this.logger.error('Error clearing GPX data:', error);
+          this.logger.error('Error during GPX data cleanup:', error);
           throw error;
       }
   }
+
+  resetGPXUI() {
+      this.logger.debug('Resetting GPX UI elements');
+      
+      // Reset select element
+      const gpxSelect = document.getElementById('gpx-option');
+      if (gpxSelect) {
+          gpxSelect.value = 'none';
+          
+          // Find and remove existing GPX option if present
+          const existingOption = gpxSelect.querySelector('option[value="existing"]');
+          if (existingOption) {
+              existingOption.remove();
+          }
+      }
+  
+      // Clear file input
+      const fileInput = document.getElementById('gpx-file-input');
+      if (fileInput) {
+          fileInput.value = '';
+      }
+  
+      // Clear filename display
+      const gpxFilename = document.getElementById('gpx-filename');
+      if (gpxFilename) {
+          gpxFilename.textContent = '';
+      }
+  
+      // Clear info display
+      const infoDisplay = document.getElementById('gpx-info-display');
+      if (infoDisplay) {
+          infoDisplay.style.display = 'none';
+          infoDisplay.innerHTML = '';
+      }
+  
+      // Hide upload container
+      const uploadContainer = document.getElementById('gpx-upload-container');
+      if (uploadContainer) {
+          uploadContainer.style.display = 'none';
+      }
+  
+      // Clear error message if any
+      const errorElement = document.getElementById('gpx-error');
+      if (errorElement) {
+          errorElement.textContent = '';
+      }
+  
+      // Hide confirmation dialog if visible
+      const confirmDialog = document.getElementById('gpx-confirm-dialog');
+      if (confirmDialog) {
+          confirmDialog.style.display = 'none';
+      }
+  
+      this.logger.debug('GPX UI elements reset completed');
+  }
+
   handleCancel() {
     this.stopTrackingFormTime();
     this.resetForm();
@@ -1307,6 +1347,8 @@ class FormManager {
       
       const selectedButtons = document.querySelectorAll('.condition-btn.selected');
       selectedButtons.forEach(button => button.classList.remove('selected'));
+
+      this.resetGPXUI();
 
       form.style.display = 'none';
       const dashboardContainer = document.getElementById('dashboard-container');
