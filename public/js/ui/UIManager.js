@@ -301,7 +301,9 @@ class UIManager {
           if (dashboardContainer) dashboardContainer.style.display = 'none';
           if (settingsContainer) settingsContainer.style.display = 'none';
           if (snowReportForm) snowReportForm.style.display = 'block';
-  
+
+          this.formManager.startTrackingFormTime();
+
       } catch (error) {
           this.logger.error('Error showing snow report form:', error);
           this.showError(this.i18next.t('errors.form.loading'));
