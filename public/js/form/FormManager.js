@@ -439,80 +439,165 @@ class FormManager {
       const confirmDialog = document.getElementById('gpx-confirm-dialog');
       const confirmReplace = document.getElementById('gpx-confirm-replace');
       const confirmCancel = document.getElementById('gpx-confirm-cancel');
-      const existingOption = document.getElementById('existing-gpx-option');
       let pendingGPXFile = null;
   
-      if (gpxUploadBtn) {
-          gpxUploadBtn.addEventListener('click', () => {
-              gpxFileInput.click();
-          });
+      if (!gpxUploadBtn || !gpxFileInput) {
+          this.logger.error('Required GPX upload elements not found');
+          return;
       }
   
-      if (gpxFileInput) {
-          gpxFileInput.accept = '.gpx,application/gpx+xml,application/xml';
-          gpxFileInput.addEventListener('change', async (e) => {
-              const file = e.target.files[0];
-              if (!file) return;
+      // Remove existing listeners
+      const newGpxUploadBtn = gpxUploadBtn.cloneNode(true);
+      const newGpxFileInput = gpxFileInput.cloneNode(true);
+      gpxUploadBtn.parentNode.replaceChild(newGpxUploadBtn, gpxUploadBtn);
+      gpxFileInput.parentNode.replaceChild(newGpxFileInput, gpxFileInput);
   
-              if (!file.name.endsWith('.gpx')) {
-                  document.getElementById('gpx-error').textContent = 
-                      this.i18next.t('form.gpx.errors.invalidFile');
-                  return;
+      newGpxUploadBtn.addEventListener('click', () => {
+          newGpxFileInput.click();
+      });
+  
+      newGpxFileInput.accept = '.gpx,application/gpx+xml,application/xml';
+      newGpxFileInput.addEventListener('change', async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+  
+          if (!file.name.endsWith('.gpx')) {
+              const errorElement = document.getElementById('gpx-error');
+              if (errorElement) {
+                  errorElement.textContent = this.i18next.t('form.gpx.errors.invalidFile');
               }
+              return;
+          }
   
-              const gpsManager = GPSManager.getInstance();
-              if (gpsManager.hasExistingTrack()) {
-                  pendingGPXFile = file;
-                  const trackStats = gpsManager.getTrackStats();
-                  document.getElementById('existing-track-info').innerHTML = `
+          const gpsManager = GPSManager.getInstance();
+          const hasTrack = await gpsManager.hasExistingTrack();
+          
+          if (hasTrack) {
+              pendingGPXFile = file;
+              const trackStats = await gpsManager.getTrackStats();
+              
+              const existingTrackInfo = document.getElementById('existing-track-info');
+              if (existingTrackInfo && trackStats) {
+                  existingTrackInfo.innerHTML = `
                       <p><strong>${this.i18next.t('form.gpx.currentTrack')}</strong><br>
-                      ${trackStats.startTime.toLocaleDateString()} at ${trackStats.startTime.toLocaleTimeString()}<br>
+                      ${new Date(trackStats.startTime).toLocaleDateString()} at ${new Date(trackStats.startTime).toLocaleTimeString()}<br>
                       Distance: ${trackStats.distance} km</p>
                   `;
-                  confirmDialog.style.display = 'block';
-              } else {
-                  await this.processGPXFile(file);
-                  if (existingOption) {
-                      existingOption.hidden = false;
-                  }
               }
-          });
-      }
+              
+              if (confirmDialog) {
+                  confirmDialog.style.display = 'block';
+              }
+          } else {
+              try {
+                  await this.processGPXFile(file);
+              } catch (error) {
+                  this.logger.error('Error processing GPX file:', error);
+              }
+          }
+      });
   
       if (confirmReplace) {
-          confirmReplace.addEventListener('click', async () => {
+          const newConfirmReplace = confirmReplace.cloneNode(true);
+          confirmReplace.parentNode.replaceChild(newConfirmReplace, confirmReplace);
+          
+          newConfirmReplace.addEventListener('click', async () => {
               if (pendingGPXFile) {
-                  await this.processGPXFile(pendingGPXFile);
-                  pendingGPXFile = null;
-                  if (existingOption) {
-                      existingOption.hidden = false;
+                  try {
+                      // First clear existing track
+                      const gpsManager = GPSManager.getInstance();
+                      await gpsManager.clearTrack();
+                      
+                      // Then process the new file
+                      await this.processGPXFile(pendingGPXFile);
+                  } catch (error) {
+                      this.logger.error('Error replacing track:', error);
                   }
+                  pendingGPXFile = null;
               }
-              confirmDialog.style.display = 'none';
+              if (confirmDialog) {
+                  confirmDialog.style.display = 'none';
+              }
           });
       }
   
       if (confirmCancel) {
-          confirmCancel.addEventListener('click', () => {
+          const newConfirmCancel = confirmCancel.cloneNode(true);
+          confirmCancel.parentNode.replaceChild(newConfirmCancel, confirmCancel);
+          
+          newConfirmCancel.addEventListener('click', () => {
               pendingGPXFile = null;
-              confirmDialog.style.display = 'none';
-              gpxFileInput.value = '';
+              if (confirmDialog) {
+                  confirmDialog.style.display = 'none';
+              }
+              if (newGpxFileInput) {
+                  newGpxFileInput.value = '';
+              }
           });
       }
   }
   
   async processGPXFile(file) {
       try {
+          // Read and process the file
           const content = await file.text();
           const gpsManager = GPSManager.getInstance();
+          
+          // Import GPX file to storage
           await gpsManager.importGPXFile(content);
-          document.getElementById('gpx-filename').textContent = file.name;
-          document.getElementById('gpx-error').textContent = '';
-          document.getElementById('existing-gpx-option').style.display = 'block';
+          
+          // Get track stats after import
+          const trackStats = await gpsManager.getTrackStats();
+          
+          // Update UI elements
+          const gpxFilename = document.getElementById('gpx-filename');
+          if (gpxFilename) {
+              gpxFilename.textContent = file.name;
+          }
+  
+          const infoDisplay = document.getElementById('gpx-info-display');
+          if (infoDisplay && trackStats) {
+              infoDisplay.style.display = '';
+              infoDisplay.innerHTML = this.i18next.t('form.gpx.trackInfo', {
+                  date: new Date(trackStats.startTime).toLocaleDateString(),
+                  distance: trackStats.distance.toString(),
+                  duration: `${trackStats.duration.hours}:${String(trackStats.duration.minutes).padStart(2, '0')}`
+              });
+          }
+  
+          // Show existing GPX option
+          const existingOption = document.getElementById('existing-gpx-option');
+          if (existingOption) {
+              existingOption.style.display = 'block';
+          }
+  
+          // Clear error message
+          const errorElement = document.getElementById('gpx-error');
+          if (errorElement) {
+              errorElement.textContent = '';
+          }
+  
+          this.logger.debug('GPX file processed successfully', {
+              filename: file.name,
+              hasTrackStats: !!trackStats
+          });
+  
       } catch (error) {
-          document.getElementById('gpx-error').textContent = 
-              this.i18next.t('form.gpx.errors.processingError');
-          document.getElementById('gpx-file-input').value = '';
+          this.logger.error('Error processing GPX file:', error);
+          
+          // Show error message
+          const errorElement = document.getElementById('gpx-error');
+          if (errorElement) {
+              errorElement.textContent = this.i18next.t('form.gpx.errors.processingError');
+          }
+          
+          // Clear file input
+          const fileInput = document.getElementById('gpx-file-input');
+          if (fileInput) {
+              fileInput.value = '';
+          }
+          
+          throw error;
       }
   }
 
