@@ -173,7 +173,15 @@ class FormManager {
       const hasTrails = userData?.trails && Array.isArray(userData.trails) && userData.trails.length > 0;
       
       this.logger.debug('User type:', { isAdmin, hasTrails });
-  
+
+      if (isAdmin && skiCenterName && userData.ski_center_name) {
+          skiCenterName.textContent = userData.ski_center_name;
+          const skiCenterId = document.getElementById('ski-center-id');
+          if (skiCenterId && userData.ski_center_id) {
+              skiCenterId.value = userData.ski_center_id;
+          }
+      }
+    
       // Clear existing content from sections to prevent duplication
       regularUserSection.style.display = isAdmin ? 'none' : 'block';
       adminSection.style.display = isAdmin ? 'block' : 'none';
