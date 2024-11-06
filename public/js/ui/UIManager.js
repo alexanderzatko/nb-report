@@ -551,8 +551,10 @@ class UIManager {
       trackCard.innerHTML = `
           <div class="card-icon"></div>
           <h3>${this.i18next.t('dashboard.gpsTrack')}</h3>
-          <p>${this.i18next.t('dashboard.trackStats', {
-              distance: Math.round(track.totalDistance),
+          <p>${this.i18next.t('dashboard.trackStatsDist', {
+              distance: Math.round(track.totalDistance)
+          })}</p>
+          <p>${this.i18next.t('dashboard.trackStatsTime', {
               hours: duration.hours,
               minutes: duration.minutes
           })}</p>
