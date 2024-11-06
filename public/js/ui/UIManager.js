@@ -77,6 +77,15 @@ class UIManager {
         if (gpsManager.isSupported()) {
             await this.updateGPSCardVisibility();
 
+            // State subscription for GPS recording updates
+            const stateManager = StateManager.getInstance();
+            stateManager.subscribe('gps.recording', () => {
+                const gpsCard = document.querySelector('[data-feature="gps-recording"]');
+                if (gpsCard) {
+                    this.updateGPSCardForRecording(gpsCard);
+                }
+            });
+
             window.addEventListener('gps-update', () => {
                 const gpsCard = document.querySelector('[data-feature="gps-recording"]');
                 if (gpsCard) {
