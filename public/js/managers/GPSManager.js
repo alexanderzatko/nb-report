@@ -363,6 +363,7 @@ class GPSManager {
                 distance: this.activeRecording.distance,
                 elevation: this.activeRecording.lastElevation
             });
+            window.dispatchEvent(new CustomEvent('gps-update'));
         } catch (error) {
             this.logger.error('Failed to save GPS point:', error);
         }
