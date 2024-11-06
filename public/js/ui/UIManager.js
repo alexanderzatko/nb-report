@@ -169,6 +169,16 @@ class UIManager {
             e.stopPropagation();
             const gpsManager = GPSManager.getInstance();
             
+            // First check if GPS is supported
+            const capability = gpsManager.checkGPSCapability();
+            if (!capability.supported) {
+                // Show non-Android message
+                const message = this.i18next.t('errors.gps.androidOnly');
+                alert(message);
+                return;
+            }
+            
+            // Only check for existing track if GPS is supported
             if (gpsManager.isRecording) {
                 try {
                     const track = await gpsManager.stopRecording();
@@ -182,9 +192,11 @@ class UIManager {
                     this.updateGPSCardForStandby(gpsCard);
                 }
             } else {
-                if (gpsManager.hasExistingTrack()) {
+                if (await gpsManager.hasExistingTrack()) {
                     const confirm = window.confirm(
-                        this.i18next.t('dashboard.confirmOverwriteTrack')
+                        this.i18next.t('dashboard.confirmOverwriteTrack') + '\n\n' +
+                        this.i18next.t('dashboard.confirmButtons.confirm') + ' / ' + 
+                        this.i18next.t('dashboard.confirmButtons.cancel')
                     );
                     if (!confirm) return;
                     await gpsManager.clearTrack();
