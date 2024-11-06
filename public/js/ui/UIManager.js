@@ -567,17 +567,16 @@ class UIManager {
               return;
           }
   
-          // Create a date string for the filename
-          const stats = gpsManager.getTrackStats();
-          const dateStr = stats.startTime.toISOString().split('T')[0];
-          
+          // Get current date if no track date available
+          const dateStr = new Date().toISOString().split('T')[0];
+    
           // Create blob and download link
           const blob = new Blob([gpxContent], { type: 'application/gpx+xml' });
           const url = window.URL.createObjectURL(blob);
           const tempLink = document.createElement('a');
           tempLink.href = url;
           tempLink.download = `track_${dateStr}.gpx`;
-  
+    
           // Append to document, click, and remove
           document.body.appendChild(tempLink);
           tempLink.click();
