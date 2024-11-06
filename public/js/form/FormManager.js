@@ -185,7 +185,7 @@ class FormManager {
           await this.replaceCommonSections(activeSection, commonTemplate);
 
           // Initialize photo upload after common sections are loaded
-          this.photoManager.initializePhotoUpload(true);
+          await this.photoManager.initializePhotoUpload(true);
 
       } catch (error) {
           this.logger.error('Failed to replace common sections:', error);
