@@ -3,651 +3,485 @@
 import Logger from '../utils/Logger.js';
 import i18next from '/node_modules/i18next/dist/esm/i18next.js';
 import DatabaseManager from './DatabaseManager.js';
+import StateManager from '../state/StateManager.js';
 
 class GPSManager {
-  static instance = null;
+    static instance = null;
 
-  constructor() {
-    if (GPSManager.instance) {
-      return GPSManager.instance;
-    }
+    constructor() {
+        if (GPSManager.instance) {
+            return GPSManager.instance;
+        }
 
-    this.logger = Logger.getInstance();
-    this.i18next = i18next;
-    this.isRecording = false;
-    this.currentTrack = null;
-    this.watchId = null;
-    this.trackPoints = [];
-    this.lastPoint = null;
-    this.totalDistance = 0;
-    this.lastElevation = null;
-    
-    this.wakeLock = null;
-    this.hasWakeLock = 'wakeLock' in navigator;
-
-    this.dbName = 'AppDB';
-    this.dbVersion = 2;  // Increment this from 1 to 2
-    this.db = null;
-    this.dbManager = DatabaseManager.getInstance();
-
-    this.recordingMetadata = {
-        startTime: null,
-        distance: 0,
-        elapsedTime: 0
-    };
-
-    GPSManager.instance = this;
-}
-
-  static getInstance() {
-    if (!GPSManager.instance) {
-      GPSManager.instance = new GPSManager();
-    }
-    return GPSManager.instance;
-  }
-
-  checkGPSCapability() {
-    // Wait for i18next to be initialized before accessing translations
-    if (!this.i18next.isInitialized) {
-      return {
-        supported: false,
-        reason: 'GPS check unavailable' // Fallback message
-      };
-    }
-
-    const isAndroid = /Android/i.test(navigator.userAgent);
-    if (!isAndroid) {
-      return {
-        supported: false,
-        reason: this.i18next.t('errors.gps.androidOnly')
-      };
-    }
-  
-    if (!('geolocation' in navigator)) {
-      return {
-        supported: false,
-        reason: this.i18next.t('errors.gps.notAvailable')
-      };
-    }
-  
-    return {
-      supported: true
-    };
-  }
-
-  hasExistingTrack() {
-    return this.currentTrack !== null;
-  }
-
-  calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371; // Earth's radius in km
-    const dLat = this.toRad(lat2 - lat1);
-    const dLon = this.toRad(lon2 - lon1);
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(this.toRad(lat1)) * Math.cos(this.toRad(lat2)) * 
-              Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  }
-
-  toRad(value) {
-    return value * Math.PI / 180;
-  }
-
-  async startRecording() {
-      try {
-          const capability = this.checkGPSCapability();
-          if (!capability.supported) {
-              alert(capability.reason);
-              return false;
-          }
-  
-          const permission = await this.requestLocationPermission();
-          if (!permission) {
-              throw new Error(this.i18next.t('errors.gps.permissionDenied'));
-          }
-  
-          // Clear any existing active points
-          await this.clearActivePoints();
-  
-          this.trackPoints = [];
-          this.totalDistance = 0;
-          this.lastPoint = null;
-          this.lastElevation = null;
-          this.isRecording = true;
-  
-          if (this.hasWakeLock) {
-              try {
-                  this.wakeLock = await navigator.wakeLock.request('screen');
-                  this.logger.debug('Wake Lock acquired');
-              } catch (err) {
-                  this.logger.warn('Failed to acquire wake lock:', err);
-              }
-          }
-  
-          this.watchId = navigator.geolocation.watchPosition(
-              (position) => this.handlePosition(position),
-              (error) => this.handleError(error),
-              {
-                  enableHighAccuracy: true,
-                  timeout: 30000,
-                  maximumAge: 0
-              }
-          );
-  
-          this.recordingMetadata = {
-              startTime: new Date().toISOString(),
-              distance: 0,
-              elapsedTime: 0
-          };
-  
-          // Save initial metadata
-          await this.saveTrackMetadata(this.recordingMetadata);
-          return true;
-  
-      } catch (error) {
-          this.logger.error('Error starting GPS recording:', error);
-          throw error;
-      }
-  }
-
-  async saveTrackMetadata(metadata) {
-      const db = await this.dbManager.getDatabase();
-      
-      return new Promise((resolve, reject) => {
-          const transaction = db.transaction(['trackMetadata'], 'readwrite');
-          const store = transaction.objectStore('trackMetadata');
-          
-          const request = store.put({
-              id: 'current',
-              ...metadata
-          });
-  
-          request.onsuccess = () => resolve();
-          request.onerror = () => reject(request.error);
-      });
-  }
-  
-  async requestLocationPermission() {
-    try {
-      const result = await navigator.permissions.query({ name: 'geolocation' });
-      if (result.state === 'granted') {
-        return true;
-      }
-      if (result.state === 'prompt') {
-        return new Promise((resolve) => {
-          navigator.geolocation.getCurrentPosition(
-            () => resolve(true),
-            () => {
-              this.logger.error(this.i18next.t('errors.gps.permissionDenied'));
-              resolve(false);
-            }
-          );
-        });
-      }
-      return false;
-    } catch (error) {
-      this.logger.error('Error requesting location permission:', error);
-      return false;
-    }
-  }
-
-  async handlePosition(position) {
-    const point = {
-      lat: position.coords.latitude,
-      lon: position.coords.longitude,
-      ele: position.coords.altitude,
-      time: new Date().toISOString(),
-      accuracy: position.coords.accuracy
-    };
-
-    if (this.lastPoint) {
-      const distance = this.calculateDistance(
-        this.lastPoint.lat,
-        this.lastPoint.lon,
-        point.lat,
-        point.lon
-      );
-      this.totalDistance += distance;
-    }
-
-    // Update metadata
-    this.recordingMetadata.distance = this.totalDistance;
-    this.recordingMetadata.elapsedTime = 
-        new Date() - new Date(this.recordingMetadata.startTime);
-    await this.saveTrackMetadata(this.recordingMetadata);
-
-    this.trackPoints.push(point);
-    this.lastPoint = point;
-    this.lastElevation = point.ele;
-
-    // Save point to IndexedDB
-    try {
-      await this.savePoint(point);
-    } catch (error) {
-      this.logger.error('Failed to save GPS point:', error);
-    }
-
-    // Emit update event
-    const event = new CustomEvent('gps-update', {
-      detail: {
-        distance: this.totalDistance,
-        elevation: this.lastElevation
-      }
-    });
-    window.dispatchEvent(event);
-  }
-
-  async loadTrackMetadata() {
-      const db = await this.dbManager.getDatabase();
-      
-      return new Promise((resolve, reject) => {
-          const transaction = db.transaction(['trackMetadata'], 'readonly');
-          const store = transaction.objectStore('trackMetadata');
-          const request = store.get('current');
-  
-          request.onsuccess = () => resolve(request.result);
-          request.onerror = () => reject(request.error);
-      });
-  }
-
-  async clearTrackMetadata() {
-      const db = await this.dbManager.getDatabase();
-      
-      return new Promise((resolve, reject) => {
-          const transaction = db.transaction(['trackMetadata'], 'readwrite');
-          const store = transaction.objectStore('trackMetadata');
-          const request = store.delete('current');
-  
-          request.onsuccess = () => resolve();
-          request.onerror = () => reject(request.error);
-      });
-  }
-  
-  handleError(error) {
-    this.logger.error('GPS Error:', error);
-    // Emit error event
-    const event = new CustomEvent('gps-error', {
-      detail: { error }
-    });
-    window.dispatchEvent(event);
-  }
-
-  async stopRecording() {
-    if (this.watchId) {
-      navigator.geolocation.clearWatch(this.watchId);
-      this.watchId = null;
-    }
-
-    if (this.wakeLock) {
-      try {
-        await this.wakeLock.release();
-        this.logger.debug('Wake Lock released');
-        this.wakeLock = null;
-      } catch (err) {
-        this.logger.warn('Error releasing wake lock:', err);
-      }
-    }
-
-    this.isRecording = false;
-
-    // Create track data
-    const metadata = await this.loadTrackMetadata();
-    const track = {
-        points: this.trackPoints,
-        totalDistance: this.totalDistance,
-        startTime: metadata.startTime,
-        endTime: new Date().toISOString(),
-        elapsedTime: metadata.elapsedTime
-    };
-
-    this.logger.debug('Track data before save:', {
-      totalDistance: track.totalDistance,
-      pointsCount: track.points.length,
-      startTime: track.startTime,
-      endTime: track.endTime
-    });
-
-    // Save completed track and explicitly set it as current
-    try {
-        const trackId = await this.saveTrack(track);
-        this.currentTrack = {
-            ...track,
-            id: trackId
-        };
-
-        this.logger.debug('Track saved and set as currentTrack:', {
-            id: trackId,
-            currentTrackSet: !!this.currentTrack,
-            currentTrackDistance: this.currentTrack?.totalDistance
-        });
-          
-        // Clear metadata after successful save
-        await this.clearTrackMetadata();
-
-        // Clear active points after successful save
-        await this.clearActivePoints();
+        this.logger = Logger.getInstance();
+        this.i18next = i18next;
+        this.isRecording = false;
+        this.watchId = null;
+        this.dbManager = DatabaseManager.getInstance();
+        this.stateManager = StateManager.getInstance();
         
-        return track;
-    } catch (error) {
-      this.logger.error('Failed to save completed track:', error);
-      throw error;
+        // Only keep actively recording data in memory
+        this.activeRecording = {
+            points: [],
+            distance: 0,
+            lastPoint: null,
+            lastElevation: null,
+            startTime: null
+        };
+        
+        this.wakeLock = null;
+        this.hasWakeLock = 'wakeLock' in navigator;
+
+        GPSManager.instance = this;
     }
-  }
 
-  getTrackStats() {
-    this.logger.debug('Getting track stats, currentTrack:', {
-      exists: !!this.currentTrack,
-      data: this.currentTrack,
-      totalDistance: this.currentTrack?.totalDistance,
-      startTime: this.currentTrack?.startTime,
-      endTime: this.currentTrack?.endTime
-    });
-  
-    if (!this.currentTrack) {
-      this.logger.debug('No current track available');
-      return null;
+    static getInstance() {
+        if (!GPSManager.instance) {
+            GPSManager.instance = new GPSManager();
+        }
+        return GPSManager.instance;
     }
-  
-    try {
-      const stats = {
-        distance: Math.round(this.currentTrack.totalDistance),
-        startTime: new Date(this.currentTrack.startTime),
-        endTime: new Date(this.currentTrack.endTime),
-        duration: this.calculateDuration(
-          this.currentTrack.startTime,
-          this.currentTrack.endTime
-        )
-      };
-      this.logger.debug('Calculated track stats:', stats);
-      return stats;
-    } catch (error) {
-      this.logger.error('Error calculating track stats:', error);
-      return null;
+
+    checkGPSCapability() {
+        if (!this.i18next.isInitialized) {
+            return {
+                supported: false,
+                reason: 'GPS check unavailable'
+            };
+        }
+
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        if (!isAndroid) {
+            return {
+                supported: false,
+                reason: this.i18next.t('errors.gps.androidOnly')
+            };
+        }
+
+        if (!('geolocation' in navigator)) {
+            return {
+                supported: false,
+                reason: this.i18next.t('errors.gps.notAvailable')
+            };
+        }
+
+        return {
+            supported: true
+        };
     }
-  }
 
-  calculateDuration(startTime, endTime) {
-    const start = new Date(startTime);
-    const end = new Date(endTime);
-    const diff = end - start;
-    const hours = Math.floor(diff / 3600000);
-    const minutes = Math.floor((diff % 3600000) / 60000);
-    return { hours, minutes };
-  }
+    isSupported() {
+        const capability = this.checkGPSCapability();
+        return capability.supported;
+    }
 
-  getCurrentStats() {
-    if (!this.isRecording) return null;
-    
-    return {
-      distance: Math.round(this.totalDistance),
-      elevation: this.lastElevation
-    };
-  }
-
-  clearTrack() {
-    this.currentTrack = null;
-    this.trackPoints = [];
-    this.totalDistance = 0;
-    this.lastPoint = null;
-    this.lastElevation = null;
-  }
-
-    async initializeDB() {
+    async hasExistingTrack() {
         try {
+            const db = await this.dbManager.getDatabase();
             return new Promise((resolve, reject) => {
-                const request = indexedDB.open(this.dbName, this.dbVersion);
+                const transaction = db.transaction(['tracks'], 'readonly');
+                const store = transaction.objectStore('tracks');
+                const countRequest = store.count();
 
-                request.onerror = (event) => {
-                    this.logger.error('IndexedDB error:', event.target.error);
-                    reject(event.target.error);
+                countRequest.onsuccess = () => {
+                    const hasTrack = countRequest.result > 0;
+                    this.stateManager.setState('gps.hasTrack', hasTrack);
+                    resolve(hasTrack);
                 };
 
-                request.onsuccess = (event) => {
-                    this.db = event.target.result;
-                    this.logger.debug('IndexedDB initialized successfully');
-                    resolve();
-                };
-
-                request.onupgradeneeded = (event) => {
-                    const db = event.target.result;
-                    
-                    // GPS tracking stores
-                    if (!db.objectStoreNames.contains('tracks')) {
-                        const trackStore = db.createObjectStore('tracks', { keyPath: 'id' });
-                        trackStore.createIndex('startTime', 'startTime', { unique: false });
-                    }
-                    
-                    if (!db.objectStoreNames.contains('activePoints')) {
-                        const pointsStore = db.createObjectStore('activePoints', { keyPath: 'timestamp' });
-                        pointsStore.createIndex('timestamp', 'timestamp', { unique: false });
-                    }
-
-                    if (!db.objectStoreNames.contains('trackMetadata')) {
-                        db.createObjectStore('trackMetadata', { keyPath: 'id' });
-                    }
-
-                    // Add schema version info store
-                    if (!db.objectStoreNames.contains('metadata')) {
-                        const metaStore = db.createObjectStore('metadata', { keyPath: 'key' });
-                        metaStore.put({
-                            key: 'schemaVersion',
-                            value: this.dbVersion,
-                            lastUpdated: new Date().toISOString()
-                        });
-                    }
+                countRequest.onerror = (error) => {
+                    this.logger.error('Error checking for existing tracks:', error);
+                    resolve(false);
                 };
             });
         } catch (error) {
-            this.logger.error('Failed to initialize IndexedDB:', error);
-            throw error;
+            this.logger.error('Error in hasExistingTrack:', error);
+            return false;
         }
     }
 
-  // Save point during recording
-  async savePoint(point) {
-    const db = await this.dbManager.getDatabase();
-    
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(['activePoints'], 'readwrite');
-      const store = transaction.objectStore('activePoints');
-      
-      const request = store.add({
-        ...point,
-        timestamp: new Date(point.time).getTime()
-      });
+    async startRecording() {
+        try {
+            const capability = this.checkGPSCapability();
+            if (!capability.supported) {
+                this.stateManager.setState('gps.error', capability.reason);
+                return false;
+            }
 
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
-  }
+            const permission = await this.requestLocationPermission();
+            if (!permission) {
+                this.stateManager.setState('gps.error', this.i18next.t('errors.gps.permissionDenied'));
+                return false;
+            }
 
-  // Load active recording points
-  async loadActivePoints() {
-    const db = await this.dbManager.getDatabase();
-    
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(['activePoints'], 'readonly');
-      const store = transaction.objectStore('activePoints');
-      const request = store.getAll();
+            // Clear any existing recording data
+            await this.clearActivePoints();
+            this.resetActiveRecording();
 
-      request.onsuccess = () => {
-        const points = request.result;
-        resolve(points.sort((a, b) => a.timestamp - b.timestamp));
-      };
-      request.onerror = () => reject(request.error);
-    });
-  }
+            this.isRecording = true;
+            this.activeRecording.startTime = new Date().toISOString();
 
-  // Clear active recording points
-  async clearActivePoints() {
-    const db = await this.dbManager.getDatabase();
-    
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(['activePoints'], 'readwrite');
-      const store = transaction.objectStore('activePoints');
-      const request = store.clear();
+            // Acquire wake lock if available
+            if (this.hasWakeLock) {
+                try {
+                    this.wakeLock = await navigator.wakeLock.request('screen');
+                    this.logger.debug('Wake Lock acquired');
+                } catch (err) {
+                    this.logger.warn('Failed to acquire wake lock:', err);
+                }
+            }
 
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
-  }
+            this.watchId = navigator.geolocation.watchPosition(
+                (position) => this.handlePosition(position),
+                (error) => this.handleError(error),
+                {
+                    enableHighAccuracy: true,
+                    timeout: 30000,
+                    maximumAge: 0
+                }
+            );
 
-  // Save completed track
-  async saveTrack(track) {
-      const db = await this.dbManager.getDatabase();
-      
-      this.logger.debug('Saving track with data:', track); // Add debug logging
-      
-      return new Promise((resolve, reject) => {
-          const transaction = db.transaction(['tracks'], 'readwrite');
-          const store = transaction.objectStore('tracks');
-          
-          const trackData = {
-              id: new Date().getTime().toString(),
-              points: track.points,
-              totalDistance: track.totalDistance || 0,
-              startTime: track.startTime,
-              endTime: track.endTime,
-              elapsedTime: track.endTime - track.startTime
-          };
-  
-          this.logger.debug('Track data prepared for save:', trackData);
-  
-          const request = store.add(trackData);
-  
-          request.onsuccess = () => {
-              this.logger.debug('Track saved successfully with ID:', trackData.id);
-              resolve(trackData.id);
-          };
-          request.onerror = () => reject(request.error);
-      });
-  }
+            this.stateManager.setState('gps.isRecording', true);
+            return true;
 
-  // Load saved track
-  async loadTrack(trackId) {
-    const db = await this.dbManager.getDatabase();
-    
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(['tracks'], 'readonly');
-      const store = transaction.objectStore('tracks');
-      const request = store.get(trackId);
-
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-  }
-
-  async checkForActiveRecording() {
-    try {
-      const points = await this.loadActivePoints();
-      if (points.length > 0) {
-        this.trackPoints = points.map(p => ({
-          lat: p.lat,
-          lon: p.lon,
-          ele: p.ele,
-          time: new Date(p.timestamp).toISOString(),
-          accuracy: p.accuracy
-        }));
-        
-        // Recalculate total distance
-        this.totalDistance = 0;
-        for (let i = 1; i < this.trackPoints.length; i++) {
-          const distance = this.calculateDistance(
-            this.trackPoints[i-1].lat,
-            this.trackPoints[i-1].lon,
-            this.trackPoints[i].lat,
-            this.trackPoints[i].lon
-          );
-          this.totalDistance += distance;
+        } catch (error) {
+            this.logger.error('Error starting GPS recording:', error);
+            this.stateManager.setState('gps.error', error.message);
+            return false;
         }
-        
-        this.lastPoint = this.trackPoints[this.trackPoints.length - 1];
-        this.lastElevation = this.lastPoint.ele;
-        this.isRecording = true;
-        
-        return true;
-      }
-      return false;
-    } catch (error) {
-      this.logger.error('Error checking for active recording:', error);
-      return false;
     }
-  }
 
-  async loadLatestTrack() {
-      this.logger.debug('Loading latest track from DB');
-      const db = await this.dbManager.getDatabase();
-      
-      return new Promise((resolve, reject) => {
-          const transaction = db.transaction(['tracks'], 'readonly');
-          const store = transaction.objectStore('tracks');
-          const index = store.index('startTime');
-          
-          // Get the most recent track
-          const request = index.openCursor(null, 'prev');
-  
-          request.onsuccess = (event) => {
-              const cursor = event.target.result;
-              if (cursor) {
-                  // Found the latest track
-                  const track = cursor.value;
-                  this.logger.debug('Loaded latest track:', track); // Add debug logging
-                  
-                  this.currentTrack = {
-                      points: track.points,
-                      totalDistance: track.totalDistance || 0,
-                      startTime: track.startTime,
-                      endTime: track.endTime,
-                      elapsedTime: track.endTime - track.startTime
-                  };
-                  resolve(this.currentTrack);
-              } else {
-                  this.logger.debug('No tracks found');
-                  resolve(null);
-              }
-          };
-  
-          request.onerror = () => reject(request.error);
-      });
-  }
+    async stopRecording() {
+        if (this.watchId) {
+            navigator.geolocation.clearWatch(this.watchId);
+            this.watchId = null;
+        }
 
-  async importGPXFile(content) {
-      try {
-          const parser = new DOMParser();
-          const gpxDoc = parser.parseFromString(content, "text/xml");
-          
-          const trackPoints = Array.from(gpxDoc.getElementsByTagName('trkpt')).map(point => ({
-              lat: parseFloat(point.getAttribute('lat')),
-              lon: parseFloat(point.getAttribute('lon')),
-              ele: parseFloat(point.querySelector('ele')?.textContent) || null,
-              time: point.querySelector('time')?.textContent || new Date().toISOString()
-          }));
-  
-          if (trackPoints.length === 0) {
-              throw new Error('No track points found in GPX file');
-          }
-  
-          this.trackPoints = trackPoints;
-          this.calculateTrackStats();
-          
-          const track = {
-              points: this.trackPoints,
-              totalDistance: this.totalDistance,
-              startTime: trackPoints[0].time,
-              endTime: trackPoints[trackPoints.length - 1].time,
-              elapsedTime: new Date(trackPoints[trackPoints.length - 1].time) - new Date(trackPoints[0].time)
-          };
-  
-          await this.saveTrack(track);
-          this.currentTrack = track;
-          
-          // Emit event for UI updates
-          const event = new CustomEvent('gpx-imported', { detail: track });
-          window.dispatchEvent(event);
-          
-          return true;
-      } catch (error) {
+        if (this.wakeLock) {
+            try {
+                await this.wakeLock.release();
+                this.logger.debug('Wake Lock released');
+                this.wakeLock = null;
+            } catch (err) {
+                this.logger.warn('Error releasing wake lock:', err);
+            }
+        }
+
+        this.isRecording = false;
+
+        try {
+            // Save completed track
+            const trackData = {
+                points: this.activeRecording.points,
+                totalDistance: this.activeRecording.distance,
+                startTime: this.activeRecording.startTime,
+                endTime: new Date().toISOString()
+            };
+
+            const trackId = await this.saveTrack(trackData);
+            if (!trackId) {
+                throw new Error('Failed to save track');
+            }
+
+            // Clear active recording data
+            await this.clearActivePoints();
+            this.resetActiveRecording();
+
+            // Update state
+            this.stateManager.setState('gps.isRecording', false);
+            this.stateManager.setState('gps.hasTrack', true);
+            
+            return trackData;
+
+        } catch (error) {
+            this.logger.error('Error stopping recording:', error);
+            return null;
+        }
+    }
+
+    async getTrackStats() {
+        try {
+            if (this.isRecording) {
+                return {
+                    distance: Math.round(this.activeRecording.distance),
+                    elevation: this.activeRecording.lastElevation
+                };
+            }
+
+            const track = await this.loadLatestTrack();
+            if (!track) return null;
+
+            return {
+                distance: Math.round(track.totalDistance),
+                startTime: new Date(track.startTime),
+                endTime: new Date(track.endTime),
+                duration: this.calculateDuration(track.startTime, track.endTime)
+            };
+        } catch (error) {
+            this.logger.error('Error getting track stats:', error);
+            return null;
+        }
+    }
+
+    async loadLatestTrack() {
+        try {
+            const db = await this.dbManager.getDatabase();
+            
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['tracks'], 'readonly');
+                const store = transaction.objectStore('tracks');
+                const index = store.index('startTime');
+                const request = index.openCursor(null, 'prev');
+
+                request.onsuccess = (event) => {
+                    const cursor = event.target.result;
+                    const track = cursor ? cursor.value : null;
+                    if (track) {
+                        this.stateManager.setState('gps.hasTrack', true);
+                    }
+                    resolve(track);
+                };
+
+                request.onerror = (error) => {
+                    this.logger.error('Error loading latest track:', error);
+                    reject(error);
+                };
+            });
+        } catch (error) {
+            this.logger.error('Error in loadLatestTrack:', error);
+            return null;
+        }
+    }
+
+    async clearTrack() {
+        this.logger.debug('Clearing track data');
+        try {
+            const db = await this.dbManager.getDatabase();
+            
+            // Clear tracks store
+            await new Promise((resolve, reject) => {
+                const transaction = db.transaction(['tracks'], 'readwrite');
+                const tracksStore = transaction.objectStore('tracks');
+                const request = tracksStore.clear();
+                
+                request.onsuccess = resolve;
+                request.onerror = (error) => {
+                    this.logger.error('Error clearing tracks store:', error);
+                    reject(error);
+                };
+            });
+
+            // Clear metadata store
+            await new Promise((resolve, reject) => {
+                const transaction = db.transaction(['trackMetadata'], 'readwrite');
+                const metadataStore = transaction.objectStore('trackMetadata');
+                const request = metadataStore.clear();
+                
+                request.onsuccess = resolve;
+                request.onerror = (error) => {
+                    this.logger.error('Error clearing track metadata:', error);
+                    reject(error);
+                };
+            });
+
+            // Update state
+            this.stateManager.setState('gps.hasTrack', false);
+            
+            this.logger.debug('Track data cleared successfully');
+            return true;
+        } catch (error) {
+            this.logger.error('Failed to clear track data:', error);
+            return false;
+        }
+    }
+
+    async handlePosition(position) {
+        const point = {
+            lat: position.coords.latitude,
+            lon: position.coords.longitude,
+            ele: position.coords.altitude,
+            time: new Date().toISOString(),
+            accuracy: position.coords.accuracy
+        };
+
+        if (this.activeRecording.lastPoint) {
+            const distance = this.calculateDistance(
+                this.activeRecording.lastPoint.lat,
+                this.activeRecording.lastPoint.lon,
+                point.lat,
+                point.lon
+            );
+            this.activeRecording.distance += distance;
+        }
+
+        this.activeRecording.points.push(point);
+        this.activeRecording.lastPoint = point;
+        this.activeRecording.lastElevation = point.ele;
+
+        try {
+            await this.savePoint(point);
+            
+            // Update state
+            this.stateManager.setState('gps.recording', {
+                distance: this.activeRecording.distance,
+                elevation: this.activeRecording.lastElevation
+            });
+        } catch (error) {
+            this.logger.error('Failed to save GPS point:', error);
+        }
+    }
+
+    handleError(error) {
+        this.logger.error('GPS Error:', error);
+        this.stateManager.setState('gps.error', error.message);
+    }
+
+    async requestLocationPermission() {
+        try {
+            const result = await navigator.permissions.query({ name: 'geolocation' });
+            if (result.state === 'granted') {
+                return true;
+            }
+            if (result.state === 'prompt') {
+                return new Promise((resolve) => {
+                    navigator.geolocation.getCurrentPosition(
+                        () => resolve(true),
+                        () => {
+                            this.logger.error(this.i18next.t('errors.gps.permissionDenied'));
+                            resolve(false);
+                        }
+                    );
+                });
+            }
+            return false;
+        } catch (error) {
+            this.logger.error('Error requesting location permission:', error);
+            return false;
+        }
+    }
+
+    async savePoint(point) {
+        const db = await this.dbManager.getDatabase();
+        
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(['activePoints'], 'readwrite');
+            const store = transaction.objectStore('activePoints');
+            
+            const request = store.add({
+                ...point,
+                timestamp: new Date(point.time).getTime()
+            });
+
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async saveTrack(trackData) {
+        const db = await this.dbManager.getDatabase();
+        
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(['tracks'], 'readwrite');
+            const store = transaction.objectStore('tracks');
+            
+            const data = {
+                id: new Date().getTime().toString(),
+                ...trackData
+            };
+
+            const request = store.add(data);
+
+            request.onsuccess = () => resolve(data.id);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async clearActivePoints() {
+        const db = await this.dbManager.getDatabase();
+        
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(['activePoints'], 'readwrite');
+            const store = transaction.objectStore('activePoints');
+            const request = store.clear();
+
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    resetActiveRecording() {
+        this.activeRecording = {
+            points: [],
+            distance: 0,
+            lastPoint: null,
+            lastElevation: null,
+            startTime: null
+        };
+        this.stateManager.setState('gps.recording', null);
+    }
+
+    calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // Earth's radius in km
+        const dLat = this.toRad(lat2 - lat1);
+        const dLon = this.toRad(lon2 - lon1);
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(this.toRad(lat1)) * Math.cos(this.toRad(lat2)) * 
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+
+    toRad(value) {
+        return value * Math.PI / 180;
+    }
+
+    calculateDuration(startTime, endTime) {
+        const start = new Date(startTime);
+        const end = new Date(endTime);
+        const diff = end - start;
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        return { hours, minutes };
+    }
+
+    async importGPXFile(content) {
+        try {
+            const parser = new DOMParser();
+            const gpxDoc = parser.parseFromString(content, "text/xml");
+            
+            const trackPoints = Array.from(gpxDoc.getElementsByTagName('trkpt')).map(point => ({
+                lat: parseFloat(point.getAttribute('lat')),
+                lon: parseFloat(point.getAttribute('lon')),
+                ele: parseFloat(point.querySelector('ele')?.textContent) || null,
+                time: point.querySelector('time')?.textContent || new Date().toISOString()
+            }));
+
+            if (trackPoints.length === 0) {
+                throw new Error('No track points found in GPX file');
+            }
+
+            let totalDistance = 0;
+            for (let i = 1; i < trackPoints.length; i++) {
+                totalDistance += this.calculateDistance(
+                    trackPoints[i-1].lat,
+                    trackPoints[i-1].lon,
+                    trackPoints[i].lat,
+                    trackPoints[i].lon
+                );
+            }
+
+            const trackData = {
+                points: trackPoints,
+                totalDistance: totalDistance,
+                startTime: trackPoints[0].time,
+                endTime: trackPoints[trackPoints.length - 1].time
+            };
+
+            await this.saveTrack(trackData);
+            this.stateManager.setState('gps.hasTrack', true);
+
+            return true;
+        } catch (error) {
           this.logger.error('Error importing GPX file:', error);
           throw error;
       }
