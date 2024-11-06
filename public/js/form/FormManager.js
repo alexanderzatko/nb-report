@@ -351,13 +351,16 @@ class FormManager {
       }
   
       try {
+          // First explicitly check if there's a track stored
           const hasTrack = await gpsManager.hasExistingTrack();
+          
+          // Only try to get track stats if we confirmed a track exists
           const trackStats = hasTrack ? await gpsManager.getTrackStats() : null;
   
-          this.logger.debug('Track existence check:', {
+          this.logger.debug('Track check results:', {
               hasTrack,
+              hasTrackStats: !!trackStats,
               optionPresent: existingOption !== null,
-              trackStats,
               uploadContainerPresent: uploadContainer !== null
           });
           
@@ -369,14 +372,18 @@ class FormManager {
               // Update our reference to the new element
               const gpxSelectElement = newGpxSelect;
   
-              if (!hasTrack) {
-                  if (existingOption.parentNode === gpxSelectElement) {
-                      gpxSelectElement.removeChild(existingOption);
+              // Hide or show the existing track option based on actual track existence
+              if (!hasTrack || !trackStats) {
+                  // If there's no track or no valid stats, ensure the option is removed
+                  const existingOptionElement = gpxSelectElement.querySelector('option[value="existing"]');
+                  if (existingOptionElement) {
+                      gpxSelectElement.removeChild(existingOptionElement);
                   }
                   if (infoDisplay) {
                       infoDisplay.style.display = 'none';
                   }
               } else {
+                  // We have confirmed we have both track and stats
                   if (existingOption.parentNode !== gpxSelectElement) {
                       const firstOption = gpxSelectElement.querySelector('option');
                       if (firstOption) {
@@ -384,10 +391,10 @@ class FormManager {
                       } else {
                           gpxSelectElement.appendChild(existingOption);
                       }
-                      existingOption.style.display = '';
                   }
+                  existingOption.style.display = '';
   
-                  if (infoDisplay && trackStats) {
+                  if (infoDisplay) {
                       infoDisplay.innerHTML = this.i18next.t('form.gpx.trackInfo', {
                           date: new Date(trackStats.startTime).toLocaleDateString(),
                           distance: trackStats.distance.toString(),
@@ -405,7 +412,7 @@ class FormManager {
                   });
                   
                   if (infoDisplay) {
-                      infoDisplay.style.display = selectedValue === 'existing' ? '' : 'none';
+                      infoDisplay.style.display = selectedValue === 'existing' && hasTrack ? '' : 'none';
                   }
                   
                   if (uploadContainer) {
@@ -423,12 +430,19 @@ class FormManager {
                   uploadContainer.style.display = initialValue === 'upload' ? '' : 'none';
               }
               if (infoDisplay) {
-                  infoDisplay.style.display = initialValue === 'existing' ? '' : 'none';
+                  infoDisplay.style.display = (initialValue === 'existing' && hasTrack) ? '' : 'none';
               }
           }
   
       } catch (error) {
           this.logger.error('Error initializing GPX section:', error);
+          // On error, ensure the existing option is removed
+          if (gpxSelect && existingOption) {
+              const existingOptionElement = gpxSelect.querySelector('option[value="existing"]');
+              if (existingOptionElement) {
+                  gpxSelect.removeChild(existingOptionElement);
+              }
+          }
           throw error;
       }
   }
