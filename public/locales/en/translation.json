@@ -29,7 +29,7 @@
     "confirmButtons": {
       "confirm": "OK",
       "cancel": "Cancel"
-    },
+    }
   },
   "settings": {
     "title": "Nastavení",
