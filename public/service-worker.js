@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v279';  // Should match ConfigManager.js version
+const CACHE_VERSION = 'v280';  // Should match ConfigManager.js version
 const CACHE_NAME = 'snow-report-cache';
 const FULL_CACHE_NAME = `${CACHE_NAME}-${CACHE_VERSION}`;
 const OFFLINE_PAGE = '/offline.html';
@@ -29,7 +29,13 @@ const urlsToCache = [
   '/js/validation/ValidationManager.js',
   '/node_modules/i18next/dist/esm/i18next.js',
   '/node_modules/i18next-http-backend/esm/index.js',
-  '/node_modules/i18next-browser-languagedetector/dist/esm/i18nextBrowserLanguageDetector.js'
+  '/node_modules/i18next-browser-languagedetector/dist/esm/i18nextBrowserLanguageDetector.js',
+  '/fonts/roboto/Roboto-Regular.woff2',
+  '/fonts/roboto/Roboto-Regular.woff',
+  '/fonts/roboto/Roboto-Medium.woff2',
+  '/fonts/roboto/Roboto-Medium.woff',
+  '/fonts/roboto/Roboto-Bold.woff2',
+  '/fonts/roboto/Roboto-Bold.woff'
 ];
 
 self.addEventListener('install', function(event) {
