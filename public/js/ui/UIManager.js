@@ -442,23 +442,23 @@ class UIManager {
       }
   }
 
-  updateGPSCardForRecording(card) {
-    const gpsManager = GPSManager.getInstance();
-    const stats = gpsManager.getCurrentStats();
+updateGPSCardForRecording(card) {
+    const stateManager = StateManager.getInstance();
+    const recordingState = stateManager.getState('gps.recording');
     
     // Format numbers properly
-    const distance = stats ? Number(stats.distance).toFixed(2) : '0.00';
-    const elevation = stats && stats.elevation ? Math.round(stats.elevation) : '–';
+    const distance = recordingState ? Number(recordingState.distance).toFixed(2) : '0.00';
+    const elevation = recordingState && recordingState.elevation ? Math.round(recordingState.elevation) : '–';
     
     card.querySelector('h3').textContent = this.i18next.t('dashboard.stopGpsRecording');
     card.querySelector('p').textContent = this.i18next.t('dashboard.recordingStats', {
-      distance: distance,
-      elevation: elevation
+        distance: distance,
+        elevation: elevation
     });
-  
-    // Add recording class for animation
+
+    // Ensure recording class is present
     card.classList.add('recording');
-  }
+}
   
   updateGPSCardForStandby(card) {
     card.querySelector('h3').textContent = this.i18next.t('dashboard.recordGps');
