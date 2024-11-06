@@ -207,7 +207,7 @@ class GPSManager {
         this.isRecording = false;
     
         try {
-            // Save completed track
+            // Create track data
             const trackData = {
                 points: this.activeRecording.points,
                 totalDistance: this.activeRecording.distance,
@@ -215,10 +215,14 @@ class GPSManager {
                 endTime: new Date().toISOString()
             };
     
+            // Save the track
             const trackId = await this.saveTrack(trackData);
             if (!trackId) {
                 throw new Error('Failed to save track');
             }
+    
+            // Set as current track for GPX export
+            this.currentTrack = trackData;  // Add this line
     
             // Clear active recording data
             await this.clearActivePoints();
@@ -268,21 +272,25 @@ class GPSManager {
                 const transaction = db.transaction(['tracks'], 'readonly');
                 const store = transaction.objectStore('tracks');
                 const index = store.index('startTime');
+                
+                // Get the most recent track
                 const request = index.openCursor(null, 'prev');
-
+    
                 request.onsuccess = (event) => {
                     const cursor = event.target.result;
-                    const track = cursor ? cursor.value : null;
-                    if (track) {
-                        this.stateManager.setState('gps.hasTrack', true);
+                    if (cursor) {
+                        // Found the latest track
+                        const track = cursor.value;
+                        this.currentTrack = track;  // Add this line
+                        this.logger.debug('Loaded latest track:', track);
+                        resolve(track);
+                    } else {
+                        this.logger.debug('No tracks found');
+                        resolve(null);
                     }
-                    resolve(track);
                 };
-
-                request.onerror = (error) => {
-                    this.logger.error('Error loading latest track:', error);
-                    reject(error);
-                };
+    
+                request.onerror = () => reject(request.error);
             });
         } catch (error) {
             this.logger.error('Error in loadLatestTrack:', error);
