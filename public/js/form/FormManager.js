@@ -244,10 +244,6 @@ class FormManager {
   }
 
   async refreshFormComponents() {
-      // Re-initialize any components that need to be refreshed
-      const photoManager = PhotoManager.getInstance();
-      photoManager.initializePhotoUpload(true);
-  
       // Refresh dropdowns if SelectManager is available
       const selectManager = SelectManager.getInstance();
       if (selectManager) {
