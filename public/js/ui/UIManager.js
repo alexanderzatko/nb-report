@@ -99,7 +99,8 @@ class UIManager {
             } else {
                 const latestTrack = await gpsManager.loadLatestTrack();
                 if (latestTrack) {
-                    await this.showGPSTrackCard();
+                  this.logger.debug('Latest track loaded:', latestTrack);
+                  await this.showGPSTrackCard(latestTrack);
                 }
             }
         }
