@@ -30,6 +30,7 @@
       "confirm": "Potvrdiť",
       "cancel": "Zrušiť"
     }
+  },
   "settings": {
     "title": "Nastavenia",
     "returnToDashboard": "Späť na hlavnú stránku"
