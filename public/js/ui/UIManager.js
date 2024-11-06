@@ -71,6 +71,21 @@ class UIManager {
             console.log('Dashboard container is now visible');
         }
 
+        // Initialize GPS functionality
+        const gpsManager = GPSManager.getInstance();
+        if (gpsManager.isSupported()) {
+            await this.updateGPSCardVisibility();
+            const hasActiveRecording = await gpsManager.checkForActiveRecording();
+            if (hasActiveRecording) {
+                await this.updateGPSCardVisibility();
+            } else {
+                const latestTrack = await gpsManager.loadLatestTrack();
+                if (latestTrack) {
+                    await this.showGPSTrackCard();
+                }
+            }
+        }
+      
         // Initialize select manager before setting up other UI elements
         const selectManager = SelectManager.getInstance();
         await selectManager.initialize();
@@ -90,6 +105,26 @@ class UIManager {
     }
   }
 
+  async updateGPSCardVisibility() {
+      const gpsCard = document.querySelector('[data-feature="gps-recording"]');
+      if (!gpsCard) return;
+  
+      const gpsManager = GPSManager.getInstance();
+      const capability = gpsManager.checkGPSCapability();
+  
+      if (capability.supported) {
+          gpsCard.classList.remove('disabled');
+          if (gpsManager.isRecording) {
+              this.updateGPSCardForRecording(gpsCard);
+          } else {
+              this.updateGPSCardForStandby(gpsCard);
+          }
+      } else {
+          gpsCard.classList.add('disabled');
+          gpsCard.querySelector('p').textContent = capability.reason;
+      }
+  }
+  
   async setupDashboardCards() {
     console.log('Setting up dashboard cards');
     
@@ -125,6 +160,44 @@ class UIManager {
         });
     } else {
         console.log('Settings link not found');
+    }
+
+    // GPS Recording Card
+    const gpsCard = document.querySelector('[data-feature="gps-recording"]');
+    if (gpsCard) {
+        gpsCard.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const gpsManager = GPSManager.getInstance();
+            
+            if (gpsManager.isRecording) {
+                try {
+                    const track = await gpsManager.stopRecording();
+                    if (track) {
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        this.showGPSTrackCard();
+                        this.updateGPSCardForStandby(gpsCard);
+                    }
+                } catch (error) {
+                    this.logger.error('Error stopping GPS recording:', error);
+                    this.updateGPSCardForStandby(gpsCard);
+                }
+            } else {
+                if (gpsManager.hasExistingTrack()) {
+                    const confirm = window.confirm(
+                        this.i18next.t('dashboard.confirmOverwriteTrack')
+                    );
+                    if (!confirm) return;
+                    gpsManager.clearTrack();
+                    this.removeGPSTrackCard();
+                }
+                
+                const started = await gpsManager.startRecording();
+                if (started) {
+                    this.updateGPSCardForRecording(gpsCard);
+                }
+            }
+        });
     }
 
     // Make cards visually clickable
