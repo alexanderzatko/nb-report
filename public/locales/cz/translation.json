@@ -25,7 +25,11 @@ port{
     "preferences": "Nastavení",
     "preferencesDesc": "Správa nastavení aplikace",
     "settings": "Settings",
-    "settingsDesc": "Manage your preferences and account"
+    "settingsDesc": "Manage your preferences and account",
+    "confirmButtons": {
+      "confirm": "Potvrdit",
+      "cancel": "Zrušit"
+    },
   },
   "settings": {
     "title": "Settings",
