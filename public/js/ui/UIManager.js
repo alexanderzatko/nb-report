@@ -477,8 +477,8 @@ class UIManager {
       }
   }
   
-  showGPSTrackCard(stats) {
-      if (!stats) {
+  showGPSTrackCard(track) {
+      if (!track) {
           this.logger.debug('No track stats available');
           return;
       }
@@ -496,13 +496,17 @@ class UIManager {
       trackCard.className = 'dashboard-card';
       trackCard.dataset.feature = 'gps-track';
       
+      // Calculate duration from start and end times
+      const gpsManager = GPSManager.getInstance();
+      const duration = gpsManager.calculateDuration(track.startTime, track.endTime);
+      
       trackCard.innerHTML = `
           <div class="card-icon"></div>
           <h3>${this.i18next.t('dashboard.gpsTrack')}</h3>
           <p>${this.i18next.t('dashboard.trackStats', {
-              distance: stats.distance,
-              hours: stats.duration.hours,
-              minutes: stats.duration.minutes
+              distance: Math.round(track.totalDistance),
+              hours: duration.hours,
+              minutes: duration.minutes
           })}</p>
           <a href="#" class="gpx-download">${this.i18next.t('dashboard.downloadGpx')}</a>
       `;
