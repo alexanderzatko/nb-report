@@ -100,6 +100,43 @@ class GPSManager {
         }
     }
 
+    async checkForActiveRecording() {
+        try {
+          const points = await this.loadActivePoints();
+          if (points.length > 0) {
+        	this.trackPoints = points.map(p => ({
+        	  lat: p.lat,
+        	  lon: p.lon,
+        	  ele: p.ele,
+        	  time: new Date(p.timestamp).toISOString(),
+        	  accuracy: p.accuracy
+        	}));
+        	
+        	// Recalculate total distance
+        	this.totalDistance = 0;
+        	for (let i = 1; i < this.trackPoints.length; i++) {
+        	  const distance = this.calculateDistance(
+        		this.trackPoints[i-1].lat,
+        		this.trackPoints[i-1].lon,
+        		this.trackPoints[i].lat,
+        		this.trackPoints[i].lon
+        	  );
+        	  this.totalDistance += distance;
+        	}
+        	
+        	this.lastPoint = this.trackPoints[this.trackPoints.length - 1];
+        	this.lastElevation = this.lastPoint.ele;
+        	this.isRecording = true;
+        	
+        	return true;
+          }
+          return false;
+        } catch (error) {
+          this.logger.error('Error checking for active recording:', error);
+          return false;
+        }
+    }
+    
     async startRecording() {
         try {
             const capability = this.checkGPSCapability();
