@@ -4,6 +4,7 @@ import Logger from '../utils/Logger.js';
 import SelectManager from '../managers/SelectManager.js';
 import FormManager from '../form/FormManager.js';
 import StateManager from '../state/StateManager.js';
+import GPSManager from './managers/GPSManager.js';
 
 class UIManager {
   static instance = null;
