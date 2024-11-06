@@ -23,7 +23,7 @@ class PhotoManager {
     return PhotoManager.instance;
   }
 
-  initializePhotoUpload(forceInit = false) {
+  async initializePhotoUpload(forceInit = false) {
     console.log('PhotoManager initializePhotoUpload called, force:', forceInit);
     
     if (this.initialized && !forceInit) {
