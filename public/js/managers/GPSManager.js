@@ -433,6 +433,22 @@ class GPSManager {
         });
     }
 
+    async loadActivePoints() {
+        const db = await this.dbManager.getDatabase();
+        
+        return new Promise((resolve, reject) => {
+          const transaction = db.transaction(['activePoints'], 'readonly');
+          const store = transaction.objectStore('activePoints');
+          const request = store.getAll();
+        
+          request.onsuccess = () => {
+            const points = request.result;
+            resolve(points.sort((a, b) => a.timestamp - b.timestamp));
+          };
+          request.onerror = () => reject(request.error);
+        });
+    }
+
     async clearActivePoints() {
         const db = await this.dbManager.getDatabase();
         
