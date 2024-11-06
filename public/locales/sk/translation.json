@@ -25,8 +25,11 @@
     "preferences": "Nastavenia",
     "preferencesDesc": "Správa nastavení aplikácie",
     "settings": "Nastavenia",
-    "settingsDesc": "Správa nastavení a účtu"
-  },
+    "settingsDesc": "Správa nastavení a účtu",
+    "confirmButtons": {
+      "confirm": "Potvrdiť",
+      "cancel": "Zrušiť"
+    },
   "settings": {
     "title": "Nastavenia",
     "returnToDashboard": "Späť na hlavnú stránku"
