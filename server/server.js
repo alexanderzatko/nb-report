@@ -262,34 +262,23 @@ app.post('/api/submit-snow-report', async (req, res) => {
       });
     }
 
-    // The Drupal form processing rule expects the form data to be called "posted_data"
-    const wrappedData = {
-      posted_data: req.body
-    };
+    // Create URL-encoded form data as Drupal expects
+    const params = new URLSearchParams();
+    params.append('posted_data', JSON.stringify(req.body));
 
-    // Ensure we have a valid request body
-    if (!req.body || typeof req.body !== 'object') {
-      logger.error('Invalid request body', { body: req.body });
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid request format'
-      });
-    }
-
-    // Log the outgoing request to nabezky service
     logger.info('Making request to nabezky service', {
       url: `${OAUTH_PROVIDER_URL}/nabezky/rules/rules_process_data_from_the_nb_report_app`,
       hasAuthHeader: true,
-      requestBody: req.body
+      requestBody: params.toString()
     });
 
     const response = await axios.post(
       `${OAUTH_PROVIDER_URL}/nabezky/rules/rules_process_data_from_the_nb_report_app`,
-      req.body,
+      params,  // Send as URL-encoded form data
       {
         headers: {
           'Authorization': `Bearer ${req.session.accessToken}`,
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',  // Changed content type
           'Accept': 'application/json'
         }
       }
