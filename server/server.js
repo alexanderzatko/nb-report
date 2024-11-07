@@ -239,11 +239,49 @@ app.get('/api/auth-status', (req, res) => {
   });
 });
 
-app.post('/api/submit-snow-report', (req, res) => {
-  // Log the received data
-  console.log('Snow report received:', req.body);
-  // Send success response
-  res.json({ message: 'Snow report received successfully' });
+app.post('/api/submit-snow-report', async (req, res) => {
+  try {
+    if (!req.session || !req.session.accessToken) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Not authenticated' 
+      });
+    }
+
+    const response = await axios.post(
+      `${OAUTH_PROVIDER_URL}/nabezky/rules/rules_process_data_from_the_nb_report_app`,
+      req.body,
+      {
+        headers: {
+          'Authorization': `Bearer ${req.session.accessToken}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      }
+    );
+
+    // Response will be true/false from the nabezky endpoint
+    res.json({ 
+      success: response.data === true,
+      message: response.data === true ? 'Snow report submitted successfully' : 'Failed to submit snow report'
+    });
+
+  } catch (error) {
+    logger.error('Error submitting snow report:', error.response?.data || error.message);
+    
+    // Handle different error types
+    if (error.response?.status === 401) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Authentication failed' 
+      });
+    }
+    
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error while submitting snow report' 
+    });
+  }
 });
 
 app.post('/api/initiate-oauth', (req, res) => {
