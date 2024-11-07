@@ -1052,29 +1052,46 @@ class FormManager {
   }
 
   collectFormData() {
-      const jsonData = {};
+      const formData = new FormData();
       
+      // Determine which form type is visible
       const isAdmin = document.getElementById('admin-section')?.style.display !== 'none';
+      
+      // Get common fields that are visible
       const visibleData = this.collectVisibleData(isAdmin);
       
-      // Add visible data to JSON object
+      // Add each visible field to FormData
       Object.entries(visibleData).forEach(([key, value]) => {
           if (value !== null && value !== undefined && value !== '') {
-              // Convert numeric strings to numbers
-              if (!isNaN(value) && value !== '') {
-                  jsonData[key] = Number(value);
-              } else {
-                  jsonData[key] = value;
-              }
+              formData.append(key, value);
           }
       });
   
       // Add trail conditions for admin
       if (isAdmin && Object.keys(this.trailConditions).length > 0) {
-          jsonData.trailConditions = this.trailConditions;
+          formData.append('trailConditions', JSON.stringify(this.trailConditions));
       }
   
-      return jsonData;  // Return plain object instead of FormData
+      // Add rewards data if rewards section is visible
+      const rewardsSection = document.getElementById('rewards-section');
+      if (rewardsSection?.style.display !== 'none') {
+          const laborTime = document.getElementById('labor-time')?.value;
+          const rewardRequested = document.getElementById('reward-requested')?.value;
+          
+          if (laborTime) formData.append('laborTime', laborTime);
+          if (rewardRequested) formData.append('rewardRequested', rewardRequested);
+      }
+  
+      // Handle GPS/GPX data
+      const gpxOption = document.getElementById('gpx-option');
+      if (gpxOption && gpxOption.value !== 'none') {
+          const gpsManager = GPSManager.getInstance();
+          if (gpsManager.hasExistingTrack()) {
+              formData.append('gpx', gpsManager.exportGPX());
+          }
+      }
+  
+      return formData;
   }
 
   collectVisibleData(isAdmin) {
@@ -1160,34 +1177,27 @@ class FormManager {
   
   async submitFormData(formData) {
       try {
-          // Convert FormData to a regular object
-          const jsonData = {};
+          // Log the form data for debugging
+          const formDataDebug = {};
           formData.forEach((value, key) => {
-              // Handle numeric values
-              if (!isNaN(value) && value !== '') {
-                  jsonData[key] = Number(value);
-              } else {
-                  jsonData[key] = value;
-              }
+              formDataDebug[key] = value instanceof File ? 
+                  { type: 'File', name: value.name, size: value.size } : value;
           });
+          this.logger.debug('Submitting form data:', formDataDebug);
   
-          this.logger.debug('Submitting form data:', jsonData);
-  
+          // Make the actual submission request
           const response = await fetch('/api/submit-snow-report', {
               method: 'POST',
               headers: {
                   'Content-Type': 'application/json'
               },
-              body: JSON.stringify(jsonData),
+              body: JSON.stringify(Object.fromEntries(formData)),
               credentials: 'include'
           });
   
           if (!response.ok) {
               let errorMessage;
               switch (response.status) {
-                  case 400:
-                      errorMessage = this.i18next.t('errors.form.invalidData');
-                      break;
                   case 401:
                       errorMessage = this.i18next.t('errors.form.unauthorized');
                       break;
@@ -1233,12 +1243,6 @@ class FormManager {
                       infoDisplay.innerHTML = '';
                   }
               }
-    
-              // If submission was successful, clear GPX data if it was included
-              if (gpxOption && gpxOption.value !== 'none') {
-                  const gpsManager = GPSManager.getInstance();
-                  await this.clearGPXData(gpsManager);
-              }
           }
   
           return {
@@ -1250,7 +1254,6 @@ class FormManager {
   
       } catch (error) {
           this.logger.error('Form submission error:', error);
-          // Do NOT clear form data on error - allow retry
           throw {
               success: false,
               message: error.message || this.i18next.t('errors.form.submitFailed')
