@@ -262,6 +262,11 @@ app.post('/api/submit-snow-report', async (req, res) => {
       });
     }
 
+    // The Drupal form processing rule expects the form data to be called "posted_data"
+    const wrappedData = {
+      posted_data: req.body
+    };
+
     // Ensure we have a valid request body
     if (!req.body || typeof req.body !== 'object') {
       logger.error('Invalid request body', { body: req.body });
