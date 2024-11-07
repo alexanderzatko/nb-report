@@ -53,6 +53,8 @@ const setCorrectMimeType = (res, path) => {
   }
 };
 
+app.use(express.json());
+
 // Serve static files with specific configurations
 app.use('/js', express.static(path.join(__dirname, '../public/js'), {
   setHeaders: setCorrectMimeType
@@ -131,6 +133,12 @@ app.use((req, res, next) => {
 
 app.post('/api/log-error', (req, res) => {
   try {
+
+    if (!req.body) {
+      logger.warn('Empty request body in log-error endpoint');
+      return res.status(400).json({ status: 'error', message: 'No data provided' });
+    }
+
     const { level = 'error', message, data } = req.body;
     
     // Log with session context if available
@@ -179,8 +187,6 @@ app.get('/api/check-session', (req, res) => {
     hasAccessToken: !!req.session.accessToken
   });
 });
-    
-app.use(express.json());
 
 const authenticateUser = (req, res, next) => {
   const token = req.headers.authorization;
@@ -241,6 +247,13 @@ app.get('/api/auth-status', (req, res) => {
 
 app.post('/api/submit-snow-report', async (req, res) => {
   try {
+    // Log the incoming request
+    logger.info('Snow report submission received', {
+      body: req.body,
+      session: req.session ? 'exists' : 'missing',
+      token: req.session?.accessToken ? 'exists' : 'missing'
+    });
+
     if (!req.session || !req.session.accessToken) {
       return res.status(401).json({ 
         success: false, 
@@ -248,7 +261,19 @@ app.post('/api/submit-snow-report', async (req, res) => {
       });
     }
 
-    logger.error('About to make a call to:', `${OAUTH_PROVIDER_URL}/nabezky/rules/rules_process_data_from_the_nb_report_app`);
+    // Ensure we have a valid request body
+    if (!req.body || typeof req.body !== 'object') {
+      logger.error('Invalid request body', { body: req.body });
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid request format'
+      });
+    }
+
+    // Make the request to nabezky service
+    logger.info('Making request to nabezky service', {
+      url: `${OAUTH_PROVIDER_URL}/nabezky/rules/rules_process_data_from_the_nb_report_app`
+    });
 
     const response = await axios.post(
       `${OAUTH_PROVIDER_URL}/nabezky/rules/rules_process_data_from_the_nb_report_app`,
@@ -262,6 +287,11 @@ app.post('/api/submit-snow-report', async (req, res) => {
       }
     );
 
+    logger.info('Received response from nabezky service', {
+      status: response.status,
+      data: response.data
+    });
+
     // Response will be true/false from the nabezky endpoint
     res.json({ 
       success: response.data === true,
@@ -269,20 +299,33 @@ app.post('/api/submit-snow-report', async (req, res) => {
     });
 
   } catch (error) {
-    logger.error('Error submitting snow report:', error.response?.data || error.message);
+    logger.error('Error in submit-snow-report:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      stack: error.stack
+    });
     
-    // Handle different error types
-    if (error.response?.status === 401) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Authentication failed' 
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      return res.status(error.response.status).json({
+        success: false,
+        message: error.response.data?.message || 'Server error while submitting snow report'
+      });
+    } else if (error.request) {
+      // The request was made but no response was received
+      return res.status(502).json({
+        success: false,
+        message: 'No response received from service'
+      });
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error'
       });
     }
-    
-    res.status(500).json({ 
-      success: false, 
-      message: 'Server error while submitting snow report' 
-    });
   }
 });
 
