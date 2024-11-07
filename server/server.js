@@ -262,23 +262,24 @@ app.post('/api/submit-snow-report', async (req, res) => {
       });
     }
 
-    // Create URL-encoded form data as Drupal expects
-    const params = new URLSearchParams();
-    params.append('posted_data', JSON.stringify(req.body));
+    // Format the data as JSON with posted_data wrapper
+    const data = {
+      posted_data: JSON.stringify(req.body)  // Stringify the inner data
+    };
 
     logger.info('Making request to nabezky service', {
       url: `${OAUTH_PROVIDER_URL}/nabezky/rules/rules_process_data_from_the_nb_report_app`,
       hasAuthHeader: true,
-      requestBody: params.toString()
+      requestBody: data
     });
 
     const response = await axios.post(
       `${OAUTH_PROVIDER_URL}/nabezky/rules/rules_process_data_from_the_nb_report_app`,
-      params,  // Send as URL-encoded form data
+      data,
       {
         headers: {
           'Authorization': `Bearer ${req.session.accessToken}`,
-          'Content-Type': 'application/x-www-form-urlencoded',  // Changed content type
+          'Content-Type': 'application/json',
           'Accept': 'application/json'
         }
       }
