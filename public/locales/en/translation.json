@@ -366,7 +366,13 @@
       "initFailed": "Application initialization failed. Please refresh the page."
     },
     "form": {
-      "loading": "Error loading form"
+      "loading": "Error loading form",
+      "unauthorized": "You need to log in again to send the message",
+      "forbidden": "You do not have permission to send the message",
+      "tooLarge": "The message is too large. Try reducing or removing some photos",
+      "tooManyRequests": "Too many attempts to send. Please wait a moment and try again",
+      "serverError": "Server error occurred while processing the message. Please try again later",
+      "submitFailed": "Failed to send the message. Please try again later"
     }
   }
 }
