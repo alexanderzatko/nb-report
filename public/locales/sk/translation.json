@@ -316,7 +316,13 @@
       "initFailed": "Inicializácia aplikácie zlyhala. Obnovte stránku."
     },
     "form": {
-      "loading": "Chyba pri načítavaní formulára"
+      "loading": "Chyba pri načítavaní formulára",
+      "unauthorized": "Pre odoslanie správy sa musíte znovu prihlásiť",
+      "forbidden": "Nemáte oprávnenie na odoslanie správy",
+      "tooLarge": "Správa je príliš veľká. Skúste zmenšiť alebo odstrániť niektoré fotografie",
+      "tooManyRequests": "Príliš veľa pokusov o odoslanie. Prosím počkajte chvíľu a skúste znova",
+      "serverError": "Chyba servera pri spracovaní správy. Skúste to znova neskôr",
+      "submitFailed": "Správu sa nepodarilo odoslať. Skúste to znova neskôr"
     }
   },
   "offline": {
