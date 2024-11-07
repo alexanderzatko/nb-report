@@ -359,7 +359,13 @@ port{
       "initFailed": "Inicializace aplikace selhala. Obnovte stránku."
     },
     "form": {
-      "loading": "Chyba při načítání formuláře"
+      "loading": "Chyba při načítání formuláře",
+      "unauthorized": "Pro odeslání zprávy se musíte znovu přihlásit",
+      "forbidden": "Nemáte oprávnění k odeslání zprávy",
+      "tooLarge": "Zpráva je příliš velká. Zkuste zmenšit nebo odstranit některé fotografie",
+      "tooManyRequests": "Příliš mnoho pokusů o odeslání. Prosím, počkejte chvíli a zkuste to znovu",
+      "serverError": "Došlo k chybě serveru při zpracování zprávy. Zkuste to prosím později",
+      "submitFailed": "Nepodařilo se odeslat zprávu. Zkuste to prosím znovu později"
     }
   },
   "offline": {
