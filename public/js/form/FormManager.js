@@ -1052,40 +1052,29 @@ class FormManager {
   }
 
   collectFormData() {
-    const formData = new FormData();
-    
-    // Determine which form type is visible
-    const isAdmin = document.getElementById('admin-section')?.style.display !== 'none';
-    
-    // Get common fields that are visible
-    const visibleData = this.collectVisibleData(isAdmin);
-    
-    // Add each visible field to FormData
-    Object.entries(visibleData).forEach(([key, value]) => {
-        if (value !== null && value !== undefined && value !== '') {
-            formData.append(key, value);
-        }
-    });
-
-    // Add trail conditions for admin
-    if (isAdmin && Object.keys(this.trailConditions).length > 0) {
-        formData.append('trailConditions', JSON.stringify(this.trailConditions));
-    }
-
-    // Add rewards data if rewards section is visible
-    if (document.getElementById('rewards-section')?.style.display !== 'none') {
-        this.collectRewardsData(formData);
-    }
-
-    const gpxOption = document.getElementById('gpx-option');
-    if (gpxOption && gpxOption.value !== 'none') {
-        const gpsManager = GPSManager.getInstance();
-        if (gpsManager.hasExistingTrack()) {
-            formData.append('gpx', gpsManager.exportGPX());
-        }
-    }
-
-    return formData;
+      const jsonData = {};
+      
+      const isAdmin = document.getElementById('admin-section')?.style.display !== 'none';
+      const visibleData = this.collectVisibleData(isAdmin);
+      
+      // Add visible data to JSON object
+      Object.entries(visibleData).forEach(([key, value]) => {
+          if (value !== null && value !== undefined && value !== '') {
+              // Convert numeric strings to numbers
+              if (!isNaN(value) && value !== '') {
+                  jsonData[key] = Number(value);
+              } else {
+                  jsonData[key] = value;
+              }
+          }
+      });
+  
+      // Add trail conditions for admin
+      if (isAdmin && Object.keys(this.trailConditions).length > 0) {
+          jsonData.trailConditions = this.trailConditions;
+      }
+  
+      return jsonData;  // Return plain object instead of FormData
   }
 
   collectVisibleData(isAdmin) {
@@ -1171,25 +1160,34 @@ class FormManager {
   
   async submitFormData(formData) {
       try {
-          const formDataDebug = {};
+          // Convert FormData to a regular object
+          const jsonData = {};
           formData.forEach((value, key) => {
-              formDataDebug[key] = value instanceof File ? 
-                  { type: 'File', name: value.name, size: value.size } : value;
+              // Handle numeric values
+              if (!isNaN(value) && value !== '') {
+                  jsonData[key] = Number(value);
+              } else {
+                  jsonData[key] = value;
+              }
           });
-          this.logger.debug('Submitting form data:', formDataDebug);
+  
+          this.logger.debug('Submitting form data:', jsonData);
   
           const response = await fetch('/api/submit-snow-report', {
               method: 'POST',
               headers: {
                   'Content-Type': 'application/json'
               },
-              body: formData,
+              body: JSON.stringify(jsonData),
               credentials: 'include'
           });
   
           if (!response.ok) {
               let errorMessage;
               switch (response.status) {
+                  case 400:
+                      errorMessage = this.i18next.t('errors.form.invalidData');
+                      break;
                   case 401:
                       errorMessage = this.i18next.t('errors.form.unauthorized');
                       break;
