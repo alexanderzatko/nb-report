@@ -249,15 +249,16 @@ app.post('/api/submit-snow-report', async (req, res) => {
   try {
     // Log the incoming request
     logger.info('Snow report submission received', {
-      body: req.body,
-      session: req.session ? 'exists' : 'missing',
-      token: req.session?.accessToken ? 'exists' : 'missing'
+      sessionExists: !!req.session,
+      hasAccessToken: !!req.session?.accessToken,
+      tokenValue: req.session?.accessToken ? 'exists' : 'missing'
     });
 
     if (!req.session || !req.session.accessToken) {
+      logger.warn('No valid session or access token found');
       return res.status(401).json({ 
         success: false, 
-        message: 'Not authenticated' 
+        message: 'Pre odoslanie správy sa musíte znovu prihlásiť' 
       });
     }
 
@@ -270,9 +271,11 @@ app.post('/api/submit-snow-report', async (req, res) => {
       });
     }
 
-    // Make the request to nabezky service
+    // Log the outgoing request to nabezky service
     logger.info('Making request to nabezky service', {
-      url: `${OAUTH_PROVIDER_URL}/nabezky/rules/rules_process_data_from_the_nb_report_app`
+      url: `${OAUTH_PROVIDER_URL}/nabezky/rules/rules_process_data_from_the_nb_report_app`,
+      hasAuthHeader: true,
+      requestBody: req.body
     });
 
     const response = await axios.post(
@@ -303,29 +306,21 @@ app.post('/api/submit-snow-report', async (req, res) => {
       message: error.message,
       response: error.response?.data,
       status: error.response?.status,
+      isAxiosError: error.isAxiosError,
       stack: error.stack
     });
     
-    if (error.response) {
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx
-      return res.status(error.response.status).json({
+    if (error.response?.status === 401) {
+      return res.status(401).json({
         success: false,
-        message: error.response.data?.message || 'Server error while submitting snow report'
-      });
-    } else if (error.request) {
-      // The request was made but no response was received
-      return res.status(502).json({
-        success: false,
-        message: 'No response received from service'
-      });
-    } else {
-      // Something happened in setting up the request that triggered an Error
-      return res.status(500).json({
-        success: false,
-        message: 'Internal server error'
+        message: 'Pre odoslanie správy sa musíte znovu prihlásiť'
       });
     }
+
+    return res.status(error.response?.status || 500).json({
+      success: false,
+      message: error.response?.data?.message || 'Server error while submitting snow report'
+    });
   }
 });
 
