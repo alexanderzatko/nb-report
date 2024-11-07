@@ -248,6 +248,8 @@ app.post('/api/submit-snow-report', async (req, res) => {
       });
     }
 
+    logger.error('About to make a call to:', `${OAUTH_PROVIDER_URL}/nabezky/rules/rules_process_data_from_the_nb_report_app`);
+
     const response = await axios.post(
       `${OAUTH_PROVIDER_URL}/nabezky/rules/rules_process_data_from_the_nb_report_app`,
       req.body,
