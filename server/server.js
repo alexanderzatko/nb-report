@@ -46,21 +46,22 @@ const setCorrectMimeType = (res, path) => {
   }
 };
 
+// Serve static files with specific configurations
+app.use('/js', express.static(path.join(__dirname, '../public/js'), {
+  setHeaders: setCorrectMimeType
+}));
+
+app.use('/locales', express.static(path.join(__dirname, '../public/locales')));
+
 // Serve static files from the 'public' directory
-app.use(express.static(path.join(__dirname, 'public'), {
+app.use(express.static(path.join(__dirname, '../public'), {
   setHeaders: setCorrectMimeType
 }));
 
 // Serve necessary files from node_modules with correct MIME type
-app.use('/node_modules', express.static(path.join(__dirname, 'node_modules'), {
+app.use('/node_modules', express.static(path.join(__dirname, '../node_modules'), {
   setHeaders: setCorrectMimeType
 }));
-
-// Serve service-worker.js with the correct MIME type
-app.get('/service-worker.js', (req, res) => {
-  res.setHeader('Content-Type', 'application/javascript');
-  res.sendFile(path.join(__dirname, 'service-worker.js'));
-});
 
 //This tells Express that it's behind a proxy and to trust the X-Forwarded-* headers
 app.set('trust proxy', 1);
@@ -119,6 +120,31 @@ app.use((req, res, next) => {
     oldWriteHead.apply(this, arguments);
   };
   next();
+});
+
+app.post('/api/log-error', (req, res) => {
+  try {
+    const { level = 'error', message, data } = req.body;
+    
+    // Log with session context if available
+    const logData = {
+      message,
+      data,
+      timestamp: new Date().toISOString(),
+      clientIP: req.ip,
+      userAgent: req.get('User-Agent'),
+      sessionID: req.session?.id || 'no-session',
+      isAuthenticated: !!req.session?.accessToken
+    };
+
+    // Log even if there's no session - these could be important startup errors
+    logger.error('Client-side error', logData);
+    
+    res.status(200).json({ status: 'logged' });
+  } catch (err) {
+    logger.error('Error in log-error endpoint:', err);
+    res.status(500).json({ error: 'Failed to log error' });
+  }
 });
 
 //logging errors
@@ -194,10 +220,16 @@ app.get('/api/auth-status', (req, res) => {
     hasAccessToken: req.session && !!req.session.accessToken
   });
 
+  // Check if session exists and has valid tokens
   const isAuthenticated = !!(req.session && req.session.accessToken);
   
+  if (isAuthenticated) {
+    // Refresh the session expiry
+    req.session.touch();
+  }
+
   res.json({ 
-    isAuthenticated: isAuthenticated,
+    isAuthenticated,
     sessionID: req.sessionID,
     // Only include non-sensitive user info here
     userInfo: isAuthenticated ? {
@@ -207,13 +239,10 @@ app.get('/api/auth-status', (req, res) => {
 });
 
 app.post('/api/submit-snow-report', (req, res) => {
-  if (req.session.accessToken) {
-    // Process the snow report submission
-    console.log('Snow report received:', req.body);
-    res.json({ message: 'Snow report submitted successfully' });
-  } else {
-    res.status(401).json({ error: 'Not authenticated' });
-  }
+  // Log the received data
+  console.log('Snow report received:', req.body);
+  // Send success response
+  res.json({ message: 'Snow report received successfully' });
 });
 
 app.post('/api/initiate-oauth', (req, res) => {
@@ -339,7 +368,6 @@ app.get('/api/user-data', async (req, res) => {
   }
 
   try {
-    // Fetch user data from Drupal server using the access token
     const response = await axios.post(
       `${OAUTH_PROVIDER_URL}/nabezky/rules/rules_retrieve_data_for_the_nb_report_app`,
       {},
@@ -352,7 +380,8 @@ app.get('/api/user-data', async (req, res) => {
       }
     );
 
-    // Update the session with the latest user data
+    logger.info('User data retrieved:', response.data);  // Add this log
+
     req.session.userData = response.data;
     req.session.save((err) => {
       if (err) logger.error('Error saving session:', err);

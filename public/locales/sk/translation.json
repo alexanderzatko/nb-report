@@ -1,4 +1,10 @@
 {
+  "updates": {
+    "newVersionTitle": "Nová verzia aplikácie",
+    "newVersionMessage": "K dispozícii je nová verzia aplikácie. Aktualizujte teraz, aby ste získali najnovšie funkcie a vylepšenia.",
+    "updateNow": "Aktualizovať teraz",
+    "updateLater": "Neskôr"
+  },
   "app": {
     "title": "Report — Snehové podmienky",
     "header": "Report — Snehové podmienky"
@@ -8,14 +14,34 @@
     "newReport": "Nová správa",
     "newReportDesc": "Vytvoriť a odoslať novú správu z terénu",
     "recordGps": "Nový GPS záznam",
-    "recordGpsDesc": "Spustiť GPS záznam vašej túry (Už čoskoro)",
+    "recordGpsDesc": "Spustiť GPS záznam vašej túry",
+    "stopGpsRecording": "Zastaviť záznam",
+    "recordingStatsDist": "Vzdialenosť: {{distance}} km",
+    "recordingStatsEle": "Nadmorská výška: {{elevation}} m",
+    "gpsTrack": "GPS Trasa",
+    "trackStatsDist": "Vzdialenosť: {{distance}} km",
+    "trackStatsTime": "Doba trvania: {{hours}} h {{minutes}} m",
+    "confirmOverwriteTrack": "Pozor! Týmto vymažete existujúci záznam!",
+    "downloadGpx": "Exportovať GPS záznam",
+    "gpxDownloadError": "Chyba pri ukladaní GPS záznamu. Skúste znovu.",
     "preferences": "Nastavenia",
-    "preferencesDesc": "Správa nastavení aplikácie (Už čoskoro)"
+    "preferencesDesc": "Správa nastavení aplikácie",
+    "settings": "Nastavenia",
+    "settingsDesc": "Správa nastavení a účtu",
+    "confirmButtons": {
+      "confirm": "Potvrdiť",
+      "cancel": "Zrušiť"
+    }
+  },
+  "settings": {
+    "title": "Nastavenia",
+    "returnToDashboard": "Späť na hlavnú stránku"
   },
   "auth": {
     "loginText": "Prihlásiť sa do aplikácie",
     "login": "Prihlásiť",
-    "logout": "Odhlásiť"
+    "logout": "Odhlásiť",
+    "loginError": "Nedarí sa mi pripojiť sa na prihlasovací server. Skúste prosím neskôr."
   },
   "form": {
     "validation": {
@@ -29,6 +55,7 @@
     "formTitleRegular": "Vytvoriť správu",
     "formTitleAdmin": "Vytvoriť správu",
     "reportTitle": "Názov:",
+    "skicenterName": "Stredisko:",
     "country": "Krajina:",
     "selectCountry": "Vyberte krajinu",
     "region": "Oblasť:",
@@ -39,6 +66,7 @@
     "snowDepth750": "Hĺbka snehu v 750 m.n.m. (cm):",
     "snowDepth1000": "Hĺbka snehu nad 1000 m.n.m. (cm):",
     "snowType": "Typ snehu:",
+    "selectSnowType": "Vyberte typ snehu",
     "snowTypes": {
       "0": "Neznámy typ",
       "PDR": "Prašan",
@@ -54,6 +82,14 @@
     "snowDepthTotal": "Celková výška snehu (cm)",
     "snowDepthNew": "Nový sneh (cm)",
     "nextMaintenance": "Najbližšia úprava",
+    "maintenance": {
+      "unknown": "Neznáme",
+      "today": "Dnes",
+      "tomorrow": "Zajtra",
+      "laterDays": "Pozajtra alebo neskôr",
+      "fridaySaturday": "Piatok alebo v sobotu ráno",
+      "afterSnow": "Po najbližšom snežení"
+    },
     "classicStyle": "Klasický štýl:",
     "freeStyle": "Voľný štýl:",
     "trackConditions": {
@@ -82,6 +118,30 @@
     "photos": "Fotografie:",
     "selectPhotos": "Vybrať fotografie",
     "takePhoto": "Urobiť fotografiu",
+    "captionPlaceholder": "Pridať popisku ...",
+    "gpsTrack": {
+      "attachLabel": "Priložiť GPS záznam z {{date}}",
+      "details": "Dĺžka trasy: {{distance}} km, Trvanie: {{duration}}"
+    },
+    "gpx": {
+      "groupLabel": "GPX súbor záznamu trasy",
+      "options": {
+        "none": "Žiaden záznam",
+        "existing": "Pripojiť zaznamenanú trasu",
+        "upload": "Nahrať nový GPX súbor"
+      },
+      "trackInfo": "Záznam vytvorený dňa {{date}}\nVzdialenosť: {{distance}} km\nčas: {{duration}}",
+      "uploadButton": "Vybrať GPX súbor",
+      "confirmReplace": "Nahradiť existujúcu trasu?",
+      "currentTrack": "Existujúca trasa zaznamenaná dňa:",
+      "replaceQuestion": "Chcete ju nahradiť novou trasou?",
+      "cancel": "Zrušiť",
+      "replace": "Nahradiť",
+      "errors": {
+        "invalidFile": "Vyberte platný GPX súbor",
+        "processingError": "Chyba pri spracovaní GPX súboru"
+      }
+    },
     "rewards": {
       "sectionTitle": "Odmeňovanie",
       "timeElapsed": "Čas od otvorenia tejto stránky:",
@@ -107,7 +167,7 @@
     "alpy": "Alpy",
     "bachuren": "Bachureň",
     "belianskeTatry": "Belianske Tatry",
-    "benesovskaPahorkatina": "benešovská Pahorkatina",
+    "benesovskaPahorkatina": "Benešovská Pahorkatina",
     "beskydskePredhorie": "Beskydské Predhorie",
     "bieleKarpaty": "Biele Karpaty",
     "blatenskaPahorkatina": "Blatenska Pahorkatina",
@@ -245,6 +305,25 @@
     "ziarskaKotlina": "Žiarska Kotlina",
     "zitavskaPahorkatina": "Žitavská Pahorkatina",
     "zilinskaKotlina": "Žilinská Kotlina"
+  },
+  "errors": {
+    "gps": {
+      "androidOnly": "Táto funkcia je momentálne podporovaná len na zariadeniach s Androidom",
+      "notAvailable": "GPS funkcionalita nie je na tomto zariadení dostupná",
+      "permissionDenied": "Prístup k polohe bol zamietnutý"
+    },
+    "application": {
+      "initFailed": "Inicializácia aplikácie zlyhala. Obnovte stránku."
+    },
+    "form": {
+      "loading": "Chyba pri načítavaní formulára"
+    }
+  },
+  "offline": {
+    "title": "Nie ste pripojený na internet",
+    "message": "Zdá sa, že ste stratili pripojenie k internetu. Táto aplikácia vyžaduje pripojenie k internetu na načítanie dát a odosielanie hlásení.",
+    "instruction": "Skontrolujte svoje pripojenie a skúste to znova.",
+    "retryButton": "Skúsiť znova"
   },
   "welcome": "Vitajte, {{name}} ({{role}})"
 }

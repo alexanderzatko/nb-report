@@ -1,4 +1,10 @@
 {
+  "updates": {
+    "newVersionTitle": "New App Version",
+    "newVersionMessage": "A new version of the app is available. Update now to get the latest features and improvements.",
+    "updateNow": "Update Now",
+    "updateLater": "Later"
+  },
   "app": {
     "title": "Report Snow Conditions",
     "header": "Report Snow Conditions"
@@ -8,14 +14,34 @@
     "newReport": "New Report",
     "newReportDesc": "Submit a new report",
     "recordGps": "New GPS Record",
-    "recordGpsDesc": "Make a GPS recording of your trip (Coming soon)",
+    "recordGpsDesc": "Make a GPS recording of your trip",
+    "stopGpsRecording": "Stop Recording",
+    "recordingStatsDist": "Distance: {{distance}}km",
+    "recordingStatsEle": "Elevation: {{elevation}}m",
+    "gpsTrack": "GPS Track",
+    "trackStatsDist": "Distance: {{distance}}km",
+    "trackStatsTime": "Duration: {{hours}}h {{minutes}}m",
+    "confirmOverwriteTrack": "Warning! This will overwrite the existing record!",
+    "downloadGpx": "Export GPS record",
+    "gpxDownloadError": "Error saving GPS record. Please try again.",
     "preferences": "Preferences",
-    "preferencesDesc": "Manage your preferences (Coming soon)"
+    "preferencesDesc": "Manage your preferences",
+    "settings": "Nastavení",
+    "settingsDesc": "Správa nastavení a účtu",
+    "confirmButtons": {
+      "confirm": "OK",
+      "cancel": "Cancel"
+    }
+  },
+  "settings": {
+    "title": "Nastavení",
+    "returnToDashboard": "Zpět na hlavní stránku"
   },
   "auth": {
     "loginText": "Log in",
     "login": "Login",
-    "logout": "Logout"
+    "logout": "Logout",
+    "loginError": "Unable to connect to login service. Please try again later."
   },
   "form": {
     "validation": {
@@ -29,6 +55,7 @@
     "formTitleRegular": "Create Report",
     "formTitleAdmin": "Create Report",
     "reportTitle": "Title:",
+    "skicenterName": "Ski Center:",
     "country": "Country:",
     "selectCountry": "Select a country",
     "region": "Region:",
@@ -39,6 +66,7 @@
     "snowDepth750": "Hĺbka snehu v 750 m.n.m. (cm):",
     "snowDepth1000": "Hĺbka snehu nad 1000 m.n.m. (cm):",
     "snowType": "Snow Type:",
+    "selectSnowType": "Select snow type",
     "snowTypes": {
       "0": "Unknown type",
       "PDR": "Powder",
@@ -54,6 +82,14 @@
     "snowDepthTotal": "Total snow height (cm)",
     "snowDepthNew": "New snow (cm)",
     "nextMaintenance": "Next maintenance",
+    "maintenance": {
+      "unknown": "Unknown",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "laterDays": "The day after tomorrow or later",
+      "fridaySaturday": "Friday or Saturday morning",
+      "afterSnow": "After the next snowfall"
+    },
     "classicStyle": "Classic Style:",
     "freeStyle": "Free Style:",
     "trackConditions": {
@@ -82,6 +118,30 @@
     "photos": "Photos:",
     "selectPhotos": "Select photos",
     "takePhoto": "Take Photo",
+    "captionPlaceholder": "Add acaption ...",
+    "gpsTrack": {
+      "attachLabel": "Attach GPS record from {{date}}",
+      "details": "Track length: {{distance}} km, Time elapsed: {{duration}}"
+    },
+    "gpx": {
+      "groupLabel": "Trip record GPX file",
+      "options": {
+    	"none": "No record",
+    	"existing": "Include recorded track",
+    	"upload": "Upload new GPX file"
+      },
+      "trackInfo": "Track recorded on {{date}}\nDistance: {{distance}} km\nDuration: {{duration}}",
+      "uploadButton": "Select GPX file",
+      "confirmReplace": "Replace Existing Track?",
+      "currentTrack": "Current track recorded on:",
+      "replaceQuestion": "Do you want to replace it with the new track?",
+      "cancel": "Cancel",
+      "replace": "Replace",
+      "errors": {
+    	"invalidFile": "Please select a valid GPX file",
+    	"processingError": "Error processing GPX file"
+      }
+    },
     "rewards": {
       "sectionTitle": "Rewards",
       "timeElapsed": "Time since opening this form:",
@@ -198,7 +258,7 @@
     "krusneHory": "Krušné Hory",
     "plZapadneBeskydy": "Západné Beskydy",
     "blatenskaPahorkatina": "Blatenska Pahorkatina",
-    "benesovskaPahorkatina": "benešovská Pahorkatina",
+    "benesovskaPahorkatina": "Benešovská Pahorkatina",
     "ceskyyLes": "Český Les",
     "podceskoleskaPahorkatina": "Podčeskoleská Pahorkatina",
     "vserubskaVrchovina": "Všerubská Vrchovina",
@@ -289,5 +349,24 @@
     "severomadarskaStredohorie": "Severomaďarské Stredohorie",
     "plZapadneSudety": "Západné Sudety"
   },
-  "welcome": "Welcome, {{name}} ({{role}})"
+  "welcome": "Welcome, {{name}} ({{role}})",
+  "offline": {
+    "title": "You're Offline",
+    "message": "It looks like you've lost your internet connection. This app requires an internet connection to load data and submit reports.",
+    "instruction": "Please check your connection and try again.",
+    "retryButton": "Try Again"
+  },
+  "errors": {
+    "gps": {
+      "androidOnly": "This feature is currently only supported on Android devices",
+      "notAvailable": "GPS functionality is not available on this device",
+      "permissionDenied": "Location permission denied"
+    },
+    "application": {
+      "initFailed": "Application initialization failed. Please refresh the page."
+    },
+    "form": {
+      "loading": "Error loading form"
+    }
+  }
 }
