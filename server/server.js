@@ -7,6 +7,13 @@ import winston from 'winston';
 import MySQLStore from 'express-mysql-session';
 import axios from 'axios';
 
+// OAuth Configuration
+const OAUTH_CLIENT_ID = process.env.OAUTH_CLIENT_ID;
+const OAUTH_CLIENT_SECRET = process.env.OAUTH_CLIENT_SECRET;
+const OAUTH_REDIRECT_URI = 'https://report.nabezky.sk/api/nblogin/';
+const OAUTH_PROVIDER_URL = 'https://devsuhel.nabezky.sk';
+const TOKEN_URL = process.env.TOKEN_URL || 'https://devsuhel.nabezky.sk/oauth2/token';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -174,12 +181,6 @@ app.get('/api/check-session', (req, res) => {
 });
     
 app.use(express.json());
-
-const OAUTH_CLIENT_ID = process.env.OAUTH_CLIENT_ID;
-const OAUTH_CLIENT_SECRET = process.env.OAUTH_CLIENT_SECRET;
-const OAUTH_REDIRECT_URI = 'https://report.nabezky.sk/api/nblogin/';
-const OAUTH_PROVIDER_URL = 'https://nabezky.sk';
-const TOKEN_URL = process.env.TOKEN_URL || 'https://nabezky.sk/oauth2/token';
 
 const authenticateUser = (req, res, next) => {
   const token = req.headers.authorization;
