@@ -1030,11 +1030,19 @@ class FormManager {
   
       // Continue with form submission if validation passes
       const formData = this.collectFormData();
-      await this.submitFormData(formData);
-      this.stopTrackingFormTime();
-      this.showSuccess(this.i18next.t('form.validation.submitSuccess'));
-      this.resetForm();
-  
+      const result = await this.submitFormData(formData);
+      
+      if (result.success) {
+          this.showSuccess(this.i18next.t('form.validation.submitSuccess'));
+          this.stopTrackingFormTime();
+          this.resetForm();
+          
+          // Show dashboard
+          document.getElementById('dashboard-container').style.display = 'block';
+          document.getElementById('snow-report-form').style.display = 'none';
+      } else {
+          this.showError(result.message || this.i18next.t('form.validation.submitError'));
+      }  
     } catch (error) {
       this.logger.error('Error submitting snow report:', error);
       this.showError(this.i18next.t('form.validation.submitError'));
@@ -1162,100 +1170,93 @@ class FormManager {
   }
   
   async submitFormData(formData) {
-      // Convert FormData to a regular object for logging
-      const formDataObject = {};
-      formData.forEach((value, key) => {
-          // Handle File objects specially
-          if (value instanceof File) {
-              formDataObject[key] = {
-                  type: 'File',
-                  name: value.name,
-                  size: value.size,
-                  lastModified: value.lastModified
-              };
-          } else {
-              // Handle regular form data
-              formDataObject[key] = value;
-          }
-      });
-  
-      // Get photos if photo section is visible
-      const photoSection = document.querySelector('.photos-section');
-      const photoInfo = [];
-      if (photoSection?.style.display !== 'none') {
-          const photos = this.photoManager.getPhotos();
-          photos.forEach(photo => {
-              photoInfo.push({
-                  name: photo.file.name,
-                  size: photo.file.size,
-                  caption: photo.caption
-              });
-          });
-      }
-  
       try {
-          // Log the complete form submission data
-          console.group('Form Submission Data');
-          console.log('Form Fields:', formDataObject);
-          if (formDataObject.trailConditions) {
-              console.log('Trail Conditions:', JSON.parse(formDataObject.trailConditions));
-          }
-          if (photoInfo.length > 0) {
-              console.log('Photos:', photoInfo);
-          }
-          
-          // If GPS track is included, log it
-          const gpxOption = document.getElementById('gpx-option');
-          const includeGPX = document.getElementById('include-gpx');
-          if (gpxOption && gpxOption.value !== 'none') {
-              const gpsManager = GPSManager.getInstance();
-              if (gpsManager.hasExistingTrack()) {
-                  console.log('GPS Track included:', true);
-                  console.log('GPX Data:', gpsManager.exportGPX());
-              }
-          }
-          console.groupEnd();
+          const formDataDebug = {};
+          formData.forEach((value, key) => {
+              formDataDebug[key] = value instanceof File ? 
+                  { type: 'File', name: value.name, size: value.size } : value;
+          });
+          this.logger.debug('Submitting form data:', formDataDebug);
   
-          // Make the API call to submit the form data
           const response = await fetch('/api/submit-snow-report', {
               method: 'POST',
-              body: formData
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              body: formData,
+              credentials: 'include'
           });
   
           if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
+              let errorMessage;
+              switch (response.status) {
+                  case 401:
+                      errorMessage = this.i18next.t('errors.form.unauthorized');
+                      break;
+                  case 403:
+                      errorMessage = this.i18next.t('errors.form.forbidden');
+                      break;
+                  case 413:
+                      errorMessage = this.i18next.t('errors.form.tooLarge');
+                      break;
+                  case 429:
+                      errorMessage = this.i18next.t('errors.form.tooManyRequests');
+                      break;
+                  default:
+                      errorMessage = this.i18next.t('errors.form.serverError');
+              }
+              throw new Error(errorMessage);
           }
   
-          // If submission was successful, clear GPX data if it was included
-          if (gpxOption && gpxOption.value !== 'none') {
-              const gpsManager = GPSManager.getInstance();
-              await this.clearGPXData(gpsManager);
+          const data = await response.json();
+          
+          if (data.success) {
+              // Perform cleanup only after successful submission
               
-              // Reset the GPX option select to 'none'
-              gpxOption.value = 'none';
-              
-              // Hide the existing GPX option
-              const existingOption = document.getElementById('existing-gpx-option');
-              if (existingOption) {
-                  existingOption.hidden = true;
+              // Clear GPS data if it was included
+              const gpxOption = document.getElementById('gpx-option');
+              if (gpxOption && gpxOption.value !== 'none') {
+                  const gpsManager = GPSManager.getInstance();
+                  await this.clearGPXData(gpsManager);
+                  
+                  // Reset the GPX option select to 'none'
+                  gpxOption.value = 'none';
+                  
+                  // Hide the existing GPX option
+                  const existingOption = document.getElementById('existing-gpx-option');
+                  if (existingOption) {
+                      existingOption.style.display = 'none';
+                  }
+    
+                  // Clear info display
+                  const infoDisplay = document.getElementById('gpx-info-display');
+                  if (infoDisplay) {
+                      infoDisplay.style.display = 'none';
+                      infoDisplay.innerHTML = '';
+                  }
               }
-  
-              // Clear info display
-              const infoDisplay = document.getElementById('gpx-info-display');
-              if (infoDisplay) {
-                  infoDisplay.style.display = 'none';
-                  infoDisplay.innerHTML = '';
+    
+              // If submission was successful, clear GPX data if it was included
+              if (gpxOption && gpxOption.value !== 'none') {
+                  const gpsManager = GPSManager.getInstance();
+                  await this.clearGPXData(gpsManager);
               }
           }
   
           return {
-              success: true,
-              message: 'Form data submitted successfully'
+              success: data.success,
+              message: data.success ? 
+                  this.i18next.t('form.validation.submitSuccess') : 
+                  this.i18next.t('errors.form.submitFailed')
           };
   
       } catch (error) {
-          this.logger.error('Error submitting form data:', error);
-          throw error;
+          this.logger.error('Form submission error:', error);
+          // Do NOT clear form data on error - allow retry
+          throw {
+              success: false,
+              message: error.message || this.i18next.t('errors.form.submitFailed')
+          };
       }
   }
 
