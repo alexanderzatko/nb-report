@@ -349,7 +349,6 @@
     "severomadarskaStredohorie": "Severomaďarské Stredohorie",
     "plZapadneSudety": "Západné Sudety"
   },
-  "welcome": "Welcome, {{name}} ({{role}})",
   "offline": {
     "title": "You're Offline",
     "message": "It looks like you've lost your internet connection. This app requires an internet connection to load data and submit reports.",
@@ -374,5 +373,6 @@
       "serverError": "Server error occurred while processing the message. Please try again later",
       "submitFailed": "Failed to send the message. Please try again later"
     }
-  }
+  },
+  "welcome": "Welcome, {{name}}"
 }
