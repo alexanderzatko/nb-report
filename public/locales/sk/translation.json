@@ -331,5 +331,5 @@
     "instruction": "Skontrolujte svoje pripojenie a skúste to znova.",
     "retryButton": "Skúsiť znova"
   },
-  "welcome": "Vitajte, {{name}} ({{role}})"
+  "welcome": "Vitajte, {{name}}"
 }
