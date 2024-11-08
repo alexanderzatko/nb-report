@@ -649,15 +649,14 @@ class UIManager {
   }
   
   updateUserSpecificElements(userData) {
-    if (userData.name) {
-      const welcomeElement = document.querySelector('[data-i18n="welcome"]');
-      if (welcomeElement) {
-        welcomeElement.textContent = this.i18next.t('welcome', {
-          name: userData.name,
-          role: userData.ski_center_admin === "1" ? "Admin" : "User"
-        });
+      if (userData.user_name) {
+          const welcomeElement = document.getElementById('welcome-head');
+          if (welcomeElement) {
+              welcomeElement.textContent = this.i18next.t('welcome', {
+                  name: userData.user_name
+              });
+          }
       }
-    }
   }
   
   updateLoginText() {
