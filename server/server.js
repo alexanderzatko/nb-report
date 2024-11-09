@@ -164,14 +164,14 @@ app.post('/api/log-error', (req, res) => {
 
 //logging errors
 app.use((err, req, res, next) => {
-  logger.error('Unhandled error', {
-    error: err.message,
-    stack: err.stack,
-    url: req.url,
-    method: req.method,
-    sessionID: req.sessionID
-  });
-  res.status(500).json({ error: 'Internal server error' });
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    logger.error('JSON parsing error:', err);
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Invalid JSON format'
+    });
+  }
+  next(err);
 });
 
 //for checking the session by making a call to this endpoint
