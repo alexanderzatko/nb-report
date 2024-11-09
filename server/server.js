@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import session from 'express-session';
 import path from 'path';
+import multer from 'multer';
 import { fileURLToPath } from 'url';
 import winston from 'winston';
 import MySQLStore from 'express-mysql-session';
@@ -52,6 +53,23 @@ const setCorrectMimeType = (res, path) => {
     res.set('Content-Type', 'application/javascript');
   }
 };
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, '/tmp/uploads/') // Temporary storage
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + path.extname(file.originalname))
+    }
+});
+
+const upload = multer({ 
+    storage: storage,
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB limit per file
+    }
+});
 
 app.use(express.json());
 
@@ -243,6 +261,76 @@ app.get('/api/auth-status', (req, res) => {
       // e.g., username: req.session.username,
     } : null
   });
+});
+
+// Handle photo uploads
+app.post('/api/upload-photo', upload.single('files[0]'), async (req, res) => {
+    try {
+        if (!req.session?.accessToken) {
+            return res.status(401).json({ error: 'Not authenticated' });
+        }
+
+        // Create file entity in Drupal
+        const formData = new FormData();
+        formData.append('files[0]', fs.createReadStream(req.file.path));
+        formData.append('caption', req.body.caption || '');
+
+        const response = await axios.post(
+            `${OAUTH_PROVIDER_URL}/nabezky/file/upload`,
+            formData,
+            {
+                headers: {
+                    'Authorization': `Bearer ${req.session.accessToken}`,
+                    ...formData.getHeaders()
+                }
+            }
+        );
+
+        // Clean up temporary file
+        fs.unlink(req.file.path, (err) => {
+            if (err) logger.error('Error deleting temp file:', err);
+        });
+
+        res.json({ fid: response.data.fid });
+
+    } catch (error) {
+        logger.error('Photo upload error:', error);
+        res.status(500).json({ error: 'Failed to upload photo' });
+    }
+});
+
+// Handle GPX uploads
+app.post('/api/upload-gpx', upload.single('files[0]'), async (req, res) => {
+    try {
+        if (!req.session?.accessToken) {
+            return res.status(401).json({ error: 'Not authenticated' });
+        }
+
+        const formData = new FormData();
+        formData.append('files[0]', fs.createReadStream(req.file.path));
+
+        const response = await axios.post(
+            `${OAUTH_PROVIDER_URL}/nabezky/file/upload`,
+            formData,
+            {
+                headers: {
+                    'Authorization': `Bearer ${req.session.accessToken}`,
+                    ...formData.getHeaders()
+                }
+            }
+        );
+
+        // Clean up temporary file
+        fs.unlink(req.file.path, (err) => {
+            if (err) logger.error('Error deleting temp file:', err);
+        });
+
+        res.json({ fid: response.data.fid });
+
+    } catch (error) {
+        logger.error('GPX upload error:', error);
+        res.status(500).json({ error: 'Failed to upload GPX file' });
+    }
 });
 
 app.post('/api/submit-snow-report', async (req, res) => {
