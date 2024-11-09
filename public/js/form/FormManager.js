@@ -1192,7 +1192,7 @@ class FormManager {
               formDataObj.photos = await Promise.all(photos.map(async (photo) => {
                   const base64Data = await this.fileToBase64(photo.file);
                   return {
-                      file: base64Data.split(',')[1], // Remove data URL prefix
+                      file: base64Data.split(',')[1],
                       filename: photo.file.name,
                       filemime: photo.file.type,
                       filesize: photo.file.size,
@@ -1230,15 +1230,26 @@ class FormManager {
               photos: formDataObj.photos ? `${formDataObj.photos.length} photos included` : 'no photos',
               gpx: formDataObj.gpx ? 'GPX file included' : 'no GPX'
           });
+
+          // First check if we have a valid session
+          const authCheckResponse = await fetch('/api/auth-status', {
+              credentials: 'include'
+          });
+          const authStatus = await authCheckResponse.json();
   
+          if (!authStatus.isAuthenticated) {
+              throw new Error(this.i18next.t('errors.form.unauthorized'));
+          }
+        
           // Make the actual submission request
           const response = await fetch('/api/submit-snow-report', {
               method: 'POST',
               headers: {
-                  'Content-Type': 'application/json'
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json'
               },
-              body: JSON.stringify(wrappedData),
-              credentials: 'include'
+              credentials: 'include',
+              body: JSON.stringify(wrappedData)
           });
   
           if (!response.ok) {
