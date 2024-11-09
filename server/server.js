@@ -264,7 +264,7 @@ app.post('/api/submit-snow-report', async (req, res) => {
 
     // Format the data as JSON with posted_data wrapper
     const data = {
-      posted_data: JSON.stringify(req.body)  // Stringify the inner data
+      posted_data: JSON.stringify(req.body.data)
     };
 
     logger.info('Making request to nabezky service', {
