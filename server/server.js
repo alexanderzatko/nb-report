@@ -263,9 +263,7 @@ app.post('/api/submit-snow-report', async (req, res) => {
     }
 
     // Format the data as JSON with posted_data wrapper
-    const data = {
-      posted_data: JSON.stringify(req.body.data)
-    };
+    const data = req.body;
 
     logger.info('Making request to nabezky service', {
       url: `${OAUTH_PROVIDER_URL}/nabezky/rules/rules_process_data_from_the_nb_report_app`,
