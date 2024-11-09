@@ -1230,16 +1230,6 @@ class FormManager {
               photos: formDataObj.photos ? `${formDataObj.photos.length} photos included` : 'no photos',
               gpx: formDataObj.gpx ? 'GPX file included' : 'no GPX'
           });
-
-          // First check if we have a valid session
-          const authCheckResponse = await fetch('/api/auth-status', {
-              credentials: 'include'
-          });
-          const authStatus = await authCheckResponse.json();
-  
-          if (!authStatus.isAuthenticated) {
-              throw new Error(this.i18next.t('errors.form.unauthorized'));
-          }
         
           // Make the actual submission request
           const response = await fetch('/api/submit-snow-report', {
