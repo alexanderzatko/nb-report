@@ -1177,13 +1177,59 @@ class FormManager {
   
   async submitFormData(formData) {
       try {
-          // Log the form data for debugging
-          const formDataDebug = {};
+          // First collect all the regular form data
+          const formDataObj = {};
           formData.forEach((value, key) => {
-              formDataDebug[key] = value instanceof File ? 
-                  { type: 'File', name: value.name, size: value.size } : value;
+              if (!(value instanceof File)) {
+                  formDataObj[key] = value;
+              }
           });
-          this.logger.debug('Submitting form data:', formDataDebug);
+          
+          // Handle photos if present
+          const photoManager = PhotoManager.getInstance();
+          const photos = photoManager.getPhotos();
+          if (photos && photos.length > 0) {
+              formDataObj.photos = await Promise.all(photos.map(async (photo) => {
+                  const base64Data = await this.fileToBase64(photo.file);
+                  return {
+                      file: base64Data.split(',')[1], // Remove data URL prefix
+                      filename: photo.file.name,
+                      filemime: photo.file.type,
+                      filesize: photo.file.size,
+                      caption: photo.caption || ''
+                  };
+              }));
+          }
+  
+          // Handle GPX file if present
+          const gpxOption = document.getElementById('gpx-option');
+          if (gpxOption && (gpxOption.value === 'existing' || gpxOption.value === 'upload')) {
+              const gpsManager = GPSManager.getInstance();
+              const gpxContent = gpsManager.exportGPX();
+              if (gpxContent) {
+                  // Create a timestamp-based filename for the GPX
+                  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                  const gpxFilename = `track_${timestamp}.gpx`;
+                  
+                  formDataObj.gpx = {
+                      file: btoa(gpxContent), // Base64 encode the GPX content
+                      filename: gpxFilename,
+                      filemime: 'application/gpx+xml',
+                      filesize: new Blob([gpxContent]).size
+                  };
+              }
+          }
+  
+          // Create the properly wrapped data structure for Drupal Services
+          const wrappedData = {
+              data: formDataObj
+          };
+  
+          this.logger.debug('Submitting data to server:', {
+              ...wrappedData,
+              photos: formDataObj.photos ? `${formDataObj.photos.length} photos included` : 'no photos',
+              gpx: formDataObj.gpx ? 'GPX file included' : 'no GPX'
+          });
   
           // Make the actual submission request
           const response = await fetch('/api/submit-snow-report', {
@@ -1191,7 +1237,7 @@ class FormManager {
               headers: {
                   'Content-Type': 'application/json'
               },
-              body: JSON.stringify(Object.fromEntries(formData)),
+              body: JSON.stringify(wrappedData),
               credentials: 'include'
           });
   
@@ -1219,30 +1265,12 @@ class FormManager {
           const data = await response.json();
           
           if (data.success) {
-              // Perform cleanup only after successful submission
-              
-              // Clear GPS data if it was included
-              const gpxOption = document.getElementById('gpx-option');
+              // Clear form state after successful submission
               if (gpxOption && gpxOption.value !== 'none') {
                   const gpsManager = GPSManager.getInstance();
                   await this.clearGPXData(gpsManager);
-                  
-                  // Reset the GPX option select to 'none'
-                  gpxOption.value = 'none';
-                  
-                  // Hide the existing GPX option
-                  const existingOption = document.getElementById('existing-gpx-option');
-                  if (existingOption) {
-                      existingOption.style.display = 'none';
-                  }
-    
-                  // Clear info display
-                  const infoDisplay = document.getElementById('gpx-info-display');
-                  if (infoDisplay) {
-                      infoDisplay.style.display = 'none';
-                      infoDisplay.innerHTML = '';
-                  }
               }
+              photoManager.clearPhotos();
           }
   
           return {
@@ -1261,6 +1289,15 @@ class FormManager {
       }
   }
 
+  async fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = error => reject(error);
+      });
+  }
+    
   async clearGPXData(gpsManager) {
       this.logger.debug('Starting GPX data cleanup');
       try {
