@@ -1177,108 +1177,85 @@ class FormManager {
   
   async submitFormData(formData) {
       try {
-          // First collect all the regular form data
-          const formDataObj = {};
-          formData.forEach((value, key) => {
-              if (!(value instanceof File)) {
-                  formDataObj[key] = value;
-              }
-          });
-          
-          // Handle photos if present
+          // First handle photos if present
           const photoManager = PhotoManager.getInstance();
           const photos = photoManager.getPhotos();
+          const photoIds = [];
+          
           if (photos && photos.length > 0) {
-              formDataObj.photos = await Promise.all(photos.map(async (photo) => {
-                  const base64Data = await this.fileToBase64(photo.file);
-                  return {
-                      file: base64Data.split(',')[1],
-                      filename: photo.file.name,
-                      filemime: photo.file.type,
-                      filesize: photo.file.size,
-                      caption: photo.caption || ''
-                  };
-              }));
+              for (const photo of photos) {
+                  const photoData = new FormData();
+                  photoData.append('files[0]', photo.file);
+                  photoData.append('caption', photo.caption || '');
+                  
+                  const response = await fetch('/api/upload-photo', {
+                      method: 'POST',
+                      credentials: 'include',
+                      body: photoData
+                  });
+                  
+                  if (!response.ok) {
+                      throw new Error('Failed to upload photo');
+                  }
+                  
+                  const result = await response.json();
+                  photoIds.push(result.fid);
+              }
           }
   
-          // Handle GPX file if present
+          // Handle GPX file similarly if present
+          let gpxId = null;
           const gpxOption = document.getElementById('gpx-option');
           if (gpxOption && (gpxOption.value === 'existing' || gpxOption.value === 'upload')) {
               const gpsManager = GPSManager.getInstance();
               const gpxContent = gpsManager.exportGPX();
               if (gpxContent) {
-                  // Create a timestamp-based filename for the GPX
-                  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-                  const gpxFilename = `track_${timestamp}.gpx`;
+                  const gpxData = new FormData();
+                  const gpxBlob = new Blob([gpxContent], { type: 'application/gpx+xml' });
+                  gpxData.append('files[0]', gpxBlob, 'track.gpx');
                   
-                  formDataObj.gpx = {
-                      file: btoa(gpxContent), // Base64 encode the GPX content
-                      filename: gpxFilename,
-                      filemime: 'application/gpx+xml',
-                      filesize: new Blob([gpxContent]).size
-                  };
+                  const response = await fetch('/api/upload-gpx', {
+                      method: 'POST',
+                      credentials: 'include',
+                      body: gpxData
+                  });
+                  
+                  if (!response.ok) {
+                      throw new Error('Failed to upload GPX file');
+                  }
+                  
+                  const result = await response.json();
+                  gpxId = result.fid;
               }
           }
   
-          // Create the properly wrapped data structure for Drupal Services
-          const wrappedData = {
-              data: formDataObj
+          // Create the final submission data with file references
+          const submissionData = {
+              data: {
+                  ...formData,
+                  photoIds: photoIds,
+                  gpxId: gpxId
+              }
           };
   
-          this.logger.debug('Submitting data to server:', {
-              ...wrappedData,
-              photos: formDataObj.photos ? `${formDataObj.photos.length} photos included` : 'no photos',
-              gpx: formDataObj.gpx ? 'GPX file included' : 'no GPX'
-          });
-        
-          // Make the actual submission request
+          // Submit the form data with file references
           const response = await fetch('/api/submit-snow-report', {
               method: 'POST',
               headers: {
                   'Content-Type': 'application/json',
-                  'Accept': 'application/json'
               },
               credentials: 'include',
-              body: JSON.stringify(wrappedData)
+              body: JSON.stringify(submissionData)
           });
   
           if (!response.ok) {
-              let errorMessage;
-              switch (response.status) {
-                  case 401:
-                      errorMessage = this.i18next.t('errors.form.unauthorized');
-                      break;
-                  case 403:
-                      errorMessage = this.i18next.t('errors.form.forbidden');
-                      break;
-                  case 413:
-                      errorMessage = this.i18next.t('errors.form.tooLarge');
-                      break;
-                  case 429:
-                      errorMessage = this.i18next.t('errors.form.tooManyRequests');
-                      break;
-                  default:
-                      errorMessage = this.i18next.t('errors.form.serverError');
-              }
-              throw new Error(errorMessage);
+              throw new Error(await response.text());
           }
   
-          const data = await response.json();
-          
-          if (data.success) {
-              // Clear form state after successful submission
-              if (gpxOption && gpxOption.value !== 'none') {
-                  const gpsManager = GPSManager.getInstance();
-                  await this.clearGPXData(gpsManager);
-              }
-              photoManager.clearPhotos();
-          }
-  
+          const result = await response.json();
           return {
-              success: data.success,
-              message: data.success ? 
-                  this.i18next.t('form.validation.submitSuccess') : 
-                  this.i18next.t('errors.form.submitFailed')
+              success: result.success,
+              message: result.message
           };
   
       } catch (error) {
