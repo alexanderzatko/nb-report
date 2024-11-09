@@ -249,6 +249,10 @@ app.post('/api/submit-snow-report', async (req, res) => {
   try {
     // Log the incoming request
     logger.info('Snow report submission received', {
+      headers: req.headers,
+      body: req.body,
+      hasData: !!req.body.data,
+      bodyKeys: Object.keys(req.body),
       sessionExists: !!req.session,
       hasAccessToken: !!req.session?.accessToken,
       tokenValue: req.session?.accessToken ? 'exists' : 'missing'
