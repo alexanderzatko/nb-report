@@ -3,6 +3,8 @@ import express from 'express';
 import session from 'express-session';
 import path from 'path';
 import multer from 'multer';
+import fs from 'fs';
+import FormData from 'form-data';
 import { fileURLToPath } from 'url';
 import winston from 'winston';
 import MySQLStore from 'express-mysql-session';
@@ -57,17 +59,27 @@ const setCorrectMimeType = (res, path) => {
 // Configure multer for file uploads
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, '/tmp/uploads/') // Temporary storage
+        cb(null, '/tmp/uploads/')
     },
     filename: function (req, file, cb) {
-        cb(null, Date.now() + path.extname(file.originalname))
+        // Preserve original extension but add timestamp
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + path.extname(file.originalname))
     }
 });
 
-const upload = multer({ 
+const upload = multer({
     storage: storage,
     limits: {
-        fileSize: 5 * 1024 * 1024 // 5MB limit per file
+        fileSize: 5 * 1024 * 1024, // 5MB limit
+        files: 1
+    },
+    fileFilter: function (req, file, cb) {
+        // Accept images only
+        if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/i)) {
+            return cb(new Error('Only image files are allowed!'), false);
+        }
+        cb(null, true);
     }
 });
 
@@ -265,16 +277,40 @@ app.get('/api/auth-status', (req, res) => {
 
 // Handle photo uploads
 app.post('/api/upload-photo', upload.single('files[0]'), async (req, res) => {
+    logger.info('Photo upload request received');
+    
     try {
         if (!req.session?.accessToken) {
+            logger.warn('Photo upload attempted without auth token');
             return res.status(401).json({ error: 'Not authenticated' });
         }
 
+        if (!req.file) {
+            logger.error('No file received in request');
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        logger.debug('File received:', {
+            filename: req.file.originalname,
+            size: req.file.size,
+            mimetype: req.file.mimetype
+        });
+
         // Create file entity in Drupal
         const formData = new FormData();
-        formData.append('files[0]', fs.createReadStream(req.file.path));
-        formData.append('caption', req.body.caption || '');
+        
+        try {
+            formData.append('files[0]', fs.createReadStream(req.file.path));
+            if (req.body.caption) {
+                formData.append('caption', req.body.caption);
+            }
+        } catch (error) {
+            logger.error('Error creating FormData:', error);
+            throw new Error('Failed to process uploaded file');
+        }
 
+        logger.debug('Making request to Drupal');
+        
         const response = await axios.post(
             `${OAUTH_PROVIDER_URL}/nabezky/file/upload`,
             formData,
@@ -282,20 +318,48 @@ app.post('/api/upload-photo', upload.single('files[0]'), async (req, res) => {
                 headers: {
                     'Authorization': `Bearer ${req.session.accessToken}`,
                     ...formData.getHeaders()
-                }
+                },
+                maxContentLength: Infinity,
+                maxBodyLength: Infinity
             }
         );
 
+        logger.debug('Received response from Drupal:', response.data);
+
         // Clean up temporary file
         fs.unlink(req.file.path, (err) => {
-            if (err) logger.error('Error deleting temp file:', err);
+            if (err) {
+                logger.error('Error deleting temp file:', {
+                    path: req.file.path,
+                    error: err.message
+                });
+            }
         });
 
         res.json({ fid: response.data.fid });
 
     } catch (error) {
-        logger.error('Photo upload error:', error);
-        res.status(500).json({ error: 'Failed to upload photo' });
+        logger.error('Photo upload error:', {
+            message: error.message,
+            response: error.response?.data,
+            stack: error.stack
+        });
+
+        // Clean up temporary file if it exists
+        if (req.file) {
+            fs.unlink(req.file.path, (err) => {
+                if (err) logger.error('Error deleting temp file:', err);
+            });
+        }
+
+        // Send appropriate error response
+        if (error.response?.status === 413) {
+            res.status(413).json({ error: 'File too large for Drupal server' });
+        } else if (error.response?.status === 401) {
+            res.status(401).json({ error: 'Authentication failed with Drupal server' });
+        } else {
+            res.status(500).json({ error: 'Failed to upload photo to server' });
+        }
     }
 });
 
