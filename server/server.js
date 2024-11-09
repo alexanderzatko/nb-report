@@ -454,11 +454,18 @@ app.get('/api/user-data', async (req, res) => {
       }
     );
 
-    logger.info('User data retrieved:', response.data);  // Add this log
+    logger.info('User data retrieved:', response.data);
 
     req.session.userData = response.data;
-    req.session.save((err) => {
-      if (err) logger.error('Error saving session:', err);
+
+    await new Promise((resolve, reject) => {
+      req.session.save((err) => {
+        if (err) {
+          logger.error('Error saving session:', err);
+          reject(err);
+        }
+        resolve();
+      });
     });
 
     res.json(response.data);
