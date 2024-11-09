@@ -258,7 +258,7 @@ app.post('/api/submit-snow-report', async (req, res) => {
       logger.warn('No valid session or access token found');
       return res.status(401).json({ 
         success: false, 
-        message: 'Pre odoslanie správy sa musíte znovu prihlásiť' 
+        message: 'Log in again to send the report' 
       });
     }
 
@@ -278,7 +278,11 @@ app.post('/api/submit-snow-report', async (req, res) => {
         headers: {
           'Authorization': `Bearer ${req.session.accessToken}`,
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'Accept-Language': 'en-us',
+          'Accept-Encoding': 'gzip, deflate',
+          'User-Agent': 'PWA-SnowReport/1.0',
+          'Connection': 'keep-alive'
         }
       }
     );
