@@ -1249,7 +1249,14 @@ class FormManager {
           });
   
           if (!response.ok) {
-              throw new Error(await response.text());
+              let errorMessage;
+              try {
+                  const errorData = await response.json();
+                  errorMessage = errorData.message || await response.text();
+              } catch {
+                  errorMessage = `Server error: ${response.status} ${response.statusText}`;
+              }
+              throw new Error(errorMessage);
           }
   
           const result = await response.json();
@@ -1259,11 +1266,16 @@ class FormManager {
           };
   
       } catch (error) {
-          this.logger.error('Form submission error:', error);
-          throw {
-              success: false,
-              message: error.message || this.i18next.t('errors.form.submitFailed')
-          };
+        this.logger.error('Form submission error:', {
+            message: error.message,
+            stack: error.stack,
+            formData: formData
+        });
+        throw {
+            success: false,
+            message: error.message || this.i18next.t('errors.form.submitFailed'),
+            originalError: error
+        };
       }
   }
 
