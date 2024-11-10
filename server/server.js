@@ -365,14 +365,24 @@ app.post('/api/upload-photo', upload.single('files[0]'), async (req, res) => {
 
 // Handle GPX uploads
 app.post('/api/upload-gpx', upload.single('files[0]'), async (req, res) => {
+    logger.info('GPX upload request received');
+    
     try {
         if (!req.session?.accessToken) {
             return res.status(401).json({ error: 'Not authenticated' });
         }
 
+        if (!req.file) {
+            logger.error('No GPX file received');
+            return res.status(400).json({ error: 'No GPX file received' });
+        }
+
+        // Create formData for the Drupal endpoint
         const formData = new FormData();
         formData.append('files[0]', fs.createReadStream(req.file.path));
 
+        logger.info('Sending GPX to Drupal endpoint');
+        
         const response = await axios.post(
             `${OAUTH_PROVIDER_URL}/nabezky/file/upload`,
             formData,
@@ -380,20 +390,55 @@ app.post('/api/upload-gpx', upload.single('files[0]'), async (req, res) => {
                 headers: {
                     'Authorization': `Bearer ${req.session.accessToken}`,
                     ...formData.getHeaders()
-                }
+                },
+                maxContentLength: Infinity,
+                maxBodyLength: Infinity
             }
         );
 
         // Clean up temporary file
-        fs.unlink(req.file.path, (err) => {
-            if (err) logger.error('Error deleting temp file:', err);
-        });
+        try {
+            await fs.unlink(req.file.path, (err) => {
+                if (err) logger.error('Error deleting temp file:', err);
+            });
+        } catch (cleanupError) {
+            logger.error('Error cleaning up temp file:', cleanupError);
+        }
 
-        res.json({ fid: response.data.fid });
+        if (response.data && response.data.fid) {
+            logger.info('GPX upload successful', { fid: response.data.fid });
+            res.json({ 
+                fid: response.data.fid,
+                uri: response.data.uri,
+                url: response.data.url,
+                status: 'success' 
+            });
+        } else {
+            throw new Error('Invalid response from Drupal endpoint');
+        }
 
     } catch (error) {
-        logger.error('GPX upload error:', error);
-        res.status(500).json({ error: 'Failed to upload GPX file' });
+        logger.error('GPX upload error:', {
+            message: error.message,
+            response: error.response?.data,
+            stack: error.stack
+        });
+
+        // Clean up temporary file on error if it exists
+        if (req.file?.path) {
+            try {
+                await fs.unlink(req.file.path, (err) => {
+                    if (err) logger.error('Error deleting temp file:', err);
+                });
+            } catch (cleanupError) {
+                logger.error('Error cleaning up temp file:', cleanupError);
+            }
+        }
+        
+        res.status(500).json({ 
+            error: 'Failed to upload GPX file',
+            details: error.message
+        });
     }
 });
 
