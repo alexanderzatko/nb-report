@@ -75,9 +75,9 @@ const upload = multer({
         files: 1
     },
     fileFilter: function (req, file, cb) {
-        // Accept images only
-        if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/i)) {
-            return cb(new Error('Only image files are allowed!'), false);
+        // Accept images and GPX files
+        if (!file.originalname.match(/\.(jpg|jpeg|png|gif|gpx|xml)$/i)) {
+            return cb(new Error('Only image and GPX files are allowed!'), false);
         }
         cb(null, true);
     }
