@@ -312,7 +312,7 @@ app.post('/api/upload-photo', upload.single('files[0]'), async (req, res) => {
         logger.debug('Making request to Drupal');
         
         const response = await axios.post(
-            `${OAUTH_PROVIDER_URL}/nabezky/file/upload`,
+            `${OAUTH_PROVIDER_URL}/nabezky/process_report_file`,
             formData,
             {
                 headers: {
@@ -384,7 +384,7 @@ app.post('/api/upload-gpx', upload.single('files[0]'), async (req, res) => {
         logger.info('Sending GPX to Drupal endpoint');
         
         const response = await axios.post(
-            `${OAUTH_PROVIDER_URL}/nabezky/file/upload`,
+            `${OAUTH_PROVIDER_URL}/nabezky/process_report_file`,
             formData,
             {
                 headers: {
