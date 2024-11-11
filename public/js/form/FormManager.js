@@ -1247,7 +1247,7 @@ class FormManager {
                   });
   
                   const photoData = new FormData();
-                  photoData.append('files[0]', photo.file);
+                  photoData.append('filedata', photo.file);  // Changed from 'files[0]' to 'filedata'
                   if (photo.caption) {
                       photoData.append('caption', photo.caption);
                   }
