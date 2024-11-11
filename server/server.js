@@ -276,36 +276,16 @@ app.get('/api/auth-status', (req, res) => {
 });
 
 // Handle photo uploads
-// Handle photo uploads
-app.post('/api/upload-photo', (req, res, next) => {
-    logger.info('Photo upload initial request received', {
-        hasSession: !!req.session,
-        hasAccessToken: !!req.session?.accessToken,
-        contentType: req.headers['content-type']
-    });
-    
-    upload.single('files[0]')(req, res, (err) => {
-        if (err) {
-            logger.error('Multer error:', {
-                error: err.message,
-                stack: err.stack,
-                code: err.code
-            });
-            return res.status(500).json({ error: 'File upload failed', details: err.message });
-        }
-        next();
-    });
-}, async (req, res) => {
-    logger.info('Photo upload processing', {
-        hasFile: !!req.file,
-        fileInfo: req.file ? {
+app.post('/api/upload-photo', upload.single('files[0]'), async (req, res) => {
+    logger.info('Photo upload request received', {
+        session: req.session,
+        file: req.file ? {
             originalname: req.file.originalname,
             size: req.file.size,
-            mimetype: req.file.mimetype,
-            path: req.file.path
+            mimetype: req.file.mimetype
         } : null
     });
-    
+  
     try {
         if (!req.session?.accessToken) {
             logger.warn('Photo upload attempted without auth token');
@@ -317,26 +297,27 @@ app.post('/api/upload-photo', (req, res, next) => {
             return res.status(400).json({ error: 'No file uploaded' });
         }
 
+        logger.debug('File received:', {
+            filename: req.file.originalname,
+            size: req.file.size,
+            mimetype: req.file.mimetype
+        });
+
         // Create temp directory if it doesn't exist
         const uploadDir = '/tmp/uploads/';
-        try {
-            if (!fs.existsSync(uploadDir)){
-                logger.info('Creating upload directory');
-                fs.mkdirSync(uploadDir, { recursive: true });
-            }
-        } catch (dirError) {
-            logger.error('Error creating upload directory:', dirError);
-            return res.status(500).json({ error: 'Server configuration error' });
+        if (!fs.existsSync(uploadDir)){
+            fs.mkdirSync(uploadDir, { recursive: true });
         }
 
-        logger.info('Preparing form data for Drupal');
+        // Create form data with the correct field name 'filedata'
         const formData = new FormData();
         formData.append('filedata', fs.createReadStream(req.file.path), {
             filename: req.file.originalname,
             contentType: req.file.mimetype
         });
 
-        logger.info('Sending request to Drupal endpoint');
+        logger.debug('Making request to Drupal');
+        
         const response = await axios.post(
             `${OAUTH_PROVIDER_URL}/nabezky/nb_file`,
             formData,
@@ -350,11 +331,6 @@ app.post('/api/upload-photo', (req, res, next) => {
             }
         );
 
-        logger.info('Drupal response received:', {
-            status: response.status,
-            data: response.data
-        });
-
         // Clean up temporary file
         fs.unlink(req.file.path, (err) => {
             if (err) {
@@ -362,18 +338,16 @@ app.post('/api/upload-photo', (req, res, next) => {
                     path: req.file.path,
                     error: err.message
                 });
-            } else {
-                logger.info('Temporary file cleaned up');
             }
         });
 
+        logger.info('Photo upload successful', response.data);
         res.json(response.data);
 
     } catch (error) {
         logger.error('Photo upload error:', {
             message: error.message,
             response: error.response?.data,
-            status: error.response?.status,
             stack: error.stack
         });
 
@@ -389,11 +363,7 @@ app.post('/api/upload-photo', (req, res, next) => {
         } else if (error.response?.status === 401) {
             res.status(401).json({ error: 'Authentication failed' });
         } else {
-            res.status(500).json({
-                error: 'Failed to upload photo',
-                details: error.message,
-                serverError: error.response?.data || error.message
-            });
+            res.status(500).json({ error: 'Failed to upload photo', details: error.message });
         }
     }
 });
