@@ -1097,49 +1097,67 @@ class FormManager {
   collectVisibleData(isAdmin) {
       const data = {};
       
+      // Common fields for both user types
+      const commonFields = {
+          'report-date': 'reportDate',
+          'report-note': 'note',
+          'snow-type': 'snowType'
+      };
+  
+      // Process common fields
+      Object.entries(commonFields).forEach(([elementId, dataKey]) => {
+          const element = document.getElementById(elementId);
+          if (element && element.value) {
+              data[dataKey] = element.value;
+          }
+      });
+      
       if (isAdmin) {
-          // Admin form fields
-          const snowDepthTotal = document.getElementById('snow-depth-total')?.value;
-          const snowDepthNew = document.getElementById('snow-depth-new')?.value;
-          const note = document.getElementById('report-note')?.value;
-          
-          if (snowDepthTotal) data.snowDepthTotal = snowDepthTotal;
-          if (snowDepthNew) data.snowDepthNew = snowDepthNew;
-          if (note) data.note = note;
-          
-          // Common dropdowns that are visible in admin form
-          const snowType = document.getElementById('snow-type')?.value;
-          if (snowType) data.snowType = snowType;
+          // Admin-specific fields
+          const adminFields = {
+              'snow-depth-total': 'snowDepthTotal',
+              'snow-depth-new': 'snowDepthNew'
+          };
+  
+          Object.entries(adminFields).forEach(([elementId, dataKey]) => {
+              const element = document.getElementById(elementId);
+              if (element && element.value) {
+                  data[dataKey] = element.value;
+              }
+          });
           
       } else {
-          // Regular user form fields
-          const fields = {
+          // Regular user-specific fields
+          const regularUserFields = {
               'report-title': 'reportTitle',
-              'report-date': 'reportDate',
               'country': 'country',
               'region': 'region',
               'snow-depth250': 'snowDepth250',
               'snow-depth500': 'snowDepth500',
               'snow-depth750': 'snowDepth750',
               'snow-depth1000': 'snowDepth1000',
-              'report-note': 'note'
+              'classic-style': 'classicstyle',
+              'free-style': 'freestyle',
+              'snow-age': 'snowage',
+              'wetness': 'wetness'
           };
-          
-          Object.entries(fields).forEach(([elementId, dataKey]) => {
+  
+          Object.entries(regularUserFields).forEach(([elementId, dataKey]) => {
               const element = document.getElementById(elementId);
-              if (element && element.style.display !== 'none' && element.value) {
+              if (element && element.value) {
                   data[dataKey] = element.value;
               }
           });
+      }
+      
+      // Add rewards data if rewards section is visible and enabled
+      const rewardsSection = document.getElementById('rewards-section');
+      if (rewardsSection?.style.display !== 'none') {
+          const laborTime = document.getElementById('labor-time')?.value;
+          const rewardRequested = document.getElementById('reward-requested')?.value;
           
-          // Add snow conditions for regular user form
-          const conditions = ['classic-style', 'free-style', 'snow-age', 'wetness'];
-          conditions.forEach(id => {
-              const element = document.getElementById(id);
-              if (element && element.style.display !== 'none' && element.value) {
-                  data[id.replace('-', '')] = element.value;
-              }
-          });
+          if (laborTime) data.laborTime = laborTime;
+          if (rewardRequested) data.rewardRequested = rewardRequested;
       }
       
       return data;
@@ -1229,16 +1247,29 @@ class FormManager {
               }
           }
   
-          // Create the final submission data with file references
+          // Determine user type based on visible section
+          const isAdmin = document.getElementById('admin-section')?.style.display !== 'none';
+  
+          // Collect data based on user type
+          const collectedData = this.collectVisibleData(isAdmin);
+  
+          // Create the final submission data including user type and collected data
           const submissionData = {
               data: {
-                  ...formData,
+                  ...collectedData,
                   photoIds: photoIds,
-                  gpxId: gpxId
+                  gpxId: gpxId,
+                  reportType: isAdmin ? 'admin' : 'regular', // Add explicit report type indicator
+                  trailConditions: isAdmin ? this.trailConditions : undefined // Include trail conditions only for admin
               }
           };
   
-          // Submit the form data with file references
+          // For debugging - log what we're about to send
+          this.logger.debug('Submitting form data:', {
+              userType: isAdmin ? 'admin' : 'regular',
+              data: submissionData
+          });
+  
           const response = await fetch('/api/submit-snow-report', {
               method: 'POST',
               headers: {
@@ -1249,14 +1280,7 @@ class FormManager {
           });
   
           if (!response.ok) {
-              let errorMessage;
-              try {
-                  const errorData = await response.json();
-                  errorMessage = errorData.message || await response.text();
-              } catch {
-                  errorMessage = `Server error: ${response.status} ${response.statusText}`;
-              }
-              throw new Error(errorMessage);
+              throw new Error(await response.text());
           }
   
           const result = await response.json();
@@ -1266,16 +1290,11 @@ class FormManager {
           };
   
       } catch (error) {
-        this.logger.error('Form submission error:', {
-            message: error.message,
-            stack: error.stack,
-            formData: formData
-        });
-        throw {
-            success: false,
-            message: error.message || this.i18next.t('errors.form.submitFailed'),
-            originalError: error
-        };
+          this.logger.error('Form submission error:', error);
+          throw {
+              success: false,
+              message: error.message || this.i18next.t('errors.form.submitFailed')
+          };
       }
   }
 
