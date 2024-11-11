@@ -1239,22 +1239,46 @@ class FormManager {
       
       if (photos && photos.length > 0) {
           for (const photo of photos) {
-              const photoData = new FormData();
-              photoData.append('files[0]', photo.file);
-              photoData.append('caption', photo.caption || '');
-              
-              const response = await fetch('/api/upload-photo', {
-                  method: 'POST',
-                  credentials: 'include',
-                  body: photoData
-              });
-              
-              if (!response.ok) {
-                  throw new Error('Failed to upload photo');
+              try {
+                  this.logger.debug('Preparing photo upload:', {
+                      filename: photo.file.name,
+                      size: photo.file.size,
+                      type: photo.file.type
+                  });
+  
+                  const photoData = new FormData();
+                  photoData.append('files[0]', photo.file);
+                  if (photo.caption) {
+                      photoData.append('caption', photo.caption);
+                  }
+                  
+                  const response = await fetch('/api/upload-photo', {
+                      method: 'POST',
+                      credentials: 'include',
+                      body: photoData
+                  });
+                  
+                  if (!response.ok) {
+                      const errorData = await response.json();
+                      this.logger.error('Photo upload failed:', {
+                          status: response.status,
+                          statusText: response.statusText,
+                          error: errorData
+                      });
+                      throw new Error(errorData.details || errorData.error || 'Upload failed');
+                  }
+                  
+                  const result = await response.json();
+                  this.logger.debug('Photo upload successful:', result);
+                  photoIds.push(result.fid);
+                  
+              } catch (error) {
+                  this.logger.error('Error uploading photo:', {
+                      error: error.message,
+                      stack: error.stack
+                  });
+                  throw new Error(`Failed to upload photo: ${error.message}`);
               }
-              
-              const result = await response.json();
-              photoIds.push(result.fid);
           }
       }
       
