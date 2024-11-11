@@ -296,18 +296,12 @@ app.post('/api/upload-photo', upload.single('files[0]'), async (req, res) => {
             mimetype: req.file.mimetype
         });
 
-        // Create file entity in Drupal
+        // Create form data with the correct field name 'filedata'
         const formData = new FormData();
-        
-        try {
-            formData.append('files[0]', fs.createReadStream(req.file.path));
-            if (req.body.caption) {
-                formData.append('caption', req.body.caption);
-            }
-        } catch (error) {
-            logger.error('Error creating FormData:', error);
-            throw new Error('Failed to process uploaded file');
-        }
+        formData.append('filedata', fs.createReadStream(req.file.path), {
+            filename: req.file.originalname,
+            contentType: req.file.mimetype
+        });
 
         logger.debug('Making request to Drupal');
         
@@ -317,14 +311,13 @@ app.post('/api/upload-photo', upload.single('files[0]'), async (req, res) => {
             {
                 headers: {
                     'Authorization': `Bearer ${req.session.accessToken}`,
-                    ...formData.getHeaders()
+                    ...formData.getHeaders(),
+                    'Content-Type': 'multipart/form-data'
                 },
                 maxContentLength: Infinity,
                 maxBodyLength: Infinity
             }
         );
-
-        logger.debug('Received response from Drupal:', response.data);
 
         // Clean up temporary file
         fs.unlink(req.file.path, (err) => {
@@ -336,7 +329,8 @@ app.post('/api/upload-photo', upload.single('files[0]'), async (req, res) => {
             }
         });
 
-        res.json({ fid: response.data.fid });
+        logger.info('Photo upload successful', response.data);
+        res.json(response.data);
 
     } catch (error) {
         logger.error('Photo upload error:', {
@@ -346,19 +340,18 @@ app.post('/api/upload-photo', upload.single('files[0]'), async (req, res) => {
         });
 
         // Clean up temporary file if it exists
-        if (req.file) {
+        if (req.file?.path) {
             fs.unlink(req.file.path, (err) => {
                 if (err) logger.error('Error deleting temp file:', err);
             });
         }
 
-        // Send appropriate error response
         if (error.response?.status === 413) {
-            res.status(413).json({ error: 'File too large for Drupal server' });
+            res.status(413).json({ error: 'File too large' });
         } else if (error.response?.status === 401) {
-            res.status(401).json({ error: 'Authentication failed with Drupal server' });
+            res.status(401).json({ error: 'Authentication failed' });
         } else {
-            res.status(500).json({ error: 'Failed to upload photo to server' });
+            res.status(500).json({ error: 'Failed to upload photo' });
         }
     }
 });
@@ -377,9 +370,12 @@ app.post('/api/upload-gpx', upload.single('files[0]'), async (req, res) => {
             return res.status(400).json({ error: 'No GPX file received' });
         }
 
-        // Create formData for the Drupal endpoint
+        // Create form data with the correct field name 'filedata'
         const formData = new FormData();
-        formData.append('files[0]', fs.createReadStream(req.file.path));
+        formData.append('filedata', fs.createReadStream(req.file.path), {
+            filename: req.file.originalname,
+            contentType: 'application/gpx+xml'
+        });
 
         logger.info('Sending GPX to Drupal endpoint');
         
@@ -389,7 +385,8 @@ app.post('/api/upload-gpx', upload.single('files[0]'), async (req, res) => {
             {
                 headers: {
                     'Authorization': `Bearer ${req.session.accessToken}`,
-                    ...formData.getHeaders()
+                    ...formData.getHeaders(),
+                    'Content-Type': 'multipart/form-data'
                 },
                 maxContentLength: Infinity,
                 maxBodyLength: Infinity
@@ -397,25 +394,12 @@ app.post('/api/upload-gpx', upload.single('files[0]'), async (req, res) => {
         );
 
         // Clean up temporary file
-        try {
-            await fs.unlink(req.file.path, (err) => {
-                if (err) logger.error('Error deleting temp file:', err);
-            });
-        } catch (cleanupError) {
-            logger.error('Error cleaning up temp file:', cleanupError);
-        }
+        fs.unlink(req.file.path, (err) => {
+            if (err) logger.error('Error deleting temp file:', err);
+        });
 
-        if (response.data && response.data.fid) {
-            logger.info('GPX upload successful', { fid: response.data.fid });
-            res.json({ 
-                fid: response.data.fid,
-                uri: response.data.uri,
-                url: response.data.url,
-                status: 'success' 
-            });
-        } else {
-            throw new Error('Invalid response from Drupal endpoint');
-        }
+        logger.info('GPX upload successful', response.data);
+        res.json(response.data);
 
     } catch (error) {
         logger.error('GPX upload error:', {
@@ -424,21 +408,20 @@ app.post('/api/upload-gpx', upload.single('files[0]'), async (req, res) => {
             stack: error.stack
         });
 
-        // Clean up temporary file on error if it exists
+        // Clean up temporary file if it exists
         if (req.file?.path) {
-            try {
-                await fs.unlink(req.file.path, (err) => {
-                    if (err) logger.error('Error deleting temp file:', err);
-                });
-            } catch (cleanupError) {
-                logger.error('Error cleaning up temp file:', cleanupError);
-            }
+            fs.unlink(req.file.path, (err) => {
+                if (err) logger.error('Error deleting temp file:', err);
+            });
         }
-        
-        res.status(500).json({ 
-            error: 'Failed to upload GPX file',
-            details: error.message
-        });
+
+        if (error.response?.status === 413) {
+            res.status(413).json({ error: 'File too large' });
+        } else if (error.response?.status === 401) {
+            res.status(401).json({ error: 'Authentication failed' });
+        } else {
+            res.status(500).json({ error: 'Failed to upload GPX file' });
+        }
     }
 });
 
