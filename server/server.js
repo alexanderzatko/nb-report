@@ -277,8 +277,15 @@ app.get('/api/auth-status', (req, res) => {
 
 // Handle photo uploads
 app.post('/api/upload-photo', upload.single('files[0]'), async (req, res) => {
-    logger.info('Photo upload request received');
-    
+    logger.info('Photo upload request received', {
+        session: req.session,
+        file: req.file ? {
+            originalname: req.file.originalname,
+            size: req.file.size,
+            mimetype: req.file.mimetype
+        } : null
+    });
+  
     try {
         if (!req.session?.accessToken) {
             logger.warn('Photo upload attempted without auth token');
@@ -317,8 +324,7 @@ app.post('/api/upload-photo', upload.single('files[0]'), async (req, res) => {
             {
                 headers: {
                     'Authorization': `Bearer ${req.session.accessToken}`,
-                    ...formData.getHeaders(),
-                    'Content-Type': 'multipart/form-data'
+                    ...formData.getHeaders()
                 },
                 maxContentLength: Infinity,
                 maxBodyLength: Infinity
@@ -357,7 +363,7 @@ app.post('/api/upload-photo', upload.single('files[0]'), async (req, res) => {
         } else if (error.response?.status === 401) {
             res.status(401).json({ error: 'Authentication failed' });
         } else {
-            res.status(500).json({ error: 'Failed to upload photo' });
+            res.status(500).json({ error: 'Failed to upload photo', details: error.message });
         }
     }
 });
