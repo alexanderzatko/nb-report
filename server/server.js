@@ -59,29 +59,34 @@ const setCorrectMimeType = (res, path) => {
 // Configure multer for file uploads
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, '/tmp/uploads/')
+        const uploadDir = '/tmp/uploads/';
+        try {
+            if (!fs.existsSync(uploadDir)){
+                fs.mkdirSync(uploadDir, { recursive: true });
+            }
+            cb(null, uploadDir);
+        } catch (error) {
+            cb(error);
+        }
     },
     filename: function (req, file, cb) {
-        // Preserve original extension but add timestamp
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + path.extname(file.originalname))
+        cb(null, uniqueSuffix + path.extname(file.originalname));
     }
 });
 
 const upload = multer({
     storage: storage,
     limits: {
-        fileSize: 5 * 1024 * 1024, // 5MB limit
-        files: 1
+        fileSize: 5 * 1024 * 1024 // 5MB limit
     },
     fileFilter: function (req, file, cb) {
-        // Accept images and GPX files
         if (!file.originalname.match(/\.(jpg|jpeg|png|gif|gpx|xml)$/i)) {
             return cb(new Error('Only image and GPX files are allowed!'), false);
         }
         cb(null, true);
     }
-});
+}).single('filedata');
 
 app.use(express.json());
 
@@ -276,7 +281,6 @@ app.get('/api/auth-status', (req, res) => {
 });
 
 // Handle photo uploads
-// Handle photo uploads
 app.post('/api/upload-photo', (req, res, next) => {
     logger.info('Photo upload initial request received', {
         hasSession: !!req.session,
@@ -284,7 +288,7 @@ app.post('/api/upload-photo', (req, res, next) => {
         contentType: req.headers['content-type']
     });
     
-    upload.single('files[0]')(req, res, (err) => {
+    upload(req, res, (err) => {
         if (err) {
             logger.error('Multer error:', {
                 error: err.message,
@@ -350,21 +354,11 @@ app.post('/api/upload-photo', (req, res, next) => {
             }
         );
 
-        logger.info('Drupal response received:', {
-            status: response.status,
-            data: response.data
-        });
+        logger.info('Photo upload successful', response.data);
 
         // Clean up temporary file
         fs.unlink(req.file.path, (err) => {
-            if (err) {
-                logger.error('Error deleting temp file:', {
-                    path: req.file.path,
-                    error: err.message
-                });
-            } else {
-                logger.info('Temporary file cleaned up');
-            }
+            if (err) logger.error('Error deleting temp file:', err);
         });
 
         res.json(response.data);
