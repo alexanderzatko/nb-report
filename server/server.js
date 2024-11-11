@@ -446,18 +446,60 @@ app.post('/api/submit-snow-report', async (req, res) => {
       });
     }
 
-    // Format the data as JSON with posted_data wrapper
-    const data = req.body;
+    // Extract form data from the request
+    const formData = req.body.data;
+    if (!formData) {
+      return res.status(400).json({
+        success: false,
+        message: 'No form data provided'
+      });
+    }
+
+    // Prepare the complete data object for submission
+    const submissionData = {
+      data: {
+        // Regular user form fields
+        reportTitle: formData.reportTitle,
+        reportDate: formData.reportDate,
+        country: formData.country,
+        region: formData.region,
+        snowDepth250: formData.snowDepth250,
+        snowDepth500: formData.snowDepth500,
+        snowDepth750: formData.snowDepth750,
+        snowDepth1000: formData.snowDepth1000,
+        note: formData.note,
+        
+        // Snow conditions
+        classicstyle: formData.classicstyle,
+        freestyle: formData.freestyle,
+        snowage: formData.snowage,
+        wetness: formData.wetness,
+        snowType: formData.snowType,
+
+        // Admin form fields
+        snowDepthTotal: formData.snowDepthTotal,
+        snowDepthNew: formData.snowDepthNew,
+        trailConditions: formData.trailConditions,
+
+        // Rewards data
+        laborTime: formData.laborTime,
+        rewardRequested: formData.rewardRequested,
+
+        // Files data
+        photoIds: formData.photoIds || [],
+        gpxId: formData.gpxId || null
+      }
+    };
 
     logger.info('Making request to nabezky service', {
       url: `${OAUTH_PROVIDER_URL}/nabezky/rules/rules_process_data_from_the_nb_report_app`,
       hasAuthHeader: true,
-      requestBody: data
+      requestBody: submissionData
     });
 
     const response = await axios.post(
       `${OAUTH_PROVIDER_URL}/nabezky/rules/rules_process_data_from_the_nb_report_app`,
-      data,
+      submissionData,
       {
         headers: {
           'Authorization': `Bearer ${req.session.accessToken}`,
@@ -478,8 +520,8 @@ app.post('/api/submit-snow-report', async (req, res) => {
 
     // Response will be true/false from the nabezky endpoint
     res.json({ 
-      success: response.data === true,
-      message: response.data === true ? 'Snow report submitted successfully' : 'Failed to submit snow report'
+      success: response.data.success === "1",
+      message: response.data.success === "1" ? 'Snow report submitted successfully' : 'Failed to submit snow report'
     });
 
   } catch (error) {
