@@ -296,6 +296,12 @@ app.post('/api/upload-photo', upload.single('files[0]'), async (req, res) => {
             mimetype: req.file.mimetype
         });
 
+        // Create temp directory if it doesn't exist
+        const uploadDir = '/tmp/uploads/';
+        if (!fs.existsSync(uploadDir)){
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+
         // Create form data with the correct field name 'filedata'
         const formData = new FormData();
         formData.append('filedata', fs.createReadStream(req.file.path), {
