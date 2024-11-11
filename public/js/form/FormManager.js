@@ -1029,8 +1029,8 @@ class FormManager {
       }
   
       // Continue with form submission if validation passes
-      const formData = this.collectFormData();
-      const result = await this.submitFormData(formData);
+      const formData = this.collectVisibleData(isAdmin);
+      const result = await this.submitFormData(formData, isAdmin);
       
       if (result.success) {
           this.showSuccess(this.i18next.t('form.validation.submitSuccess'));
@@ -1042,7 +1042,7 @@ class FormManager {
           document.getElementById('snow-report-form').style.display = 'none';
       } else {
           this.showError(result.message || this.i18next.t('form.validation.submitError'));
-      }  
+      }
     } catch (error) {
       this.logger.error('Error submitting snow report:', error);
       this.showError(this.i18next.t('form.validation.submitError'));
@@ -1193,82 +1193,24 @@ class FormManager {
       }
   }
   
-  async submitFormData(formData) {
+  async submitFormData(formData, isAdmin) {
       try {
-          // First handle photos if present
-          const photoManager = PhotoManager.getInstance();
-          const photos = photoManager.getPhotos();
-          const photoIds = [];
-          
-          if (photos && photos.length > 0) {
-              for (const photo of photos) {
-                  const photoData = new FormData();
-                  photoData.append('files[0]', photo.file);
-                  photoData.append('caption', photo.caption || '');
-                  
-                  const response = await fetch('/api/upload-photo', {
-                      method: 'POST',
-                      credentials: 'include',
-                      body: photoData
-                  });
-                  
-                  if (!response.ok) {
-                      throw new Error('Failed to upload photo');
-                  }
-                  
-                  const result = await response.json();
-                  photoIds.push(result.fid);
-              }
-          }
+          // Handle file uploads
+          const photoIds = await this.handlePhotoUploads();
+          const gpxId = await this.handleGpxUpload();
   
-          // Handle GPX file similarly if present
-          let gpxId = null;
-          const gpxOption = document.getElementById('gpx-option');
-          if (gpxOption && (gpxOption.value === 'existing' || gpxOption.value === 'upload')) {
-              const gpsManager = GPSManager.getInstance();
-              const gpxContent = gpsManager.exportGPX();
-              if (gpxContent) {
-                  const gpxData = new FormData();
-                  const gpxBlob = new Blob([gpxContent], { type: 'application/gpx+xml' });
-                  gpxData.append('files[0]', gpxBlob, 'track.gpx');
-                  
-                  const response = await fetch('/api/upload-gpx', {
-                      method: 'POST',
-                      credentials: 'include',
-                      body: gpxData
-                  });
-                  
-                  if (!response.ok) {
-                      throw new Error('Failed to upload GPX file');
-                  }
-                  
-                  const result = await response.json();
-                  gpxId = result.fid;
-              }
-          }
-  
-          // Determine user type based on visible section
-          const isAdmin = document.getElementById('admin-section')?.style.display !== 'none';
-  
-          // Collect data based on user type
-          const collectedData = this.collectVisibleData(isAdmin);
-  
-          // Create the final submission data including user type and collected data
+          // Prepare the submission data
           const submissionData = {
               data: {
-                  ...collectedData,
-                  photoIds: photoIds,
-                  gpxId: gpxId,
-                  reportType: isAdmin ? 'admin' : 'regular', // Add explicit report type indicator
-                  trailConditions: isAdmin ? this.trailConditions : undefined // Include trail conditions only for admin
+                  ...formData,  // This now contains the collected form fields
+                  photoIds,
+                  gpxId,
+                  reportType: isAdmin ? 'admin' : 'regular',
+                  trailConditions: isAdmin ? this.trailConditions : undefined
               }
           };
   
-          // For debugging - log what we're about to send
-          this.logger.debug('Submitting form data:', {
-              userType: isAdmin ? 'admin' : 'regular',
-              data: submissionData
-          });
+          this.logger.debug('Submitting form data:', submissionData);
   
           const response = await fetch('/api/submit-snow-report', {
               method: 'POST',
@@ -1283,21 +1225,72 @@ class FormManager {
               throw new Error(await response.text());
           }
   
-          const result = await response.json();
-          return {
-              success: result.success,
-              message: result.message
-          };
-  
+          return await response.json();
       } catch (error) {
           this.logger.error('Form submission error:', error);
-          throw {
-              success: false,
-              message: error.message || this.i18next.t('errors.form.submitFailed')
-          };
+          throw error;
       }
   }
 
+  async handlePhotoUploads() {
+      const photoManager = PhotoManager.getInstance();
+      const photos = photoManager.getPhotos();
+      const photoIds = [];
+      
+      if (photos && photos.length > 0) {
+          for (const photo of photos) {
+              const photoData = new FormData();
+              photoData.append('files[0]', photo.file);
+              photoData.append('caption', photo.caption || '');
+              
+              const response = await fetch('/api/upload-photo', {
+                  method: 'POST',
+                  credentials: 'include',
+                  body: photoData
+              });
+              
+              if (!response.ok) {
+                  throw new Error('Failed to upload photo');
+              }
+              
+              const result = await response.json();
+              photoIds.push(result.fid);
+          }
+      }
+      
+      return photoIds;
+  }
+  
+  async handleGpxUpload() {
+      const gpxOption = document.getElementById('gpx-option');
+      if (!gpxOption || (gpxOption.value !== 'existing' && gpxOption.value !== 'upload')) {
+          return null;
+      }
+  
+      const gpsManager = GPSManager.getInstance();
+      const gpxContent = gpsManager.exportGPX();
+      if (!gpxContent) {
+          return null;
+      }
+  
+      const gpxData = new FormData();
+      const gpxBlob = new Blob([gpxContent], { type: 'application/gpx+xml' });
+      gpxData.append('files[0]', gpxBlob, 'track.gpx');
+      
+      const response = await fetch('/api/upload-gpx', {
+          method: 'POST',
+          credentials: 'include',
+          body: gpxData
+      });
+      
+      if (!response.ok) {
+          throw new Error('Failed to upload GPX file');
+      }
+      
+      const result = await response.json();
+      return result.fid;
+  }
+    
   async fileToBase64(file) {
       return new Promise((resolve, reject) => {
           const reader = new FileReader();
