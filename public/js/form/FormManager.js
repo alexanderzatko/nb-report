@@ -1287,10 +1287,11 @@ class FormManager {
                   
               } catch (error) {
                   this.logger.error('Error uploading photo:', {
-                      error: error.message,
-                      stack: error.stack
+                    error: error.message,
+                    details: error.response?.data,
+                    status: error.response?.status
                   });
-                  throw new Error(`Failed to upload photo: ${error.message}`);
+                  throw new Error(`Failed to upload photo: ${error.response?.data?.details || error.message}`);
               }
           }
       }
