@@ -1243,7 +1243,8 @@ class FormManager {
                   this.logger.debug('Preparing photo upload:', {
                       filename: photo.file.name,
                       size: photo.file.size,
-                      type: photo.file.type
+                      type: photo.file.type,
+                      hasCaption: !!photo.caption
                   });
   
                   const photoData = new FormData();
