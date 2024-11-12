@@ -1197,17 +1197,38 @@ class FormManager {
       try {
           // Handle file uploads
           const photoManager = PhotoManager.getInstance();
-          const photos = photoManager.getPhotos();  // This includes both files and captions
+          const photos = photoManager.getPhotos();
           const photoIds = [];
           const photoCaptions = {};  // Store captions keyed by photo ID
   
           // Upload photos and collect IDs and captions
           if (photos && photos.length > 0) {
               for (const photo of photos) {
-                  const result = await this.uploadFile(photo.file);
-                  photoIds.push(result.fid);
-                  if (photo.caption) {
-                      photoCaptions[result.fid] = photo.caption;
+                  try {
+                      const photoData = new FormData();
+                      photoData.append('filedata', photo.file);
+                      
+                      const response = await fetch('/api/upload-file', {
+                          method: 'POST',
+                          credentials: 'include',
+                          body: photoData
+                      });
+                      
+                      if (!response.ok) {
+                          throw new Error('Failed to upload photo');
+                      }
+                      
+                      const result = await response.json();
+                      this.logger.debug('Photo upload successful:', result);
+                      
+                      photoIds.push(result.fid);
+                      if (photo.caption) {
+                          photoCaptions[result.fid] = photo.caption;
+                      }
+                      
+                  } catch (error) {
+                      this.logger.error('Error uploading photo:', error);
+                      throw error;
                   }
               }
           }
@@ -1229,7 +1250,6 @@ class FormManager {
   
           this.logger.debug('Submitting form data:', submissionData);
   
-          // Send the complete form data
           const response = await fetch('/api/submit-snow-report', {
               method: 'POST',
               headers: {
