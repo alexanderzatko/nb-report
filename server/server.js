@@ -301,7 +301,8 @@ app.post('/api/upload-file', (req, res, next) => {
             size: req.file.size,
             mimetype: req.file.mimetype,
             path: req.file.path
-        } : null
+        } : null,
+        caption: req.body.caption
     });
     
     try {
@@ -322,9 +323,10 @@ app.post('/api/upload-file', (req, res, next) => {
             contentType: req.file.mimetype
         });
 
-        // Add caption if present
-        if (req.body.caption) {
+        // Add caption if present - use req.body to access form fields
+        if (req.body && req.body.caption) {
             formData.append('caption', req.body.caption);
+            logger.debug('Adding caption to form data:', req.body.caption);
         }
       
         logger.info('Sending file to Drupal endpoint');
