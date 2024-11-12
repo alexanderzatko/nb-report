@@ -86,7 +86,7 @@ const upload = multer({
         }
         cb(null, true);
     }
-}).single('filedata');
+});
 
 app.use(express.json());
 
@@ -280,15 +280,9 @@ app.get('/api/auth-status', (req, res) => {
   });
 });
 
-// Handle photo uploads
-app.post('/api/upload-photo', (req, res, next) => {
-    logger.info('Photo upload initial request received', {
-        hasSession: !!req.session,
-        hasAccessToken: !!req.session?.accessToken,
-        contentType: req.headers['content-type']
-    });
-    
-    upload(req, res, (err) => {
+// Handle photo and gpx files uploads
+app.post('/api/upload-file', (req, res, next) => {
+    upload.single('filedata')(req, res, (err) => {
         if (err) {
             logger.error('Multer error:', {
                 error: err.message,
@@ -300,7 +294,7 @@ app.post('/api/upload-photo', (req, res, next) => {
         next();
     });
 }, async (req, res) => {
-    logger.info('Photo upload processing', {
+    logger.info('File upload request received', {
         hasFile: !!req.file,
         fileInfo: req.file ? {
             originalname: req.file.originalname,
@@ -312,35 +306,23 @@ app.post('/api/upload-photo', (req, res, next) => {
     
     try {
         if (!req.session?.accessToken) {
-            logger.warn('Photo upload attempted without auth token');
+            logger.warn('File upload attempted without auth token');
             return res.status(401).json({ error: 'Not authenticated' });
         }
 
         if (!req.file) {
-            logger.error('No file received in request');
-            return res.status(400).json({ error: 'No file uploaded' });
+            logger.error('No file received');
+            return res.status(400).json({ error: 'No file received' });
         }
 
-        // Create temp directory if it doesn't exist
-        const uploadDir = '/tmp/uploads/';
-        try {
-            if (!fs.existsSync(uploadDir)){
-                logger.info('Creating upload directory');
-                fs.mkdirSync(uploadDir, { recursive: true });
-            }
-        } catch (dirError) {
-            logger.error('Error creating upload directory:', dirError);
-            return res.status(500).json({ error: 'Server configuration error' });
-        }
-
-        logger.info('Preparing form data for Drupal');
+        // Create form data
         const formData = new FormData();
         formData.append('filedata', fs.createReadStream(req.file.path), {
             filename: req.file.originalname,
             contentType: req.file.mimetype
         });
 
-        logger.info('Sending request to Drupal endpoint');
+        logger.info('Sending file to Drupal endpoint');
         const response = await axios.post(
             `${OAUTH_PROVIDER_URL}/nabezky/nb_file`,
             formData,
@@ -354,20 +336,18 @@ app.post('/api/upload-photo', (req, res, next) => {
             }
         );
 
-        logger.info('Photo upload successful', response.data);
-
         // Clean up temporary file
         fs.unlink(req.file.path, (err) => {
             if (err) logger.error('Error deleting temp file:', err);
         });
 
+        logger.info('File upload successful', response.data);
         res.json(response.data);
 
     } catch (error) {
-        logger.error('Photo upload error:', {
+        logger.error('File upload error:', {
             message: error.message,
             response: error.response?.data,
-            status: error.response?.status,
             stack: error.stack
         });
 
@@ -384,79 +364,10 @@ app.post('/api/upload-photo', (req, res, next) => {
             res.status(401).json({ error: 'Authentication failed' });
         } else {
             res.status(500).json({
-                error: 'Failed to upload photo',
+                error: 'Failed to upload file',
                 details: error.message,
                 serverError: error.response?.data || error.message
             });
-        }
-    }
-});
-
-// Handle GPX uploads
-app.post('/api/upload-gpx', upload.single('files[0]'), async (req, res) => {
-    logger.info('GPX upload request received');
-    
-    try {
-        if (!req.session?.accessToken) {
-            return res.status(401).json({ error: 'Not authenticated' });
-        }
-
-        if (!req.file) {
-            logger.error('No GPX file received');
-            return res.status(400).json({ error: 'No GPX file received' });
-        }
-
-        // Create form data with the correct field name 'filedata'
-        const formData = new FormData();
-        formData.append('filedata', fs.createReadStream(req.file.path), {
-            filename: req.file.originalname,
-            contentType: 'application/gpx+xml'
-        });
-
-        logger.info('Sending GPX to Drupal endpoint');
-        
-        const response = await axios.post(
-            `${OAUTH_PROVIDER_URL}/nabezky/nb_file`,
-            formData,
-            {
-                headers: {
-                    'Authorization': `Bearer ${req.session.accessToken}`,
-                    ...formData.getHeaders(),
-                    'Content-Type': 'multipart/form-data'
-                },
-                maxContentLength: Infinity,
-                maxBodyLength: Infinity
-            }
-        );
-
-        // Clean up temporary file
-        fs.unlink(req.file.path, (err) => {
-            if (err) logger.error('Error deleting temp file:', err);
-        });
-
-        logger.info('GPX upload successful', response.data);
-        res.json(response.data);
-
-    } catch (error) {
-        logger.error('GPX upload error:', {
-            message: error.message,
-            response: error.response?.data,
-            stack: error.stack
-        });
-
-        // Clean up temporary file if it exists
-        if (req.file?.path) {
-            fs.unlink(req.file.path, (err) => {
-                if (err) logger.error('Error deleting temp file:', err);
-            });
-        }
-
-        if (error.response?.status === 413) {
-            res.status(413).json({ error: 'File too large' });
-        } else if (error.response?.status === 401) {
-            res.status(401).json({ error: 'Authentication failed' });
-        } else {
-            res.status(500).json({ error: 'Failed to upload GPX file' });
         }
     }
 });
