@@ -322,6 +322,11 @@ app.post('/api/upload-file', (req, res, next) => {
             contentType: req.file.mimetype
         });
 
+        // Add caption if present
+        if (req.body.caption) {
+            formData.append('caption', req.body.caption);
+        }
+      
         logger.info('Sending file to Drupal endpoint');
         const response = await axios.post(
             `${OAUTH_PROVIDER_URL}/nabezky/nb_file`,
