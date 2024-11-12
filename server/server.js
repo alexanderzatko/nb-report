@@ -86,7 +86,10 @@ const upload = multer({
         }
         cb(null, true);
     }
-});
+}).fields([
+    { name: 'filedata', maxCount: 1 },
+    { name: 'caption', maxCount: 1 }
+]);
 
 app.use(express.json());
 
