@@ -1235,6 +1235,11 @@ class FormManager {
   async handlePhotoUploads() {
       const photoManager = PhotoManager.getInstance();
       const photos = photoManager.getPhotos();
+      this.logger.debug('Retrieved photos from PhotoManager:', photos.map(p => ({
+          filename: p.file.name,
+          hasCaption: !!p.caption,
+          caption: p.caption
+      })));
       const photoIds = [];
       
       if (photos && photos.length > 0) {
@@ -1251,8 +1256,15 @@ class FormManager {
                   photoData.append('filedata', photo.file);
                   if (photo.caption) {
                       photoData.append('caption', photo.caption);
+                      this.logger.debug('Added caption to FormData:', photo.caption);
                   }
-                  
+
+                  let formDataEntries = [];
+                  for (let pair of photoData.entries()) {
+                      formDataEntries.push({key: pair[0], value: pair[1] instanceof File ? pair[1].name : pair[1]});
+                  }
+                  this.logger.debug('FormData contents:', formDataEntries);
+
                   const response = await fetch('/api/upload-file', {
                       method: 'POST',
                       credentials: 'include',
