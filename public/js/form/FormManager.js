@@ -1247,12 +1247,12 @@ class FormManager {
                   });
   
                   const photoData = new FormData();
-                  photoData.append('filedata', photo.file);  // Changed from 'files[0]' to 'filedata'
+                  photoData.append('filedata', photo.file);
                   if (photo.caption) {
                       photoData.append('caption', photo.caption);
                   }
                   
-                  const response = await fetch('/api/upload-photo', {
+                  const response = await fetch('/api/upload-file', {
                       method: 'POST',
                       credentials: 'include',
                       body: photoData
@@ -1299,9 +1299,9 @@ class FormManager {
   
       const gpxData = new FormData();
       const gpxBlob = new Blob([gpxContent], { type: 'application/gpx+xml' });
-      gpxData.append('files[0]', gpxBlob, 'track.gpx');
+      gpxData.append('filedata', gpxBlob, 'track.gpx');
       
-      const response = await fetch('/api/upload-gpx', {
+      const response = await fetch('/api/upload-file', {
           method: 'POST',
           credentials: 'include',
           body: gpxData
