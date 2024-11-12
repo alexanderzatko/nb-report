@@ -79,12 +79,6 @@ const upload = multer({
     storage: storage,
     limits: {
         fileSize: 5 * 1024 * 1024 // 5MB limit
-    },
-    fileFilter: function (req, file, cb) {
-        if (!file.originalname.match(/\.(jpg|jpeg|png|gif|gpx|xml)$/i)) {
-            return cb(new Error('Only image and GPX files are allowed!'), false);
-        }
-        cb(null, true);
     }
 }).fields([
     { name: 'filedata', maxCount: 1 },
@@ -285,13 +279,11 @@ app.get('/api/auth-status', (req, res) => {
 
 // Handle photo and gpx files uploads
 app.post('/api/upload-file', (req, res, next) => {
-  logger.debug('Upload request received', {
-      body: req.body,
-      hasFile: !!req.files,
-      contentType: req.headers['content-type']
-  });
-  
-  upload.single('filedata')(req, res, (err) => {
+    logger.debug('Upload request received:', {
+        contentType: req.headers['content-type']
+    });
+
+    upload(req, res, async (err) => {
         if (err) {
             logger.error('Multer error:', {
                 error: err.message,
@@ -300,92 +292,85 @@ app.post('/api/upload-file', (req, res, next) => {
             });
             return res.status(500).json({ error: 'File upload failed', details: err.message });
         }
-        next();
-    });
-}, async (req, res) => {
-    logger.debug('File upload processing', {
-        file: req.file ? {
-            fieldname: req.file.fieldname,
-            originalname: req.file.originalname,
-            mimetype: req.file.mimetype,
-            size: req.file.size
-        } : null,
-        body: req.body,
-        contentType: req.headers['content-type']
-    });
-    
-    try {
-        if (!req.session?.accessToken) {
-            logger.warn('File upload attempted without auth token');
-            return res.status(401).json({ error: 'Not authenticated' });
-        }
 
-        if (!req.file) {
-            logger.error('No file received');
-            return res.status(400).json({ error: 'No file received' });
-        }
+        try {
+            logger.debug('Upload request processing:', {
+                hasFiles: !!req.files,
+                fields: req.body,
+                files: req.files
+            });
 
-        // Create form data
-        const formData = new FormData();
-        formData.append('filedata', fs.createReadStream(req.file.path), {
-            filename: req.file.originalname,
-            contentType: req.file.mimetype
-        });
-
-        // Add caption if present - use req.body to access form fields
-        if (req.body && req.body.caption) {
-            formData.append('caption', req.body.caption);
-            logger.debug('Adding caption to form data:', req.body.caption);
-        }
-      
-        logger.info('Sending file to Drupal endpoint');
-        const response = await axios.post(
-            `${OAUTH_PROVIDER_URL}/nabezky/nb_file`,
-            formData,
-            {
-                headers: {
-                    'Authorization': `Bearer ${req.session.accessToken}`,
-                    ...formData.getHeaders()
-                },
-                maxContentLength: Infinity,
-                maxBodyLength: Infinity
+            if (!req.session?.accessToken) {
+                logger.warn('File upload attempted without auth token');
+                return res.status(401).json({ error: 'Not authenticated' });
             }
-        );
 
-        // Clean up temporary file
-        fs.unlink(req.file.path, (err) => {
-            if (err) logger.error('Error deleting temp file:', err);
-        });
+            if (!req.files?.filedata?.[0]) {
+                logger.error('No file received');
+                return res.status(400).json({ error: 'No file received' });
+            }
 
-        logger.info('File upload successful', response.data);
-        res.json(response.data);
+            const file = req.files.filedata[0];
+            const caption = req.body.caption;
 
-    } catch (error) {
-        logger.error('File upload error:', {
-            message: error.message,
-            response: error.response?.data,
-            stack: error.stack
-        });
+            // Create form data
+            const formData = new FormData();
+            formData.append('filedata', fs.createReadStream(file.path), {
+                filename: file.originalname,
+                contentType: file.mimetype
+            });
 
-        // Clean up temporary file if it exists
-        if (req.file?.path) {
-            fs.unlink(req.file.path, (err) => {
+            if (caption) {
+                formData.append('caption', caption);
+                logger.debug('Adding caption to Drupal request:', caption);
+            }
+
+            logger.info('Sending file to Drupal endpoint');
+            const response = await axios.post(
+                `${OAUTH_PROVIDER_URL}/nabezky/nb_file`,
+                formData,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${req.session.accessToken}`,
+                        ...formData.getHeaders()
+                    },
+                    maxContentLength: Infinity,
+                    maxBodyLength: Infinity
+                }
+            );
+
+            // Clean up temporary file
+            fs.unlink(file.path, (err) => {
                 if (err) logger.error('Error deleting temp file:', err);
             });
-        }
 
-        if (error.response?.status === 413) {
-            res.status(413).json({ error: 'File too large' });
-        } else if (error.response?.status === 401) {
-            res.status(401).json({ error: 'Authentication failed' });
-        } else {
-            res.status(500).json({
-                error: 'Failed to upload file',
-                details: error.message,
-                serverError: error.response?.data || error.message
+            logger.info('File upload successful', response.data);
+            res.json(response.data);
+
+        } catch (error) {
+            logger.error('Upload processing error:', {
+                message: error.message,
+                response: error.response?.data,
+                status: error.response?.status
             });
+
+            // Clean up temporary file if it exists
+            if (req.files?.filedata?.[0]?.path) {
+                fs.unlink(req.files.filedata[0].path, (err) => {
+                    if (err) logger.error('Error deleting temp file:', err);
+                });
+            }
+
+            if (error.response?.status === 413) {
+                res.status(413).json({ error: 'File too large' });
+            } else {
+                res.status(500).json({
+                    error: 'Failed to upload file',
+                    details: error.response?.data || error.message
+                });
+            }
         }
-    }
+    });
 });
 
 app.post('/api/submit-snow-report', async (req, res) => {
