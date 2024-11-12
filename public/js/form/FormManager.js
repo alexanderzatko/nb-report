@@ -1196,14 +1196,31 @@ class FormManager {
   async submitFormData(formData, isAdmin) {
       try {
           // Handle file uploads
-          const photoIds = await this.handlePhotoUploads();
+          const photoManager = PhotoManager.getInstance();
+          const photos = photoManager.getPhotos();  // This includes both files and captions
+          const photoIds = [];
+          const photoCaptions = {};  // Store captions keyed by photo ID
+  
+          // Upload photos and collect IDs and captions
+          if (photos && photos.length > 0) {
+              for (const photo of photos) {
+                  const result = await this.uploadFile(photo.file);
+                  photoIds.push(result.fid);
+                  if (photo.caption) {
+                      photoCaptions[result.fid] = photo.caption;
+                  }
+              }
+          }
+  
+          // Handle GPX upload
           const gpxId = await this.handleGpxUpload();
   
           // Prepare the submission data
           const submissionData = {
               data: {
-                  ...formData,  // This now contains the collected form fields
+                  ...formData,
                   photoIds,
+                  photoCaptions,  // Add captions to submission data
                   gpxId,
                   reportType: isAdmin ? 'admin' : 'regular',
                   trailConditions: isAdmin ? this.trailConditions : undefined
@@ -1212,6 +1229,7 @@ class FormManager {
   
           this.logger.debug('Submitting form data:', submissionData);
   
+          // Send the complete form data
           const response = await fetch('/api/submit-snow-report', {
               method: 'POST',
               headers: {
