@@ -282,7 +282,13 @@ app.get('/api/auth-status', (req, res) => {
 
 // Handle photo and gpx files uploads
 app.post('/api/upload-file', (req, res, next) => {
-    upload.single('filedata')(req, res, (err) => {
+  logger.debug('Upload request received', {
+      body: req.body,
+      hasFile: !!req.files,
+      contentType: req.headers['content-type']
+  });
+  
+  upload.single('filedata')(req, res, (err) => {
         if (err) {
             logger.error('Multer error:', {
                 error: err.message,
@@ -294,15 +300,15 @@ app.post('/api/upload-file', (req, res, next) => {
         next();
     });
 }, async (req, res) => {
-    logger.info('File upload request received', {
-        hasFile: !!req.file,
-        fileInfo: req.file ? {
+    logger.debug('File upload processing', {
+        file: req.file ? {
+            fieldname: req.file.fieldname,
             originalname: req.file.originalname,
-            size: req.file.size,
             mimetype: req.file.mimetype,
-            path: req.file.path
+            size: req.file.size
         } : null,
-        caption: req.body.caption
+        body: req.body,
+        contentType: req.headers['content-type']
     });
     
     try {
