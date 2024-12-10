@@ -972,11 +972,20 @@ class FormManager {
       this.logger.debug('Form submission already in progress');
       return;
     }
-  
-    this.isSubmitting = true;
-    this.logger.debug('Form submission started');
-  
+
+    const submitButton = document.querySelector('button[type="submit"]');
+    const submissionModal = document.getElementById('submission-modal');
+    const progressDiv = document.getElementById('submission-progress');
+
     try {
+      this.isSubmitting = true;
+      submitButton.classList.add('submitting');
+      this.logger.debug('Form submission started');
+  
+      // Show the modal
+      submissionModal.style.display = 'block';
+      submissionModal.querySelector('.modal-content').classList.add('submitting');
+
       const isAdmin = document.getElementById('admin-section')?.style.display !== 'none';
       this.logger.debug('Is admin form:', isAdmin);
 
@@ -1027,7 +1036,26 @@ class FormManager {
         this.isSubmitting = false;
         return;
       }
-  
+
+      // Handle photo uploads if present
+      const photos = this.photoManager.getPhotos();
+      if (photos && photos.length > 0) {
+          progressDiv.textContent = this.i18next.t('form.uploadingPhotos', { 
+              current: 1, 
+              total: photos.length 
+          });
+          
+          try {
+              const photoIds = await this.handlePhotoUploads();
+              this.logger.debug('Photos uploaded successfully:', photoIds);
+          } catch (error) {
+              throw new Error(this.i18next.t('form.photoUploadError'));
+          }
+      }
+
+      // Update progress for form submission
+      progressDiv.textContent = this.i18next.t('form.sendingReport');
+
       // Continue with form submission if validation passes
       const formData = this.collectVisibleData(isAdmin);
       const result = await this.submitFormData(formData, isAdmin);
@@ -1047,7 +1075,11 @@ class FormManager {
       this.logger.error('Error submitting snow report:', error);
       this.showError(this.i18next.t('form.validation.submitError'));
     } finally {
-      this.isSubmitting = false;
+        this.isSubmitting = false;
+        submitButton.classList.remove('submitting');
+        submissionModal.style.display = 'none';
+        submissionModal.querySelector('.modal-content').classList.remove('submitting');
+        progressDiv.textContent = '';
     }
   }
 
