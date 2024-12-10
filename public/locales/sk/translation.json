@@ -153,7 +153,13 @@
       "rewardRequestedHelp": "Pre voľný prístup ponechajte pole prázdne. Používatelia vás budú môcť dobrovoľne odmeniť Meritmi.\n... alebo vpíšte číslo 0. Používatelia budú musieť zaplatiť ľubovoľnú čiastku, väčšiu ako 0,\n... alebo vpíšte inú sumu ktorú musia návštevníci zaplatiť, aby videli túto správu."
     },
     "cancel": "Zrušiť",
-    "submit": "Odoslať správu"
+    "submit": "Odoslať správu",
+    "submitting": "Odosiela sa správa ...",
+    "uploadingPhotos": "Nahráva sa fotografia {{current}} z {{total}}...",
+    "sendingReport": "Dokončuje sa odoslanie...",
+    "submitSuccess": "Správa bola úspešne odoslaná!",
+    "submitError": "Správu sa nepodarilo odoslať",
+    "photoUploadError": "Nepodarilo sa nahrať fotografie"
   },
   "countries": {
     "austria": "Rakúsko",
