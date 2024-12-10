@@ -153,7 +153,13 @@
       "rewardRequestedHelp": "Leave empty for free access. Users will still be able to voluntarily reward you with Merits.\n...or set the number to 0. Users will have to pay any amount of their choosing, greater than 0,\n...or enter another number the visitors must pay to see this content."
     },
     "cancel": "Cancel",
-    "submit": "Submit Report"
+    "submit": "Submit Report",
+    "submitting": "Sending report...",
+    "uploadingPhotos": "Uploading photo {{current}} of {{total}}...",
+    "sendingReport": "Finalizing submission...",
+    "submitSuccess": "Report sent successfully!",
+    "submitError": "Failed to send report",
+    "photoUploadError": "Failed to upload photos"
   },
   "countries": {
     "austria": "Austria",
