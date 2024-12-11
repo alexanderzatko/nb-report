@@ -160,11 +160,11 @@
 }
 
 .settings-background {
-    background-image: url('/images/backgrounds/blank.jpg');
+    background-image: url('/images/backgrounds/transparent.gif');
 }
 
 .form-background {
-    background-image: url('/images/backgrounds/blank.jpg');
+    background-image: url('/images/backgrounds/transparent.gif');
 }
 
 /* A semi-transparent overlay to ensure content readability */
