@@ -30,6 +30,28 @@ class UIManager {
     return UIManager.instance;
   }
 
+  updateBackground(page) {
+      const backgroundContainer = document.getElementById('background-container');
+      if (!backgroundContainer) return;
+
+      backgroundContainer.className = 'page-background';
+
+      switch (page) {
+          case 'login':
+              backgroundContainer.classList.add('login-background');
+              break;
+          case 'dashboard':
+              backgroundContainer.classList.add('dashboard-background');
+              break;
+          case 'settings':
+              backgroundContainer.classList.add('settings-background');
+              break;
+          case 'form':
+              backgroundContainer.classList.add('form-background');
+              break;
+      }
+  }
+
   async initializeLoginUI() {
     try {
       // Wait for i18next to be ready (only core translations at this point)
@@ -56,6 +78,7 @@ class UIManager {
       this.logger.error('Error initializing login UI:', error);
       throw error;
     }
+    this.updateBackground('login');
   }
 
   async initializeAuthenticatedUI() {
@@ -330,6 +353,7 @@ class UIManager {
       dashboardContainer.style.display = 'block';
       console.log('Dashboard container is now visible');
     }
+    this.updateBackground('dashboard');
   }
 
   showSettings() {
@@ -350,6 +374,7 @@ class UIManager {
       settingsContainer.style.display = 'block';
       console.log('Settings container is now visible');
     }
+    this.updateBackground('settings');
   }
 
   async showSnowReportForm() {
@@ -396,6 +421,7 @@ class UIManager {
           this.showError(this.i18next.t('errors.form.loading'));
           this.showDashboard();
       }
+      this.updateBackground('form');
   }
 
   updateCorePageContent() {
