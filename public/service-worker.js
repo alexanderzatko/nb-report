@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v336';  // Should match ConfigManager.js version
+const CACHE_VERSION = 'v337';  // Should match ConfigManager.js version
 const CACHE_NAME = 'snow-report-cache';
 const FULL_CACHE_NAME = `${CACHE_NAME}-${CACHE_VERSION}`;
 const OFFLINE_PAGE = '/offline.html';
@@ -35,7 +35,10 @@ const urlsToCache = [
   '/fonts/roboto/Roboto-Medium.woff2',
   '/fonts/roboto/Roboto-Medium.woff',
   '/fonts/roboto/Roboto-Bold.woff2',
-  '/fonts/roboto/Roboto-Bold.woff'
+  '/fonts/roboto/Roboto-Bold.woff',
+  '/images/backgrounds/login-bg.jpg',
+  '/images/backgrounds/dashboard-bg.jpg',
+  '/images/backgrounds/transparent.gif',
 ];
 
 self.addEventListener('install', function(event) {
