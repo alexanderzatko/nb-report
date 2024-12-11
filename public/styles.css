@@ -152,11 +152,11 @@
 
 /* Specific background styles for each page */
 .login-background {
-    background-image: url('/images/backgrounds/login-bg.jpg');
+    background-image: url('/images/backgrounds/login.png');
 }
 
 .dashboard-background {
-    background-image: url('/images/backgrounds/dashboard-bg.jpg');
+    background-image: url('/images/backgrounds/transparent.gif');
 }
 
 .settings-background {
