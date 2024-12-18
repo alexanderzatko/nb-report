@@ -1064,10 +1064,12 @@ class FormManager {
       // Handle GPX data
       const gpxId = await this.handleGpxUpload();
 
+      const formContent = this.collectVisibleData(isAdmin);
+
       // Include the photo data in the submission
       const submissionData = {
           data: {
-              ...formData,
+              ...formContent,
               photoIds: uploadedPhotoData.photoIds,
               photoCaptions: uploadedPhotoData.photoCaptions,
               gpxId,
