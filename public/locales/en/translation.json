@@ -156,6 +156,7 @@
     "submit": "Submit Report",
     "submitting": "Sending report...",
     "uploadingPhotos": "Uploading photo {{current}} of {{total}}...",
+    "photosUploaded": "All photos uploaded successfully",
     "sendingReport": "Finalizing submission...",
     "submitSuccess": "Report sent successfully!",
     "submitError": "Failed to send report",
