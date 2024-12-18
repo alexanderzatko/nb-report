@@ -1037,6 +1037,8 @@ class FormManager {
         return;
       }
 
+      let uploadedPhotoData = { photoIds: [], photoCaptions: {} };
+
       // Handle photo uploads if present
       const photos = this.photoManager.getPhotos();
       if (photos && photos.length > 0) {
@@ -1044,10 +1046,10 @@ class FormManager {
               current: 1, 
               total: photos.length 
           });
-          
+
           try {
-              const photoIds = await this.handlePhotoUploads();
-              this.logger.debug('Photos uploaded successfully:', photoIds);
+              uploadedPhotoData = await this.handlePhotoUploads();
+              this.logger.debug('Photos uploaded successfully:', uploadedPhotoData.photoIds);
           } catch (error) {
               throw new Error(this.i18next.t('form.photoUploadError'));
           }
@@ -1058,6 +1060,17 @@ class FormManager {
 
       // Continue with form submission if validation passes
       const formData = this.collectVisibleData(isAdmin);
+
+      // Include the photo data in the submission
+      const submissionData = {
+          ...formData,  // This already contains the data property
+          data: {
+              ...formData.data,  // Spread the existing data contents
+              photoIds: uploadedPhotoData.photoIds,
+              photoCaptions: uploadedPhotoData.photoCaptions
+          }
+      };
+      
       const result = await this.submitFormData(formData, isAdmin);
       
       if (result.success) {
@@ -1279,13 +1292,9 @@ class FormManager {
   async handlePhotoUploads() {
       const photoManager = PhotoManager.getInstance();
       const photos = photoManager.getPhotos();
-      this.logger.debug('Retrieved photos from PhotoManager:', photos.map(p => ({
-          filename: p.file.name,
-          hasCaption: !!p.caption,
-          caption: p.caption
-      })));
       const photoIds = [];
-      
+      const photoCaptions = {};
+
       if (photos && photos.length > 0) {
           for (const photo of photos) {
               try {
@@ -1328,7 +1337,9 @@ class FormManager {
                   const result = await response.json();
                   this.logger.debug('Photo upload successful:', result);
                   photoIds.push(result.fid);
-                  
+                  if (photo.caption) {
+                      photoCaptions[result.fid] = photo.caption;
+                  }
               } catch (error) {
                   this.logger.error('Error uploading photo:', {
                     error: error.message,
