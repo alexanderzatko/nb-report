@@ -1233,36 +1233,10 @@ class FormManager {
           const photoIds = [];
           const photoCaptions = {};  // Store captions keyed by photo ID
   
-          // Upload photos and collect IDs and captions
-          if (photos && photos.length > 0) {
-              for (const photo of photos) {
-                  try {
-                      const photoData = new FormData();
-                      photoData.append('filedata', photo.file);
-                      
-                      const response = await fetch('/api/upload-file', {
-                          method: 'POST',
-                          credentials: 'include',
-                          body: photoData
-                      });
-                      
-                      if (!response.ok) {
-                          throw new Error('Failed to upload photo');
-                      }
-                      
-                      const result = await response.json();
-                      this.logger.debug('Photo upload successful:', result);
-                      
-                      photoIds.push(result.fid);
-                      if (photo.caption) {
-                          photoCaptions[result.fid] = photo.caption;
-                      }
-                      
-                  } catch (error) {
-                      this.logger.error('Error uploading photo:', error);
-                      throw error;
-                  }
-              }
+          // Reuse the IDs from handlePhotoUploads() which was called earlier
+          if (this.uploadedPhotoIds && this.uploadedPhotoCaptions) {
+              photoIds.push(...this.uploadedPhotoIds);
+              Object.assign(photoCaptions, this.uploadedPhotoCaptions);
           }
   
           // Handle GPX upload
