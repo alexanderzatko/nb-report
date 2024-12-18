@@ -1049,7 +1049,7 @@ class FormManager {
 
           try {
               uploadedPhotoData = await this.handlePhotoUploads();
-              this.logger.debug('Photos uploaded successfully:', uploadedPhotoData.photoIds);
+              this.logger.debug('Photos uploaded successfully:', uploadedPhotoData);
           } catch (error) {
               throw new Error(this.i18next.t('form.photoUploadError'));
           }
@@ -1061,13 +1061,18 @@ class FormManager {
       // Continue with form submission if validation passes
       const formData = this.collectVisibleData(isAdmin);
 
+      // Handle GPX data
+      const gpxId = await this.handleGpxUpload();
+
       // Include the photo data in the submission
       const submissionData = {
-          ...formData,  // This already contains the data property
           data: {
-              ...formData.data,  // Spread the existing data contents
+              ...formData,
               photoIds: uploadedPhotoData.photoIds,
-              photoCaptions: uploadedPhotoData.photoCaptions
+              photoCaptions: uploadedPhotoData.photoCaptions,
+              gpxId,
+              reportType: isAdmin ? 'admin' : 'regular',
+              trailConditions: isAdmin ? this.trailConditions : undefined
           }
       };
       
@@ -1238,35 +1243,8 @@ class FormManager {
       }
   }
   
-  async submitFormData(formData, isAdmin) {
+  async submitFormData(submissionData, isAdmin) {
       try {
-          // Handle file uploads
-          const photoManager = PhotoManager.getInstance();
-          const photos = photoManager.getPhotos();
-          const photoIds = [];
-          const photoCaptions = {};  // Store captions keyed by photo ID
-  
-          // Reuse the IDs from handlePhotoUploads() which was called earlier
-          if (this.uploadedPhotoIds && this.uploadedPhotoCaptions) {
-              photoIds.push(...this.uploadedPhotoIds);
-              Object.assign(photoCaptions, this.uploadedPhotoCaptions);
-          }
-  
-          // Handle GPX upload
-          const gpxId = await this.handleGpxUpload();
-  
-          // Prepare the submission data
-          const submissionData = {
-              data: {
-                  ...formData,
-                  photoIds,
-                  photoCaptions,  // Add captions to submission data
-                  gpxId,
-                  reportType: isAdmin ? 'admin' : 'regular',
-                  trailConditions: isAdmin ? this.trailConditions : undefined
-              }
-          };
-  
           this.logger.debug('Submitting form data:', submissionData);
   
           const response = await fetch('/api/submit-snow-report', {
