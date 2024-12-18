@@ -156,6 +156,7 @@
     "submit": "Odoslať správu",
     "submitting": "Odosiela sa správa ...",
     "uploadingPhotos": "Nahráva sa fotografia {{current}} z {{total}}...",
+    "photosUploaded": "Všetky fotografie boli úspešne nahrané",
     "sendingReport": "Dokončuje sa odoslanie...",
     "submitSuccess": "Správa bola úspešne odoslaná!",
     "submitError": "Správu sa nepodarilo odoslať",
