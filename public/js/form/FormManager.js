@@ -1331,7 +1331,10 @@ class FormManager {
           }
       }
       
-      return photoIds;
+      return {
+          photoIds: photoIds,
+          photoCaptions: photoCaptions
+      };
   }
   
   async handleGpxUpload() {
