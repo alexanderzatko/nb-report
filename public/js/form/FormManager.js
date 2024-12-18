@@ -1048,7 +1048,7 @@ class FormManager {
           });
 
           try {
-              uploadedPhotoData = await this.handlePhotoUploads();
+              uploadedPhotoData = await this.handlePhotoUploads(progressDiv, photos.length);
               this.logger.debug('Photos uploaded successfully:', uploadedPhotoData);
           } catch (error) {
               throw new Error(this.i18next.t('form.photoUploadError'));
@@ -1269,7 +1269,7 @@ class FormManager {
       }
   }
 
-  async handlePhotoUploads() {
+  async handlePhotoUploads(progressDiv, totalPhotos) {
       const photoManager = PhotoManager.getInstance();
       const photos = photoManager.getPhotos();
       const photoIds = [];
@@ -1278,11 +1278,18 @@ class FormManager {
       if (photos && photos.length > 0) {
           for (const photo of photos) {
               try {
+                  currentPhoto++;
+                  progressDiv.textContent = this.i18next.t('form.uploadingPhotos', {
+                      current: currentPhoto,
+                      total: totalPhotos
+                  });
+                  
                   this.logger.debug('Preparing photo upload:', {
                       filename: photo.file.name,
                       size: photo.file.size,
                       type: photo.file.type,
-                      hasCaption: !!photo.caption
+                      hasCaption: !!photo.caption,
+                      progress: `${currentPhoto}/${totalPhotos}`
                   });
   
                   const photoData = new FormData();
@@ -1329,6 +1336,7 @@ class FormManager {
                   throw new Error(`Failed to upload photo: ${error.response?.data?.details || error.message}`);
               }
           }
+          progressDiv.textContent = this.i18next.t('form.photosUploaded');
       }
       
       return {
