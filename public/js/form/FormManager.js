@@ -1078,8 +1078,8 @@ class FormManager {
           }
       };
       
-      const result = await this.submitFormData(formData, isAdmin);
-      
+      const result = await this.submitFormData(submissionData, isAdmin);
+
       if (result.success) {
           this.showSuccess(this.i18next.t('form.validation.submitSuccess'));
           this.stopTrackingFormTime();
