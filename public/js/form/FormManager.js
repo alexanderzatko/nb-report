@@ -121,20 +121,21 @@ class FormManager {
 
   setupEventListeners() {
       console.log('Setting up form event listeners');
-      // Clean up existing event listeners by cloning nodes
       const form = document.getElementById('snow-report-form');
       if (form) {
-          console.log('Form found, cloning...');
-          const newForm = form.cloneNode(true);
-          form.parentNode.replaceChild(newForm, form);
-          newForm.addEventListener('submit', (event) => this.handleFormSubmit(event));
+          console.log('Form found, setting up submit handler');
+          // Remove any existing submit handler to avoid duplicates
+          form.removeEventListener('submit', this.handleFormSubmit);
+          // Add new submit handler
+          form.addEventListener('submit', (event) => this.handleFormSubmit(event));
       }
   
       const cancelButton = document.getElementById('cancel-button');
       if (cancelButton) {
-          const newCancelButton = cancelButton.cloneNode(true);
-          cancelButton.parentNode.replaceChild(newCancelButton, cancelButton);
-          newCancelButton.addEventListener('click', () => this.handleCancel());
+          // Remove any existing click handler to avoid duplicates
+          cancelButton.removeEventListener('click', this.handleCancel);
+          // Add new cancel handler
+          cancelButton.addEventListener('click', () => this.handleCancel());
       }
   }
 
