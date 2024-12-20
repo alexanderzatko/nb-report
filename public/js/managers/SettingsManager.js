@@ -97,6 +97,31 @@ class SettingsManager {
       settingsContainer.style.display = 'none';
     }
   }
+
+  async initializeSkiCentersSection() {
+      const stateManager = StateManager.getInstance();
+      const userData = stateManager.getState('storage.userData');
+      
+      if (userData?.ski_center_admin === "1" && userData.ski_centers_data?.length > 1) {
+          const container = document.createElement('div');
+          container.className = 'settings-section';
+          
+          const title = document.createElement('h3');
+          title.textContent = this.i18next.t('settings.skiCenters.title');
+          container.appendChild(title);
+  
+          const skiCentersList = document.createElement('div');
+          skiCentersList.className = 'ski-centers-list';
+          
+          userData.ski_centers_data.forEach(center => {
+              const centerItem = this.createSkiCenterItem(center);
+              skiCentersList.appendChild(centerItem);
+          });
+          
+          container.appendChild(skiCentersList);
+          document.querySelector('.settings-content').appendChild(container);
+      }
+  }
 }
 
 export default SettingsManager;
