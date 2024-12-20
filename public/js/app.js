@@ -53,9 +53,7 @@ class App {
 
   async initializeCoreSystem() {
     try {
-      // Initialize minimal i18next with only core translations
-      await resetI18next();
-      await this.initializeCorei18n();
+      await initI18next();
 
       // Initialize only essential managers
       this.managers = {
