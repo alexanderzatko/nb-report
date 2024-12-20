@@ -281,6 +281,48 @@ class StateManager {
     }
     return result;
   }
+
+  async switchSkiCenter(skiCenterId) {
+      const storage = this.getState('storage.userData');
+      const currentUser = this.getState('auth.user');
+      
+      if (!storage?.ski_centers_data) {
+          this.logger.error('No ski centers data in storage');
+          return false;
+      }
+  
+      const newCenter = storage.ski_centers_data.find(center => center[0] === skiCenterId);
+      if (!newCenter) {
+          this.logger.error('Ski center not found:', skiCenterId);
+          return false;
+      }
+  
+      // Update current user with new ski center data
+      const updatedUser = {
+          ...currentUser,
+          ski_center_id: newCenter[0],
+          ski_center_name: newCenter[1],
+          trails: newCenter[2]
+      };
+  
+      this.setState('auth.user', updatedUser);
+      return true;
+  }
+  
+  getAllSkiCenters() {
+      const storage = this.getState('storage.userData');
+      return storage?.ski_centers_data || [];
+  }
+  
+  getCurrentSkiCenter() {
+      const user = this.getState('auth.user');
+      return user ? {
+          id: user.ski_center_id,
+          name: user.ski_center_name,
+          trails: user.trails
+      } : null;
+  }
+
 }
 
 export default StateManager;
