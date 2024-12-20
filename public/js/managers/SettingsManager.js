@@ -40,6 +40,8 @@ class SettingsManager {
       const stateManager = StateManager.getInstance();
       const userData = stateManager.getState('storage.userData');
 
+      this.logger.error('User data for Settings:', userData);
+
       if (userData?.ski_center_admin === "1" && userData.ski_centers_data?.length > 1) {
           const settingsContent = settingsContainer.querySelector('.settings-content');
           if (settingsContent) {
