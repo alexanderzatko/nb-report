@@ -183,6 +183,10 @@
 
 /* The FORM START */
 
+.ski-centers-section {
+    margin-bottom: 2rem;
+}
+
 .ski-centers-list {
     margin-top: 1rem;
 }
@@ -190,15 +194,30 @@
 .ski-center-item {
     display: flex;
     align-items: center;
-    padding: 0.75rem;
+    padding: 1rem;
     margin-bottom: 0.5rem;
     border: 1px solid #ddd;
     border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ski-center-item:hover {
+    background-color: #f5f5f5;
 }
 
 .ski-center-item.active {
     border-color: #0078d4;
     background: rgba(0, 120, 212, 0.05);
+}
+
+.ski-center-item input[type="radio"] {
+    margin-right: 1rem;
+}
+
+.ski-center-item label {
+    cursor: pointer;
+    flex: 1;
 }
 
 .switch-center-link {
