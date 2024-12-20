@@ -224,7 +224,7 @@ class App {
 
       // Initialize feature managers in correct order
       this.managers.database = DatabaseManager.getInstance();
-      await this.managers.database.initialize();
+      await this.managers.database.getDatabase();
 
       this.managers.select = SelectManager.getInstance();
       this.managers.form = FormManager.getInstance();
