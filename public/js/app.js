@@ -146,7 +146,7 @@ class App {
               console.log('OAuth callback successful, fetching user data...');
               // First fetch user data
               await this.refreshUserData();
-              await this.initializeFeatureManagers();
+//              await this.initializeFeatureManagers();
               // Feature managers will be initialized via auth state change subscription
               return true;
             } else {
