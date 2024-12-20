@@ -89,7 +89,15 @@ class App {
       // Subscribe to auth state changes
       this.managers.auth.subscribe('authStateChange', async (isAuthenticated) => {
         if (isAuthenticated) {
-          await this.initializeFeatureManagers();
+          const stateManager = StateManager.getInstance();
+          const storageData = stateManager.getState('storage.userData');
+          
+          // Only initialize feature managers if we have complete data
+          if (storageData) {
+            await this.initializeFeatureManagers();
+          } else {
+            this.logger.debug('Skipping feature managers initialization - waiting for complete data');
+          }
         } else {
           await this.deactivateFeatureManagers();
         }
@@ -191,17 +199,13 @@ class App {
           currentUserData.trails = firstCenter[2];
       }
 
-      stateManager.setState('auth.user', currentUserData);
-
       // Handle language preference before any UI updates
       if (userData.language && userData.language !== this.i18next.language) {
         this.logger.debug(`Changing language to user preference: ${userData.language}`);
         await this.i18next.changeLanguage(userData.language);
       }
   
-      // Now initialize UI with the user data
-      await this.managers.ui.initializeAuthenticatedUI();
-      await this.managers.ui.updateUIBasedOnAuthState(true, currentUserData);
+      stateManager.setState('auth.user', currentUserData);
       
       return currentUserData;
   
