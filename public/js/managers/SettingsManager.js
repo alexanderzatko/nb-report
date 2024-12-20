@@ -2,6 +2,8 @@
 
 import Logger from '../utils/Logger.js';
 import AuthManager from '../auth/AuthManager.js';
+import i18next from '/node_modules/i18next/dist/esm/i18next.js';
+import StateManager from '../state/StateManager.js';
 
 class SettingsManager {
   static instance = null;
@@ -92,8 +94,10 @@ class SettingsManager {
           this.logger.debug('Creating ski centers section');
 
           const settingsContent = settingsContainer.querySelector('.settings-content');
-          if (!settingsContent) return;
-          this.logger.error('Settings content container not found');
+          if (!settingsContent) {
+              this.logger.error('Settings content container not found');
+              return;
+          }
 
           const skiCenterSection = document.createElement('div');
           skiCenterSection.className = 'settings-section ski-centers-section';
