@@ -191,7 +191,20 @@ class FormManager {
                   switchLink.textContent = this.i18next.t('form.switchSkiCenter');
                   switchLink.onclick = (e) => {
                       e.preventDefault();
-                      window.dispatchEvent(new Event('showSettings'));
+                      const event = new Event('showSettings');
+                      window.dispatchEvent(event);
+                      
+                      // Hide the form
+                      const form = document.getElementById('snow-report-form');
+                      if (form) {
+                          form.style.display = 'none';
+                      }
+                      
+                      // Show settings
+                      const settingsContainer = document.getElementById('settings-container');
+                      if (settingsContainer) {
+                          settingsContainer.style.display = 'block';
+                      }
                   };
                   skiCenterNameDiv.appendChild(switchLink);
               }
