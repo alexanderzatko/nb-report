@@ -163,7 +163,9 @@ class SettingsManager {
   async initializeSkiCentersSection() {
       const stateManager = StateManager.getInstance();
       const userData = stateManager.getState('storage.userData');
-      
+
+      this.logger.debug('user data is: ',userData);
+
       if (userData?.ski_center_admin === "1" && userData.ski_centers_data?.length > 1) {
           const container = document.createElement('div');
           container.className = 'settings-section';
