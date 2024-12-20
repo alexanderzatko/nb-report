@@ -183,6 +183,36 @@
 
 /* The FORM START */
 
+.ski-centers-list {
+    margin-top: 1rem;
+}
+
+.ski-center-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.ski-center-item.active {
+    border-color: #0078d4;
+    background: rgba(0, 120, 212, 0.05);
+}
+
+.switch-center-link {
+    display: block;
+    font-size: 0.9rem;
+    color: #0078d4;
+    text-decoration: none;
+    margin-top: 0.25rem;
+}
+
+.switch-center-link:hover {
+    text-decoration: underline;
+}
+
 select {
     height: 37px;
     font-size: 14px;
