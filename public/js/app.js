@@ -27,6 +27,7 @@ class App {
     this.i18next = i18next;
     this.processingAuth = false;
     this.featureManagersInitialized = false;
+    this.initializationInProgress = false;
     App.instance = this;
   }
 
@@ -64,13 +65,33 @@ class App {
         network: NetworkManager.getInstance()
       };
 
+      // Modified auth state change handler
+      this.managers.auth.subscribe('authStateChange', async (isAuthenticated) => {
+        if (this.initializationInProgress) {
+          this.logger.debug('Skipping auth state change handler - initialization in progress');
+          return;
+        }
+
+        if (isAuthenticated) {
+          const stateManager = StateManager.getInstance();
+          const userData = stateManager.getState('auth.user');
+          const storageData = stateManager.getState('storage.userData');
+          
+          if (userData && storageData) {
+            await this.managers.ui.updateUIBasedOnAuthState(true);
+            await this.initializeFeatureManagers();
+          }
+        } else {
+          await this.deactivateFeatureManagers();
+        }
+      });
+      
       // Check for OAuth callback first
       const didAuth = await this.checkForURLParameters();
       
       if (!didAuth) {
           // Only check session if we didn't just process an auth callback
           const isAuthenticated = await this.managers.auth.checkAuthStatus();
-          
           if (isAuthenticated) {
               await this.managers.ui.updateUIBasedOnAuthState(true);
               await this.refreshUserData();
@@ -142,6 +163,7 @@ class App {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.has('code') && !this.processingAuth) {
           this.processingAuth = true;
+          this.initializationInProgress = true;
           try {
               console.log('Processing OAuth callback...');
               const success = await this.managers.auth.handleOAuthCallback(
@@ -154,6 +176,7 @@ class App {
               console.log('OAuth callback successful, fetching user data...');
               // First fetch user data
               await this.refreshUserData();
+              await this.managers.ui.updateUIBasedOnAuthState(true);
               await this.initializeFeatureManagers();
               // Feature managers will be initialized via auth state change subscription
               return true;
@@ -163,6 +186,7 @@ class App {
             }
           } finally {
               this.processingAuth = false;
+              this.initializationInProgress = false;
           }
       }
       return false;
@@ -181,7 +205,7 @@ class App {
 
       const stateManager = StateManager.getInstance();
 
-      stateManager.setState('storage.userData', userData);
+      stateManager.setState('storage.userData', userData, true);
 
       const currentUserData = {
           language: userData.language,
