@@ -182,6 +182,19 @@ class FormManager {
           if (skiCenterNameDiv) {
               skiCenterNameDiv.textContent = userData.ski_center_name || '';
               this.logger.debug('Set ski center name:', userData.ski_center_name);
+
+              const storage = StateManager.getInstance().getState('storage.userData');
+              if (storage?.ski_centers_data?.length > 1) {
+                  const switchLink = document.createElement('a');
+                  switchLink.href = '#';
+                  switchLink.className = 'switch-center-link';
+                  switchLink.textContent = this.i18next.t('form.switchSkiCenter');
+                  switchLink.onclick = (e) => {
+                      e.preventDefault();
+                      window.dispatchEvent(new Event('showSettings'));
+                  };
+                  skiCenterNameDiv.appendChild(switchLink);
+              }
           } else {
               this.logger.warn('Ski center name div not found');
           }
