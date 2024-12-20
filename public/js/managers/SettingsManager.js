@@ -31,89 +31,111 @@ class SettingsManager {
     if (this.initialized) return;
     
     try {
-      const settingsContainer = document.getElementById('settings-container');
-      if (!settingsContainer) {
-        this.logger.error('Settings container not found');
-        return;
-      }
-
-      const stateManager = StateManager.getInstance();
-      const userData = stateManager.getState('storage.userData');
-
-      this.logger.error('User data for Settings:', userData);
-
-      if (userData?.ski_center_admin === "1" && userData.ski_centers_data?.length > 1) {
-          const settingsContent = settingsContainer.querySelector('.settings-content');
-          if (settingsContent) {
-              const skiCenterSection = document.createElement('div');
-              skiCenterSection.className = 'settings-section ski-centers-section';
-              
-              const title = document.createElement('h3');
-              title.textContent = this.i18next.t('settings.skiCenters.title', 'Manage Ski Centers');
-              skiCenterSection.appendChild(title);
-
-              const centersList = document.createElement('div');
-              centersList.className = 'ski-centers-list';
-
-              const currentSkiCenterId = stateManager.getState('auth.user')?.ski_center_id;
-
-              userData.ski_centers_data.forEach(([centerId, centerName]) => {
-                  const centerItem = document.createElement('div');
-                  centerItem.className = 'ski-center-item';
-                  if (centerId === currentSkiCenterId) {
-                      centerItem.classList.add('active');
-                  }
-
-                  const radioInput = document.createElement('input');
-                  radioInput.type = 'radio';
-                  radioInput.name = 'ski-center';
-                  radioInput.value = centerId;
-                  radioInput.id = `ski-center-${centerId}`;
-                  radioInput.checked = centerId === currentSkiCenterId;
-
-                  const label = document.createElement('label');
-                  label.htmlFor = `ski-center-${centerId}`;
-                  label.textContent = centerName;
-
-                  centerItem.appendChild(radioInput);
-                  centerItem.appendChild(label);
-
-                  centerItem.addEventListener('click', async () => {
-                      if (centerId !== currentSkiCenterId) {
-                          const success = await stateManager.switchSkiCenter(centerId);
-                          if (success) {
-                              document.querySelectorAll('.ski-center-item').forEach(item => {
-                                  item.classList.remove('active');
-                              });
-                              centerItem.classList.add('active');
-                              
-                              // Update form if it exists
-                              const skiCenterNameDiv = document.getElementById('ski-center-name');
-                              const skiCenterIdInput = document.getElementById('ski-center-id');
-                              if (skiCenterNameDiv) skiCenterNameDiv.textContent = centerName;
-                              if (skiCenterIdInput) skiCenterIdInput.value = centerId;
-                          }
-                      }
-                  });
-
-                  centersList.appendChild(centerItem);
-              });
-
-              skiCenterSection.appendChild(centersList);
-              settingsContent.insertBefore(skiCenterSection, settingsContent.firstChild);
+          const settingsContainer = document.getElementById('settings-container');
+          if (!settingsContainer) {
+              this.logger.error('Settings container not found');
+              return;
           }
-      }
 
-      // Add event listeners for settings controls
-      this.setupEventListeners();
-      
-      this.initialized = true;
-      this.logger.debug('Settings manager initialized');
+          // Add event listeners for settings controls
+          this.setupEventListeners();
+          
+          // Subscribe to userData changes
+          const stateManager = StateManager.getInstance();
+          stateManager.subscribe('auth.user', (userData) => {
+              this.logger.debug('User data updated in Settings:', userData);
+              this.updateSkiCentersSection(userData);
+          });
 
-    } catch (error) {
+          // Initial setup with current data
+          const currentUser = stateManager.getState('auth.user');
+          if (currentUser) {
+              this.updateSkiCentersSection(currentUser);
+          }
+          
+          this.initialized = true;
+          this.logger.debug('Settings manager initialized');
+
+        } catch (error) {
       this.logger.error('Failed to initialize settings manager:', error);
       throw error;
     }
+  }
+
+  async updateSkiCentersSection(userData) {
+      const settingsContainer = document.getElementById('settings-container');
+      if (!settingsContainer) return;
+
+      const stateManager = StateManager.getInstance();
+      const storageData = stateManager.getState('storage.userData');
+      
+      this.logger.debug('Updating ski centers section with data:', {
+          userData,
+          storageData
+      });
+
+      // Remove existing ski centers section if it exists
+      const existingSection = settingsContainer.querySelector('.ski-centers-section');
+      if (existingSection) {
+          existingSection.remove();
+      }
+
+      // Check if user is admin and has multiple ski centers
+      if (userData?.ski_center_admin === "1" && storageData?.ski_centers_data?.length > 1) {
+          const settingsContent = settingsContainer.querySelector('.settings-content');
+          if (!settingsContent) return;
+
+          const skiCenterSection = document.createElement('div');
+          skiCenterSection.className = 'settings-section ski-centers-section';
+          
+          const title = document.createElement('h3');
+          title.textContent = this.i18next.t('settings.skiCenters.title', 'Manage Ski Centers');
+          skiCenterSection.appendChild(title);
+
+          const centersList = document.createElement('div');
+          centersList.className = 'ski-centers-list';
+
+          const currentSkiCenterId = userData.ski_center_id;
+
+          storageData.ski_centers_data.forEach(([centerId, centerName]) => {
+              const centerItem = document.createElement('div');
+              centerItem.className = 'ski-center-item';
+              if (centerId === currentSkiCenterId) {
+                  centerItem.classList.add('active');
+              }
+
+              const radioInput = document.createElement('input');
+              radioInput.type = 'radio';
+              radioInput.name = 'ski-center';
+              radioInput.value = centerId;
+              radioInput.id = `ski-center-${centerId}`;
+              radioInput.checked = centerId === currentSkiCenterId;
+
+              const label = document.createElement('label');
+              label.htmlFor = `ski-center-${centerId}`;
+              label.textContent = centerName;
+
+              centerItem.appendChild(radioInput);
+              centerItem.appendChild(label);
+
+              centerItem.addEventListener('click', async () => {
+                  if (centerId !== currentSkiCenterId) {
+                      const success = await stateManager.switchSkiCenter(centerId);
+                      if (success) {
+                          document.querySelectorAll('.ski-center-item').forEach(item => {
+                              item.classList.remove('active');
+                          });
+                          centerItem.classList.add('active');
+                      }
+                  }
+              });
+
+              centersList.appendChild(centerItem);
+          });
+
+          skiCenterSection.appendChild(centersList);
+          settingsContent.insertBefore(skiCenterSection, settingsContent.firstChild);
+      }
   }
 
   setupEventListeners() {
