@@ -34,8 +34,11 @@
     }
   },
   "settings": {
-    "title": "Settings",
-    "returnToDashboard": "Return to Dashboard"
+    "title": "Nastavení",
+    "returnToDashboard": "Návrat na hlavní stránku",
+    "skiCenters": {
+      "title": "Zpráva středisek"
+    }
   },
   "auth": {
     "loginText": "Přihlásit se do aplikace",
