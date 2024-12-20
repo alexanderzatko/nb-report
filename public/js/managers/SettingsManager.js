@@ -32,7 +32,7 @@ class SettingsManager {
 
     async initialize() {
         if (this.initialized) {
-            this.logger.error('Settings initialized, returning');
+            this.logger.debug('Settings already initialized');
             return;
         }
         
@@ -41,7 +41,6 @@ class SettingsManager {
         try {
             // Wait for i18next to be ready if it's not already
             if (!this.i18next.isInitialized) {
-                this.logger.debug('Waiting for i18next to initialize...');
                 await new Promise(resolve => {
                     this.i18next.on('initialized', resolve);
                 });
@@ -49,22 +48,12 @@ class SettingsManager {
 
             const settingsContainer = document.getElementById('settings-container');
             if (!settingsContainer) {
-                this.logger.error('Settings container not found');
-                return;
+                throw new Error('Settings container not found');
             }
 
             // Add event listeners for settings controls
             this.setupEventListeners();
-            
-            // Subscribe to userData changes
-            const stateManager = StateManager.getInstance();
-            stateManager.subscribe('auth.user', (userData) => {
-                this.logger.debug('User data updated in Settings:', userData);
-                this.updateSkiCentersSection();
-            });
-
-            // Initial setup with current data
-            this.updateSkiCentersSection();
+            await this.updateSkiCentersSection();
             
             this.initialized = true;
             this.logger.debug('Settings manager initialized');
