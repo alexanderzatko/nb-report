@@ -27,15 +27,18 @@
     "preferences": "Preferences",
     "preferencesDesc": "Manage your preferences",
     "settings": "Nastavení",
-    "settingsDesc": "Správa nastavení a účtu",
+    "settingsDesc": "Settings description",
     "confirmButtons": {
       "confirm": "OK",
       "cancel": "Cancel"
     }
   },
   "settings": {
-    "title": "Nastavení",
-    "returnToDashboard": "Zpět na hlavní stránku"
+    "title": "Settings",
+    "returnToDashboard": "Back to dashboard",
+    "skiCenters": {
+      "title": "Manage Ski Centers"
+    }
   },
   "auth": {
     "loginText": "Log in",
