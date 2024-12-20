@@ -174,9 +174,11 @@ class App {
       stateManager.setState('storage.userData', userData);
 
       const currentUserData = {
-          ...userData,
-          // Remove ski_centers_data from current user object
-          ski_centers_data: undefined
+          language: userData.language,
+          nabezky_uid: userData.nabezky_uid,
+          rovas_uid: userData.rovas_uid,
+          ski_center_admin: userData.ski_center_admin,
+          user_name: userData.user_name
       };
 
       // If admin with ski centers, add first center's data
