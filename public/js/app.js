@@ -13,6 +13,7 @@ import SelectManager from './managers/SelectManager.js';
 import PhotoManager from './media/PhotoManager.js';
 import GPSManager from './managers/GPSManager.js';
 import DatabaseManager from './managers/DatabaseManager.js';
+import SettingsManager from './managers/SettingsManager.js';
 
 class App {
   constructor() {
