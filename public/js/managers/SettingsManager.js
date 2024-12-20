@@ -63,27 +63,37 @@ class SettingsManager {
   }
 
   async updateSkiCentersSection(userData) {
+
+      this.logger.debug('updateSkiCentersSection called with userData:', userData);
+    
       const settingsContainer = document.getElementById('settings-container');
       if (!settingsContainer) return;
 
       const stateManager = StateManager.getInstance();
       const storageData = stateManager.getState('storage.userData');
       
-      this.logger.debug('Updating ski centers section with data:', {
+      this.logger.debug('Settings data check:', {
           userData,
-          storageData
+          storageData,
+          isAdmin: userData?.ski_center_admin === "1",
+          hasCenters: userData?.ski_centers_data?.length > 1,
+          settingsContentExists: !!settingsContainer.querySelector('.settings-content')
       });
 
       // Remove existing ski centers section if it exists
       const existingSection = settingsContainer.querySelector('.ski-centers-section');
       if (existingSection) {
+          this.logger.debug('Removing existing ski centers section');
           existingSection.remove();
       }
 
       // Check if user is admin and has multiple ski centers
       if (userData?.ski_center_admin === "1" && storageData?.ski_centers_data?.length > 1) {
+          this.logger.debug('Creating ski centers section');
+
           const settingsContent = settingsContainer.querySelector('.settings-content');
           if (!settingsContent) return;
+          this.logger.error('Settings content container not found');
 
           const skiCenterSection = document.createElement('div');
           skiCenterSection.className = 'settings-section ski-centers-section';
