@@ -30,10 +30,13 @@ class SettingsManager {
     }
 
     async initialize() {
-        if (this.initialized)
+        if (this.initialized) {
             this.logger.error('Settings initialized, returning');
             return;
+        }
         
+        this.logger.error('Settings just initializing');
+
         try {
             const settingsContainer = document.getElementById('settings-container');
             if (!settingsContainer) {
