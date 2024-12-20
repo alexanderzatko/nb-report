@@ -228,7 +228,7 @@ class App {
       this.managers.form = FormManager.getInstance();
       this.managers.photo = PhotoManager.getInstance();
       this.managers.gps = GPSManager.getInstance();
-      this.managers.settings = SettingsManager.getInstance();
+      await this.managers.settings.initialize();
 
       // Initialize remaining managers
       await this.managers.select.initialize();
