@@ -170,7 +170,24 @@ class App {
       this.logger.debug('User data received:', userData);
 
       const stateManager = StateManager.getInstance();
-      stateManager.setState('auth.user', userData);
+
+      stateManager.setState('storage.userData', userData);
+
+      const currentUserData = {
+          ...userData,
+          // Remove ski_centers_data from current user object
+          ski_centers_data: undefined
+      };
+
+      // If admin with ski centers, add first center's data
+      if (userData.ski_center_admin === "1" && userData.ski_centers_data?.length > 0) {
+          const firstCenter = userData.ski_centers_data[0];
+          currentUserData.ski_center_id = firstCenter[0];
+          currentUserData.ski_center_name = firstCenter[1];
+          currentUserData.trails = firstCenter[2];
+      }
+
+      stateManager.setState('auth.user', currentUserData);
 
       // Handle language preference before any UI updates
       if (userData.language && userData.language !== this.i18next.language) {
@@ -180,9 +197,9 @@ class App {
   
       // Now initialize UI with the user data
       await this.managers.ui.initializeAuthenticatedUI();
-      await this.managers.ui.updateUIBasedOnAuthState(true, userData);
+      await this.managers.ui.updateUIBasedOnAuthState(true, currentUserData);
       
-      return userData;
+      return currentUserData;
   
     } catch (error) {
       this.logger.error('Error refreshing user data:', error);
