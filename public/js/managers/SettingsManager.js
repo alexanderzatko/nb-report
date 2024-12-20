@@ -37,6 +37,68 @@ class SettingsManager {
         return;
       }
 
+      if (userData?.ski_center_admin === "1" && userData.ski_centers_data?.length > 1) {
+          const settingsContent = settingsContainer.querySelector('.settings-content');
+          if (settingsContent) {
+              const skiCenterSection = document.createElement('div');
+              skiCenterSection.className = 'settings-section ski-centers-section';
+              
+              const title = document.createElement('h3');
+              title.textContent = this.i18next.t('settings.skiCenters.title', 'Manage Ski Centers');
+              skiCenterSection.appendChild(title);
+
+              const centersList = document.createElement('div');
+              centersList.className = 'ski-centers-list';
+
+              const currentSkiCenterId = stateManager.getState('auth.user')?.ski_center_id;
+
+              userData.ski_centers_data.forEach(([centerId, centerName]) => {
+                  const centerItem = document.createElement('div');
+                  centerItem.className = 'ski-center-item';
+                  if (centerId === currentSkiCenterId) {
+                      centerItem.classList.add('active');
+                  }
+
+                  const radioInput = document.createElement('input');
+                  radioInput.type = 'radio';
+                  radioInput.name = 'ski-center';
+                  radioInput.value = centerId;
+                  radioInput.id = `ski-center-${centerId}`;
+                  radioInput.checked = centerId === currentSkiCenterId;
+
+                  const label = document.createElement('label');
+                  label.htmlFor = `ski-center-${centerId}`;
+                  label.textContent = centerName;
+
+                  centerItem.appendChild(radioInput);
+                  centerItem.appendChild(label);
+
+                  centerItem.addEventListener('click', async () => {
+                      if (centerId !== currentSkiCenterId) {
+                          const success = await stateManager.switchSkiCenter(centerId);
+                          if (success) {
+                              document.querySelectorAll('.ski-center-item').forEach(item => {
+                                  item.classList.remove('active');
+                              });
+                              centerItem.classList.add('active');
+                              
+                              // Update form if it exists
+                              const skiCenterNameDiv = document.getElementById('ski-center-name');
+                              const skiCenterIdInput = document.getElementById('ski-center-id');
+                              if (skiCenterNameDiv) skiCenterNameDiv.textContent = centerName;
+                              if (skiCenterIdInput) skiCenterIdInput.value = centerId;
+                          }
+                      }
+                  });
+
+                  centersList.appendChild(centerItem);
+              });
+
+              skiCenterSection.appendChild(centersList);
+              settingsContent.insertBefore(skiCenterSection, settingsContent.firstChild);
+          }
+      }
+
       // Add event listeners for settings controls
       this.setupEventListeners();
       
