@@ -146,7 +146,7 @@ class App {
               console.log('OAuth callback successful, fetching user data...');
               // First fetch user data
               await this.refreshUserData();
-//              await this.initializeFeatureManagers();
+              await this.initializeFeatureManagers();
               // Feature managers will be initialized via auth state change subscription
               return true;
             } else {
@@ -212,11 +212,13 @@ class App {
   }
 
   async initializeFeatureManagers() {
-    if (this.featureManagersInitialized) {
+    if (this.featureManagersInitializing || this.featureManagersInitialized) {
       return;
     }
 
     this.logger.debug('Initializing feature managers');
+
+    this.featureManagersInitializing = true;
 
     try {
       // Now load complete translations
