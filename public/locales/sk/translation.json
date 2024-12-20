@@ -35,7 +35,10 @@
   },
   "settings": {
     "title": "Nastavenia",
-    "returnToDashboard": "Späť na hlavnú stránku"
+    "returnToDashboard": "Späť na hlavnú stránku",
+    "skiCenters": {
+      "title": "Správa stredísk"
+    }
   },
   "auth": {
     "loginText": "Prihlásiť sa do aplikácie",
