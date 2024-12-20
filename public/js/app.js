@@ -212,13 +212,11 @@ class App {
   }
 
   async initializeFeatureManagers() {
-    if (this.featureManagersInitializing || this.featureManagersInitialized) {
+    if (this.featureManagersInitialized) {
       return;
     }
 
     this.logger.debug('Initializing feature managers');
-
-    this.featureManagersInitializing = true;
 
     try {
       // Now load complete translations
