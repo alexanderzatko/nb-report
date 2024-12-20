@@ -14,6 +14,7 @@ class SettingsManager {
         }
         
         this.logger = Logger.getInstance();
+        this.i18next = i18next;
         this.initialized = false;
         
         // Set up event listener for settings navigation
@@ -38,6 +39,14 @@ class SettingsManager {
         this.logger.error('Settings just initializing');
 
         try {
+            // Wait for i18next to be ready if it's not already
+            if (!this.i18next.isInitialized) {
+                this.logger.debug('Waiting for i18next to initialize...');
+                await new Promise(resolve => {
+                    this.i18next.on('initialized', resolve);
+                });
+            }
+
             const settingsContainer = document.getElementById('settings-container');
             if (!settingsContainer) {
                 this.logger.error('Settings container not found');
