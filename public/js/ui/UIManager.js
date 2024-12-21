@@ -681,12 +681,20 @@ class UIManager {
   }
   
   updateUserSpecificElements(userData) {
-      if (userData.user_name) {
+      this.logger.debug('Updating user elements with data:', userData);
+      // Check actual shape of userData
+      this.logger.debug('userData type:', typeof userData);
+      this.logger.debug('userData keys:', Object.keys(userData));
+      this.logger.debug('user_name value:', userData.user_name);
+      
+      if (userData?.user_name) {
           const welcomeElement = document.getElementById('welcome-head');
           if (welcomeElement) {
+              this.logger.debug('Welcome element found, current text:', welcomeElement.textContent);
               welcomeElement.textContent = this.i18next.t('welcome', {
                   name: userData.user_name
               });
+              this.logger.debug('Welcome text after update:', welcomeElement.textContent);
           }
       }
   }
