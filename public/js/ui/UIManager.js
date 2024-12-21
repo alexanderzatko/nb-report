@@ -447,6 +447,11 @@ class UIManager {
       this.logger.debug('Starting full page content update...');
       document.querySelectorAll('[data-i18n]').forEach(element => {
           const key = element.getAttribute('data-i18n');
+          // Skip the welcome message translation during full page updates
+          if (key === 'welcome' && element.textContent) {
+              this.logger.debug('Skipping already translated welcome message');
+              return;
+          }
           this.updateElementTranslation(element);
       });
   }
@@ -643,9 +648,11 @@ class UIManager {
       }
   }
   
-  updateElementTranslation(element) {
+  updateElementTranslation(element, translationData = null) {
       const key = element.getAttribute('data-i18n');
-      const translation = this.i18next.t(key, { returnObjects: true });
+      const translation = translationData ? 
+          this.i18next.t(key, translationData) : 
+          this.i18next.t(key, { returnObjects: true });
       
       if (typeof translation === 'object') {
           if (element.tagName.toLowerCase() === 'select') {
@@ -676,23 +683,23 @@ class UIManager {
               element.value = translation;
           } else {
               element.textContent = translation;
+              // If we provided translation data, mark the element as handled
+              if (translationData) {
+                  element.setAttribute('data-translation-handled', 'true');
+              }
           }
       }
   }
   
   updateUserSpecificElements(userData) {
       this.logger.debug('Updating user elements with data:', userData);
-      // Check actual shape of userData
-      this.logger.debug('userData type:', typeof userData);
-      this.logger.debug('userData keys:', Object.keys(userData));
-      this.logger.debug('user_name value:', userData.user_name);
-      
       if (userData?.user_name) {
           const welcomeElement = document.getElementById('welcome-head');
           if (welcomeElement) {
-            welcomeElement.setAttribute('data-i18n-options', JSON.stringify({ name: userData.user_name }));
-            this.updateElementTranslation(welcomeElement);
-        }
+              this.updateElementTranslation(welcomeElement, {
+                  name: userData.user_name
+              });
+          }
       }
   }
   
