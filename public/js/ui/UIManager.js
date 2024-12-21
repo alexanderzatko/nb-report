@@ -690,12 +690,9 @@ class UIManager {
       if (userData?.user_name) {
           const welcomeElement = document.getElementById('welcome-head');
           if (welcomeElement) {
-              this.logger.debug('Welcome element found, current text:', welcomeElement.textContent);
-              welcomeElement.textContent = this.i18next.t('welcome', {
-                  name: userData.user_name
-              });
-              this.logger.debug('Welcome text after update:', welcomeElement.textContent);
-          }
+            welcomeElement.setAttribute('data-i18n-options', JSON.stringify({ name: userData.user_name }));
+            this.updateElementTranslation(welcomeElement);
+        }
       }
   }
   
