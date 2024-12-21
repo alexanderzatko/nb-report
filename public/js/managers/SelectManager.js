@@ -262,6 +262,9 @@ class SelectManager {
   updateSnowTypeDropdown() {
     const snowTypeSelect = document.getElementById('snow-type');
     if (!snowTypeSelect) {
+      if (!this.initialized) {
+          return;
+      }
       this.logger.warn('Snow type select element not found');
       return;
     }
