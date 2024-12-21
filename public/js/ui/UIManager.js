@@ -339,6 +339,9 @@ class UIManager {
     console.log('Showing dashboard');
     this.logger.debug('Showing dashboard');
     
+    const stateManager = StateManager.getInstance();
+    const userData = stateManager.getState('auth.user');
+
     const containers = ['settings-container', 'snow-report-form'];
     containers.forEach(id => {
       const container = document.getElementById(id);
@@ -352,6 +355,10 @@ class UIManager {
     if (dashboardContainer) {
       dashboardContainer.style.display = 'block';
       console.log('Dashboard container is now visible');
+      // Update user elements when showing dashboard
+      if (userData) {
+          this.updateUserSpecificElements(userData);
+      }
     }
     this.updateBackground('dashboard');
   }
