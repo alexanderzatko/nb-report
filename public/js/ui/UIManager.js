@@ -130,7 +130,7 @@ class UIManager {
       
         // Initialize select manager before setting up other UI elements
         const selectManager = SelectManager.getInstance();
-        await selectManager.initialize();
+        await selectManager.refreshAllDropdowns();
 
         // Set up all interactive elements
         await this.setupDashboardCards();
@@ -639,7 +639,6 @@ class UIManager {
   updateElementTranslation(element) {
       const key = element.getAttribute('data-i18n');
       const translation = this.i18next.t(key, { returnObjects: true });
-      this.logger.debug(`Translating ${key} to:`, translation);
       
       if (typeof translation === 'object') {
           if (element.tagName.toLowerCase() === 'select') {
