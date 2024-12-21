@@ -173,10 +173,9 @@ class App {
             if (success) {
               console.log('OAuth callback successful, fetching user data...');
               // First fetch user data
-              await this.refreshUserData();
-              await this.managers.ui.updateUIBasedOnAuthState(true);
+              const userData = await this.refreshUserData();
+              await this.managers.ui.updateUIBasedOnAuthState(true, userData);
               await this.initializeFeatureManagers();
-              // Feature managers will be initialized via auth state change subscription
               return true;
             } else {
               console.log('OAuth callback failed, showing login...');
@@ -262,6 +261,10 @@ class App {
       // Initialize remaining managers
       await this.managers.select.initialize();
       await this.managers.form.initialize();
+
+      // Get user data from state before initializing UI
+      const stateManager = StateManager.getInstance();
+      const userData = stateManager.getState('auth.user');
 
       // Initialize full UI features
       await this.managers.ui.initializeAuthenticatedUI();
