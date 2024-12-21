@@ -36,7 +36,7 @@ class SettingsManager {
             return;
         }
         
-        this.logger.error('Settings just initializing');
+        this.logger.debug('Settings just initializing');
 
         try {
             // Wait for i18next to be ready if it's not already
