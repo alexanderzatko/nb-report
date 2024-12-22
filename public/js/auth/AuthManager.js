@@ -48,10 +48,12 @@ class AuthManager {
       const storedSessionId = localStorage.getItem(AuthManager.SESSION_KEY);
       
       if (!storedSessionId) {
+        this.logger.debug('No stored session ID found');
         this.notifyAuthStateChange(false);
         return false;
       }
-  
+
+      this.logger.debug('Validating existing session...');
       const response = await fetch('/api/auth-status', {
         credentials: 'include',
         headers: {
@@ -60,19 +62,26 @@ class AuthManager {
       });
       
       const data = await response.json();
-      console.log('Auth status response:', data);
+      const isAuthenticated = data.isAuthenticated;
       
-      if (data.isAuthenticated && !this.tokenRefreshInterval) {
-        this.setupTokenRefresh();
-      } else if (!data.isAuthenticated) {
+      this.logger.debug('Session validation result:', { isAuthenticated });
+      
+      if (isAuthenticated) {
+        if (!this.tokenRefreshInterval) {
+          this.setupTokenRefresh();
+        }
+        // Always notify about valid authentication
+        this.notifyAuthStateChange(true);
+      } else {
+        this.logger.debug('Session is invalid, clearing auth data');
         this.clearAuthData();
+        this.notifyAuthStateChange(false);
       }
-      
-      this.notifyAuthStateChange(data.isAuthenticated); // Notify subscribers of the auth state
       return data.isAuthenticated;
     } catch (error) {
-      console.error('Error checking auth status:', error);
-      this.notifyAuthStateChange(false); // Notify subscribers of the auth state failure
+      this.logger.error('Error checking auth status:', error);
+      this.clearAuthData();
+      this.notifyAuthStateChange(false);
       return false;
     }
   }
@@ -358,7 +367,7 @@ async initiateOAuth() {
 
   async logout() {
     try {
-      console.log('Logout function called');
+      this.logger.debug('Logout initiated');
       
       // Make the logout request first
       const response = await fetch('/api/logout', { 
@@ -366,22 +375,23 @@ async initiateOAuth() {
         credentials: 'include',
       });
 
-      console.log('Logout response status:', response.status);
-      const data = await response.json();
-      console.log('Logout response:', data);
-
       if (!response.ok) {
-        throw new Error('Logout failed: ' + data.message);
+        throw new Error('Logout request failed');
       }
+  
+      this.logger.debug('Server logout successful');
 
-      // Clear all auth data after successful server logout
       this.clearAuthData();
 
-      console.log('Logout successful');
+      // Clear state manager data
+      const stateManager = StateManager.getInstance();
+      stateManager.resetState('auth');
+      stateManager.resetState('storage.userData');
+
       return true;
 
     } catch (error) {
-      console.error('Logout error:', error);
+      this.logger.error('Logout error:', error);
       // Still clear auth data on error to prevent stuck states
       this.clearAuthData();
       return false;
