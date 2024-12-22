@@ -91,8 +91,9 @@ class App {
           // Only check session if we didn't just process an auth callback
           const isAuthenticated = await this.managers.auth.checkAuthStatus();
           if (isAuthenticated) {
-              await this.managers.ui.updateUIBasedOnAuthState(true);
-              await this.refreshUserData();
+            await this.refreshUserData();
+            await this.managers.ui.updateUIBasedOnAuthState(true);
+            await this.initializeFeatureManagers();
           } else {
               // Initialize minimal UI (login screen only)
               await this.managers.ui.initializeLoginUI();
