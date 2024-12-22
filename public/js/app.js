@@ -80,7 +80,7 @@ class App {
             await this.deactivateFeatureManagers();
           }
         } catch (error) {
-          this.logger.error('Error handling auth state change:', error);
+//          this.logger.error('Error handling auth state change:', error);
           // Handle failed user data fetch - might need to force logout
           await this.managers.auth.logout();
         }
