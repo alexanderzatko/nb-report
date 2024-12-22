@@ -64,10 +64,6 @@ class App {
       };
 
       this.managers.auth.subscribe('authStateChange', async (isAuthenticated) => {
-        if (this.initializationInProgress) {
-          this.logger.debug('Skipping auth state change handler - initialization in progress');
-          return;
-        }
       
         try {
           if (isAuthenticated) {
