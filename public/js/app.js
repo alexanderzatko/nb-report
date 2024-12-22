@@ -63,7 +63,6 @@ class App {
         network: NetworkManager.getInstance()
       };
 
-      // Modified auth state change handler
       this.managers.auth.subscribe('authStateChange', async (isAuthenticated) => {
         if (this.initializationInProgress) {
           this.logger.debug('Skipping auth state change handler - initialization in progress');
@@ -72,7 +71,6 @@ class App {
       
         try {
           if (isAuthenticated) {
-            // Always fetch fresh user data when authenticated
             const userData = await this.refreshUserData();
             await this.managers.ui.updateUIBasedOnAuthState(true, userData);
             await this.initializeFeatureManagers();
@@ -80,9 +78,8 @@ class App {
             await this.deactivateFeatureManagers();
           }
         } catch (error) {
-//          this.logger.error('Error handling auth state change:', error);
-          // Handle failed user data fetch - might need to force logout
-          await this.managers.auth.logout();
+            this.logger.error('Error handling auth state change:', error);
+            await this.managers.auth.logout();
         }
       });
       
@@ -91,8 +88,9 @@ class App {
       
       if (!didAuth) {
           // Only check session if we didn't just process an auth callback
-          const isAuthenticated = await this.managers.auth.checkAuthStatus();
-          if (isAuthenticated) {
+          const authStatus = await this.managers.auth.checkAuthStatus();
+
+          if (authStatus.isAuthenticated) {
             await this.refreshUserData();
             await this.managers.ui.updateUIBasedOnAuthState(true);
             await this.initializeFeatureManagers();
