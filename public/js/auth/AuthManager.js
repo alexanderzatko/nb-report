@@ -53,7 +53,7 @@ class AuthManager {
       if (!storedSessionId) {
         this.logger.debug('No stored session ID found');
         this.notifyAuthStateChange(false);
-        return false;
+        return { isAuthenticated: false };
       }
 
       this.logger.debug('Validating existing session...');
@@ -73,19 +73,22 @@ class AuthManager {
         if (!this.tokenRefreshInterval) {
           this.setupTokenRefresh();
         }
-        // Always notify about valid authentication
         this.notifyAuthStateChange(true);
       } else {
         this.logger.debug('Session is invalid, clearing auth data');
         this.clearAuthData();
         this.notifyAuthStateChange(false);
       }
-      return data.isAuthenticated;
+
+      return { 
+        isAuthenticated,
+        isExistingSession: true  // Flag to indicate this was a session validation
+      };
     } catch (error) {
       this.logger.error('Error checking auth status:', error);
       this.clearAuthData();
       this.notifyAuthStateChange(false);
-      return false;
+      return { isAuthenticated: false };
     }
   }
 
