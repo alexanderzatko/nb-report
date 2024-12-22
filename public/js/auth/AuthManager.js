@@ -56,7 +56,7 @@ class AuthManager {
         return { isAuthenticated: false };
       }
 
-      this.logger.debug('Validating existing session...');
+      this.logger.debug('Making auth status check request with session:', storedSessionId);
       const response = await fetch('/api/auth-status', {
         credentials: 'include',
         headers: {
