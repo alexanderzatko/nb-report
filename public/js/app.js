@@ -69,18 +69,20 @@ class App {
           this.logger.debug('Skipping auth state change handler - initialization in progress');
           return;
         }
-
-        if (isAuthenticated) {
-          const stateManager = StateManager.getInstance();
-          const userData = stateManager.getState('auth.user');
-          const storageData = stateManager.getState('storage.userData');
-          
-          if (userData && storageData) {
-            await this.managers.ui.updateUIBasedOnAuthState(true);
+      
+        try {
+          if (isAuthenticated) {
+            // Always fetch fresh user data when authenticated
+            const userData = await this.refreshUserData();
+            await this.managers.ui.updateUIBasedOnAuthState(true, userData);
             await this.initializeFeatureManagers();
+          } else {
+            await this.deactivateFeatureManagers();
           }
-        } else {
-          await this.deactivateFeatureManagers();
+        } catch (error) {
+          this.logger.error('Error handling auth state change:', error);
+          // Handle failed user data fetch - might need to force logout
+          await this.managers.auth.logout();
         }
       });
       
@@ -105,23 +107,6 @@ class App {
         this.managers.serviceWorker = ServiceWorkerManager.getInstance();
         await this.managers.serviceWorker.initialize();
       }
-
-      // Subscribe to auth state changes
-      this.managers.auth.subscribe('authStateChange', async (isAuthenticated) => {
-        if (isAuthenticated) {
-          const stateManager = StateManager.getInstance();
-          const storageData = stateManager.getState('storage.userData');
-          
-          // Only initialize feature managers if we have complete data
-          if (storageData) {
-            await this.initializeFeatureManagers();
-          } else {
-            this.logger.debug('Skipping feature managers initialization - waiting for complete data');
-          }
-        } else {
-          await this.deactivateFeatureManagers();
-        }
-      });
 
       this.initialized = true;
       this.logger.debug('Core system initialized');
