@@ -69,6 +69,14 @@ class NetworkManager {
     const { method = 'GET', url, data, headers = {}, timeout = this.defaultTimeout } = config;
 
     const fullUrl = this.resolveUrl(url);
+
+    this.logger.debug('Making HTTP request:', {
+        method,
+        fullUrl,
+        headers,
+        requestId
+    });
+    
     const requestConfig = {
       method,
       credentials: 'include',
