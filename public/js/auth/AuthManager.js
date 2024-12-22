@@ -70,19 +70,17 @@ class AuthManager {
       this.logger.debug('Session validation result:', { isAuthenticated });
       
       if (isAuthenticated) {
-        if (!this.tokenRefreshInterval) {
-          this.setupTokenRefresh();
-        }
+        // Fetch fresh user data here
+        await this.refreshUserData();
         this.notifyAuthStateChange(true);
       } else {
-        this.logger.debug('Session is invalid, clearing auth data');
         this.clearAuthData();
         this.notifyAuthStateChange(false);
       }
 
       return { 
         isAuthenticated,
-        isExistingSession: true  // Flag to indicate this was a session validation
+//        isExistingSession: true  // Flag to indicate this was a session validation
       };
     } catch (error) {
       this.logger.error('Error checking auth status:', error);
