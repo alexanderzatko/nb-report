@@ -1,4 +1,5 @@
 // auth/AuthManager.js
+import Logger from '../utils/Logger.js';
 
 class AuthManager {
   static instance = null;
@@ -16,6 +17,7 @@ class AuthManager {
     this.stateCheckInProgress = false;
     this.tokenRefreshInterval = null;
     this.subscribers = []; // Array to store subscribers for auth state changes
+    this.logger = Logger.getInstance();
     AuthManager.instance = this;
   }
 
