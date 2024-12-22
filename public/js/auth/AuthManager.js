@@ -1,5 +1,6 @@
 // auth/AuthManager.js
 import Logger from '../utils/Logger.js';
+import StateManager from '../state/StateManager.js';
 
 class AuthManager {
   static instance = null;
