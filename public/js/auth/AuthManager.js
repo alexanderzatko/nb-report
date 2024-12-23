@@ -370,12 +370,11 @@ async initiateOAuth() {
       const data = await response.json();
       console.log('Logout response:', data);
 
-      if (!response.ok) {
-        throw new Error('Logout failed: ' + data.message);
-      }
-
-      // Clear all auth data after successful server logout
       this.clearAuthData();
+
+      const stateManager = StateManager.getInstance();
+      stateManager.setState('auth.user', null);
+      stateManager.setState('storage.userData', null);
 
       console.log('Logout successful');
       return true;
