@@ -63,15 +63,6 @@ class AuthManager {
       console.log('Auth status response:', data);
       
       if (data.isAuthenticated) {
-          try {
-              const app = App.getInstance();
-              await app.refreshUserData();
-          } catch (error) {
-              console.error('Failed to refresh user data:', error);
-              this.clearAuthData();
-              return false;
-          }
-
           if (!this.tokenRefreshInterval) {
               this.setupTokenRefresh();
           }
