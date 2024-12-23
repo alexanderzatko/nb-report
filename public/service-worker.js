@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v390';  // Should match ConfigManager.js version
+const CACHE_VERSION = 'v391';  // Should match ConfigManager.js version
 const CACHE_NAME = 'snow-report-cache';
 const FULL_CACHE_NAME = `${CACHE_NAME}-${CACHE_VERSION}`;
 const OFFLINE_PAGE = '/offline.html';
@@ -41,6 +41,13 @@ const urlsToCache = [
   '/images/backgrounds/transparent.gif',
 ];
 
+const NEVER_CACHE_ENDPOINTS = [
+  '/api/user-data',
+  '/api/auth-status',
+  '/api/nblogin',
+  '/api/refresh-token'
+];
+
 self.addEventListener('install', function(event) {
   console.log('[ServiceWorker] Install event');
   event.waitUntil(
@@ -65,6 +72,24 @@ self.addEventListener('install', function(event) {
 });
 
 self.addEventListener('fetch', function(event) {
+  const url = new URL(event.request.url);
+  
+  // Check if this is a request that should never be cached
+  if (NEVER_CACHE_ENDPOINTS.some(endpoint => url.pathname.includes(endpoint))) {
+    // Skip cache, always fetch from network
+    event.respondWith(
+      fetch(event.request)
+        .catch(function() {
+          // Only return offline page for navigation requests
+          if (event.request.mode === 'navigate') {
+            return caches.match('/offline.html');
+          }
+          throw new Error('Network request failed');
+        })
+    );
+    return;
+  }
+  
   event.respondWith(
     caches.match(event.request)
       .then(function(response) {
