@@ -1,6 +1,4 @@
 // auth/AuthManager.js
-import Logger from '../utils/Logger.js';
-import StateManager from '../state/StateManager.js';
 
 class AuthManager {
   static instance = null;
@@ -18,7 +16,6 @@ class AuthManager {
     this.stateCheckInProgress = false;
     this.tokenRefreshInterval = null;
     this.subscribers = []; // Array to store subscribers for auth state changes
-    this.logger = Logger.getInstance();
     AuthManager.instance = this;
   }
 
@@ -46,62 +43,15 @@ class AuthManager {
     this.subscribers.forEach(callback => callback(isAuthenticated));
   }
 
-  async refreshUserData() {
-    try {
-      this.logger.debug('Fetching user data...');
-      const response = await fetch('/api/user-data', {
-        credentials: 'include'
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch user data');
-      }
-
-      const userData = await response.json();
-      this.logger.debug('User data received:', userData);
-
-      const stateManager = StateManager.getInstance();
-
-      // Store full response in storage
-      stateManager.setState('storage.userData', userData, true);
-
-      // Process and store user data
-      const currentUserData = {
-          language: userData.language,
-          nabezky_uid: userData.nabezky_uid,
-          rovas_uid: userData.rovas_uid,
-          ski_center_admin: userData.ski_center_admin,
-          user_name: userData.user_name
-      };
-
-      if (userData.ski_center_admin === "1" && userData.ski_centers_data?.length > 0) {
-          const firstCenter = userData.ski_centers_data[0];
-          currentUserData.ski_center_id = firstCenter[0];
-          currentUserData.ski_center_name = firstCenter[1];
-          currentUserData.trails = firstCenter[2];
-      }
-
-      stateManager.setState('auth.user', currentUserData);
-      
-      return currentUserData;
-
-    } catch (error) {
-      this.logger.error('Error refreshing user data:', error);
-      throw error;
-    }
-  }
-  
   async checkAuthStatus() {
     try {
       const storedSessionId = localStorage.getItem(AuthManager.SESSION_KEY);
       
       if (!storedSessionId) {
-        this.logger.debug('No stored session ID found');
         this.notifyAuthStateChange(false);
-        return { isAuthenticated: false };
+        return false;
       }
-
-      this.logger.debug('Making auth status check request with session:', storedSessionId);
+  
       const response = await fetch('/api/auth-status', {
         credentials: 'include',
         headers: {
@@ -110,28 +60,20 @@ class AuthManager {
       });
       
       const data = await response.json();
-      const isAuthenticated = data.isAuthenticated;
+      console.log('Auth status response:', data);
       
-      this.logger.debug('Session validation result:', { isAuthenticated });
-      
-      if (isAuthenticated) {
-        // Fetch fresh user data here
-        await this.refreshUserData();
-        this.notifyAuthStateChange(true);
-      } else {
+      if (data.isAuthenticated && !this.tokenRefreshInterval) {
+        this.setupTokenRefresh();
+      } else if (!data.isAuthenticated) {
         this.clearAuthData();
-        this.notifyAuthStateChange(false);
       }
-
-      return { 
-        isAuthenticated,
-//        isExistingSession: true  // Flag to indicate this was a session validation
-      };
+      
+      this.notifyAuthStateChange(data.isAuthenticated); // Notify subscribers of the auth state
+      return data.isAuthenticated;
     } catch (error) {
-      this.logger.error('Error checking auth status:', error);
-      this.clearAuthData();
-      this.notifyAuthStateChange(false);
-      return { isAuthenticated: false };
+      console.error('Error checking auth status:', error);
+      this.notifyAuthStateChange(false); // Notify subscribers of the auth state failure
+      return false;
     }
   }
 
@@ -416,7 +358,7 @@ async initiateOAuth() {
 
   async logout() {
     try {
-      this.logger.debug('Logout initiated');
+      console.log('Logout function called');
       
       // Make the logout request first
       const response = await fetch('/api/logout', { 
@@ -424,23 +366,22 @@ async initiateOAuth() {
         credentials: 'include',
       });
 
-      if (!response.ok) {
-        throw new Error('Logout request failed');
-      }
-  
-      this.logger.debug('Server logout successful');
+      console.log('Logout response status:', response.status);
+      const data = await response.json();
+      console.log('Logout response:', data);
 
+      if (!response.ok) {
+        throw new Error('Logout failed: ' + data.message);
+      }
+
+      // Clear all auth data after successful server logout
       this.clearAuthData();
 
-      // Clear state manager data
-      const stateManager = StateManager.getInstance();
-      stateManager.resetState('auth');
-      stateManager.resetState('storage.userData');
-
+      console.log('Logout successful');
       return true;
 
     } catch (error) {
-      this.logger.error('Logout error:', error);
+      console.error('Logout error:', error);
       // Still clear auth data on error to prevent stuck states
       this.clearAuthData();
       return false;
