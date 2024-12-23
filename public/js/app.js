@@ -63,19 +63,24 @@ class App {
         network: NetworkManager.getInstance()
       };
 
+      // Modified auth state change handler
       this.managers.auth.subscribe('authStateChange', async (isAuthenticated) => {
-      
-        try {
-          if (isAuthenticated) {
-            const userData = await this.refreshUserData();
-            await this.managers.ui.updateUIBasedOnAuthState(true, userData);
+        if (this.initializationInProgress) {
+          this.logger.debug('Skipping auth state change handler - initialization in progress');
+          return;
+        }
+
+        if (isAuthenticated) {
+          const stateManager = StateManager.getInstance();
+          const userData = stateManager.getState('auth.user');
+          const storageData = stateManager.getState('storage.userData');
+          
+          if (userData && storageData) {
+            await this.managers.ui.updateUIBasedOnAuthState(true);
             await this.initializeFeatureManagers();
-          } else {
-            await this.deactivateFeatureManagers();
           }
-        } catch (error) {
-            this.logger.error('Error handling auth state change:', error);
-            await this.managers.auth.logout();
+        } else {
+          await this.deactivateFeatureManagers();
         }
       });
       
@@ -84,12 +89,10 @@ class App {
       
       if (!didAuth) {
           // Only check session if we didn't just process an auth callback
-          const authStatus = await this.managers.auth.checkAuthStatus();
-
-          if (authStatus.isAuthenticated) {
-            await this.refreshUserData();
-            await this.managers.ui.updateUIBasedOnAuthState(true);
-            await this.initializeFeatureManagers();
+          const isAuthenticated = await this.managers.auth.checkAuthStatus();
+          if (isAuthenticated) {
+              await this.managers.ui.updateUIBasedOnAuthState(true);
+              await this.refreshUserData();
           } else {
               // Initialize minimal UI (login screen only)
               await this.managers.ui.initializeLoginUI();
@@ -101,6 +104,23 @@ class App {
         this.managers.serviceWorker = ServiceWorkerManager.getInstance();
         await this.managers.serviceWorker.initialize();
       }
+
+      // Subscribe to auth state changes
+      this.managers.auth.subscribe('authStateChange', async (isAuthenticated) => {
+        if (isAuthenticated) {
+          const stateManager = StateManager.getInstance();
+          const storageData = stateManager.getState('storage.userData');
+          
+          // Only initialize feature managers if we have complete data
+          if (storageData) {
+            await this.initializeFeatureManagers();
+          } else {
+            this.logger.debug('Skipping feature managers initialization - waiting for complete data');
+          }
+        } else {
+          await this.deactivateFeatureManagers();
+        }
+      });
 
       this.initialized = true;
       this.logger.debug('Core system initialized');
