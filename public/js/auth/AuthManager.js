@@ -1,5 +1,7 @@
 // auth/AuthManager.js
 
+import StateManager from '../state/StateManager.js';
+
 class AuthManager {
   static instance = null;
   static STATE_KEY = 'oauth_state';
