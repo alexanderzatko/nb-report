@@ -62,10 +62,21 @@ class AuthManager {
       const data = await response.json();
       console.log('Auth status response:', data);
       
-      if (data.isAuthenticated && !this.tokenRefreshInterval) {
-        this.setupTokenRefresh();
-      } else if (!data.isAuthenticated) {
-        this.clearAuthData();
+      if (data.isAuthenticated) {
+          try {
+              const app = App.getInstance();
+              await app.refreshUserData();
+          } catch (error) {
+              console.error('Failed to refresh user data:', error);
+              this.clearAuthData();
+              return false;
+          }
+
+          if (!this.tokenRefreshInterval) {
+              this.setupTokenRefresh();
+          }
+      } else {
+          this.clearAuthData();
       }
       
       this.notifyAuthStateChange(data.isAuthenticated); // Notify subscribers of the auth state
