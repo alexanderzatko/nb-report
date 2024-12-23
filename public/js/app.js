@@ -71,14 +71,15 @@ class App {
         }
 
         if (isAuthenticated) {
-          const stateManager = StateManager.getInstance();
-          const userData = stateManager.getState('auth.user');
-          const storageData = stateManager.getState('storage.userData');
-          
-          if (userData && storageData) {
-            await this.managers.ui.updateUIBasedOnAuthState(true);
-            await this.initializeFeatureManagers();
-          }
+           try {
+                // Always fetch fresh user data when authenticated
+                const userData = await this.refreshUserData();
+                await this.managers.ui.updateUIBasedOnAuthState(true, userData);
+                await this.initializeFeatureManagers();
+            } catch (error) {
+                this.logger.error('Failed to fetch user data:', error);
+                await this.managers.auth.logout();
+            }
         } else {
           await this.deactivateFeatureManagers();
         }
