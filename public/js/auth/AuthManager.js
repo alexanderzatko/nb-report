@@ -46,6 +46,51 @@ class AuthManager {
     this.subscribers.forEach(callback => callback(isAuthenticated));
   }
 
+  async refreshUserData() {
+    try {
+      this.logger.debug('Fetching user data...');
+      const response = await fetch('/api/user-data', {
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch user data');
+      }
+
+      const userData = await response.json();
+      this.logger.debug('User data received:', userData);
+
+      const stateManager = StateManager.getInstance();
+
+      // Store full response in storage
+      stateManager.setState('storage.userData', userData, true);
+
+      // Process and store user data
+      const currentUserData = {
+          language: userData.language,
+          nabezky_uid: userData.nabezky_uid,
+          rovas_uid: userData.rovas_uid,
+          ski_center_admin: userData.ski_center_admin,
+          user_name: userData.user_name
+      };
+
+      if (userData.ski_center_admin === "1" && userData.ski_centers_data?.length > 0) {
+          const firstCenter = userData.ski_centers_data[0];
+          currentUserData.ski_center_id = firstCenter[0];
+          currentUserData.ski_center_name = firstCenter[1];
+          currentUserData.trails = firstCenter[2];
+      }
+
+      stateManager.setState('auth.user', currentUserData);
+      
+      return currentUserData;
+
+    } catch (error) {
+      this.logger.error('Error refreshing user data:', error);
+      throw error;
+    }
+  }
+  
   async checkAuthStatus() {
     try {
       const storedSessionId = localStorage.getItem(AuthManager.SESSION_KEY);
