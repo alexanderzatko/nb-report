@@ -168,14 +168,6 @@
             <!-- Options populated dynamically -->
           </select>
 
-          <div class="form-group">
-            <div class="checkbox-container">
-              <input type="checkbox" id="private-report" name="private-report">
-              <label for="private-report" data-i18n="form.privateReport">Make the report private</label>
-            </div>
-            <p class="help-text" data-i18n="form.privateReportHelp">If checked, the report will be sent to the nabezly.sk portal and will be unpublished. You can make it public later in the Reports tab of your user profile.</p>
-          </div>
-
           <div class="common-section-placeholder" data-position="middle"></div>
 
           <!-- GPX Section -->
@@ -310,6 +302,15 @@
             <button type="button" id="cancel-button" class="cancel-button" data-i18n="form.cancel">Cancel</button>
             <button type="submit" data-i18n="form.submit">Submit Report</button>
         </div>
+
+        <div id="private-report-section" class="form-section">
+          <div class="checkbox-container">
+            <input type="checkbox" id="private-report" name="private-report">
+            <label for="private-report" data-i18n="form.privateReport">Make the report private</label>
+          </div>
+          <p class="help-text" data-i18n="form.privateReportHelp">If checked, the report will be sent to the nabezky.sk portal and will be unpublished. You can make it public later in the Reports tab of your user profile</p>
+        </div>
+
       </form>
     </main>
 
