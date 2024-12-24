@@ -1227,6 +1227,11 @@ class FormManager {
                   data[dataKey] = element.value;
               }
           });
+
+          const privateReportCheckbox = document.getElementById('private-report');
+          if (privateReportCheckbox) {
+              data.privateReport = privateReportCheckbox.checked;
+          }
       }
       
       // Add rewards data if rewards section is visible and enabled
