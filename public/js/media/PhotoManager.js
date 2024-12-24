@@ -33,36 +33,80 @@ class PhotoManager {
         let timestamp;
         const img = this;
         
-        // Debug - log ALL available tags
+        // Log all available tags for debugging
         logger.debug('All EXIF tags:');
         const allTags = EXIF.getAllTags(img);
         logger.debug(JSON.stringify(allTags, null, 2));
         
-        // Try getting date with original method
-        const dateStr = EXIF.getTag(img, "DateTimeOriginal") || 
-                       EXIF.getTag(img, "DateTimeDigitised") ||  // Note: trying both spellings
-                       EXIF.getTag(img, "DateTimeDigitized") || 
-                       EXIF.getTag(img, "DateTime");
+        // Try GPS timestamp first (it's in UTC)
+        const gpsDateStamp = EXIF.getTag(img, "GPSDateStamp");
+        const gpsTimeStamp = EXIF.getTag(img, "GPSTimeStamp");
         
-        logger.debug('Selected dateStr:', dateStr);
-        
-        if (dateStr) {
-          // ... rest of the date parsing code ...
-        } else {
-          logger.debug('No dateStr found');
+        if (gpsDateStamp && gpsTimeStamp) {
+          logger.debug('Found GPS timestamp data:', { gpsDateStamp, gpsTimeStamp });
+          
+          try {
+            // GPSDateStamp is in format "YYYY:MM:DD"
+            // GPSTimeStamp is an array of [hours, minutes, seconds]
+            const [datePart] = gpsDateStamp.split(' ');
+            const formattedDate = datePart.replace(/:/g, '-');
+            const timeStr = gpsTimeStamp.map(num => Math.floor(num).toString().padStart(2, '0')).join(':');
+            const formattedDateTime = `${formattedDate}T${timeStr}Z`; // 'Z' indicates UTC
+            
+            timestamp = new Date(formattedDateTime);
+            
+            if (!isNaN(timestamp.getTime())) {
+              logger.debug('Successfully parsed GPS timestamp (UTC):', timestamp);
+              resolve(timestamp);
+              return;
+            }
+          } catch (error) {
+            logger.debug('Error parsing GPS timestamp:', error);
+          }
         }
         
-        // If no valid EXIF timestamp found, use file's lastModified or current time
-        if (!timestamp) {
-          timestamp = file.lastModified ? new Date(file.lastModified) : new Date();
-          logger.debug('Falling back to:', timestamp);
+        // Try original datetime with timezone offset if available
+        const originalTime = EXIF.getTag(img, "DateTimeOriginal") || 
+                           EXIF.getTag(img, "DateTimeDigitised") ||  
+                           EXIF.getTag(img, "DateTimeDigitized") || 
+                           EXIF.getTag(img, "DateTime");
+        
+        const offsetTime = EXIF.getTag(img, "OffsetTimeOriginal") ||
+                          EXIF.getTag(img, "OffsetTime");
+        
+        logger.debug('Found datetime data:', { originalTime, offsetTime });
+        
+        if (originalTime) {
+          try {
+            // Standard format is "YYYY:MM:DD HH:MM:SS"
+            const [datePart, timePart] = originalTime.split(' ');
+            const formattedDate = datePart.replace(/:/g, '-');
+            
+            // If we have timezone offset, use it, otherwise assume local time
+            let formattedDateTime;
+            if (offsetTime) {
+              formattedDateTime = `${formattedDate}T${timePart}${offsetTime}`;
+            } else {
+              formattedDateTime = `${formattedDate}T${timePart}`;
+            }
+            
+            timestamp = new Date(formattedDateTime);
+            
+            if (!isNaN(timestamp.getTime())) {
+              logger.debug('Successfully parsed EXIF timestamp:', timestamp);
+              resolve(timestamp);
+              return;
+            }
+          } catch (error) {
+            logger.debug('Error parsing EXIF timestamp:', error);
+          }
         }
         
+        // Last resort: file timestamp or current time
+        timestamp = file.lastModified ? new Date(file.lastModified) : new Date();
+        logger.debug('Using fallback timestamp:', timestamp);
         resolve(timestamp);
       });
-    }).then(timestamp => {
-      logger.debug('Final timestamp:', timestamp);
-      return timestamp;
     });
   }
   
