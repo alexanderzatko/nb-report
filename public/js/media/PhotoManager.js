@@ -57,8 +57,6 @@ class PhotoManager {
           }
         }
 
-        this.logger.debug('Extracted timestamp:',timestamp);
-
         // If no valid EXIF timestamp found, use file's lastModified or current time
         if (!timestamp) {
           timestamp = file.lastModified ? new Date(file.lastModified) : new Date();
@@ -66,6 +64,9 @@ class PhotoManager {
         
         resolve(timestamp);
       });
+    }).then(timestamp => {
+      this.logger.debug('Extracted timestamp:', timestamp);
+      return timestamp;
     });
   }
   
