@@ -297,7 +297,7 @@ class PhotoManager {
           const img = new Image();
           
           await new Promise((resolve, reject) => {
-            img.onload = () => {
+            const handleLoad = () => {
               try {
                 canvas.width = img.width;
                 canvas.height = img.height;
@@ -344,16 +344,15 @@ class PhotoManager {
                 reject(error);
               }
             };
+  
+            img.onload = handleLoad;
             img.onerror = reject;
   
             // Create object URL for the resized image
             const url = URL.createObjectURL(processedFile);
             img.src = url;
-            // Clean up object URL after load
-            img.onload = () => {
-              URL.revokeObjectURL(url);
-              img.onload();
-            };
+            // Clean up object URL after use
+            URL.revokeObjectURL(url);
           });
         }
   
