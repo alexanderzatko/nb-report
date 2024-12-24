@@ -268,7 +268,11 @@ class FormManager {
       // Initialize form fields based on user type
       const config = isAdmin ? this.formConfig.admin : this.formConfig.regular;
       this.initializeFormFields(config);
-  
+
+      const privateReportSection = document.getElementById('private-report-section');
+      if (privateReportSection) {
+        privateReportSection.style.display = isAdmin ? 'none' : 'block';
+      }
       // Initialize form components that need to be refreshed
       await this.refreshFormComponents();
   }
