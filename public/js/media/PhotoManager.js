@@ -30,28 +30,35 @@ class PhotoManager {
     return new Promise((resolve) => {
       EXIF.getData(file, function() {
         let timestamp;
-
-        // Get a reference to the image context
         const img = this;
         
-        if (EXIF.getTag(img, "DateTime") || 
-            EXIF.getTag(img, "DateTimeOriginal") || 
-            EXIF.getTag(img, "DateTimeDigitized")) {
-              
-          const dateStr = EXIF.getTag(img, "DateTimeOriginal") || 
-                         EXIF.getTag(img, "DateTimeDigitized") || 
-                         EXIF.getTag(img, "DateTime");
-                         
-          if (dateStr) {
-            const [datePart, timePart] = dateStr.split(' ');
-            const [year, month, day] = datePart.split(':');
-            const [hour, minute, second] = timePart.split(':');
-            
+        // Get date strings from EXIF
+        const dateStr = EXIF.getTag(img, "DateTimeOriginal") || 
+                       EXIF.getTag(img, "DateTimeDigitized") || 
+                       EXIF.getTag(img, "DateTime");
+        
+        if (dateStr) {
+          // First try standard EXIF format "YYYY:MM:DD HH:MM:SS"
+          const standardMatch = dateStr.match(/(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})/);
+          
+          // Then try the format from your images "DD MMM YYYY at HH:MM:SS"
+          const altMatch = dateStr.match(/(\d{2}) (\w{3}) (\d{4}) at (\d{2}):(\d{2}):(\d{2})/);
+          
+          if (standardMatch) {
+            const [_, year, month, day, hour, minute, second] = standardMatch;
             timestamp = new Date(year, month - 1, day, hour, minute, second);
-            
-            if (isNaN(timestamp.getTime())) {
-              timestamp = null;
-            }
+          } else if (altMatch) {
+            const [_, day, monthStr, year, hour, minute, second] = altMatch;
+            const months = {
+              Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+              Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11
+            };
+            timestamp = new Date(year, months[monthStr], day, hour, minute, second);
+          }
+          
+          // Validate the parsed date
+          if (timestamp && isNaN(timestamp.getTime())) {
+            timestamp = null;
           }
         }
         
