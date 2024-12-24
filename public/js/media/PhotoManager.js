@@ -25,17 +25,25 @@ class PhotoManager {
   }
 
   async getPhotoTimestamp(file) {
-    this.logger.debug('Getting time from the photo EXIF');
+    const logger = this.logger;  // Store logger reference
+    logger.debug('Getting time from the photo EXIF');
     
     return new Promise((resolve) => {
       EXIF.getData(file, function() {
         let timestamp;
         const img = this;
         
+        // Debug log all possible date fields
+        logger.debug('EXIF DateTimeOriginal:', EXIF.getTag(img, "DateTimeOriginal"));
+        logger.debug('EXIF DateTimeDigitized:', EXIF.getTag(img, "DateTimeDigitized"));
+        logger.debug('EXIF DateTime:', EXIF.getTag(img, "DateTime"));
+        
         // Get date strings from EXIF
         const dateStr = EXIF.getTag(img, "DateTimeOriginal") || 
                        EXIF.getTag(img, "DateTimeDigitized") || 
                        EXIF.getTag(img, "DateTime");
+        
+        logger.debug('Selected dateStr:', dateStr);
         
         if (dateStr) {
           // First try standard EXIF format "YYYY:MM:DD HH:MM:SS"
@@ -44,9 +52,13 @@ class PhotoManager {
           // Then try the format from your images "DD MMM YYYY at HH:MM:SS"
           const altMatch = dateStr.match(/(\d{2}) (\w{3}) (\d{4}) at (\d{2}):(\d{2}):(\d{2})/);
           
+          logger.debug('Standard match:', standardMatch);
+          logger.debug('Alt match:', altMatch);
+          
           if (standardMatch) {
             const [_, year, month, day, hour, minute, second] = standardMatch;
             timestamp = new Date(year, month - 1, day, hour, minute, second);
+            logger.debug('Created from standard match:', timestamp);
           } else if (altMatch) {
             const [_, day, monthStr, year, hour, minute, second] = altMatch;
             const months = {
@@ -54,23 +66,28 @@ class PhotoManager {
               Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11
             };
             timestamp = new Date(year, months[monthStr], day, hour, minute, second);
+            logger.debug('Created from alt match:', timestamp);
           }
           
           // Validate the parsed date
           if (timestamp && isNaN(timestamp.getTime())) {
+            logger.debug('Invalid timestamp detected');
             timestamp = null;
           }
+        } else {
+          logger.debug('No dateStr found');
         }
         
         // If no valid EXIF timestamp found, use file's lastModified or current time
         if (!timestamp) {
           timestamp = file.lastModified ? new Date(file.lastModified) : new Date();
+          logger.debug('Falling back to:', timestamp);
         }
         
         resolve(timestamp);
       });
     }).then(timestamp => {
-      this.logger.debug('Extracted timestamp:', timestamp);
+      logger.debug('Final timestamp:', timestamp);
       return timestamp;
     });
   }
