@@ -1199,7 +1199,8 @@ class FormManager {
           // Admin-specific fields
           const adminFields = {
               'snow-depth-total': 'snowDepthTotal',
-              'snow-depth-new': 'snowDepthNew'
+              'snow-depth-new': 'snowDepthNew',
+              'ski-center-id': 'skiCenterId'
           };
   
           Object.entries(adminFields).forEach(([elementId, dataKey]) => {
