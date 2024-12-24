@@ -1,5 +1,6 @@
 import Logger from '../utils/Logger.js';
 import i18next from '/node_modules/i18next/dist/esm/i18next.js';
+import StateManager from '../state/StateManager.js';
 
 class PhotoManager {
   static instance = null;
@@ -23,6 +24,78 @@ class PhotoManager {
     return PhotoManager.instance;
   }
 
+  async addTimestampToImage(file) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        img.src = reader.result;
+      };
+
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+
+          const ctx = canvas.getContext('2d');
+          
+          // Draw the original image
+          ctx.drawImage(img, 0, 0);
+
+          // Configure text style for timestamp
+          ctx.fillStyle = 'white';
+          ctx.strokeStyle = 'black';
+          ctx.lineWidth = 3;
+          const fontSize = Math.max(Math.min(img.width * 0.04, 48), 16); // Responsive font size
+          ctx.font = `${fontSize}px Arial`;
+          
+          // Format the current date/time
+          const now = new Date();
+          const timestampText = now.toLocaleString(this.i18next.language, {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          });
+
+          // Position the text in the bottom-right corner with padding
+          const padding = fontSize;
+          const textMetrics = ctx.measureText(timestampText);
+          const x = canvas.width - textMetrics.width - padding;
+          const y = canvas.height - padding;
+
+          // Draw text stroke and fill
+          ctx.strokeText(timestampText, x, y);
+          ctx.fillText(timestampText, x, y);
+
+          // Convert back to blob/file
+          canvas.toBlob((blob) => {
+            resolve(new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now()
+            }));
+          }, 'image/jpeg', 0.9);
+        } catch (error) {
+          reject(error);
+        }
+      };
+
+      img.onerror = () => {
+        reject(new Error('Failed to load image for timestamp'));
+      };
+
+      reader.onerror = () => {
+        reject(new Error('Failed to read file for timestamp'));
+      };
+
+      reader.readAsDataURL(file);
+    });
+  }
+  
   async initializePhotoUpload(forceInit = false) {
     console.log('PhotoManager initializePhotoUpload called, force:', forceInit);
     
@@ -182,6 +255,12 @@ class PhotoManager {
       return;
     }
 
+    // Check if user is admin
+    const stateManager = StateManager.getInstance();
+    const userData = stateManager.getState('auth.user');
+    const isAdmin = userData?.ski_center_admin === "1";
+
+
     try {
       for (const file of fileList) {
         if (!file.type.startsWith('image/')) {
@@ -189,8 +268,14 @@ class PhotoManager {
           continue;
         }
 
-        const resizedFile = await this.resizeImage(file);
-        this.photos.push(resizedFile);
+        let processedFile = await this.resizeImage(file);
+
+        // Add timestamp for admin users
+        if (isAdmin) {
+          processedFile = await this.addTimestampToImage(processedFile);
+        }
+        
+        this.photos.push(processedFile);
         await this.addPhotoPreview(resizedFile);
       }
     } catch (error) {
