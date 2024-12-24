@@ -122,6 +122,8 @@
     "photos": "Fotografie:",
     "selectPhotos": "Vybrat fotografie",
     "captionPlaceholder": "Přidat popisek ...",
+    "privateReport": "Nezveřejňovat zprávu",
+    "privateReportHelp": "Pokud je zaškrtnuto, zpráva bude odeslána na portál nabezky.sk jako nezveřejněná. Můžete ji zveřejnit později v záložce Zprávy ve vašem uživatelském profilu",
     "gpsTrack": {
       "attachLabel": "Připojit GPS záznam z {{date}}",
       "details": "Délka trasy: {{distance}} km, Trvání: {{duration}}"
