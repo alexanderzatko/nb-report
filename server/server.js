@@ -428,7 +428,7 @@ app.post('/api/submit-snow-report', async (req, res) => {
         snowDepthTotal: formData.snowDepthTotal,
         snowDepthNew: formData.snowDepthNew,
         trailConditions: formData.trailConditions,
-        ski_center_id: formData.skiCenterId
+        ski_center_id: formData.skiCenterId,
 
         // Rewards data
         laborTime: formData.laborTime,
