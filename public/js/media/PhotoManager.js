@@ -31,10 +31,6 @@ class PhotoManager {
       EXIF.getData(file, function() {
         let timestamp;
 
-        this.logger.debug('EXIF DateTime:', EXIF.getTag(this, "DateTime"));
-        this.logger.debug('EXIF DateTimeOriginal:', EXIF.getTag(this, "DateTimeOriginal"));
-        this.logger.debug('EXIF DateTimeDigitized:', EXIF.getTag(this, "DateTimeDigitized"));
-
         // Get a reference to the image context
         const img = this;
         
