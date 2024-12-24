@@ -66,7 +66,7 @@ class PhotoManager {
     });
   }
   
-  async addTimestampToImage(file) {
+  async addTimestampToImage(file, timestamp) {
     return new Promise(async (resolve, reject) => {
       try {
         // Get the photo's timestamp first
@@ -315,11 +315,18 @@ class PhotoManager {
           continue;
         }
 
+        // Get timestamp from EXIF data before any processing
+        let timestamp;
+        if (isAdmin) {
+          timestamp = await this.getPhotoTimestamp(file);
+          this.logger.debug('Extracted timestamp:', timestamp);
+        }
+
         let processedFile = await this.resizeImage(file);
 
         // Add timestamp for admin users
-        if (isAdmin) {
-          processedFile = await this.addTimestampToImage(processedFile);
+        if (isAdmin && timestamp) {
+          processedFile = await this.addTimestampToImage(processedFile, timestamp);
         }
         
         this.photos.push(processedFile);
