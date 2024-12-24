@@ -276,7 +276,7 @@ class PhotoManager {
         }
         
         this.photos.push(processedFile);
-        await this.addPhotoPreview(resizedFile);
+        await this.addPhotoPreview(processedFile);
       }
     } catch (error) {
       this.logger.error('Error handling files:', error);
