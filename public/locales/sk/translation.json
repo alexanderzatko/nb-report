@@ -123,6 +123,8 @@
     "selectPhotos": "Vybrať fotografie",
     "takePhoto": "Urobiť fotografiu",
     "captionPlaceholder": "Pridať popisku ...",
+    "privateReport": "Nezverejňovať správu",
+    "privateReportHelp": "Ak je zaškrtnuté, správa bude odoslaná na portál nabezky.sk ako nezverejnená. Môžete ju zverejniť neskôr v záložke Správy vo vašom používateľskom profile",
     "gpsTrack": {
       "attachLabel": "Priložiť GPS záznam z {{date}}",
       "details": "Dĺžka trasy: {{distance}} km, Trvanie: {{duration}}"
