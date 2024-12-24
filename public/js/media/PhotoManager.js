@@ -25,7 +25,7 @@ class PhotoManager {
   }
 
   async getPhotoTimestamp(file) {
-    const logger = this.logger;  // Store logger reference
+    const logger = this.logger;
     logger.debug('Getting time from the photo EXIF');
     
     return new Promise((resolve) => {
@@ -33,47 +33,21 @@ class PhotoManager {
         let timestamp;
         const img = this;
         
-        // Debug log all possible date fields
-        logger.debug('EXIF DateTimeOriginal:', EXIF.getTag(img, "DateTimeOriginal"));
-        logger.debug('EXIF DateTimeDigitized:', EXIF.getTag(img, "DateTimeDigitized"));
-        logger.debug('EXIF DateTime:', EXIF.getTag(img, "DateTime"));
+        // Debug - log ALL available tags
+        logger.debug('All EXIF tags:');
+        const allTags = EXIF.getAllTags(img);
+        logger.debug(JSON.stringify(allTags, null, 2));
         
-        // Get date strings from EXIF
+        // Try getting date with original method
         const dateStr = EXIF.getTag(img, "DateTimeOriginal") || 
+                       EXIF.getTag(img, "DateTimeDigitised") ||  // Note: trying both spellings
                        EXIF.getTag(img, "DateTimeDigitized") || 
                        EXIF.getTag(img, "DateTime");
         
         logger.debug('Selected dateStr:', dateStr);
         
         if (dateStr) {
-          // First try standard EXIF format "YYYY:MM:DD HH:MM:SS"
-          const standardMatch = dateStr.match(/(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})/);
-          
-          // Then try the format from your images "DD MMM YYYY at HH:MM:SS"
-          const altMatch = dateStr.match(/(\d{2}) (\w{3}) (\d{4}) at (\d{2}):(\d{2}):(\d{2})/);
-          
-          logger.debug('Standard match:', standardMatch);
-          logger.debug('Alt match:', altMatch);
-          
-          if (standardMatch) {
-            const [_, year, month, day, hour, minute, second] = standardMatch;
-            timestamp = new Date(year, month - 1, day, hour, minute, second);
-            logger.debug('Created from standard match:', timestamp);
-          } else if (altMatch) {
-            const [_, day, monthStr, year, hour, minute, second] = altMatch;
-            const months = {
-              Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
-              Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11
-            };
-            timestamp = new Date(year, months[monthStr], day, hour, minute, second);
-            logger.debug('Created from alt match:', timestamp);
-          }
-          
-          // Validate the parsed date
-          if (timestamp && isNaN(timestamp.getTime())) {
-            logger.debug('Invalid timestamp detected');
-            timestamp = null;
-          }
+          // ... rest of the date parsing code ...
         } else {
           logger.debug('No dateStr found');
         }
