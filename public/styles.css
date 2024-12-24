@@ -367,6 +367,30 @@ input#report-date {
     border-radius: 4px;
 }
 
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.checkbox-container input[type="checkbox"] {
+  width: 1.2rem;
+  height: 1.2rem;
+  cursor: pointer;
+}
+
+.checkbox-container label {
+  cursor: pointer;
+}
+
+.help-text {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 0.25rem;
+  line-height: 1.4;
+}
+
 /* The FORM STOP */
 
 
