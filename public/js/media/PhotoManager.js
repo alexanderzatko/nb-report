@@ -25,24 +25,27 @@ class PhotoManager {
   }
 
   async getPhotoTimestamp(file) {
-  
     this.logger.debug('Getting time from the photo EXIF');
-
+    
     return new Promise((resolve) => {
       EXIF.getData(file, function() {
         let timestamp;
+
+        this.logger.debug('EXIF DateTime:', EXIF.getTag(this, "DateTime"));
+        this.logger.debug('EXIF DateTimeOriginal:', EXIF.getTag(this, "DateTimeOriginal"));
+        this.logger.debug('EXIF DateTimeDigitized:', EXIF.getTag(this, "DateTimeDigitized"));
+
+        // Get a reference to the image context
+        const img = this;
         
-        // Try to get DateTime from EXIF
-        if (EXIF.getTag(this, "DateTime") || 
-            EXIF.getTag(this, "DateTimeOriginal") || 
-            EXIF.getTag(this, "DateTimeDigitized")) {
+        if (EXIF.getTag(img, "DateTime") || 
+            EXIF.getTag(img, "DateTimeOriginal") || 
+            EXIF.getTag(img, "DateTimeDigitized")) {
               
-          // Priority: Original > Digitized > Modified
-          const dateStr = EXIF.getTag(this, "DateTimeOriginal") || 
-                         EXIF.getTag(this, "DateTimeDigitized") || 
-                         EXIF.getTag(this, "DateTime");
+          const dateStr = EXIF.getTag(img, "DateTimeOriginal") || 
+                         EXIF.getTag(img, "DateTimeDigitized") || 
+                         EXIF.getTag(img, "DateTime");
                          
-          // EXIF DateTime format: "YYYY:MM:DD HH:MM:SS"
           if (dateStr) {
             const [datePart, timePart] = dateStr.split(' ');
             const [year, month, day] = datePart.split(':');
@@ -50,13 +53,12 @@ class PhotoManager {
             
             timestamp = new Date(year, month - 1, day, hour, minute, second);
             
-            // Validate the parsed date
             if (isNaN(timestamp.getTime())) {
               timestamp = null;
             }
           }
         }
-
+        
         // If no valid EXIF timestamp found, use file's lastModified or current time
         if (!timestamp) {
           timestamp = file.lastModified ? new Date(file.lastModified) : new Date();
