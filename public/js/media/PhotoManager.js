@@ -110,83 +110,6 @@ class PhotoManager {
     });
   }
   
-  async addTimestampToImage(file, timestamp) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        // Get the photo's timestamp first
-        const timestamp = await this.getPhotoTimestamp(file);
-        
-        const img = new Image();
-        const reader = new FileReader();
-  
-        reader.onload = () => {
-          img.src = reader.result;
-        };
-  
-        img.onload = () => {
-          try {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-  
-            const ctx = canvas.getContext('2d');
-            
-            // Draw the original image
-            ctx.drawImage(img, 0, 0);
-  
-            // Configure text style for timestamp
-            ctx.fillStyle = 'white';
-            ctx.strokeStyle = 'black';
-            ctx.lineWidth = 3;
-            const fontSize = Math.max(Math.min(img.width * 0.04, 48), 16);
-            ctx.font = `${fontSize}px Arial`;
-            
-            // Format the timestamp
-            const timestampText = timestamp.toLocaleString(this.i18next.language, {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit',
-              hour: '2-digit',
-              minute: '2-digit'
-            });
-  
-            // Position the text in the bottom-right corner with padding
-            const padding = fontSize;
-            const textMetrics = ctx.measureText(timestampText);
-            const x = canvas.width - textMetrics.width - padding;
-            const y = canvas.height - padding;
-  
-            // Draw text stroke and fill
-            ctx.strokeText(timestampText, x, y);
-            ctx.fillText(timestampText, x, y);
-  
-            // Convert back to blob/file
-            canvas.toBlob((blob) => {
-              resolve(new File([blob], file.name, {
-                type: 'image/jpeg',
-                lastModified: Date.now()
-              }));
-            }, 'image/jpeg', 0.9);
-          } catch (error) {
-            reject(error);
-          }
-        };
-  
-        img.onerror = () => {
-          reject(new Error('Failed to load image for timestamp'));
-        };
-  
-        reader.onerror = () => {
-          reject(new Error('Failed to read file for timestamp'));
-        };
-  
-        reader.readAsDataURL(file);
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }
-  
   async initializePhotoUpload(forceInit = false) {
     console.log('PhotoManager initializePhotoUpload called, force:', forceInit);
     
@@ -339,40 +262,101 @@ class PhotoManager {
       this.logger.warn('No files selected');
       return;
     }
-
+  
     const previewContainer = document.getElementById('photo-preview-container');
     if (!previewContainer) {
       this.logger.error('Preview container not found');
       return;
     }
-
+  
     // Check if user is admin
     const stateManager = StateManager.getInstance();
     const userData = stateManager.getState('auth.user');
     const isAdmin = userData?.ski_center_admin === "1";
-
-
+  
     try {
       for (const file of fileList) {
         if (!file.type.startsWith('image/')) {
           this.logger.warn(`Skipping non-image file: ${file.name}`);
           continue;
         }
-
+  
         // Get timestamp from EXIF data before any processing
-        let timestamp;
+        let photoTimestamp;
         if (isAdmin) {
-          timestamp = await this.getPhotoTimestamp(file);
-          this.logger.debug('Extracted timestamp:', timestamp);
+          photoTimestamp = await this.getPhotoTimestamp(file);
+          this.logger.debug('Original photo timestamp:', photoTimestamp);
         }
-
+  
+        // Process the image
         let processedFile = await this.resizeImage(file);
-
-        // Add timestamp for admin users
-        if (isAdmin && timestamp) {
-          processedFile = await this.addTimestampToImage(processedFile, timestamp);
+  
+        if (isAdmin && photoTimestamp) {
+          // Create a new canvas with timestamp
+          const canvas = document.createElement('canvas');
+          const img = new Image();
+          
+          await new Promise((resolve, reject) => {
+            img.onload = () => {
+              try {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+  
+                // Draw the image
+                ctx.drawImage(img, 0, 0);
+  
+                // Configure text style
+                ctx.fillStyle = 'white';
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 3;
+                const fontSize = Math.max(Math.min(img.width * 0.04, 48), 16);
+                ctx.font = `${fontSize}px Arial`;
+  
+                // Format the timestamp using the stored timestamp
+                const timestampText = photoTimestamp.toLocaleString(this.i18next.language, {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                });
+  
+                // Position text
+                const padding = fontSize;
+                const textMetrics = ctx.measureText(timestampText);
+                const x = canvas.width - textMetrics.width - padding;
+                const y = canvas.height - padding;
+  
+                // Draw text
+                ctx.strokeText(timestampText, x, y);
+                ctx.fillText(timestampText, x, y);
+  
+                // Convert to blob
+                canvas.toBlob((blob) => {
+                  processedFile = new File([blob], file.name, {
+                    type: 'image/jpeg',
+                    lastModified: photoTimestamp.getTime()
+                  });
+                  resolve();
+                }, 'image/jpeg', 0.9);
+              } catch (error) {
+                reject(error);
+              }
+            };
+            img.onerror = reject;
+  
+            // Create object URL for the resized image
+            const url = URL.createObjectURL(processedFile);
+            img.src = url;
+            // Clean up object URL after load
+            img.onload = () => {
+              URL.revokeObjectURL(url);
+              img.onload();
+            };
+          });
         }
-        
+  
         this.photos.push(processedFile);
         await this.addPhotoPreview(processedFile);
       }
