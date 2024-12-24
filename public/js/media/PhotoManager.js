@@ -24,74 +24,120 @@ class PhotoManager {
     return PhotoManager.instance;
   }
 
-  async addTimestampToImage(file) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const reader = new FileReader();
-
-      reader.onload = () => {
-        img.src = reader.result;
-      };
-
-      img.onload = () => {
-        try {
-          const canvas = document.createElement('canvas');
-          canvas.width = img.width;
-          canvas.height = img.height;
-
-          const ctx = canvas.getContext('2d');
-          
-          // Draw the original image
-          ctx.drawImage(img, 0, 0);
-
-          // Configure text style for timestamp
-          ctx.fillStyle = 'white';
-          ctx.strokeStyle = 'black';
-          ctx.lineWidth = 3;
-          const fontSize = Math.max(Math.min(img.width * 0.04, 48), 16); // Responsive font size
-          ctx.font = `${fontSize}px Arial`;
-          
-          // Format the current date/time
-          const now = new Date();
-          const timestampText = now.toLocaleString(this.i18next.language, {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-          });
-
-          // Position the text in the bottom-right corner with padding
-          const padding = fontSize;
-          const textMetrics = ctx.measureText(timestampText);
-          const x = canvas.width - textMetrics.width - padding;
-          const y = canvas.height - padding;
-
-          // Draw text stroke and fill
-          ctx.strokeText(timestampText, x, y);
-          ctx.fillText(timestampText, x, y);
-
-          // Convert back to blob/file
-          canvas.toBlob((blob) => {
-            resolve(new File([blob], file.name, {
-              type: 'image/jpeg',
-              lastModified: Date.now()
-            }));
-          }, 'image/jpeg', 0.9);
-        } catch (error) {
-          reject(error);
+  async getPhotoTimestamp(file) {
+    return new Promise((resolve) => {
+      EXIF.getData(file, function() {
+        let timestamp;
+        
+        // Try to get DateTime from EXIF
+        if (EXIF.getTag(this, "DateTime") || 
+            EXIF.getTag(this, "DateTimeOriginal") || 
+            EXIF.getTag(this, "DateTimeDigitized")) {
+              
+          // Priority: Original > Digitized > Modified
+          const dateStr = EXIF.getTag(this, "DateTimeOriginal") || 
+                         EXIF.getTag(this, "DateTimeDigitized") || 
+                         EXIF.getTag(this, "DateTime");
+                         
+          // EXIF DateTime format: "YYYY:MM:DD HH:MM:SS"
+          if (dateStr) {
+            const [datePart, timePart] = dateStr.split(' ');
+            const [year, month, day] = datePart.split(':');
+            const [hour, minute, second] = timePart.split(':');
+            
+            timestamp = new Date(year, month - 1, day, hour, minute, second);
+            
+            // Validate the parsed date
+            if (isNaN(timestamp.getTime())) {
+              timestamp = null;
+            }
+          }
         }
-      };
-
-      img.onerror = () => {
-        reject(new Error('Failed to load image for timestamp'));
-      };
-
-      reader.onerror = () => {
-        reject(new Error('Failed to read file for timestamp'));
-      };
-
-      reader.readAsDataURL(file);
+        
+        // If no valid EXIF timestamp found, use file's lastModified or current time
+        if (!timestamp) {
+          timestamp = file.lastModified ? new Date(file.lastModified) : new Date();
+        }
+        
+        resolve(timestamp);
+      });
+    });
+  }
+  
+  async addTimestampToImage(file) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        // Get the photo's timestamp first
+        const timestamp = await this.getPhotoTimestamp(file);
+        
+        const img = new Image();
+        const reader = new FileReader();
+  
+        reader.onload = () => {
+          img.src = reader.result;
+        };
+  
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+  
+            const ctx = canvas.getContext('2d');
+            
+            // Draw the original image
+            ctx.drawImage(img, 0, 0);
+  
+            // Configure text style for timestamp
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 3;
+            const fontSize = Math.max(Math.min(img.width * 0.04, 48), 16);
+            ctx.font = `${fontSize}px Arial`;
+            
+            // Format the timestamp
+            const timestampText = timestamp.toLocaleString(this.i18next.language, {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+  
+            // Position the text in the bottom-right corner with padding
+            const padding = fontSize;
+            const textMetrics = ctx.measureText(timestampText);
+            const x = canvas.width - textMetrics.width - padding;
+            const y = canvas.height - padding;
+  
+            // Draw text stroke and fill
+            ctx.strokeText(timestampText, x, y);
+            ctx.fillText(timestampText, x, y);
+  
+            // Convert back to blob/file
+            canvas.toBlob((blob) => {
+              resolve(new File([blob], file.name, {
+                type: 'image/jpeg',
+                lastModified: Date.now()
+              }));
+            }, 'image/jpeg', 0.9);
+          } catch (error) {
+            reject(error);
+          }
+        };
+  
+        img.onerror = () => {
+          reject(new Error('Failed to load image for timestamp'));
+        };
+  
+        reader.onerror = () => {
+          reject(new Error('Failed to read file for timestamp'));
+        };
+  
+        reader.readAsDataURL(file);
+      } catch (error) {
+        reject(error);
+      }
     });
   }
   
