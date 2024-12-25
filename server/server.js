@@ -437,7 +437,10 @@ app.post('/api/submit-snow-report', async (req, res) => {
         // Files data
         photoIds: formData.photoIds || [],
         photoCaptions: formData.photoCaptions || {},
-        gpxId: formData.gpxId || null
+        gpxId: formData.gpxId || null,
+
+        privateReport: formData.privateReport || false
+
       }
     };
 
