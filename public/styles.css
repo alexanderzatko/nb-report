@@ -1,28 +1,46 @@
 @font-face {
-  font-family: 'Roboto';
-  src: url('/fonts/roboto/Roboto-Regular.woff2') format('woff2'),
-       url('/fonts/roboto/Roboto-Regular.woff') format('woff');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
+    font-family: 'Baloo Thambi 2';
+    src: url('/fonts/BalooThambi2/BalooThambi2-Bold.woff2') format('woff2'),
+        url('/fonts/BalooThambi2/BalooThambi2-Bold.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
-  font-family: 'Roboto';
-  src: url('/fonts/roboto/Roboto-Medium.woff2') format('woff2'),
-       url('/fonts/roboto/Roboto-Medium.woff') format('woff');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
+    font-family: 'Baloo Thambi 2';
+    src: url('/fonts/BalooThambi2/BalooThambi2-ExtraBold.woff2') format('woff2'),
+        url('/fonts/BalooThambi2/BalooThambi2-ExtraBold.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
-  font-family: 'Roboto';
-  src: url('/fonts/roboto/Roboto-Bold.woff2') format('woff2'),
-       url('/fonts/roboto/Roboto-Bold.woff') format('woff');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
+    font-family: 'Baloo Thambi 2';
+    src: url('/fonts/BalooThambi2/BalooThambi2-Medium.woff2') format('woff2'),
+        url('/fonts/BalooThambi2/BalooThambi2-Medium.woff') format('woff');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Baloo Thambi 2';
+    src: url('/fonts/BalooThambi2/BalooThambi2-SemiBold.woff2') format('woff2'),
+        url('/fonts/BalooThambi2/BalooThambi2-SemiBold.woff') format('woff');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Baloo Thambi 2';
+    src: url('/fonts/BalooThambi2/BalooThambi2-Regular.woff2') format('woff2'),
+        url('/fonts/BalooThambi2/BalooThambi2-Regular.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
 }
 
 /* app updater styles START */
@@ -242,7 +260,7 @@ select {
 }
 
 body {
-  font-family: 'Roboto', Arial, sans-serif;
+  font-family: 'Baloo Thambi 2', Arial, sans-serif;
   margin: 15px;
   padding: 0;
   display: flex;
