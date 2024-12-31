@@ -153,38 +153,6 @@
 
 /* app updater styles STOP */
 
-/* Background images START */
-
-.page-background {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    transition: opacity 0.3s ease;
-}
-
-/* Specific background styles for each page */
-.login-background {
-    background-image: url('/images/backgrounds/login.png');
-}
-
-.dashboard-background {
-    background-image: url('/images/backgrounds/transparent.gif');
-}
-
-.settings-background {
-    background-image: url('/images/backgrounds/transparent.gif');
-}
-
-.form-background {
-    background-image: url('/images/backgrounds/transparent.gif');
-}
-
 /* A semi-transparent overlay to ensure content readability */
 .page-content {
     position: relative;
