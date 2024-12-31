@@ -465,6 +465,7 @@ class UIManager {
     const snowReportForm = document.getElementById('snow-report-form');
   
     if (isAuthenticated) {
+      document.body.classList.add(userData?.ski_center_admin === "1" ? 'admin-user' : 'regular-user');
       if (loginContainer) loginContainer.style.display = 'none';
       if (dashboardContainer) dashboardContainer.style.display = 'block';
       if (settingsContainer) settingsContainer.style.display = 'none';
@@ -475,6 +476,7 @@ class UIManager {
       }
   
     } else {
+      document.body.classList.remove('admin-user', 'regular-user');
       if (loginContainer) {
         loginContainer.style.display = 'flex';
         this.updateLoginText();
