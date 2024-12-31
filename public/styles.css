@@ -165,8 +165,6 @@
 */
 }
 
-/* Background images STOP */
-
 /* The FORM START */
 
 .ski-centers-section {
@@ -781,193 +779,6 @@ textarea:invalid + .validation-message {
 
 /* Alert messages STOP */
 
-/* Dashboard START */
-
-.dashboard-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding: 0 20px;
-}
-
-.form-buttons {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-    margin-top: 50px;
-}
-
-.cancel-button {
-    padding: 10px 20px;
-    background-color: #6c757d;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-}
-
-.cancel-button:hover {
-    background-color: #5a6268;
-}
-
-.dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    padding: 20px;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.dashboard-card {
-    background: white;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    padding: 20px;
-    text-decoration: none;
-    color: inherit;
-    transition: all 0.3s ease;
-    will-change: transform, box-shadow;
-    transform: translateZ(0);
-}
-
-.dashboard-card:not(.disabled):hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    border-color: #0078d4;
-}
-
-.dashboard-card.disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    background: #f5f5f5;
-}
-
-.dashboard-card.recording {
-    background-color: #f8f9fa;
-    border-color: #0078d4;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(0, 120, 212, 0.4);
-    }
-    70% {
-        box-shadow: 0 0 0 10px rgba(0, 120, 212, 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(0, 120, 212, 0);
-    }
-}
-
-.card-icon {
-    font-size: 24px;
-    margin-bottom: 10px;
-}
-
-.dashboard-card h3 {
-    margin: 10px 0;
-    color: #333;
-}
-
-.dashboard-card p {
-    color: #666;
-    font-size: 14px;
-    margin: 0;
-}
-
-.gpx-download {
-  display: inline-block;
-  margin-top: 10px;
-  padding: 5px 10px;
-  background-color: #0078d4;
-  color: white;
-  text-decoration: none;
-  border-radius: 4px;
-  font-size: 14px;
-}
-
-.gpx-download:hover {
-  background-color: #005a9e;
-}
-
-.gpx-download:visited {
-  color: white;
-}
-
-.gps-track-section {
-  margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px solid #eee;
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
-.checkbox-label input[type="checkbox"] {
-  width: auto;
-}
-
-#gps-track-details {
-  margin-left: 24px;
-  color: #666;
-}
-
-/* Dashboard STOP */
-
-/* Settings section START */
-.settings-content {
-    padding: 20px;
-    max-width: 600px;
-    margin: 0 auto;
-}
-
-.settings-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    align-items: center;
-    margin-top: 30px;
-}
-
-.settings-button {
-    padding: 12px 20px;
-    font-size: 16px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    width: 200px;
-    text-align: center;
-    transition: background-color 0.3s ease;
-}
-
-#dashboard-button {
-    background-color: #0078d4;
-    color: white;
-}
-
-#dashboard-button:hover {
-    background-color: #005bb5;
-}
-
-#logout-button {
-    background-color: #dc3545;
-    color: white;
-}
-
-#logout-button:hover {
-    background-color: #c82333;
-}
-
-/* Settings section STOP */
-
 /* Trail Section Styles START */
 
 .trail-item {
@@ -1091,3 +902,322 @@ textarea:invalid + .validation-message {
     display: none !important;
 }
 /* Disable the gps card STOP */
+
+
+/* New look styles */
+
+/* Reset and base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', Arial, sans-serif;
+    background-color: #f5f5f5;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
+/* Main app container */
+.app-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    gap: 20px;
+    max-width: 100%;
+    margin: 0 auto;
+    position: relative;
+}
+
+/* Header styles */
+.app-header {
+    width: 100%;
+    max-width: 500px;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.header-logo {
+    width: 200px;
+    height: auto;
+    object-fit: contain;
+}
+
+/* Main content area */
+.app-content {
+    flex: 1;
+    width: 100%;
+    max-width: 500px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 20px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 400px; /* Ensure minimum height for content */
+}
+
+/* Footer styles */
+.app-footer {
+    width: 100%;
+    max-width: 500px;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: auto; /* Push footer to bottom when content is short */
+}
+
+.footer-logo {
+    width: 150px;
+    height: auto;
+    object-fit: contain;
+    opacity: 0.7;
+}
+
+/* Login page specific styles */
+#login-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    padding: 40px 20px;
+}
+
+.login-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 20px;
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.login-button:hover {
+    transform: scale(1.05);
+}
+
+.login-icon {
+    width: 250px;
+    height: auto;
+    margin-bottom: 20px;
+}
+
+#login-text {
+    color: #666;
+    font-size: 16px;
+    text-align: center;
+}
+
+/* Dashboard specific styles */
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+#welcome-head {
+    font-size: 18px;
+    color: #666;
+}
+
+.dashboard-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 0;
+}
+
+.dashboard-card {
+    background: #f0f7ff;
+    border-radius: 10px;
+    padding: 20px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.3s ease;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Settings icon */
+.settings-icon {
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    width: 40px;
+    height: 40px;
+    background: #f0f7ff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.settings-icon:hover {
+    transform: scale(1.1);
+}
+
+/* Settings page specific styles */
+.settings-content {
+    padding: 20px 0;
+}
+
+.ski-centers-section {
+    background: #f5f5f5;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.ski-centers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ski-center-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ski-center-item.active {
+    border-color: #0078d4;
+    background: #f0f7ff;
+}
+
+.settings-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 30px;
+    padding: 0 20px;
+}
+
+.settings-button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.2s ease;
+}
+
+#dashboard-button {
+    background: #f0f7ff;
+    color: #333;
+}
+
+#logout-button {
+    background: #dc3545;
+    color: white;
+}
+
+/* Role-specific images */
+.regular-user .dashboard-grid::after {
+    content: '';
+    display: block;
+    width: 200px;
+    height: 200px;
+    background: url('/images/bezkarka.jpg') center/cover no-repeat;
+    border-radius: 10px;
+    margin: 20px auto;
+}
+
+.admin-user .dashboard-grid::after {
+    content: '';
+    display: block;
+    width: 200px;
+    height: 200px;
+    background: url('/images/rolba.jpg') center/cover no-repeat;
+    border-radius: 10px;
+    margin: 20px auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .app-container {
+        padding: 10px;
+    }
+
+    .app-content {
+        border-radius: 15px;
+    }
+
+    .settings-icon {
+        bottom: 20px;
+        right: 20px;
+    }
+
+    .dashboard-card {
+        max-width: 100%;
+    }
+}
+
+/* Hide elements properly */
+[style*="display: none"] {
+    display: none !important;
+}
+
+/* Maintain existing form styles */
+#snow-report-form {
+    margin: 0;
+    padding: 20px;
+}
+
+/* Modal styles */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 90%;
+    width: 400px;
+}
+
+/* Ensure proper stacking */
+.settings-icon {
+    z-index: 100;
+}
+
+.modal {
+    z-index: 1000;
+}
+
+/* New look styles end */
