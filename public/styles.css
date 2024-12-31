@@ -406,16 +406,6 @@ div#private-report-section {
   background-color: #da190b;
 }
 
-.login-icon {
-  width: 100px;
-  height: 100px;
-  transition: transform 0.3s;
-}
-
-.auth-button.login:hover .login-icon {
-  transform: scale(1.1);
-}
-
 #login-text {
   margin-top: 10px;
   text-align: center;
@@ -993,9 +983,8 @@ body {
 }
 
 .login-icon {
-    width: 250px;
+    width: 120px;
     height: auto;
-    margin-bottom: 20px;
 }
 
 #login-text {
