@@ -154,14 +154,22 @@
 /* app updater styles STOP */
 
 /* A semi-transparent overlay to ensure content readability */
-.page-content {
+
+.page-content-wrapper {
+    flex: 1;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
     position: relative;
-    z-index: 1;
+}
+
+.page-content {
     background-color: rgba(255, 255, 255, 0.9);
     border-radius: 8px;
+    width: 100%;
 /*
-    padding: 20px;
-    margin: 20px;
+    position: relative;
+    z-index: 1;
 */
 }
 
