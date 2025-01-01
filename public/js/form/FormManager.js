@@ -147,7 +147,8 @@ class FormManager {
           placeholders.forEach((placeholder, index) => {
               this.logger.debug(`Replacing placeholder ${index}`);
               const commonContent = commonTemplate.content.cloneNode(true);
-              placeholder.parentNode.replaceChild(commonContent, placeholder);
+              placeholder.innerHTML = '';
+              placeholder.appendChild(commonContent);
           });
       } catch (error) {
           this.logger.error('Error replacing common sections:', error);
