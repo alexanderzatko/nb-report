@@ -1176,7 +1176,7 @@ body {
         padding: 10px;
     }
 
-    .header-logo, .footer-logo {
+    .header-logo {
         width: 120px; /* Smaller logos on mobile */
     }
 
