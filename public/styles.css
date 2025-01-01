@@ -1033,7 +1033,6 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 20px;
-    padding: 20px 0;
 }
 
 .dashboard-card {
@@ -1148,7 +1147,6 @@ body {
     height: 200px;
     background: url('/images/bezkarka.jpg') center/cover no-repeat;
     border-radius: 10px;
-    margin: 20px auto;
 }
 
 .admin-user .dashboard-grid::after {
