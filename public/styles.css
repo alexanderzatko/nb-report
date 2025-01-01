@@ -1062,9 +1062,11 @@ body {
     transition: transform 0.3s ease;
 }
 
+/*
 .settings-icon:hover {
     transform: scale(1.1);
 }
+*/
 
 /* Settings page specific styles */
 .settings-content {
