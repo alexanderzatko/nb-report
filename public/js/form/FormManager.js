@@ -144,11 +144,17 @@ class FormManager {
           const placeholders = activeSection.querySelectorAll('.common-section-placeholder');
           this.logger.debug(`Found ${placeholders.length} placeholders to replace`);
           
-          placeholders.forEach((placeholder, index) => {
-              this.logger.debug(`Replacing placeholder ${index}`);
+          placeholders.forEach((placeholder) => {
+              this.logger.debug(`Replacing placeholder`);
+              // Create a new div to hold the common content
+              const container = document.createElement('div');
+              // Clone the template content
               const commonContent = commonTemplate.content.cloneNode(true);
+              // Append to our container first
+              container.appendChild(commonContent);
+              // Clear and replace placeholder content
               placeholder.innerHTML = '';
-              placeholder.appendChild(commonContent);
+              placeholder.appendChild(container);
           });
       } catch (error) {
           this.logger.error('Error replacing common sections:', error);
