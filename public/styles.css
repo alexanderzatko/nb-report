@@ -966,20 +966,19 @@ body {
 
 /* Footer styles */
 .app-footer {
-    width: 100%;
+    width: 50%;
     max-width: 500px;
     padding: 20px;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-top: auto; /* Push footer to bottom when content is short */
+    margin: 0 auto;
 }
 
 .footer-logo {
     width: 250px;
     height: auto;
     object-fit: contain;
-    opacity: 0.7;
 }
 
 /* Login page specific styles */
