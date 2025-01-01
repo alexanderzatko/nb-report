@@ -44,38 +44,31 @@
       </div>
 
       <!-- Dashboard Page -->
-      <div id="dashboard-container" class="page-content" style="display: none;">
-        <div class="dashboard-header">
-          <h2 id="welcome-head" data-i18n="welcome"></h2>
-        </div>
-
-        <div class="dashboard-grid">
-          <a href="#" class="dashboard-card" id="snow-report-link">
-            <div class="card-icon"></div>
-            <h3 data-i18n="dashboard.newReport">New Report</h3>
-            <p data-i18n="dashboard.newReportDesc">Submit a new snow condition report</p>
-          </a>
-
-		  <div class="dashboard-card disabled" data-feature="gps-recording">
-			  <div class="card-icon">
-				<i class="glyphicon glyphicon-map-marker"></i>
-			  </div>
-			  <h3 data-i18n="dashboard.recordGps">Record GPS</h3>
-			  <p data-i18n="dashboard.recordGpsDesc">Start GPS recording</p>
-		  </div>
-
-		<div id="settings-link" class="settings-icon-container">
-		  <img src="/images/sprocket.svg" alt="Settings" class="sprocket">
+	<div id="dashboard-container" class="page-content" style="display: none;">
+		<div class="dashboard-grid">
+			<a href="#" class="dashboard-card" id="snow-report-link">
+				<div class="card-icon"></div>
+				<h3 data-i18n="dashboard.newReport">New Report</h3>
+				<p data-i18n="dashboard.newReportDesc">Submit a new snow condition report</p>
+			</a>
+			
+			<div class="dashboard-header">
+				<h2 id="welcome-head" data-i18n="welcome"></h2>
+			</div>
+			
+			<div class="dashboard-card disabled" data-feature="gps-recording">
+				<div class="card-icon">
+					<i class="glyphicon glyphicon-map-marker"></i>
+				</div>
+				<h3 data-i18n="dashboard.recordGps">Record GPS</h3>
+				<p data-i18n="dashboard.recordGpsDesc">Start GPS recording</p>
+			</div>
+		
+			<div id="settings-link" class="settings-icon-container">
+				<img src="/images/sprocket.svg" alt="Settings" class="sprocket">
+			</div>
 		</div>
-<!--
-          <a href="#" id="settings-link" class="dashboard-card">
-            <div class="card-icon settings-icon">
-	      <img src="/images/sprocket.svg" alt="Settings" class="sprocket">
-	    </div>
-          </a>
--->
-        </div>
-      </div>
+	</div>
 
       <!-- Settings Page -->
       <div id="settings-container" class="page-content" style="display: none;">
