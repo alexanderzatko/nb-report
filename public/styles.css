@@ -978,7 +978,7 @@ body {
     height: auto;
     object-fit: contain;
     min-height: 40px;
-    width: calc(80vw);
+    width: calc(70vw);
 }
 
 /* Login page specific styles */
@@ -1056,7 +1056,7 @@ body {
 .settings-icon-container {
     position: fixed;
     bottom: 60px;
-    right: 40px;
+    right: 20px;
     width: 40px;
     height: 40px;
     background: #f0f7ff;
@@ -1174,11 +1174,6 @@ body {
     .app-footer {
         padding: 10px;
     }
-
-    .header-logo {
-        width: 120px; /* Smaller logos on mobile */
-    }
-
 }
 
 /* Hide elements properly */
