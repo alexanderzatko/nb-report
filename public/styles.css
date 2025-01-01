@@ -440,21 +440,38 @@ textarea#report-note {
   font-size: 14px;
 }
 
+.form-buttons {
+    margin-top: 40px;
+}
+
+button#cancel-button {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #03b8ff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
 button:hover {
   background-color: #005bb5;
 }
 
 button[type="submit"] {
-  display: block;
-  padding: 10px 20px;
-  background-color: #02ba06;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-  position: relative;
-  transition: all 0.3s ease;
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #02ba06;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    position: relative;
+    transition: all 0.3s ease;
 }
 
 button[type="submit"]:disabled {
