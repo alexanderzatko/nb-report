@@ -159,18 +159,7 @@
     flex: 1;
     width: 100%;
     max-width: 600px;
-    margin: 0 auto;
     position: relative;
-}
-
-.page-content {
-    background-color: rgba(255, 255, 255, 0.9);
-    border-radius: 8px;
-    width: 100%;
-/*
-    position: relative;
-    z-index: 1;
-*/
 }
 
 /* The FORM START */
@@ -960,7 +949,6 @@ body {
     flex: 1;
     width: 100%;
     max-width: 500px;
-    padding: 20px;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -979,7 +967,6 @@ body {
     justify-content: center;
     align-items: center;
     margin: 0 auto;
-    background: white;
     position: fixed;
     bottom: 0;
     left: 50%;
@@ -988,10 +975,11 @@ body {
 }
 
 .footer-logo {
-    width: 250px;
+    max-width: 300px;
     height: auto;
     object-fit: contain;
     min-height: 40px;
+    width: calc(80vw);
 }
 
 /* Login page specific styles */
@@ -1192,9 +1180,6 @@ body {
         width: 120px; /* Smaller logos on mobile */
     }
 
-    .app-content {
-        margin: 40px 0 60px 0;
-    }
 }
 
 /* Hide elements properly */
