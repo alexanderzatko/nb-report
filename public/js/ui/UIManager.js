@@ -397,9 +397,9 @@ class UIManager {
           // Use existing form data stored in state
           const stateManager = StateManager.getInstance();
           const userData = stateManager.getState('auth.user');
-  
-          this.logger.debug('Showing user data', userData);
-  
+
+          this.logger.debug('Showing user data',userData);
+
           if (!userData) {
               this.logger.error('No user data available');
               await AuthManager.getInstance().logout();
@@ -412,7 +412,7 @@ class UIManager {
           // Initialize form with user data
           await this.formManager.initializeForm(userData);
   
-          // Show/hide containers (only once)
+          // Show the form container
           const dashboardContainer = document.getElementById('dashboard-container');
           const settingsContainer = document.getElementById('settings-container');
           const snowReportForm = document.getElementById('snow-report-form');
@@ -420,9 +420,9 @@ class UIManager {
           if (dashboardContainer) dashboardContainer.style.display = 'none';
           if (settingsContainer) settingsContainer.style.display = 'none';
           if (snowReportForm) snowReportForm.style.display = 'block';
-  
+
           this.formManager.startTrackingFormTime();
-  
+
       } catch (error) {
           this.logger.error('Error showing snow report form:', error);
           this.showError(this.i18next.t('errors.form.loading'));
