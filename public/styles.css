@@ -1046,7 +1046,7 @@ body {
 }
 
 /* Settings icon */
-.settings-icon {
+.settings-icon-container {
     position: fixed;
     bottom: 40px;
     right: 40px;
@@ -1060,13 +1060,17 @@ body {
     text-decoration: none;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     transition: transform 0.3s ease;
+    cursor: pointer;
 }
 
-/*
-.settings-icon:hover {
+.settings-icon-container:hover {
     transform: scale(1.1);
 }
-*/
+
+.sprocket {
+    width: 24px;
+    height: 24px;
+}
 
 /* Settings page specific styles */
 .settings-content {
