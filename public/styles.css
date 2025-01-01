@@ -1124,7 +1124,7 @@ body {
 .admin-user .dashboard-grid::after {
     content: '';
     display: block;
-    width: 200px;
+    width: 65%;
     height: 200px;
     background: url('/images/rolba.jpg') center/cover no-repeat;
     border-radius: 10px;
