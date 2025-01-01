@@ -1143,8 +1143,8 @@ body {
 .regular-user .dashboard-grid::after {
     content: '';
     display: block;
-    width: 200px;
-    height: 200px;
+    width: 168px;
+    height: 226px;
     background: url('/images/bezkarka.jpg') center/cover no-repeat;
     border-radius: 10px;
 }
@@ -1153,7 +1153,7 @@ body {
     content: '';
     display: block;
     width: 65%;
-    height: 200px;
+    height: 165px;
     background: url('/images/rolba.jpg') center/cover no-repeat;
     border-radius: 10px;
     margin: 20px auto;
