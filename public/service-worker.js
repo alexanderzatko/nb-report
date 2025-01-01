@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v421';  // Should match ConfigManager.js version
+const CACHE_VERSION = 'v422';  // Should match ConfigManager.js version
 const CACHE_NAME = 'snow-report-cache';
 const FULL_CACHE_NAME = `${CACHE_NAME}-${CACHE_VERSION}`;
 const OFFLINE_PAGE = '/offline.html';
@@ -37,8 +37,8 @@ const urlsToCache = [
   '/fonts/BalooThambi2/BalooThambi2-Medium.woff',
   '/fonts/BalooThambi2/BalooThambi2-Medium.woff2',
   '/fonts/BalooThambi2/BalooThambi2-Regular.woff',
-  '/fonts/BalooThambi2/BalooThambi2-Regular.woff2,
-  '/fonts/BalooThambi2/BalooThambi2-SemiBold.woff,
+  '/fonts/BalooThambi2/BalooThambi2-Regular.woff2',
+  '/fonts/BalooThambi2/BalooThambi2-SemiBold.woff',
   '/fonts/BalooThambi2/BalooThambi2-SemiBold.woff2',
   '/images/backgrounds/login-bg.jpg',
   '/images/backgrounds/dashboard-bg.jpg',
