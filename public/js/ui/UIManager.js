@@ -393,30 +393,13 @@ class UIManager {
               this.formManager = FormManager.getInstance();
               await this.formManager.initialize();
           }
-
-          // Get reference to app-content and form
-          const appContent = document.querySelector('.app-content');
-          const snowReportForm = document.getElementById('snow-report-form');
   
-          // Check if form needs to be moved back into app-content
-          if (snowReportForm && !appContent.contains(snowReportForm)) {
-              appContent.appendChild(snowReportForm);
-          }
-  
-          // Hide other containers
-          const dashboardContainer = document.getElementById('dashboard-container');
-          const settingsContainer = document.getElementById('settings-container');
-          
-          if (dashboardContainer) dashboardContainer.style.display = 'none';
-          if (settingsContainer) settingsContainer.style.display = 'none';
-          if (snowReportForm) snowReportForm.style.display = 'block';
-          
           // Use existing form data stored in state
           const stateManager = StateManager.getInstance();
           const userData = stateManager.getState('auth.user');
-
-          this.logger.debug('Showing user data',userData);
-
+  
+          this.logger.debug('Showing user data', userData);
+  
           if (!userData) {
               this.logger.error('No user data available');
               await AuthManager.getInstance().logout();
@@ -429,7 +412,7 @@ class UIManager {
           // Initialize form with user data
           await this.formManager.initializeForm(userData);
   
-          // Show the form container
+          // Show/hide containers (only once)
           const dashboardContainer = document.getElementById('dashboard-container');
           const settingsContainer = document.getElementById('settings-container');
           const snowReportForm = document.getElementById('snow-report-form');
@@ -437,9 +420,9 @@ class UIManager {
           if (dashboardContainer) dashboardContainer.style.display = 'none';
           if (settingsContainer) settingsContainer.style.display = 'none';
           if (snowReportForm) snowReportForm.style.display = 'block';
-
+  
           this.formManager.startTrackingFormTime();
-
+  
       } catch (error) {
           this.logger.error('Error showing snow report form:', error);
           this.showError(this.i18next.t('errors.form.loading'));
