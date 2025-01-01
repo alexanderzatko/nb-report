@@ -20,8 +20,9 @@
     "i18next-browser-languagedetector": "/node_modules/i18next-browser-languagedetector/dist/esm/i18nextBrowserLanguageDetector.js"
     }
     }
-  </script>
+    </script>
   <title data-i18n="app.title">Report Snow Conditions</title>
+
 </head>
 <body>
   <div class="app-container">
@@ -54,6 +55,14 @@
             <p data-i18n="dashboard.newReportDesc">Submit a new snow condition report</p>
           </a>
 
+		  <div class="dashboard-card disabled" data-feature="gps-recording">
+			  <div class="card-icon">
+				<i class="glyphicon glyphicon-map-marker"></i>
+			  </div>
+			  <h3 data-i18n="dashboard.recordGps">Record GPS</h3>
+			  <p data-i18n="dashboard.recordGpsDesc">Start GPS recording</p>
+		  </div>
+		  
           <a href="#" id="settings-link" class="dashboard-card">
             <div class="card-icon settings-icon"></div>
           </a>
@@ -62,19 +71,18 @@
 
       <!-- Settings Page -->
       <div id="settings-container" class="page-content" style="display: none;">
-        <div class="dashboard-header">
-          <h2 id="settings-title" data-i18n="settings.title">Settings</h2>
-        </div>
-        <div class="settings-content">
-          <!-- Existing settings content -->
-          <div class="settings-buttons">
-            <button type="button" id="dashboard-button" class="settings-button" data-i18n="settings.returnToDashboard">Return to Dashboard</button>
-            <button type="button" id="logout-button" class="settings-button" data-i18n="auth.logout">Logout</button>
+          <div class="dashboard-header">
+              <h2 id="settings-title" data-i18n="settings.title">Settings</h2>
+          </div>
+          <div class="settings-content">
+              <div class="settings-buttons">
+                  <button type="button" id="dashboard-button" class="settings-button" data-i18n="settings.returnToDashboard">Return to Dashboard</button>
+                  <button type="button" id="logout-button" class="settings-button" data-i18n="auth.logout">Logout</button>
+              </div>
           </div>
         </div>
       </div>
 
-      <!-- Snow Report Form - Preserving existing structure exactly -->
       <form id="snow-report-form" class="page-content" novalidate style="display:none;">
         <!-- Regular User Section -->
         <div id="regular-user-section" class="form-section">
@@ -192,9 +200,9 @@
         </div>
 
         <!-- Admin Section -->
-        <div id="admin-section" class="form-section" style="display: none;">
         <div id="admin-section" class="form-section" style="display: none;">   
             <div class="form-title" data-i18n="form.formTitleAdmin">Vytvoriť správu</div>
+
             <div class="form-group">
                 <label for="ski-center-name" data-i18n="form.skicenterName">Stredisko:</label>
                 <input type="hidden" id="ski-center-id" />
@@ -212,8 +220,11 @@
                 <input type="number" id="snow-depth-new" name="snowDepthNew" min="0" data-i18n-validate="form.validation.required" />
                 <div class="validation-message"></div>
             </div>
+
             <div class="common-section-placeholder" data-position="middle"></div>
+
         </div>
+
         <template id="common-section">   
           <div class="form-group">
           	<label for="snow-type" data-i18n="form.snowType">Typ snehu:</label>
@@ -232,11 +243,13 @@
             <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
           </div>
         </template>
+
         <div class="form-group">
           <label for="report-note" class="required-field" data-i18n="form.reportNote">Report</label>
           <textarea id="report-note" required name="report_note" data-i18n-validate="form.validation.required"></textarea>
           <div class="validation-message"></div>
         </div>
+
         <!-- Trails Section (for admins) -->
         <div id="trails-section" class="form-section" style="display: none;">
           <div id="trails-header">
@@ -261,6 +274,7 @@
               <span class="time-label seconds">sec.</span>
             </span>
           </div>
+
           <div class="form-group">
             <label for="labor-time" data-i18n="form.rewards.laborTime">Labor time</label>
             <div class="input-with-units">
@@ -269,6 +283,7 @@
             </div>
             <p class="help-text" data-i18n="form.rewards.laborTimeHelp"></p>
           </div>
+
           <div class="form-group">
             <label for="reward-requested" data-i18n="form.rewards.rewardRequested">Reward requested</label>
             <div class="input-with-units">
@@ -286,10 +301,12 @@
           </div>
           <p class="help-text" data-i18n="form.privateReportHelp">If checked, the report will be sent to the nabezky.sk portal and will be unpublished. You can make it public later in the Reports tab of your user profile</p>
         </div>
+
         <div class="form-buttons">
             <button type="button" id="cancel-button" class="cancel-button" data-i18n="form.cancel">Cancel</button>
             <button type="submit" data-i18n="form.submit">Submit Report</button>
         </div>
+
       </form>
     </main>
 
