@@ -237,7 +237,7 @@ form {
   align-items: center;
   gap: 15px;
   width: 100%;
-  max-width: 600px;
+  max-width: 500px;  /* Match app-content */
   margin: 0 auto;
 }
 
