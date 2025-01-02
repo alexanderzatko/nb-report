@@ -292,7 +292,7 @@ class StateManager {
           return false;
       }
   
-      const newCenter = storage.ski_centers_data.find(center => center[0] === skiCenterId);
+      const newCenter = storage.ski_centers_data.find(center => center[0][0] === skiCenterId);
       if (!newCenter) {
           this.logger.error('Ski center not found:', skiCenterId);
           return false;
