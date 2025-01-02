@@ -1,6 +1,7 @@
 // auth/AuthManager.js
 
 import StateManager from '../state/StateManager.js';
+import StorageManager from '../storage/StorageManager.js';
 
 class AuthManager {
   static instance = null;
@@ -364,7 +365,6 @@ async initiateOAuth() {
     try {
       console.log('Logout function called');
       
-      // Make the logout request first
       const response = await fetch('/api/logout', { 
         method: 'POST',
         credentials: 'include',
@@ -372,8 +372,8 @@ async initiateOAuth() {
 
       console.log('Logout response status:', response.status);
       const data = await response.json();
+      StorageManager.getInstance().clearSelectedSkiCenter();
       console.log('Logout response:', data);
-
       this.clearAuthData();
 
       const stateManager = StateManager.getInstance();
@@ -384,8 +384,7 @@ async initiateOAuth() {
       return true;
 
     } catch (error) {
-      console.error('Logout error:', error);
-      // Still clear auth data on error to prevent stuck states
+      this.logger.error('Logout error:', error);
       this.clearAuthData();
       return false;
     }
