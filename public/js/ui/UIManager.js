@@ -53,6 +53,10 @@ class UIManager {
   }
 
   async initializeLoginUI() {
+    const settingsIcon = document.querySelector('.settings-icon-container');
+    if (settingsIcon) {
+        settingsIcon.style.display = 'none';
+    }
     try {
       // Wait for i18next to be ready (only core translations at this point)
       if (!this.i18next.isInitialized) {
