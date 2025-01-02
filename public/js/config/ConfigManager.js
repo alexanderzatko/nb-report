@@ -13,7 +13,7 @@ class ConfigManager {
     this.logger = Logger.getInstance();
     this.config = {
       cache: {
-        version: 'v484', // update this for new app release and do the same in service-worker.js
+        version: 'v485', // update this for new app release and do the same in service-worker.js
         name: 'snow-report-cache',
         staticResources: [
           '/',
@@ -114,6 +114,7 @@ class ConfigManager {
           sessionId: 'sessionId',
           language: 'i18nextLng',
           theme: 'theme'
+          selectedSkiCenter: 'selectedSkiCenter'
         }
       },
 
