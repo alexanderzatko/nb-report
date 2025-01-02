@@ -164,41 +164,56 @@
 
 /* The FORM START */
 
+
 .ski-centers-section {
-    margin-bottom: 2rem;
+    background: #f5f5f5;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 30px;
 }
 
 .ski-centers-list {
-    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 35px;
 }
 
 .ski-center-item {
     display: flex;
     align-items: center;
-    padding: 1rem;
-    margin-bottom: 0.5rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    padding-left: 15px;
     cursor: pointer;
     transition: all 0.2s ease;
+}
+
+.ski-center-item.active {
+    border-color: #0078d4;
+    background: #f0f7ff;
+}
+.ski-center-item.active input {
+    background: radial-gradient(
+        circle,
+        #a6a6a6 40%,
+        transparent 50%
+    );
 }
 
 .ski-center-item:hover {
     background-color: #f5f5f5;
 }
 
-.ski-center-item.active {
-    border-color: #0078d4;
-    background: rgba(0, 120, 212, 0.05);
-}
-
 .ski-center-item input[type="radio"] {
-    margin-right: 1rem;
+    margin-right: 10px;
+    appearance: none;
+    border: solid 2px #a6a6a6;
+    border-radius: 50%;
 }
 
 .ski-center-item label {
     cursor: pointer;
-    flex: 1;
+    flex-direction: 1;
+    margin: unset;
 }
 
 .switch-center-link {
@@ -1083,35 +1098,6 @@ position: relative;
     padding: 20px 0;
 }
 
-.ski-centers-section {
-    background: #f5f5f5;
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 30px;
-}
-
-.ski-centers-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.ski-center-item {
-    display: flex;
-    align-items: center;
-    padding: 15px;
-    background: white;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.ski-center-item.active {
-    border-color: #0078d4;
-    background: #f0f7ff;
-}
-
 .settings-buttons {
     display: flex;
     flex-direction: column;
@@ -1162,11 +1148,10 @@ position: relative;
     top: 31px;
 }
 
-.admin-image {
-    max-width: 90vw;
+.admin-image  {
+    max-width: 43vw;
     object-fit: cover;
     position: relative;
-    bottom: 30px;
 }
 
 /* Show appropriate image based on user type */
@@ -1188,7 +1173,6 @@ position: relative;
     .admin-image {
         max-width: 90vw;
         position: relative;
-        bottom: 30px;
     }
     
     .app-container {
