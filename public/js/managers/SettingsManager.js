@@ -4,7 +4,8 @@ import Logger from '../utils/Logger.js';
 import AuthManager from '../auth/AuthManager.js';
 import i18next from '/node_modules/i18next/dist/esm/i18next.js';
 import StateManager from '../state/StateManager.js';
-
+import StorageManager from '../storage/StorageManager.js';
+    
 class SettingsManager {
     static instance = null;
 
@@ -66,7 +67,7 @@ class SettingsManager {
 
     async updateSkiCentersSection() {
         this.logger.debug('updateSkiCentersSection called');
-        
+
         const settingsContainer = document.getElementById('settings-container');
         if (!settingsContainer) {
             this.logger.error('Settings container not found');
@@ -76,6 +77,17 @@ class SettingsManager {
         const stateManager = StateManager.getInstance();
         const storageData = stateManager.getState('storage.userData');
         const currentUser = stateManager.getState('auth.user');
+        const storageManager = StorageManager.getInstance();
+
+        if (storageData?.ski_centers_data?.length > 0) {
+            const savedCenterId = storageManager.getSelectedSkiCenter();
+            if (!savedCenterId) {
+                const firstCenter = storageData.ski_centers_data[0];
+                await stateManager.switchSkiCenter(firstCenter[0]);
+            } else {
+                await stateManager.switchSkiCenter(savedCenterId);
+            }
+        }
 
         this.logger.debug('Settings data check:', {
             storageData,
