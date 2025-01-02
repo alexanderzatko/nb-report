@@ -1,6 +1,6 @@
 {
-  "name": "Snow Report",
-  "short_name": "SnowReport",
+  "name": "NB Report",
+  "short_name": "NBReport",
   "description": "App to collect snow information from skiers",
   "start_url": "/index.html",
   "display": "standalone",
