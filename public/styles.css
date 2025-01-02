@@ -956,7 +956,6 @@ body {
     flex-direction: column;
     min-height: 400px;
     overflow-y: auto;
-    padding-bottom: 30px;
 }
 
 /* Footer styles */
