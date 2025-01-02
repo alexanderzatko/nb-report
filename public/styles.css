@@ -1146,7 +1146,6 @@ position: relative;
     width: 168px;
     height: 226px;
     background: url('/images/bezkarka.jpg') center/cover no-repeat;
-    border-radius: 10px;
 }
 
 .admin-user .dashboard-grid::after {
@@ -1155,7 +1154,6 @@ position: relative;
     width: 65%;
     height: 174px;
     background: url('/images/rolba.jpg') center/cover no-repeat;
-    border-radius: 10px;
     margin: 20px auto;
 }
 
@@ -1170,7 +1168,7 @@ position: relative;
     }
 
     .app-footer {
-        padding: 10px;
+        padding-bottom: 15px;
     }
 }
 
