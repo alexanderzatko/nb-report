@@ -1,231 +1,218 @@
 <!DOCTYPE html>
 <html>
-  <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Collect snow information from skiers">
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="styles.css">
-  <link rel="preload" href="/fonts/BalooThambi2/BalooThambi2-Bold.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="/fonts/BalooThambi2/BalooThambi2-ExtraBold.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="/fonts/BalooThambi2/BalooThambi2-Medium.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="/fonts/BalooThambi2/BalooThambi2-Regular.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="/fonts/BalooThambi2/BalooThambi2-SemiBold.woff2" as="font" type="font/woff2" crossorigin>
-  <script src="/vendor/exif.js"></script>
-  <script type="importmap">
-    {
-    "imports": {
-    "i18next": "/node_modules/i18next/dist/esm/i18next.js",
-    "i18next-http-backend": "/node_modules/i18next-http-backend/esm/index.js",
-    "i18next-browser-languagedetector": "/node_modules/i18next-browser-languagedetector/dist/esm/i18nextBrowserLanguageDetector.js"
-    }
-    }
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Collect snow information from skiers">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preload" href="/fonts/BalooThambi2/BalooThambi2-Bold.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/BalooThambi2/BalooThambi2-ExtraBold.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/BalooThambi2/BalooThambi2-Medium.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/BalooThambi2/BalooThambi2-Regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/BalooThambi2/BalooThambi2-SemiBold.woff2" as="font" type="font/woff2" crossorigin>
+    <script src="/vendor/exif.js"></script>
+    <script type="importmap">
+        { "imports": { "i18next": "/node_modules/i18next/dist/esm/i18next.js", "i18next-http-backend": "/node_modules/i18next-http-backend/esm/index.js", "i18next-browser-languagedetector": "/node_modules/i18next-browser-languagedetector/dist/esm/i18nextBrowserLanguageDetector.js"
+        } }
     </script>
-  <title data-i18n="app.title">Report Snow Conditions</title>
+    <title data-i18n="app.title">Report Snow Conditions</title>
 
 </head>
+
 <body>
-  <div class="app-container">
-    <!-- Common Header -->
-    <header class="app-header">
-      <img src="/images/report_nabezky_logo_gs.svg" alt="Report Na bezky" class="header-logo">
-    </header>
+    <div class="app-container">
+        <!-- Common Header -->
+        <header class="app-header">
+            <img src="/images/report_nabezky_logo_gs.svg" alt="Report Na bezky" class="header-logo">
+        </header>
 
-    <main class="app-content">
-    <div class="page-content-wrapper">
-      <!-- Login Page  -->
-      <div id="auth-container">
-        <div id="login-container" class="page-content">
-          <button id="login-button" class="auth-button login">
-            <img src="/images/nabezky_logo_blue_white.svg" alt="Login" class="login-icon">
-            <p id="login-text" data-i18n="auth.loginText"></p>
-          </button>
-        </div>
-      </div>
+        <main class="app-content">
+            <div class="page-content-wrapper">
+                <!-- Login Page  -->
+                <div id="auth-container">
+                    <div id="login-container" class="page-content">
+                        <button id="login-button" class="auth-button login">
+              		  <img src="/images/nabezky_logo_blue_white.svg" alt="Login" class="login-icon">
+		          <p id="login-text" data-i18n="auth.loginText"></p>
+		        </button>
+                    </div>
+                </div>
 
-      <!-- Dashboard Page -->
-	<div id="dashboard-container" class="page-content" style="display: none;">
-		<div class="dashboard-grid">
-			<a href="#" class="dashboard-card" id="snow-report-link">
-				<div class="card-icon"></div>
-				<h3 data-i18n="dashboard.newReport">New Report</h3>
-				<p data-i18n="dashboard.newReportDesc">Submit a new snow condition report</p>
-			</a>
-			<div class="dashboard-header">
-				<h2 id="welcome-head" data-i18n="welcome"></h2>
-			</div>
-		</div>
+                <!-- Dashboard Page -->
+                <div id="dashboard-container" class="page-content" style="display: none;">
+                    <div class="dashboard-grid">
+                        <a href="#" class="dashboard-card" id="snow-report-link">
+                            <div class="card-icon"></div>
+                            <h3 data-i18n="dashboard.newReport">New Report</h3>
+                            <p data-i18n="dashboard.newReportDesc">Submit a new snow condition report</p>
+                        </a>
+                        <div class="dashboard-header">
+                            <h2 id="welcome-head" data-i18n="welcome"></h2>
+                        </div>
+                    </div>
 
-		<div class="dashboard-images">
-			<img src="/images/bezkarka.jpg" alt="Skier" class="user-type-image regular-image">
-			<img src="/images/rolba.jpg" alt="Snow groomer" class="user-type-image admin-image">
-		</div>
+                    <div class="dashboard-images">
+                        <img src="/images/bezkarka.jpg" alt="Skier" class="user-type-image regular-image">
+                        <img src="/images/rolba.jpg" alt="Snow groomer" class="user-type-image admin-image">
+                    </div>
 
-	</div>
+                </div>
 
-      <!-- Settings Page -->
-      <div id="settings-container" class="page-content" style="display: none;">
-          <div class="dashboard-header">
-              <h2 id="settings-title" data-i18n="settings.title">Settings</h2>
-          </div>
-          <div class="settings-content">
-              <div class="settings-buttons">
-                  <button type="button" id="dashboard-button" class="settings-button" data-i18n="settings.returnToDashboard">Return to Dashboard</button>
-                  <button type="button" id="logout-button" class="settings-button" data-i18n="auth.logout">Logout</button>
-              </div>
-          </div>
-        </div>
-      </div>
+                <!-- Settings Page -->
+                <div id="settings-container" class="page-content" style="display: none;">
+                    <div class="dashboard-header">
+                        <h2 id="settings-title" data-i18n="settings.title">Settings</h2>
+                    </div>
+                    <div class="settings-content">
+                        <div class="settings-buttons">
+                            <button type="button" id="dashboard-button" class="settings-button" data-i18n="settings.returnToDashboard">Return to Dashboard</button>
+                            <button type="button" id="logout-button" class="settings-button" data-i18n="auth.logout">Logout</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-      <form id="snow-report-form" class="page-content" novalidate style="display:none;">
-        <!-- Regular User Section -->
-        <div id="regular-user-section" class="form-section">
-          <div class="form-group">
-            <div class="form-title" data-i18n="form.formTitleRegular">Vytvoriť správu</div>
-            <label for="report-title" class="required-field" data-i18n="form.reportTitle"></label>
-            <input type="text" id="report-title" required data-i18n-validate="form.validation.required"/>
-            <div class="validation-message"></div>
-          </div>
-            
-          <div class="form-group">
-            <label for="country" class="required-field" data-i18n="form.country">Country:</label>
-            <select id="country" 
-                    required 
-                    data-i18n-validate="form.validation.required">
+            <form id="snow-report-form" class="page-content" novalidate style="display:none;">
+                <!-- Regular User Section -->
+                <div id="regular-user-section" class="form-section">
+                    <div class="form-group">
+                        <div class="form-title" data-i18n="form.formTitleRegular">Vytvoriť správu</div>
+                        <label for="report-title" class="required-field" data-i18n="form.reportTitle"></label>
+                        <input type="text" id="report-title" required data-i18n-validate="form.validation.required" />
+                        <div class="validation-message"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="country" class="required-field" data-i18n="form.country">Country:</label>
+                        <select id="country" required data-i18n-validate="form.validation.required">
               <option value="">Select country</option>
             </select>
-            <div class="validation-message"></div>
-          </div>
-          
-          <div class="form-group">
-            <label for="region" class="required-field" data-i18n="form.region">Region:</label>
-            <select id="region" 
-                    required 
-                    data-i18n-validate="form.validation.required">
+                        <div class="validation-message"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="region" class="required-field" data-i18n="form.region">Region:</label>
+                        <select id="region" required data-i18n-validate="form.validation.required">
               <option value="">Select region</option>
             </select>
-            <div class="validation-message"></div>
-          </div>
-        
-          <div class="form-group">
-            <label for="report-date" data-i18n="form.reportDate">Report Date:</label>
-            <input 
-              type="date" 
-              id="report-date"
-              name="report-date"
-              required
-              class="form-control"
-              >
-          </div>
-            
-          <div class="form-group">
-            <label for="classic-style" data-i18n="form.classicStyle">Classic Style:</label>
-            <select id="classic-style" data-i18n="form.trackConditions">
+                        <div class="validation-message"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="report-date" data-i18n="form.reportDate">Report Date:</label>
+                        <input type="date" id="report-date" name="report-date" required class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="classic-style" data-i18n="form.classicStyle">Classic Style:</label>
+                        <select id="classic-style" data-i18n="form.trackConditions">
               <!-- Options populated dynamically -->
             </select>
-          </div>
-          <div class="form-group">
-            <label for="free-style" data-i18n="form.freeStyle">Free Style:</label>
-            <select id="free-style" data-i18n="form.trackConditions">
+                    </div>
+                    <div class="form-group">
+                        <label for="free-style" data-i18n="form.freeStyle">Free Style:</label>
+                        <select id="free-style" data-i18n="form.trackConditions">
               <!-- Options populated dynamically -->
             </select>
-          </div>
-        	
-          <div class="form-group">
-            <label for="snow-depth250" data-i18n="form.snowDepth250">Hĺbka snehu v 250 m.n.m. (cm):</label>
-            <input type="number" id="snow-depth250" name="snowDepth250" min="0" />
-          </div>
-          
-          <div class="form-group">
-            <label for="snow-depth500" data-i18n="form.snowDepth500">Hĺbka snehu v 500 m.n.m. (cm):</label>
-            <input type="number" id="snow-depth500" name="snowDepth500" min="0" />
-          </div>
-          
-          <div class="form-group">
-            <label for="snow-depth750" data-i18n="form.snowDepth750">Hĺbka snehu v 750 m.n.m. (cm):</label>
-            <input type="number" id="snow-depth750" name="snowDepth750" min="0" />
-          </div>
-          
-          <div class="form-group">
-            <label for="snow-depth1000" data-i18n="form.snowDepth1000">Hĺbka snehu nad 1000 m.n.m. (cm):</label>
-            <input type="number" id="snow-depth1000" name="snowDepth1000" min="0" />
-          </div>
-          <label for="snow-age" data-i18n="form.snowAge">Age:</label>
-          <select id="snow-age" data-i18n="form.snowAgeOptions">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="snow-depth250" data-i18n="form.snowDepth250">Hĺbka snehu v 250 m.n.m. (cm):</label>
+                        <input type="number" id="snow-depth250" name="snowDepth250" min="0" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="snow-depth500" data-i18n="form.snowDepth500">Hĺbka snehu v 500 m.n.m. (cm):</label>
+                        <input type="number" id="snow-depth500" name="snowDepth500" min="0" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="snow-depth750" data-i18n="form.snowDepth750">Hĺbka snehu v 750 m.n.m. (cm):</label>
+                        <input type="number" id="snow-depth750" name="snowDepth750" min="0" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="snow-depth1000" data-i18n="form.snowDepth1000">Hĺbka snehu nad 1000 m.n.m. (cm):</label>
+                        <input type="number" id="snow-depth1000" name="snowDepth1000" min="0" />
+                    </div>
+                    <label for="snow-age" data-i18n="form.snowAge">Age:</label>
+                    <select id="snow-age" data-i18n="form.snowAgeOptions">
             <!-- Options populated dynamically -->
           </select>
-  
-          <label for="wetness" data-i18n="form.wetness">Moisture:</label>
-          <select id="wetness" data-i18n="form.wetnessOptions">
+
+                    <label for="wetness" data-i18n="form.wetness">Moisture:</label>
+                    <select id="wetness" data-i18n="form.wetnessOptions">
             <!-- Options populated dynamically -->
           </select>
-          <div class="common-section-placeholder" data-position="middle"></div>
-          <!-- GPX Section -->
-          <div class="form-section gpx-section">
-            <label data-i18n="form.gpx.groupLabel">GPX Trip Record File</label>
-            <select id="gpx-option" class="gpx-select">
+                    <div class="common-section-placeholder" data-position="middle"></div>
+                    <!-- GPX Section -->
+                    <div class="form-section gpx-section">
+                        <label data-i18n="form.gpx.groupLabel">GPX Trip Record File</label>
+                        <select id="gpx-option" class="gpx-select">
                 <option value="none" data-i18n="form.gpx.options.none">No record</option>
                 <option id="existing-gpx-option" value="existing" data-i18n="form.gpx.options.existing">Include recorded track</option>
                 <option value="upload" data-i18n="form.gpx.options.upload">Upload new GPX file</option>
             </select>
-            
-            <div id="gpx-info-display" class="gpx-info" style="display: none"></div>
-            
-            <div id="gpx-upload-container" class="gpx-upload-controls">
-                <button type="button" id="gpx-upload-btn" data-i18n="form.gpx.uploadButton">Select GPX file</button>
-                <input type="file" id="gpx-file-input" style="display: none">
-                <span id="gpx-filename" class="gpx-filename"></span>
-                <div id="gpx-error" class="validation-message"></div>
-            </div>
-  
-            <div id="gpx-confirm-dialog" class="modal" style="display: none;">
-              <div class="modal-content">
-                <h3 data-i18n="form.gpx.confirmReplace">Replace Existing Track?</h3>
-                <div id="existing-track-info"></div>
-                <p data-i18n="form.gpx.replaceQuestion">Do you want to replace it with the new track?</p>
-                <div class="modal-buttons">
-                  <button type="button" id="gpx-confirm-cancel" class="cancel-button" data-i18n="form.gpx.cancel">Cancel</button>
-                  <button type="button" id="gpx-confirm-replace" class="photo-button" data-i18n="form.gpx.replace">Replace</button>
+
+                        <div id="gpx-info-display" class="gpx-info" style="display: none"></div>
+
+                        <div id="gpx-upload-container" class="gpx-upload-controls">
+                            <button type="button" id="gpx-upload-btn" data-i18n="form.gpx.uploadButton">Select GPX file</button>
+                            <input type="file" id="gpx-file-input" style="display: none">
+                            <span id="gpx-filename" class="gpx-filename"></span>
+                            <div id="gpx-error" class="validation-message"></div>
+                        </div>
+
+                        <div id="gpx-confirm-dialog" class="modal" style="display: none;">
+                            <div class="modal-content">
+                                <h3 data-i18n="form.gpx.confirmReplace">Replace Existing Track?</h3>
+                                <div id="existing-track-info"></div>
+                                <p data-i18n="form.gpx.replaceQuestion">Do you want to replace it with the new track?</p>
+                                <div class="modal-buttons">
+                                    <button type="button" id="gpx-confirm-cancel" class="cancel-button" data-i18n="form.gpx.cancel">Cancel</button>
+                                    <button type="button" id="gpx-confirm-replace" class="photo-button" data-i18n="form.gpx.replace">Replace</button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
-              </div>
-            </div>
-  
-          </div>
-        </div>
 
-        <!-- Admin Section -->
-        <div id="admin-section" class="form-section" style="display: none;">   
-            <div class="form-title" data-i18n="form.formTitleAdmin">Vytvoriť správu</div>
+                <!-- Admin Section -->
+                <div id="admin-section" class="form-section" style="display: none;">
+                    <div class="form-title" data-i18n="form.formTitleAdmin">Vytvoriť správu</div>
 
-            <div class="form-group">
-                <label for="ski-center-name" data-i18n="form.skicenterName">Stredisko:</label>
-                <input type="hidden" id="ski-center-id" />
-                <div id="ski-center-name"></div>
-            </div>
-            
-            <div class="form-group">
-                <label for="snow-depth-total" class="required-field" data-i18n="form.snowDepthTotal">Celková výška snehu (cm):</label>
-                <input type="number" id="snow-depth-total" name="snowDepthTotal" min="0" data-i18n-validate="form.validation.required" />
-                <div class="validation-message"></div>
-            </div>
-            
-            <div class="form-group">
-                <label for="snow-depth-new" class="" data-i18n="form.snowDepthNew">Nový sneh (cm):</label>
-                <input type="number" id="snow-depth-new" name="snowDepthNew" min="0" data-i18n-validate="form.validation.required" />
-                <div class="validation-message"></div>
-            </div>
+                    <div class="form-group">
+                        <label for="ski-center-name" data-i18n="form.skicenterName">Stredisko:</label>
+                        <input type="hidden" id="ski-center-id" />
+                        <div id="ski-center-name"></div>
+                    </div>
 
-            <div class="common-section-placeholder" data-position="middle"></div>
+                    <div class="form-group">
+                        <label for="snow-depth-total" class="required-field" data-i18n="form.snowDepthTotal">Celková výška snehu (cm):</label>
+                        <input type="number" id="snow-depth-total" name="snowDepthTotal" min="0" data-i18n-validate="form.validation.required" />
+                        <div class="validation-message"></div>
+                    </div>
 
-        </div>
+                    <div class="form-group">
+                        <label for="snow-depth-new" class="" data-i18n="form.snowDepthNew">Nový sneh (cm):</label>
+                        <input type="number" id="snow-depth-new" name="snowDepthNew" min="0" data-i18n-validate="form.validation.required" />
+                        <div class="validation-message"></div>
+                    </div>
 
-        <template id="common-section">   
+                    <div class="common-section-placeholder" data-position="middle"></div>
+
+                </div>
+
+                <template id="common-section">   
           <div class="form-group">
-          	<label for="snow-type" data-i18n="form.snowType">Typ snehu:</label>
-          	<select id="snow-type" name="snowType" data-i18n-validate="form.validation.required">
+            <label for="snow-type" data-i18n="form.snowType">Typ snehu:</label>
+            <select id="snow-type" name="snowType" data-i18n-validate="form.validation.required">
               <!-- Options populated dynamically -->
-          	</select>
-          	<div class="validation-message"></div>
+            </select>
+            <div class="validation-message"></div>
           </div>
   
           <!-- Photos upload -->
@@ -238,93 +225,93 @@
           </div>
         </template>
 
-        <div class="form-group">
-          <label for="report-note" class="required-field" data-i18n="form.reportNote">Report</label>
-          <textarea id="report-note" required name="report_note" data-i18n-validate="form.validation.required"></textarea>
-          <div class="validation-message"></div>
-        </div>
+                <div class="form-group">
+                    <label for="report-note" class="required-field" data-i18n="form.reportNote">Report</label>
+                    <textarea id="report-note" required name="report_note" data-i18n-validate="form.validation.required"></textarea>
+                    <div class="validation-message"></div>
+                </div>
 
-        <!-- Trails Section (for admins) -->
-        <div id="trails-section" class="form-section" style="display: none;">
-          <div id="trails-header">
-            <h3 data-i18n="form.trailsSection">Bežkárske trate</h3>
-          </div>
-          <div id="trails-container">
-              <!-- Trail items will be added here dynamically -->
-          </div>
-        </div>
-                
-        <!-- the rewards section -->        
-        <div id="rewards-section" class="rewards-section" style="display: none;">
-          <h3 data-i18n="form.rewards.sectionTitle">Rewards</h3>
-          <div class="time-elapsed">
-            <span data-i18n="form.rewards.timeElapsed">Time since opening this form:</span>
-            <span id="elapsed-time" class="time-display">
+                <!-- Trails Section (for admins) -->
+                <div id="trails-section" class="form-section" style="display: none;">
+                    <div id="trails-header">
+                        <h3 data-i18n="form.trailsSection">Bežkárske trate</h3>
+                    </div>
+                    <div id="trails-container">
+                        <!-- Trail items will be added here dynamically -->
+                    </div>
+                </div>
+
+                <!-- the rewards section -->
+                <div id="rewards-section" class="rewards-section" style="display: none;">
+                    <h3 data-i18n="form.rewards.sectionTitle">Rewards</h3>
+                    <div class="time-elapsed">
+                        <span data-i18n="form.rewards.timeElapsed">Time since opening this form:</span>
+                        <span id="elapsed-time" class="time-display">
               <span id="elapsed-hours" class="time-unit hours">00</span>
-              <span class="time-label hours">hrs.</span>
-              <span id="elapsed-minutes" class="time-unit minutes">00</span>
-              <span class="time-label minutes">min.</span>
-              <span id="elapsed-seconds" class="time-unit seconds">00</span>
-              <span class="time-label seconds">sec.</span>
-            </span>
-          </div>
+                        <span class="time-label hours">hrs.</span>
+                        <span id="elapsed-minutes" class="time-unit minutes">00</span>
+                        <span class="time-label minutes">min.</span>
+                        <span id="elapsed-seconds" class="time-unit seconds">00</span>
+                        <span class="time-label seconds">sec.</span>
+                        </span>
+                    </div>
 
-          <div class="form-group">
-            <label for="labor-time" data-i18n="form.rewards.laborTime">Labor time</label>
-            <div class="input-with-units">
-              <input type="number" id="labor-time" name="labor-time" min="0">
-              <span data-i18n="form.rewards.laborTimeUnits">minutes</span>
-            </div>
-            <p class="help-text" data-i18n="form.rewards.laborTimeHelp"></p>
-          </div>
+                    <div class="form-group">
+                        <label for="labor-time" data-i18n="form.rewards.laborTime">Labor time</label>
+                        <div class="input-with-units">
+                            <input type="number" id="labor-time" name="labor-time" min="0">
+                            <span data-i18n="form.rewards.laborTimeUnits">minutes</span>
+                        </div>
+                        <p class="help-text" data-i18n="form.rewards.laborTimeHelp"></p>
+                    </div>
 
-          <div class="form-group">
-            <label for="reward-requested" data-i18n="form.rewards.rewardRequested">Reward requested</label>
-            <div class="input-with-units">
-              <input type="number" id="reward-requested" name="reward-requested" value="0" min="0">
-              <span data-i18n="form.rewards.rewardRequestedUnits">Merits</span>
-            </div>
-            <p class="help-text" data-i18n="form.rewards.rewardRequestedHelp"></p>
-          </div>
-        </div>
-        
-        <div id="private-report-section" class="form-section">
-          <div class="checkbox-container">
-            <input type="checkbox" id="private-report" name="private-report">
-            <label for="private-report" data-i18n="form.privateReport">Make the report private</label>
-          </div>
-          <p class="help-text" data-i18n="form.privateReportHelp">If checked, the report will be sent to the nabezky.sk portal and will be unpublished. You can make it public later in the Reports tab of your user profile</p>
-        </div>
+                    <div class="form-group">
+                        <label for="reward-requested" data-i18n="form.rewards.rewardRequested">Reward requested</label>
+                        <div class="input-with-units">
+                            <input type="number" id="reward-requested" name="reward-requested" value="0" min="0">
+                            <span data-i18n="form.rewards.rewardRequestedUnits">Merits</span>
+                        </div>
+                        <p class="help-text" data-i18n="form.rewards.rewardRequestedHelp"></p>
+                    </div>
+                </div>
 
-        <div class="form-buttons">
-            <button type="button" id="cancel-button" class="cancel-button" data-i18n="form.cancel">Cancel</button>
-            <button type="submit" data-i18n="form.submit">Submit Report</button>
-        </div>
+                <div id="private-report-section" class="form-section">
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="private-report" name="private-report">
+                        <label for="private-report" data-i18n="form.privateReport">Make the report private</label>
+                    </div>
+                    <p class="help-text" data-i18n="form.privateReportHelp">If checked, the report will be sent to the nabezky.sk portal and will be unpublished. You can make it public later in the Reports tab of your user profile</p>
+                </div>
 
-      </form>
-	</div>
-    </main>
+                <div class="form-buttons">
+                    <button type="button" id="cancel-button" class="cancel-button" data-i18n="form.cancel">Cancel</button>
+                    <button type="submit" data-i18n="form.submit">Submit Report</button>
+                </div>
+
+            </form>
+      </main>
 
     <!-- Common Footer -->
     <footer class="app-footer">
-	<img src="/images/kredit_eph.svg" alt="Nadácia EPH" class="footer-logo">
-	<div id="settings-link" class="settings-icon-container">
-		<img src="/images/sprocket.svg" alt="Settings" class="sprocket">
-	</div>
-    </footer>
-  </div>
-
-  <!-- Existing Modal -->
-  <div id="submission-modal" class="modal" style="display: none;">
-    <div class="modal-content">
-      <h3 data-i18n="form.submitting">Sending report...</h3>
-      <div id="submission-progress"></div>
-      <div class="modal-buttons" style="justify-content: center;">
+      <img src="/images/kredit_eph.svg" alt="Nadácia EPH" class="footer-logo">
+      <div id="settings-link" class="settings-icon-container">
+        <img src="/images/sprocket.svg" alt="Settings" class="sprocket">
       </div>
+    </footer>
     </div>
-  </div>
 
-  <script type="module" src="/js/app.js"></script>
-  <script type="module" src="/js/i18n.js"></script>
+    <!-- Existing Modal -->
+    <div id="submission-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3 data-i18n="form.submitting">Sending report...</h3>
+            <div id="submission-progress"></div>
+            <div class="modal-buttons" style="justify-content: center;">
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/js/app.js"></script>
+    <script type="module" src="/js/i18n.js"></script>
 </body>
+
 </html>
