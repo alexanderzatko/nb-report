@@ -362,6 +362,11 @@ class UIManager {
       }
     }
     this.updateBackground('dashboard');
+
+    const settingsIcon = document.querySelector('.settings-icon-container');
+    if (settingsIcon) {
+        settingsIcon.style.display = 'flex';
+    }
   }
 
   showSettings() {
@@ -378,9 +383,13 @@ class UIManager {
     });
 
     const settingsContainer = document.getElementById('settings-container');
+    const settingsIcon = document.querySelector('.settings-icon-container');
+
     if (settingsContainer) {
       settingsContainer.style.display = 'block';
-      console.log('Settings container is now visible');
+      if (settingsIcon) {
+          settingsIcon.style.display = 'none';
+      }
     }
     this.updateBackground('settings');
   }
