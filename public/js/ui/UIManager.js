@@ -139,16 +139,15 @@ class UIManager {
       await this.setupFormButtons();
       
       this.updateFullPageContent();
-      
-      const settingsIcon = document.querySelector('.settings-icon-container');
-      if (settingsIcon) {
-          settingsIcon.style.display = 'flex';
-      }
       this.logger.debug('Authenticated UI initialization complete');
     } catch (error) {
         console.error('Error initializing authenticated UI:', error);
         this.logger.error('Error initializing authenticated UI:', error);
         throw error;
+    }
+    const settingsIcon = document.querySelector('.settings-icon-container');
+    if (settingsIcon) {
+        settingsIcon.style.display = 'flex';
     }
   }
   
