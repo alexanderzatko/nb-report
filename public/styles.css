@@ -1035,9 +1035,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
     position: relative;
-    min-height: calc(100vh - 191px);
     width: 100%;
 }
 
@@ -1145,7 +1143,6 @@ position: relative;
 /* Role-specific images */
 .dashboard-images {
     position: absolute;
-    bottom: 80px; /* Space for footer */
     left: 0;
     right: 0;
     display: flex;
@@ -1203,17 +1200,6 @@ position: relative;
     }
 }
 
-@media (max-width: 400px) {
-    .regular-image {
-        width: 112px;
-        height: 150px;
-    }
-    
-    .admin-image {
-        width: 90%;
-        height: 116px;
-    }
-}
 [style*="display: none"] {
     display: none !important;
 }
