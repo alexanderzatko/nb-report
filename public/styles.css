@@ -1156,15 +1156,15 @@ position: relative;
 }
 
 .regular-image {
-    width: 168px;
-    height: 226px;
+    max-width: 70vw;
     object-fit: cover;
 }
 
 .admin-image {
-    width: 65%;
-    height: 174px;
+    max-width: 90vw;
     object-fit: cover;
+    position: relative;
+    bottom: 30px;
 }
 
 /* Show appropriate image based on user type */
@@ -1179,13 +1179,13 @@ position: relative;
 /* Responsive adjustments */
 @media (max-width: 600px) {
     .regular-image {
-        max-width: 250px;
-        height: 188px;
+        max-width: 70vw;
     }
     
     .admin-image {
-        width: 80%;
-        height: 145px;
+        max-width: 90vw;
+        position: relative;
+        bottom: 30px;
     }
     
     .app-container {
