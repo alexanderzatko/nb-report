@@ -1143,43 +1143,49 @@ position: relative;
 }
 
 /* Role-specific images */
-.dashboard-image {
-    display: none; /* Hidden by default */
-    margin: auto;
+.dashboard-images {
     position: absolute;
     bottom: 80px; /* Space for footer */
-    left: 50%;
-    transform: translateX(-50%);
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
 }
 
-.skier-image {
+.user-type-image {
+    display: none; /* Hidden by default */
+    margin: auto;
+}
+
+.regular-image {
     width: 168px;
     height: 226px;
     object-fit: cover;
 }
 
-.groomer-image {
+.admin-image {
     width: 65%;
     height: 174px;
     object-fit: cover;
 }
 
-.regular-user .skier-image {
+/* Show appropriate image based on user type */
+.regular-user .regular-image {
     display: block;
 }
 
-.admin-user .groomer-image {
+.admin-user .admin-image {
     display: block;
 }
 
 /* Responsive adjustments */
 @media (max-width: 600px) {
-    .skier-image {
+    .regular-image {
         width: 140px;
         height: 188px;
     }
     
-    .groomer-image {
+    .admin-image {
         width: 80%;
         height: 145px;
     }
@@ -1198,12 +1204,12 @@ position: relative;
 }
 
 @media (max-width: 400px) {
-    .skier-image {
+    .regular-image {
         width: 112px;
         height: 150px;
     }
     
-    .groomer-image {
+    .admin-image {
         width: 90%;
         height: 116px;
     }
