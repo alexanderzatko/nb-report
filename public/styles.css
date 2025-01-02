@@ -1036,6 +1036,9 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 20px;
+    position: relative;
+    min-height: calc(100vh - 191px);
+    width: 100%;
 }
 
 .dashboard-card {
@@ -1140,25 +1143,47 @@ position: relative;
 }
 
 /* Role-specific images */
-.regular-user .dashboard-grid::after {
-    content: '';
-    display: block;
-    width: 168px;
-    height: 226px;
-    background: url('/images/bezkarka.jpg') center/cover no-repeat;
+.dashboard-image {
+    display: none; /* Hidden by default */
+    margin: auto;
+    position: absolute;
+    bottom: 80px; /* Space for footer */
+    left: 50%;
+    transform: translateX(-50%);
 }
 
-.admin-user .dashboard-grid::after {
-    content: '';
-    display: block;
+.skier-image {
+    width: 168px;
+    height: 226px;
+    object-fit: cover;
+}
+
+.groomer-image {
     width: 65%;
     height: 174px;
-    background: url('/images/rolba.jpg') center/cover no-repeat;
-    margin: 20px auto;
+    object-fit: cover;
+}
+
+.regular-user .skier-image {
+    display: block;
+}
+
+.admin-user .groomer-image {
+    display: block;
 }
 
 /* Responsive adjustments */
 @media (max-width: 600px) {
+    .skier-image {
+        width: 140px;
+        height: 188px;
+    }
+    
+    .groomer-image {
+        width: 80%;
+        height: 145px;
+    }
+    
     .app-container {
         padding: 10px 10px 60px 10px;
     }
@@ -1172,7 +1197,17 @@ position: relative;
     }
 }
 
-/* Hide elements properly */
+@media (max-width: 400px) {
+    .skier-image {
+        width: 112px;
+        height: 150px;
+    }
+    
+    .groomer-image {
+        width: 90%;
+        height: 116px;
+    }
+}
 [style*="display: none"] {
     display: none !important;
 }
