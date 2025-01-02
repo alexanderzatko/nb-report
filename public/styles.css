@@ -172,17 +172,26 @@
     margin-bottom: 30px;
 }
 
+.ski-centers-section h3 {
+    text-align: center;
+    color: #747f96;
+    margin-bottom: 10px;
+}
+
 .ski-centers-list {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    margin-top: 35px;
+    border: solid 4px #b8c5d0;
+    border-radius: 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
 }
 
 .ski-center-item {
     display: flex;
     align-items: center;
-    padding-left: 15px;
+    padding: 4px 20px;
     cursor: pointer;
     transition: all 0.2s ease;
 }
