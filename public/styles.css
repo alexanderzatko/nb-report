@@ -1023,6 +1023,7 @@ body {
 .dashboard-header {
     text-align: center;
     margin-bottom: 30px;
+    margin-top: 25px;
 }
 
 #welcome-head {
@@ -1042,7 +1043,7 @@ body {
 .dashboard-card {
     background: #dae9ef;
     border-radius: 10px;
-    padding: 20px;
+    padding: 10px;
     width: 100%;
     text-align: center;
     text-decoration: none;
@@ -1050,7 +1051,6 @@ body {
     transition: transform 0.3s ease;
     border: solid 4px #b8c5d0;
     max-width: 300px;
-    margin-top: 25px;
 }
 
 .dashboard-card:hover {
@@ -1179,7 +1179,7 @@ position: relative;
 /* Responsive adjustments */
 @media (max-width: 600px) {
     .regular-image {
-        width: 140px;
+        max-width: 250px;
         height: 188px;
     }
     
@@ -1189,7 +1189,7 @@ position: relative;
     }
     
     .app-container {
-        padding: 10px 10px 60px 10px;
+        padding: 10px 10px 20px 10px;
     }
 
     .app-header {
