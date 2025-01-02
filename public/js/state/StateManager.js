@@ -285,16 +285,14 @@ class StateManager {
   async switchSkiCenter(skiCenterId) {
       const storage = this.getState('storage.userData');
       const currentUser = this.getState('auth.user');
+      const storageManager = StorageManager.getInstance();
       
       if (!storage?.ski_centers_data) {
           this.logger.error('No ski centers data in storage');
           return false;
       }
   
-      const newCenter = storage.ski_centers_data.find(center => 
-          // center[0][0] is the ID in ["136216"]
-          center[0][0] === skiCenterId
-      );
+      const newCenter = storage.ski_centers_data.find(center => center[0] === skiCenterId);
       if (!newCenter) {
           this.logger.error('Ski center not found:', skiCenterId);
           return false;
@@ -309,6 +307,7 @@ class StateManager {
       };
   
       this.setState('auth.user', updatedUser);
+      storageManager.setSelectedSkiCenter(skiCenterId);
       return true;
   }
   
