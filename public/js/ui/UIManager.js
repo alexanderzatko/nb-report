@@ -471,6 +471,11 @@ class UIManager {
 
   async updateUIBasedOnAuthState(isAuthenticated, userData = null) {
     this.logger.debug('Updating UI based on auth state:', isAuthenticated);
+
+    const settingsIcon = document.querySelector('.settings-icon-container');
+    if (settingsIcon) {
+        settingsIcon.style.display = isAuthenticated ? 'flex' : 'none';
+    }
     
     const loginContainer = document.getElementById('login-container');
     const dashboardContainer = document.getElementById('dashboard-container');
@@ -480,7 +485,6 @@ class UIManager {
     document.body.classList.remove('admin-user', 'regular-user');
 
     if (isAuthenticated) {
-      if (settingsIcon) settingsIcon.style.display = 'flex';
       if (userData) {
         const userTypeClass = userData.ski_center_admin === "1" ? 'admin-user' : 'regular-user';
         document.body.classList.add(userTypeClass);
@@ -495,7 +499,6 @@ class UIManager {
       }
   
     } else {
-      if (settingsIcon) settingsIcon.style.display = 'none';
       if (loginContainer) {
         loginContainer.style.display = 'flex';
         this.updateLoginText();
