@@ -1039,7 +1039,7 @@ body {
 }
 
 .dashboard-card {
-    background: #f0f7ff;
+    background: #dae9ef;
     border-radius: 10px;
     padding: 20px;
     width: 100%;
@@ -1048,6 +1048,8 @@ body {
     text-decoration: none;
     color: inherit;
     transition: transform 0.3s ease;
+    border-radius: solid 4px #b8c5d0;
+    max-width: 300px;
 }
 
 .dashboard-card:hover {
@@ -1060,11 +1062,11 @@ body {
 
 /* Settings icon */
 .settings-icon-container {
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    cursor: pointer;
+border-radius: 50%;
+display: flex;
+align-items: center;
+left: 15px;
+position: relative;
 }
 
 ..sprocket:hover {
