@@ -481,6 +481,7 @@ class UIManager {
     document.body.classList.remove('admin-user', 'regular-user');
 
     if (isAuthenticated) {
+      if (settingsIcon) settingsIcon.style.display = 'flex';
       if (userData) {
         const userTypeClass = userData.ski_center_admin === "1" ? 'admin-user' : 'regular-user';
         document.body.classList.add(userTypeClass);
@@ -495,6 +496,7 @@ class UIManager {
       }
   
     } else {
+      if (settingsIcon) settingsIcon.style.display = 'none';
       if (loginContainer) {
         loginContainer.style.display = 'flex';
         this.updateLoginText();
