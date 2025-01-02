@@ -295,6 +295,25 @@ class StorageManager {
       throw error;
     }
   }
+
+  setSelectedSkiCenter(centerId) {
+      return this.setLocalStorage(
+          this.configManager.getStorageKeys().selectedSkiCenter, 
+          centerId
+      );
+  }
+
+  getSelectedSkiCenter() {
+      return this.getLocalStorage(
+          this.configManager.getStorageKeys().selectedSkiCenter
+      );
+  }
+
+  clearSelectedSkiCenter() {
+      return this.removeLocalStorage(
+          this.configManager.getStorageKeys().selectedSkiCenter
+      );
+  }
 }
 
 export default StorageManager;
