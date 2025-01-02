@@ -1092,11 +1092,12 @@ body {
     position: fixed;
 }
 
-..sprocket:hover {
+.sprocket:hover {
     transform: scale(1.1);
 }
 
 .sprocket {
+    transition: transform 0.2s ease;
     width: 20px;
 }
 
