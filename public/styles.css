@@ -1043,13 +1043,13 @@ body {
     border-radius: 10px;
     padding: 20px;
     width: 100%;
-    max-width: 400px;
     text-align: center;
     text-decoration: none;
     color: inherit;
     transition: transform 0.3s ease;
-    border-radius: solid 4px #b8c5d0;
+    border: solid 4px #b8c5d0;
     max-width: 300px;
+    margin-top: 25px;
 }
 
 .dashboard-card:hover {
@@ -1153,7 +1153,7 @@ position: relative;
     content: '';
     display: block;
     width: 65%;
-    height: 165px;
+    height: 174px;
     background: url('/images/rolba.jpg') center/cover no-repeat;
     border-radius: 10px;
     margin: 20px auto;
