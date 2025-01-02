@@ -300,7 +300,9 @@ class StateManager {
       const firstCenter = storage.ski_centers_data[0];
       this.logger.debug('First center structure:', firstCenter);
 
-      const newCenter = storage.ski_centers_data.find(center => center[0][0] === skiCenterId);
+      const newCenter = storage.ski_centers_data.find(center => 
+          center[0][0] === String(skiCenterId)  // Convert to string for comparison
+      );
       if (!newCenter) {
           this.logger.error('Ski center not found:', skiCenterId);
           return false;
