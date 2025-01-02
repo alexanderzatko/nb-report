@@ -995,7 +995,6 @@ body {
     bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 100;
 }
 
 .footer-logo {
@@ -1098,8 +1097,7 @@ body {
 }
 
 .sprocket {
-    width: 24px;
-    height: 24px;
+    width: 20px;
 }
 
 /* Settings page specific styles */
@@ -1161,6 +1159,7 @@ body {
     max-width: 43vw;
     object-fit: cover;
     position: relative;
+    overflow-x: hidden;
 }
 
 /* Show appropriate image based on user type */
