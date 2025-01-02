@@ -1180,6 +1180,7 @@ position: relative;
 @media (max-width: 600px) {
     .regular-image {
         max-width: 70vw;
+        max-height: 57vh;
     }
     
     .admin-image {
