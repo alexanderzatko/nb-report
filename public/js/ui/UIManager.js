@@ -96,6 +96,7 @@ class UIManager {
         }
 
         // Initialize GPS functionality
+/*
         const gpsManager = GPSManager.getInstance();
         if (gpsManager.isSupported()) {
             await this.updateGPSCardVisibility();
@@ -127,7 +128,7 @@ class UIManager {
                 }
             }
         }
-      
+*/      
         // Initialize select manager before setting up other UI elements
         const selectManager = SelectManager.getInstance();
         await selectManager.refreshAllDropdowns();
