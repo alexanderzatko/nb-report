@@ -800,6 +800,11 @@ class UIManager {
       }
     });
 
+    const settingsIcon = document.querySelector('.settings-icon-container');
+    if (settingsIcon) {
+        settingsIcon.style.display = 'none';
+    }
+    
     const loginContainer = document.getElementById('login-container');
     if (loginContainer) {
       loginContainer.style.display = 'flex';
