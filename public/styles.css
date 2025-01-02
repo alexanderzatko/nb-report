@@ -956,6 +956,7 @@ body {
     flex-direction: column;
     min-height: 400px;
     overflow-y: auto;
+    padding-bottom: 30px;
 }
 
 /* Footer styles */
@@ -963,7 +964,6 @@ body {
 .app-footer {
     width: 100%;
     max-width: 500px;
-    padding: 20px;
     display: flex;
     justify-content: center;
     align-items: center;
