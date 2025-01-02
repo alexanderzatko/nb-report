@@ -287,12 +287,19 @@ class StateManager {
       const storage = this.getState('storage.userData');
       const currentUser = this.getState('auth.user');
       const storageManager = StorageManager.getInstance();
-      
+
+      this.logger.debug('Storage data:', storage);
+      this.logger.debug('Attempting to switch to ski center:', skiCenterId);
+      this.logger.debug('Available centers:', storage?.ski_centers_data);
+
       if (!storage?.ski_centers_data) {
           this.logger.error('No ski centers data in storage');
           return false;
       }
-  
+
+      const firstCenter = storage.ski_centers_data[0];
+      this.logger.debug('First center structure:', firstCenter);
+
       const newCenter = storage.ski_centers_data.find(center => center[0][0] === skiCenterId);
       if (!newCenter) {
           this.logger.error('Ski center not found:', skiCenterId);
