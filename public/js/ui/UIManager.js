@@ -238,7 +238,7 @@ class UIManager {
     }
 
     // Make cards visually clickable
-    [snowReportLink, settingsLink].forEach(card => {
+    [snowReportLink].forEach(card => {
         if (card) {
             card.style.cursor = 'pointer';
             // Add hover effect
