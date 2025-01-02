@@ -86,61 +86,65 @@ class UIManager {
     console.log('Initializing authenticated UI');
 
     try {
-        const loginContainer = document.getElementById('login-container');
-        const dashboardContainer = document.getElementById('dashboard-container');
-        
-        if (loginContainer) loginContainer.style.display = 'none';
-        if (dashboardContainer) {
-            dashboardContainer.style.display = 'block';
-            console.log('Dashboard container is now visible');
-        }
+      const loginContainer = document.getElementById('login-container');
+      const dashboardContainer = document.getElementById('dashboard-container');
+      
+      if (loginContainer) loginContainer.style.display = 'none';
+      if (dashboardContainer) {
+          dashboardContainer.style.display = 'block';
+          console.log('Dashboard container is now visible');
+      }
 
-        // Initialize GPS functionality
+      // Initialize GPS functionality
 /*
-        const gpsManager = GPSManager.getInstance();
-        if (gpsManager.isSupported()) {
-            await this.updateGPSCardVisibility();
+      const gpsManager = GPSManager.getInstance();
+      if (gpsManager.isSupported()) {
+          await this.updateGPSCardVisibility();
 
-            // State subscription for GPS recording updates
-            const stateManager = StateManager.getInstance();
-            stateManager.subscribe('gps.recording', () => {
-                const gpsCard = document.querySelector('[data-feature="gps-recording"]');
-                if (gpsCard) {
-                    this.updateGPSCardForRecording(gpsCard);
-                }
-            });
+          // State subscription for GPS recording updates
+          const stateManager = StateManager.getInstance();
+          stateManager.subscribe('gps.recording', () => {
+              const gpsCard = document.querySelector('[data-feature="gps-recording"]');
+              if (gpsCard) {
+                  this.updateGPSCardForRecording(gpsCard);
+              }
+          });
 
-            window.addEventListener('gps-update', () => {
-                const gpsCard = document.querySelector('[data-feature="gps-recording"]');
-                if (gpsCard) {
-                    this.updateGPSCardForRecording(gpsCard);
-                }
-            });
+          window.addEventListener('gps-update', () => {
+              const gpsCard = document.querySelector('[data-feature="gps-recording"]');
+              if (gpsCard) {
+                  this.updateGPSCardForRecording(gpsCard);
+              }
+          });
 
-            const hasActiveRecording = await gpsManager.checkForActiveRecording();
-            if (hasActiveRecording) {
-                await this.updateGPSCardVisibility();
-            } else {
-                const latestTrack = await gpsManager.loadLatestTrack();
-                if (latestTrack) {
-                  this.logger.debug('Latest track loaded:', latestTrack);
-                  await this.showGPSTrackCard(latestTrack);
-                }
-            }
-        }
+          const hasActiveRecording = await gpsManager.checkForActiveRecording();
+          if (hasActiveRecording) {
+              await this.updateGPSCardVisibility();
+          } else {
+              const latestTrack = await gpsManager.loadLatestTrack();
+              if (latestTrack) {
+                this.logger.debug('Latest track loaded:', latestTrack);
+                await this.showGPSTrackCard(latestTrack);
+              }
+          }
+      }
 */      
-        // Initialize select manager before setting up other UI elements
-        const selectManager = SelectManager.getInstance();
-        await selectManager.refreshAllDropdowns();
+      // Initialize select manager before setting up other UI elements
+      const selectManager = SelectManager.getInstance();
+      await selectManager.refreshAllDropdowns();
 
-        // Set up all interactive elements
-        await this.setupDashboardCards();
-        await this.setupSettingsButtons();
-        await this.setupFormButtons();
-        
-        this.updateFullPageContent();
-        
-        this.logger.debug('Authenticated UI initialization complete');
+      // Set up all interactive elements
+      await this.setupDashboardCards();
+      await this.setupSettingsButtons();
+      await this.setupFormButtons();
+      
+      this.updateFullPageContent();
+      
+      const settingsIcon = document.querySelector('.settings-icon-container');
+      if (settingsIcon) {
+          settingsIcon.style.display = 'flex';
+      }
+      this.logger.debug('Authenticated UI initialization complete');
     } catch (error) {
         console.error('Error initializing authenticated UI:', error);
         this.logger.error('Error initializing authenticated UI:', error);
