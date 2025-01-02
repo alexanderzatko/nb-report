@@ -1086,11 +1086,11 @@ body {
 
 /* Settings icon */
 .settings-icon-container {
-border-radius: 50%;
-display: flex;
-align-items: center;
-left: 20px;
-position: relative;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    right: 10px;
+    position: fixed;
 }
 
 ..sprocket:hover {
