@@ -464,9 +464,14 @@ class UIManager {
     const dashboardContainer = document.getElementById('dashboard-container');
     const settingsContainer = document.getElementById('settings-container');
     const snowReportForm = document.getElementById('snow-report-form');
-  
+
+    document.body.classList.remove('admin-user', 'regular-user');
+
     if (isAuthenticated) {
-      document.body.classList.add(userData?.ski_center_admin === "1" ? 'admin-user' : 'regular-user');
+      if (userData) {
+        const userTypeClass = userData.ski_center_admin === "1" ? 'admin-user' : 'regular-user';
+        document.body.classList.add(userTypeClass);
+      }
       if (loginContainer) loginContainer.style.display = 'none';
       if (dashboardContainer) dashboardContainer.style.display = 'block';
       if (settingsContainer) settingsContainer.style.display = 'none';
@@ -477,7 +482,6 @@ class UIManager {
       }
   
     } else {
-      document.body.classList.remove('admin-user', 'regular-user');
       if (loginContainer) {
         loginContainer.style.display = 'flex';
         this.updateLoginText();
