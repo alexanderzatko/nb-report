@@ -1026,8 +1026,9 @@ body {
 }
 
 #welcome-head {
-    font-size: 18px;
+    font-size: 16px;
     color: #666;
+    font-weight: 400;
 }
 
 .dashboard-grid {
@@ -1053,25 +1054,20 @@ body {
     transform: translateY(-5px);
 }
 
+#snow-report-link p {
+    font-size: 14px;
+}
+
 /* Settings icon */
 .settings-icon-container {
-    position: fixed;
-    bottom: 60px;
-    right: 20px;
-    width: 40px;
-    height: 40px;
-    background: #f0f7ff;
     border-radius: 50%;
     display: flex;
     align-items: center;
-    justify-content: center;
-    text-decoration: none;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease;
     cursor: pointer;
 }
 
-.settings-icon-container:hover {
+..sprocket:hover {
     transform: scale(1.1);
 }
 
