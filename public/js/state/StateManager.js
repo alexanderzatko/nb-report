@@ -311,15 +311,6 @@ class StateManager {
       this.logger.error('Ski center not found:', skiCenterId);
       return false;
     }
-
-    const newCenter = storage.ski_centers_data.find(center => 
-        center[0][0] === String(skiCenterId)
-    );
-
-    if (!newCenter) {
-        this.logger.error('Ski center not found:', skiCenterId);
-        return false;
-    }
     
     const storageManager = StorageManager.getInstance();
     await storageManager.setSelectedSkiCenter(skiCenterId);
