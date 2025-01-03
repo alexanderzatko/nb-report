@@ -13,7 +13,7 @@ class ConfigManager {
     this.logger = Logger.getInstance();
     this.config = {
       cache: {
-        version: 'v503', // update this for new app release and do the same in service-worker.js
+        version: 'v504', // update this for new app release and do the same in service-worker.js
         name: 'snow-report-cache',
         staticResources: [
           '/',
@@ -126,7 +126,7 @@ class ConfigManager {
       },
 
       defaultLocale: 'sk',
-      supportedLocales: ['sk', 'en', 'cs', 'de', 'pl', 'hu'],
+      supportedLocales: ['sk', 'en', 'cz', 'de', 'pl', 'hu'],
       fallbackLocale: 'en'
     };
 
