@@ -332,7 +332,7 @@ class SelectManager {
   inferCountryFromLanguage() {
     const languageToCountry = {
       'sk': 'SK',
-      'cs': 'CZ',
+      'cz': 'CZ',
       'de': 'AT',
       'it': 'IT',
       'pl': 'PL',
