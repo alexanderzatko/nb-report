@@ -1,4 +1,5 @@
 import i18next from '/node_modules/i18next/dist/esm/i18next.js';
+import Logger from '../utils/Logger.js';
 
 class ServiceWorkerManager {
   static instance = null;
