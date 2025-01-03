@@ -83,9 +83,9 @@ class SettingsManager {
             const savedCenterId = storageManager.getSelectedSkiCenter();
             if (!savedCenterId) {
                 const firstCenter = storageData.ski_centers_data[0];
-                await stateManager.switchSkiCenter(firstCenter[0]);
+                await stateManager.selectSkiCenter(firstCenter[0]);
             } else {
-                await stateManager.switchSkiCenter(savedCenterId);
+                await stateManager.selectSkiCenter(savedCenterId);
             }
         }
 
@@ -154,7 +154,7 @@ class SettingsManager {
 
                 centerItem.addEventListener('click', async () => {
                     if (centerId !== currentSkiCenterId) {
-                        const success = await stateManager.switchSkiCenter(centerId);
+                        const success = await stateManager.selectSkiCenter(centerId);
                         if (success) {
                             document.querySelectorAll('.ski-center-item').forEach(item => {
                                 item.classList.remove('active');
