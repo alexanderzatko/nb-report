@@ -181,7 +181,7 @@ class ServiceWorkerManager {
   
       notification.querySelector('.update-notification-update').addEventListener('click', () => {
         console.log('[ServiceWorkerManager] Update button clicked');
-        this.applyUpdate();
+        this.handleUpdate();
         cleanup();
       });
   
@@ -197,6 +197,35 @@ class ServiceWorkerManager {
     });
   }
 
+  async handleUpdate() {
+     try {
+         if (!navigator.onLine) {
+             this.notifyUpdateReady();
+             return;
+         }
+  
+         const authManager = AuthManager.getInstance();
+         const isAuthenticated = await Promise.race([
+             authManager.checkAuthStatus(),
+             new Promise((_, reject) => setTimeout(() => reject('Auth check timeout'), 5000))
+         ]);
+         
+         if (isAuthenticated) {
+             try {
+                 await authManager.refreshToken();
+             } catch (error) {
+                 this.logger.error('Token refresh failed during update:', error);
+             }
+         }
+         
+         await this.applyUpdate();
+         
+     } catch (error) {
+         this.logger.error('Update handling failed:', error);
+         this.notifyUpdateReady();
+     }
+  }
+  
   async applyUpdate() {
     console.log('[ServiceWorkerManager] Applying update');
     if (!this.registration || !this.registration.waiting) {
