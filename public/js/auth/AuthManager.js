@@ -88,6 +88,8 @@ class AuthManager {
     }
     
     this.tokenRefreshInterval = setInterval(async () => {
+      if (!navigator.onLine) return;
+
       try {
         const success = await this.checkAndRefreshToken();
         if (!success) {
