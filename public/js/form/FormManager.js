@@ -767,7 +767,7 @@ class FormManager {
       { value: '2', label: '★★', title: this.i18next.t('form.trackConditions.2') },
       { value: '3', label: '★', title: this.i18next.t('form.trackConditions.3') },
       { value: '4', label: '≠', title: this.i18next.t('form.trackConditions.4') },
-      { value: '5', label: '=::=', title: this.i18next.t('form.trackConditions.5') }
+      { value: '5', label: '= =', title: this.i18next.t('form.trackConditions.5') }
     ];
   
     conditions.forEach(condition => {
