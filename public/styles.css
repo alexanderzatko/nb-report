@@ -802,8 +802,8 @@ textarea:invalid + .validation-message {
 }
 
 .trail-name {
-    font-size: 1.2em;
-    font-weight: 900;
+    font-size: 17px;
+    font-weight: 500;
     margin-bottom: 15px;
     background-color: #67a599;
     color: #ffffff;
