@@ -191,50 +191,70 @@ class App {
   }
 
   async refreshUserData() {
-    try {
-      this.logger.debug('Fetching user data...');
-      const userData = await this.managers.network.get('/api/user-data');
+      try {
+          this.logger.debug('Fetching user data...');
+          const userData = await this.managers.network.get('/api/user-data');
+          
+          if (!userData) {
+              throw new Error('Failed to fetch user data');
+          }
       
-      if (!userData) {
-        throw new Error('Failed to fetch user data');
-      }
+          this.logger.debug('User data received:', userData);
+          const stateManager = StateManager.getInstance();
+          stateManager.setState('storage.userData', userData, true);
+          
+          const currentUserData = {
+              language: userData.language,
+              nabezky_uid: userData.nabezky_uid,
+              rovas_uid: userData.rovas_uid,
+              ski_center_admin: userData.ski_center_admin,
+              user_name: userData.user_name
+          };
   
-      this.logger.debug('User data received:', userData);
-
-      const stateManager = StateManager.getInstance();
-
-      stateManager.setState('storage.userData', userData, true);
-
-      const currentUserData = {
-          language: userData.language,
-          nabezky_uid: userData.nabezky_uid,
-          rovas_uid: userData.rovas_uid,
-          ski_center_admin: userData.ski_center_admin,
-          user_name: userData.user_name
-      };
-
-      // If admin with ski centers, add first center's data
-      if (userData.ski_center_admin === "1" && userData.ski_centers_data?.length > 0) {
-          const firstCenter = userData.ski_centers_data[0];
-          currentUserData.ski_center_id = firstCenter[0];
-          currentUserData.ski_center_name = firstCenter[1];
-          currentUserData.trails = firstCenter[2];
-      }
-
-      // Handle language preference before any UI updates
-      if (userData.language && userData.language !== this.i18next.language) {
-        this.logger.debug(`Changing language to user preference: ${userData.language}`);
-        await this.i18next.changeLanguage(userData.language);
-      }
+          // Handle ski center data for admin users
+          if (userData.ski_center_admin === "1" && userData.ski_centers_data?.length > 0) {
+              const storageManager = StorageManager.getInstance();
+              const savedCenterId = storageManager.getSelectedSkiCenter();
+              
+              let selectedCenter;
+              if (savedCenterId) {
+                  // Find saved center in the available centers
+                  selectedCenter = userData.ski_centers_data.find(center => 
+                      center[0][0] === String(savedCenterId)
+                  );
+              }
+              
+              // If no saved center or saved center not found, use first center
+              if (!selectedCenter) {
+                  selectedCenter = userData.ski_centers_data[0];
+                  // Save the first center as new preference
+                  await storageManager.setSelectedSkiCenter(selectedCenter[0][0]);
+              }
   
-      stateManager.setState('auth.user', currentUserData);
+              // Add selected center's data to currentUserData
+              currentUserData.ski_center_id = selectedCenter[0][0];
+              currentUserData.ski_center_name = selectedCenter[1][0];
+              currentUserData.trails = selectedCenter[2];
+          } else {
+              // For non-admin users, clear any stored ski center data
+              const storageManager = StorageManager.getInstance();
+              storageManager.clearSelectedSkiCenter();
+          }
+  
+          // Handle language preference before any UI updates
+          if (userData.language && userData.language !== this.i18next.language) {
+              this.logger.debug(`Changing language to user preference: ${userData.language}`);
+              await this.i18next.changeLanguage(userData.language);
+          }
       
-      return currentUserData;
-  
-    } catch (error) {
-      this.logger.error('Error refreshing user data:', error);
-      throw error;
-    }
+          stateManager.setState('auth.user', currentUserData);
+          
+          return currentUserData;
+      
+      } catch (error) {
+          this.logger.error('Error refreshing user data:', error);
+          throw error;
+      }
   }
 
   async initializeFeatureManagers() {
