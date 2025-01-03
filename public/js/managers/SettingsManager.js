@@ -125,7 +125,7 @@ class SettingsManager {
             centersList.className = 'ski-centers-list';
 
             // Current ski center ID from the simplified user data
-            const currentSkiCenterId = currentUser.ski_center_id;
+            const currentSkiCenterId = storageManager.getSelectedSkiCenter();
             this.logger.debug('Current ski center ID:', currentSkiCenterId);
 
             storageData.ski_centers_data.forEach(center => {
@@ -160,6 +160,8 @@ class SettingsManager {
                                 item.classList.remove('active');
                             });
                             centerItem.classList.add('active');
+                            // Force refresh of the settings view to reflect changes
+                            await this.updateSkiCentersSection();
                         }
                     }
                 });
