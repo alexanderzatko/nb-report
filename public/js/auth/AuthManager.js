@@ -321,6 +321,10 @@ async initiateOAuth() {
   }
 
   async checkAndRefreshToken() {
+    if (!navigator.onLine) {
+      return true; // Skip refresh when offline
+    }
+    
     console.log('Checking if token needs refresh...');
     const isLoggedIn = await this.checkAuthStatus();
     
