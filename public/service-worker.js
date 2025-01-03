@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v502';  // Should match ConfigManager.js version
+const CACHE_VERSION = 'v503';  // Should match ConfigManager.js version
 const CACHE_NAME = 'snow-report-cache';
 const FULL_CACHE_NAME = `${CACHE_NAME}-${CACHE_VERSION}`;
 const OFFLINE_PAGE = '/offline.html';
