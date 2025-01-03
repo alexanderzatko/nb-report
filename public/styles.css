@@ -263,9 +263,9 @@ form {
 }
 
 .form-title {
-    font-size: 22px;
-    font-weight: bold;
-    margin-bottom: 50px;
+    font-size: 1.4em;
+    font-weight: 400;
+    margin-bottom: 30px;
 }
 
 input#report-title {
@@ -1102,6 +1102,12 @@ body {
 }
 
 /* Settings page specific styles */
+
+#settings-title {
+    font-weight: 400;
+    font-family: Baloo Thambi 2;
+}
+
 .settings-content {
     padding: 20px 0;
 }
@@ -1110,11 +1116,13 @@ body {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    margin-top: 30px;
+    margin-top: 84px;
     padding: 0 20px;
 }
 
 .settings-button {
+    display: block;
+    margin: auto;
     padding: 12px 20px;
     border: none;
     border-radius: 8px;
@@ -1124,12 +1132,12 @@ body {
 }
 
 #dashboard-button {
-    background: #f0f7ff;
-    color: #333;
+    background: #747f96;
+    color: #fff;
 }
 
 #logout-button {
-    background: #dc3545;
+    background: #d27676;
     color: white;
 }
 
