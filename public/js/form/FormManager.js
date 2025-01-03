@@ -178,19 +178,22 @@ class FormManager {
       }
   
       const isAdmin = userData?.ski_center_admin === "1";
-      const hasTrails = userData?.trails && Array.isArray(userData.trails) && userData.trails.length > 0;
-      
-      this.logger.debug('User type:', { isAdmin, hasTrails });
-  
-      // Handle admin form elements
-      if (isAdmin) {
-          // Set ski center name in the div
+      const stateManager = StateManager.getInstance();
+      const currentCenter = stateManager.getSkiCenterData();
+      const hasTrails = currentCenter?.trails && Array.isArray(currentCenter.trails) && currentCenter.trails.length > 0;
+
+      this.logger.debug('Form initialization:', {
+        isAdmin,
+        hasTrails,
+        currentCenter,
+      });
+        
+      if (isAdmin && currentCenter) {
           const skiCenterNameDiv = document.getElementById('ski-center-name');
           if (skiCenterNameDiv) {
-              skiCenterNameDiv.textContent = userData.ski_center_name || '';
-              this.logger.debug('Set ski center name:', userData.ski_center_name);
+            skiCenterNameDiv.textContent = currentCenter.name;
 
-              const storage = StateManager.getInstance().getState('storage.userData');
+              const storage = stateManager.getState('storage.userData');
               if (storage?.ski_centers_data?.length > 1) {
                   const switchLink = document.createElement('a');
                   switchLink.href = '#';
@@ -222,8 +225,7 @@ class FormManager {
           // Set the hidden input value
           const skiCenterIdInput = document.getElementById('ski-center-id');
           if (skiCenterIdInput) {
-              skiCenterIdInput.value = userData.ski_center_id || '';
-              this.logger.debug('Set ski center ID:', userData.ski_center_id);
+              skiCenterIdInput.value = currentCenter.id;
           } else {
               this.logger.warn('Ski center ID input not found');
           }
@@ -232,7 +234,7 @@ class FormManager {
       // Clear existing content from sections to prevent duplication
       regularUserSection.style.display = isAdmin ? 'none' : 'block';
       adminSection.style.display = isAdmin ? 'block' : 'none';
-  
+
       // Handle common sections
       const activeSection = isAdmin ? adminSection : regularUserSection;
   
@@ -244,18 +246,13 @@ class FormManager {
           throw error;
       }
   
-      this.logger.debug('Setting form visibility for user:', {
-          isAdmin,
-          hasTrails,
-          hasRovasId: !!userData?.rovas_uid
-      });
           
       // Set visibility for trails section
-      if (trailsSection) {
-          trailsSection.style.display = isAdmin && hasTrails ? 'block' : 'none';
-          if (isAdmin && hasTrails) {
-              await this.initializeTrailsSection(userData.trails);
-          }
+      trailsSection.style.display = 'none';
+      if (isAdmin && hasTrails) {
+        trailsSection.style.display = 'block';
+        // Now pass the trails from currentCenter instead of userData
+        this.initializeTrailsSection(currentCenter.trails);
       }
   
       // Set visibility for rewards section based on rovas_uid
@@ -263,15 +260,7 @@ class FormManager {
           rewardsSection.style.display = 
               (userData?.rovas_uid && !isNaN(userData.rovas_uid)) ? 'block' : 'none';
       }
-  
-      this.logger.debug('Form section visibility after changes:', {
-          regularSection: regularUserSection.style.display,
-          adminSection: adminSection.style.display,
-          trailsSection: trailsSection?.style.display,
-          rewardsSection: rewardsSection?.style.display,
-          placeholdersReplaced: activeSection.querySelectorAll('.common-section-placeholder').length
-      });
-    
+      
       // Initialize form fields based on user type
       const config = isAdmin ? this.formConfig.admin : this.formConfig.regular;
       this.initializeFormFields(config);
