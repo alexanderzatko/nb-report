@@ -854,6 +854,10 @@ textarea:invalid + .validation-message {
   overflow: hidden;
 }
 
+.condition-btn[data-value="4"] .condition-btn-text {
+    font-size: 16px;
+}
+
 .condition-btn-text {
   position: absolute;
   width: 100%;
