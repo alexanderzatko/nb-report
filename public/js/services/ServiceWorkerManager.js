@@ -1,5 +1,5 @@
 import i18next from '/node_modules/i18next/dist/esm/i18next.js';
-import Logger from '../utils/Logger.js';
+import AuthManager from '../auth/AuthManager.js';
 
 class ServiceWorkerManager {
   static instance = null;
@@ -215,14 +215,14 @@ class ServiceWorkerManager {
              try {
                  await authManager.refreshToken();
              } catch (error) {
-                 this.logger.error('Token refresh failed during update:', error);
+                 console.error('Token refresh failed during update:', error);
              }
          }
          
          await this.applyUpdate();
          
      } catch (error) {
-         this.logger.error('Update handling failed:', error);
+         console.error('Update handling failed:', error);
          this.notifyUpdateReady();
      }
   }
