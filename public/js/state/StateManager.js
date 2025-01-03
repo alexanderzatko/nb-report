@@ -14,7 +14,13 @@ class StateManager {
     this.state = {
       auth: {
         isAuthenticated: false,
-        user: null,
+        user: {
+          user_name: null,
+          language: null,
+          ski_center_admin: null,
+          rovas_uid: null,
+          nabezky_uid: null
+        },
         sessionId: null
       },
       ui: {
@@ -39,6 +45,9 @@ class StateManager {
       location: {
         selectedCountry: null,
         selectedRegion: null
+      },
+      storage: {
+        userData: null  // for admins contains full list of ski centers
       }
     };
 
@@ -283,58 +292,70 @@ class StateManager {
     return result;
   }
 
-  async switchSkiCenter(skiCenterId) {
-      const storage = this.getState('storage.userData');
-      const currentUser = this.getState('auth.user');
-      const storageManager = StorageManager.getInstance();
+  async selectSkiCenter(skiCenterId) {
+    const storage = this.getState('storage.userData');
+    
+    this.logger.debug('Selecting ski center:', skiCenterId);
+    this.logger.debug('Available centers:', storage?.ski_centers_data);
 
-      this.logger.debug('Storage data:', storage);
-      this.logger.debug('Attempting to switch to ski center:', skiCenterId);
-      this.logger.debug('Available centers:', storage?.ski_centers_data);
+    if (!storage?.ski_centers_data) {
+      this.logger.error('No ski centers data available');
+      return false;
+    }
 
-      if (!storage?.ski_centers_data) {
-          this.logger.error('No ski centers data in storage');
-          return false;
-      }
+    const newCenter = storage.ski_centers_data.find(center => 
+      center[0][0] === String(skiCenterId)
+    );
 
-      const firstCenter = storage.ski_centers_data[0];
-      this.logger.debug('First center structure:', firstCenter);
+    if (!newCenter) {
+      this.logger.error('Ski center not found:', skiCenterId);
+      return false;
+    }
 
-      const newCenter = storage.ski_centers_data.find(center => 
-          center[0][0] === String(skiCenterId)  // Convert to string for comparison
+    const storageManager = StorageManager.getInstance();
+    await storageManager.setSelectedSkiCenter(skiCenterId);
+    
+    // Notify about selection change
+    this.notifySubscribers('skiCenter.selected', skiCenterId);
+    return true;
+  }
+
+  getCurrentSkiCenter() {
+    const storage = this.getState('storage.userData');
+    const storageManager = StorageManager.getInstance();
+    const selectedId = storageManager.getSelectedSkiCenter();
+    
+    if (!storage?.ski_centers_data) {
+      this.logger.debug('No ski centers data available');
+      return null;
+    }
+
+    if (selectedId) {
+      const selected = storage.ski_centers_data.find(center => 
+        center[0][0] === String(selectedId)
       );
-      if (!newCenter) {
-          this.logger.error('Ski center not found:', skiCenterId);
-          return false;
-      }
-  
-      // Update current user with new ski center data
-      const updatedUser = {
-          ...currentUser,
-          ski_center_id: newCenter[0][0],
-          ski_center_name: newCenter[1][0],
-          trails: newCenter[2]
-      };
-  
-      this.setState('auth.user', updatedUser);
-      storageManager.setSelectedSkiCenter(skiCenterId);
-      return true;
+      if (selected) return selected;
+    }
+
+    // Default to first center if none selected
+    return storage.ski_centers_data[0] || null;
+  }
+
+  getSkiCenterData() {
+    const currentCenter = this.getCurrentSkiCenter();
+    if (!currentCenter) return null;
+
+    return {
+      id: currentCenter[0][0],
+      name: currentCenter[1][0],
+      trails: currentCenter[2]
+    };
   }
   
   getAllSkiCenters() {
       const storage = this.getState('storage.userData');
       return storage?.ski_centers_data || [];
   }
-  
-  getCurrentSkiCenter() {
-      const user = this.getState('auth.user');
-      return user ? {
-          id: user.ski_center_id,
-          name: user.ski_center_name,
-          trails: user.trails
-      } : null;
-  }
-
 }
 
 export default StateManager;
