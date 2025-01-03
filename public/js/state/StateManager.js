@@ -312,8 +312,25 @@ class StateManager {
       return false;
     }
 
+    const newCenter = storage.ski_centers_data.find(center => 
+        center[0][0] === String(skiCenterId)
+    );
+
+    if (!newCenter) {
+        this.logger.error('Ski center not found:', skiCenterId);
+        return false;
+    }
+    
     const storageManager = StorageManager.getInstance();
     await storageManager.setSelectedSkiCenter(skiCenterId);
+
+    const currentUser = this.getState('auth.user');
+    if (currentUser) {
+        currentUser.ski_center_id = skiCenterId;
+        currentUser.ski_center_name = newCenter[1][0];
+        currentUser.trails = newCenter[2];
+        this.setState('auth.user', currentUser);
+    }
     
     // Notify about selection change
     this.notifySubscribers('skiCenter.selected', skiCenterId);
