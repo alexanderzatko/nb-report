@@ -280,6 +280,37 @@ input, select {
   border-radius: 4px;
 }
 
+/* Custom dropdown arrow styling */
+select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 25px;
+    padding-right: 30px;
+
+}
+
+/* Remove dropdown arrow in IE */
+select::-ms-expand {
+    display: none;
+}
+
+
+/* Remove number input spinners */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
 input#report-date {
     width: fit-content;
 }
@@ -810,6 +841,7 @@ textarea:invalid + .validation-message {
     padding-left: 7px;
     padding-top: 3px;
     padding-bottom: 3px;
+    border-radius: 3px;
 }
 
 .condition-group {
