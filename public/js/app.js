@@ -340,7 +340,7 @@ class App {
       }
 
       if (this.managers.database) {
-        await this.managers.database.clearStores();
+        await this.managers.database.clearDatabase();
       }
 
       // Reset UI to login state
