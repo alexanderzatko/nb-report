@@ -1185,6 +1185,7 @@ body {
     display: flex;
     justify-content: center;
     bottom: 0px;
+    z-index: -1;
 }
 
 .user-type-image {
