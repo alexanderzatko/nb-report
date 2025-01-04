@@ -208,7 +208,8 @@ class ServiceWorkerManager {
          const authManager = AuthManager.getInstance();
          const isAuthenticated = await Promise.race([
              authManager.checkAuthStatus(),
-             new Promise((_, reject) => setTimeout(() => reject('Auth check timeout'), 5000))
+             new Promise((_, reject) => setTimeout(() => 
+                 reject(new Error('Auth check timeout')), 5000))
          ]);
          
          if (isAuthenticated) {
