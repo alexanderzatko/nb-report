@@ -321,50 +321,47 @@ async initiateOAuth() {
   }
 
   async checkAndRefreshToken() {
-    if (!navigator.onLine) {
-      return true; // Skip refresh when offline
-    }
-    
-    console.log('Checking if token needs refresh...');
-    const isLoggedIn = await this.checkAuthStatus();
-    
-    if (!isLoggedIn) {
-      console.log('User is not logged in, skipping token refresh');
-      if (this.tokenRefreshInterval) {
-        clearInterval(this.tokenRefreshInterval);
-        this.tokenRefreshInterval = null;
-      }
-      return false;
-    }
 
-    try {
-      const response = await fetch('/api/refresh-token', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          console.log('Token refreshed successfully');
-          return true;
-        }
-      } else if (response.status === 401) {
-        console.log('Session expired. Please log in again.');
-        localStorage.removeItem('sessionId');
-        if (this.tokenRefreshInterval) {
-          clearInterval(this.tokenRefreshInterval);
-          this.tokenRefreshInterval = null;
-        }
-        return false;
+      if (!navigator.onLine) {
+          this.logger.debug('Offline - skipping token refresh');
+          return true; // Return true to prevent logout/reload
       }
-    } catch (error) {
-      console.error('Error refreshing token:', error);
-      return false;
-    }
+  
+      try {
+          const response = await fetch('/api/refresh-token', {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                  'Content-Type': 'application/json'
+              }
+          });
+  
+          if (response.ok) {
+              const data = await response.json();
+              if (data.success) {
+                  console.log('Token refreshed successfully');
+                  return true;
+              }
+          } else if (response.status === 401) {
+              console.log('Session expired. Please log in again.');
+
+              const isLoggedIn = await this.checkAuthStatus();
+              if (!isLoggedIn) {
+                  if (this.tokenRefreshInterval) {
+                      clearInterval(this.tokenRefreshInterval);
+                      this.tokenRefreshInterval = null;
+                  }
+                  return false;
+              }
+          }
+      } catch (error) {
+          if (!navigator.onLine) {
+              this.logger.debug('Network error during refresh - app is offline');
+              return true;
+          }
+          console.error('Error refreshing token:', error);
+          return false;
+      }
   }
 
   async logout() {
