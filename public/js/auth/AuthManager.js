@@ -139,6 +139,14 @@ class AuthManager {
         const userData = JSON.parse(cachedUserData);
         stateManager.setState('auth.user', userData);
         stateManager.setState('storage.userData', userData);
+
+        if (userData.language) {
+            const i18next = (await import('/node_modules/i18next/dist/esm/i18next.js')).default;
+            if (i18next.language !== userData.language) {
+                await i18next.changeLanguage(userData.language);
+            }
+        }
+
       } catch (e) {
         console.error('Error parsing cached user data:', e);
       }
