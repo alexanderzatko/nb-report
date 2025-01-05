@@ -571,6 +571,7 @@ app.post('/api/refresh-token', async (req, res) => {
       sessionID: req.sessionID,
       hasSession: !!req.session,
       hasRefreshToken: !!req.session?.refreshToken,
+      refreshTokenLength: req.session?.refreshToken?.length,
       cookies: req.cookies
   });
   
@@ -583,6 +584,11 @@ app.post('/api/refresh-token', async (req, res) => {
   }
 
   try {
+    logger.debug('Sending refresh request to OAuth server', {
+        grant_type: 'refresh_token',
+        client_id: OAUTH_CLIENT_ID,
+        refresh_token_length: req.session.refreshToken.length
+    });
     const response = await axios.post(TOKEN_URL, {
       grant_type: 'refresh_token',
       client_id: OAUTH_CLIENT_ID,
@@ -593,17 +599,26 @@ app.post('/api/refresh-token', async (req, res) => {
     logger.debug('Token refresh response from OAuth provider:', {
         status: response.status,
         hasAccessToken: !!response.data.access_token,
-        hasRefreshToken: !!response.data.refresh_token
+        hasRefreshToken: !!response.data.refresh_token,
+        newRefreshTokenLength: response.data.refresh_token?.length,
+        oldRefreshTokenLength: req.session.refreshToken.length
+
     });
 
     if (response.data && response.data.access_token) {
+      // Store the old refresh token temporarily for comparison
+      const oldRefreshToken = req.session.refreshToken;
+
       req.session.accessToken = response.data.access_token;
       if (response.data.refresh_token) {
         req.session.refreshToken = response.data.refresh_token;
       }
       logger.info('Token refresh successful', {
-          sessionID: req.sessionID,
-          tokenLength: response.data.access_token.length
+        sessionID: req.sessionID,
+        tokenLength: response.data.access_token.length,
+        refreshTokenChanged: oldRefreshToken !== req.session.refreshToken,
+        oldRefreshTokenLength: oldRefreshToken.length,
+        newRefreshTokenLength: req.session.refreshToken.length
       });
       res.json({ success: true });
     } else {
