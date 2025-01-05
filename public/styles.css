@@ -313,6 +313,7 @@ input[type="number"] {
 
 input#report-date {
     width: fit-content;
+    height: 37px;
 }
 
 /* GPX upload functinality */
