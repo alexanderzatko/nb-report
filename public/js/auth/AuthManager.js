@@ -49,12 +49,29 @@ class AuthManager {
   async checkAuthStatus() {
     try {
       const storedSessionId = localStorage.getItem(AuthManager.SESSION_KEY);
-      
-      if (!storedSessionId) {
+      const storedAuthData = localStorage.getItem(AuthManager.AUTH_DATA_KEY);
+
+      if (!storedSessionId || !storedAuthData) {
         this.notifyAuthStateChange(false);
         return false;
       }
-  
+
+      // If offline, use stored auth data
+      if (!navigator.onLine) {
+        try {
+          const authData = JSON.parse(storedAuthData);
+          const isValid = this.validateStoredAuthData(authData);
+          if (isValid) {
+            this.notifyAuthStateChange(true);
+            return true;
+          }
+        } catch (e) {
+          this.logger.error('Error parsing stored auth data:', e);
+        }
+      }
+
+      if (navigator.onLine) {
+
       const response = await fetch('/api/auth-status', {
         credentials: 'include',
         headers: {
@@ -66,22 +83,58 @@ class AuthManager {
       console.log('Auth status response:', data);
       
       if (data.isAuthenticated) {
-          if (!this.tokenRefreshInterval) {
+        localStorage.setItem(AuthManager.AUTH_DATA_KEY, JSON.stringify({
+          timestamp: Date.now(),
+          sessionId: storedSessionId,
+          isAuthenticated: true
+        }));
+
+        if (!this.tokenRefreshInterval) {
               this.setupTokenRefresh();
           }
-      } else {
+        } else {
           this.clearAuthData();
+          this.notifyAuthStateChange(false);
+          return false;
+        }
       }
-      
-      this.notifyAuthStateChange(data.isAuthenticated); // Notify subscribers of the auth state
-      return data.isAuthenticated;
+
+      return false;
     } catch (error) {
-      console.error('Error checking auth status:', error);
-      this.notifyAuthStateChange(false); // Notify subscribers of the auth state failure
+
+    // If network error and we have valid stored auth data, stay authenticated
+    if (error.name === 'TypeError' && error.message.includes('NetworkError')) {
+      const storedAuthData = localStorage.getItem(AuthManager.AUTH_DATA_KEY);
+      if (storedAuthData) {
+        try {
+          const authData = JSON.parse(storedAuthData);
+          const isValid = this.validateStoredAuthData(authData);
+          if (isValid) {
+            this.notifyAuthStateChange(true);
+            return true;
+          }
+        } catch (e) {
+          this.logger.error('Error parsing stored auth data:', e);
+        }
+      }
+
+      this.logger.error('Error checking auth status:', error);
+      this.notifyAuthStateChange(false);
       return false;
     }
   }
 
+  validateStoredAuthData(authData) {
+    if (!authData || !authData.timestamp || !authData.sessionId) {
+      return false;
+    }
+
+    // Consider auth data valid for 30 days
+    const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+    const isValid = (Date.now() - authData.timestamp) < thirtyDays;
+    return isValid;
+  }
+    
   setupTokenRefresh() {
 
     fetch('/api/log-error', {
