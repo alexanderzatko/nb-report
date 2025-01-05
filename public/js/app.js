@@ -53,84 +53,108 @@ class App {
   }
 
   async initializeCoreSystem() {
-    try {
-      await initI18next();
-
-      // Initialize only essential managers
-      this.managers = {
-        state: StateManager.getInstance(),
-        auth: AuthManager.getInstance(),
-        ui: UIManager.getInstance(),
-        network: NetworkManager.getInstance()
-      };
-
-      // Modified auth state change handler
-      this.managers.auth.subscribe('authStateChange', async (isAuthenticated) => {
-        if (this.initializationInProgress) {
-          this.logger.debug('Skipping auth state change handler - initialization in progress');
-          return;
-        }
-
-        if (isAuthenticated) {
-           try {
-                // Always fetch fresh user data when authenticated
-                const userData = await this.refreshUserData();
-                await this.managers.ui.updateUIBasedOnAuthState(true, userData);
-                await this.initializeFeatureManagers();
-            } catch (error) {
-                this.logger.error('Failed to fetch user data:', error);
-                await this.managers.auth.logout();
-            }
-        } else {
-          await this.deactivateFeatureManagers();
-        }
-      });
-      
-      // Check for OAuth callback first
-      const didAuth = await this.checkForURLParameters();
-      
-      if (!didAuth) {
-          // Only check session if we didn't just process an auth callback
-          const isAuthenticated = await this.managers.auth.checkAuthStatus();
+      try {
+        await initI18next();
+  
+        // Initialize only essential managers
+        this.managers = {
+          state: StateManager.getInstance(),
+          auth: AuthManager.getInstance(),
+          ui: UIManager.getInstance(),
+          network: NetworkManager.getInstance()
+        };
+  
+        // Add offline status handling
+        window.addEventListener('online', () => {
+          this.handleOnlineStatus();
+        });
+  
+        window.addEventListener('offline', () => {
+          this.handleOfflineStatus();
+        });
+  
+        // Single unified auth state change handler
+        this.managers.auth.subscribe('authStateChange', async (isAuthenticated) => {
+          if (this.initializationInProgress) {
+            this.logger.debug('Skipping auth state change handler - initialization in progress');
+            return;
+          }
+  
           if (isAuthenticated) {
-              await this.managers.ui.updateUIBasedOnAuthState(true);
-              await this.refreshUserData();
+            try {
+              // Check for stored data first
+              const stateManager = StateManager.getInstance();
+              let userData = stateManager.getState('auth.user');
+              let storageData = stateManager.getState('storage.userData');
+  
+              // If we're online or don't have stored data, try to fetch fresh data
+              if (navigator.onLine || !userData) {
+                try {
+                  userData = await this.refreshUserData();
+                  storageData = stateManager.getState('storage.userData');
+                } catch (error) {
+                  if (!navigator.onLine && userData && storageData) {
+                    // If offline and we have stored data, continue with that
+                    this.logger.debug('Using stored data in offline mode');
+                  } else {
+                    throw error;
+                  }
+                }
+              }
+  
+              // Update UI with whatever data we have
+              await this.managers.ui.updateUIBasedOnAuthState(true, userData);
+  
+              // Only initialize feature managers if we have complete data
+              if (storageData) {
+                await this.initializeFeatureManagers();
+              } else {
+                this.logger.debug('Skipping feature managers initialization - waiting for complete data');
+                // If we're online and don't have storage data, something's wrong
+                if (navigator.onLine) {
+                  throw new Error('No storage data available after refresh');
+                }
+              }
+            } catch (error) {
+              this.logger.error('Error handling auth state change:', error);
+              if (navigator.onLine) {
+                // Only logout if we're online - otherwise keep trying with cached data
+                await this.managers.auth.logout();
+              }
+            }
           } else {
-              // Initialize minimal UI (login screen only)
-              await this.managers.ui.initializeLoginUI();
+            await this.deactivateFeatureManagers();
           }
-      }
-
-      // Initialize service worker for PWA functionality
-      if ('serviceWorker' in navigator) {
-        this.managers.serviceWorker = ServiceWorkerManager.getInstance();
-        await this.managers.serviceWorker.initialize();
-      }
-
-      // Subscribe to auth state changes
-      this.managers.auth.subscribe('authStateChange', async (isAuthenticated) => {
-        if (isAuthenticated) {
-          const stateManager = StateManager.getInstance();
-          const storageData = stateManager.getState('storage.userData');
-          
-          // Only initialize feature managers if we have complete data
-          if (storageData) {
-            await this.initializeFeatureManagers();
-          } else {
-            this.logger.debug('Skipping feature managers initialization - waiting for complete data');
-          }
-        } else {
-          await this.deactivateFeatureManagers();
+        });
+        
+        // Check for OAuth callback first
+        const didAuth = await this.checkForURLParameters();
+        
+        if (!didAuth) {
+            const isAuthenticated = await this.managers.auth.checkAuthStatus();
+            if (isAuthenticated) {
+                await this.managers.ui.updateUIBasedOnAuthState(true);
+                if (navigator.onLine) {
+                  await this.refreshUserData();
+                }
+            } else {
+                await this.managers.ui.initializeLoginUI();
+            }
         }
-      });
-
-      this.initialized = true;
-      this.logger.debug('Core system initialized');
-
-    } catch (error) {
-      this.logger.error('Failed to initialize core system:', error);
-      throw error;
-    }
+  
+        // Initialize service worker for PWA functionality
+        if ('serviceWorker' in navigator) {
+          this.managers.serviceWorker = ServiceWorkerManager.getInstance();
+          await this.managers.serviceWorker.initialize();
+        }
+  
+        this.initialized = true;
+        this.logger.debug('Core system initialized');
+  
+      } catch (error) {
+        this.logger.error('Failed to initialize core system:', error);
+        throw error;
+      }
   }
 
   async initializeCorei18n() {
