@@ -83,21 +83,72 @@ class AuthManager {
   }
 
   setupTokenRefresh() {
+
+    fetch('/api/log-error', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            level: 'info',
+            message: 'Setting up token refresh interval',
+            data: {
+                timestamp: new Date().toISOString()
+            }
+        })
+    });
+    
     if (this.tokenRefreshInterval) {
       clearInterval(this.tokenRefreshInterval);
     }
     
     this.tokenRefreshInterval = setInterval(async () => {
+
+      await fetch('/api/log-error', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+              level: 'info',
+              message: 'Token refresh interval triggered',
+              data: {
+                  timestamp: new Date().toISOString()
+              }
+          })
+      });
+      
       if (!navigator.onLine) return;
 
       try {
         const success = await this.checkAndRefreshToken();
         if (!success) {
+
+          await fetch('/api/log-error', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  level: 'warn',
+                  message: 'Token refresh failed, preparing for reload',
+                  data: {
+                      timestamp: new Date().toISOString()
+                  }
+              })
+          });
+          
           this.clearAuthData();
           window.location.reload();
         }
       } catch (error) {
-        this.logger.error('Token refresh failed:', error);
+        await fetch('/api/log-error', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                level: 'error',
+                message: 'Error in refresh interval',
+                data: {
+                    error: error.message,
+                    stack: error.stack,
+                    timestamp: new Date().toISOString()
+                }
+            })
+        });
       }
     }, 15 * 60 * 1000); // Refresh every 15 minutes
   }
@@ -328,6 +379,20 @@ async initiateOAuth() {
       }
   
       try {
+
+          await fetch('/api/log-error', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  level: 'info',
+                  message: 'Token refresh starting',
+                  data: {
+                      hasSessionId: !!localStorage.getItem(AuthManager.SESSION_KEY),
+                      timestamp: new Date().toISOString()
+                  }
+              })
+          });
+        
           const response = await fetch('/api/refresh-token', {
               method: 'POST',
               credentials: 'include',
@@ -335,7 +400,21 @@ async initiateOAuth() {
                   'Content-Type': 'application/json'
               }
           });
-  
+
+          await fetch('/api/log-error', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  level: 'info',
+                  message: 'Token refresh response received',
+                  data: {
+                      status: response.status,
+                      ok: response.ok,
+                      timestamp: new Date().toISOString()
+                  }
+              })
+          });
+          
           if (response.ok) {
               const data = await response.json();
               if (data.success) {
@@ -343,23 +422,56 @@ async initiateOAuth() {
                   return true;
               }
           } else if (response.status === 401) {
-              console.log('Session expired. Please log in again.');
 
+              await fetch('/api/log-error', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                      level: 'warn',
+                      message: 'Token refresh 401 received',
+                      data: {
+                          responseText: await response.text(),
+                          timestamp: new Date().toISOString()
+                      }
+                  })
+              });
+            
               const isLoggedIn = await this.checkAuthStatus();
               if (!isLoggedIn) {
                   if (this.tokenRefreshInterval) {
                       clearInterval(this.tokenRefreshInterval);
                       this.tokenRefreshInterval = null;
                   }
+
+                  await fetch('/api/log-error', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                          level: 'warn',
+                          message: 'Auth check failed after 401',
+                          data: {
+                              timestamp: new Date().toISOString()
+                          }
+                      })
+                  });
+
                   return false;
               }
           }
       } catch (error) {
-          if (!navigator.onLine) {
-              this.logger.debug('Network error during refresh - app is offline');
-              return true;
-          }
-          console.error('Error refreshing token:', error);
+          await fetch('/api/log-error', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  level: 'error',
+                  message: 'Token refresh error',
+                  data: {
+                      error: error.message,
+                      stack: error.stack,
+                      timestamp: new Date().toISOString()
+                  }
+              })
+          });
           return false;
       }
   }
