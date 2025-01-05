@@ -1,10 +1,3 @@
-html, body {
-    -webkit-touch-callout: none; /* Disable callout on long press */
-    -webkit-tap-highlight-color: transparent; /* Disable tap highlight */
-    -webkit-user-select: none; /* Prevent text selection */
-    touch-action: manipulation; /* Reduce delays and enforce active styles */
-}
-
 @font-face {
     font-family: 'Baloo Thambi 2';
     src: url('/fonts/BalooThambi2/BalooThambi2-Bold.woff2') format('woff2'),
@@ -578,21 +571,40 @@ input[type="date"] {
   border: 1px solid #ccc;
   border-radius: 4px;
   font-family: Arial, sans-serif;
+  -webkit-appearance: none;
+  min-height: 37px;
+  line-height: 1.2;
+  background-color: #fff;
 }
 
 input[type="date"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
   padding: 5px;
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  margin-right: 5px;
 }
 
-/* Improve touch targets on mobile */
+@supports (-webkit-touch-callout: none) {
+  input[type="date"] {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding-right: 25px; /* Makes room for the calendar icon */
+  }
+}
+
 @media (max-width: 768px) {
   input[type="date"] {
+    font-size: 14px;
     padding: 12px;
   }
   
   input[type="date"]::-webkit-calendar-picker-indicator {
-    padding: 8px;
+    width: 24px;
+    height: 24px;
   }
 }
 
@@ -1137,7 +1149,7 @@ body {
     border-radius: 50%;
     display: flex;
     align-items: center;
-    right: 10px;
+    right: 20px;
     position: fixed;
 }
 
