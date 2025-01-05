@@ -65,9 +65,9 @@
     "region": "Oblast:",
     "reportDate": "Datum:",
     "selectRegion": "Vyberte oblast",
-    "snowDepth250": "Hloubka sněhu v 250 m.n.m. (cm):",
-    "snowDepth500": "Hloubka sněhu v 500 m.n.m. (cm):",
-    "snowDepth750": "Hloubka sněhu v 750 m.n.m. (cm):",
+    "snowDepth250": "Hloubka sněhu v 250 m n. m. (cm):",
+    "snowDepth500": "Hloubka sněhu v 500 m n. m. (cm):",
+    "snowDepth750": "Hloubka sněhu v 750 m n. m. (cm):",
     "snowDepth1000": "Hloubka sněhu nad 1000 m.n.m. (cm):",
     "snowType": "Typ sněhu:",
     "selectSnowType": "Vyberte typ sněhu",
@@ -105,7 +105,7 @@
       "5": "Sjízdné jen některé úseky",
       "6": "Nevhodné"
     },
-    "snowAge": "Věk:",
+    "snowAge": "Věk sněhu:",
     "snowAgeOptions": {
       "0": "Neznámý",
       "1": "Starý",
@@ -122,8 +122,8 @@
     "photos": "Fotografie:",
     "selectPhotos": "Vybrat fotografie",
     "captionPlaceholder": "Přidat popisek ...",
-    "privateReport": "Nezveřejňovat zprávu",
-    "privateReportHelp": "Pokud je zaškrtnuto, zpráva bude odeslána na portál nabezky.sk jako nezveřejněná. Můžete ji zveřejnit později v záložce Zprávy ve vašem uživatelském profilu",
+    "privateReport": "Uložit jako koncept",
+    "privateReportHelp": "Pokud je toto pole zaškrtnuto, zpráva nebude zveřejněna. Můžete ji zveřejnit později, najdete ji v záložce Zprávy ve vašem uživatelském profilu.",
     "gpsTrack": {
       "attachLabel": "Připojit GPS záznam z {{date}}",
       "details": "Délka trasy: {{distance}} km, Trvání: {{duration}}"
@@ -149,6 +149,9 @@
       }
     },
     "rewards": {
+      "hrs": "hod.",
+      "min": "min.",
+      "sec": "sek.",
       "sectionTitle": "Odměňování",
       "timeElapsed": "Čas od oteření táto formuláře:",
       "laborTime": "Chrony",
