@@ -438,8 +438,7 @@ div#private-report-section {
   padding: 20px;
   font-size: 16px;
   cursor: pointer;
-  border: none;
-  transition: background-color 0.3s;
+  border: unset;
 }
 
 .auth-button.login {
