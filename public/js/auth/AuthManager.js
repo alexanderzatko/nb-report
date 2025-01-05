@@ -5,7 +5,7 @@ import StorageManager from '../storage/StorageManager.js';
 
 class AuthManager {
   static instance = null;
-  static STATE_KEY = 'oauth_state';
+  static OAUTH_STATE_KEY = 'oauth_state';
   static SESSION_KEY = 'session_id';
   static AUTH_DATA_KEY = 'auth_data';
 
@@ -18,7 +18,7 @@ class AuthManager {
     this.exchangingToken = false;
     this.stateCheckInProgress = false;
     this.tokenRefreshInterval = null;
-    this.subscribers = []; // Array to store subscribers for auth state changes
+    this.subscribers = [];
     AuthManager.instance = this;
   }
 
@@ -102,8 +102,6 @@ class AuthManager {
 
       return false;
     } catch (error) {
-
-      // If network error and we have valid stored auth data, stay authenticated
       if (error.name === 'TypeError' && error.message.includes('NetworkError')) {
         const storedAuthData = localStorage.getItem(AuthManager.AUTH_DATA_KEY);
         if (storedAuthData) {
@@ -120,7 +118,7 @@ class AuthManager {
         }
       }
   
-      this.logger.error('Error checking auth status:', error);
+      console.error('Error checking auth status:', error);
       this.notifyAuthStateChange(false);
       return false;
     }
@@ -221,7 +219,7 @@ class AuthManager {
   
     try {
       if (state) {
-        const storedState = sessionStorage.getItem(AuthManager.STATE_KEY);
+        const storedState = sessionStorage.getItem(AuthManager.OAUTH_STATE_KEY);
         console.log('Stored state:', storedState);
         
         if (!storedState || !state) {
@@ -243,10 +241,9 @@ class AuthManager {
         }
   
         // Verify the complete state if timestamps are close
-        if (state === storedState) {
-          console.log('Exact state match');
-        } else {
-          console.log('States differ but timestamps are within tolerance');
+        if (state !== storedState) {
+          console.error('States do not match');
+          return false;
         }
       }
   
@@ -274,7 +271,7 @@ class AuthManager {
     } finally {
       this.exchangingToken = false;
       // Clear OAuth-specific data but keep session if successful
-      sessionStorage.removeItem(AuthManager.STATE_KEY);
+      sessionStorage.removeItem(AuthManager.OAUTH_STATE_KEY);
       sessionStorage.removeItem('oauth_initiated_at');
     }
   }
@@ -282,19 +279,17 @@ class AuthManager {
   clearAuthData() {
     console.log('Clearing auth data...');
     const beforeClear = {
-      sessionStorage: {
-        state: sessionStorage.getItem(AuthManager.STATE_KEY),
-        initiatedAt: sessionStorage.getItem('oauth_initiated_at')
-      },
       localStorage: {
+        state: localStorage.getItem(AuthManager.OAUTH_STATE_KEY),
+        initiatedAt: localStorage.getItem('oauth_initiated_at'),
         sessionId: localStorage.getItem(AuthManager.SESSION_KEY),
         authData: localStorage.getItem(AuthManager.AUTH_DATA_KEY)
       }
     };
     console.log('Before clearing:', beforeClear);
 
-    sessionStorage.removeItem(AuthManager.STATE_KEY);
-    sessionStorage.removeItem('oauth_initiated_at');
+    localStorage.removeItem(AuthManager.OAUTH_STATE_KEY);
+    localStorage.removeItem('oauth_initiated_at');
     localStorage.removeItem(AuthManager.SESSION_KEY);
     localStorage.removeItem(AuthManager.AUTH_DATA_KEY);
     
@@ -307,11 +302,9 @@ class AuthManager {
     }
 
     const afterClear = {
-      sessionStorage: {
-        state: sessionStorage.getItem(AuthManager.STATE_KEY),
-        initiatedAt: sessionStorage.getItem('oauth_initiated_at')
-      },
       localStorage: {
+        state: localStorage.getItem(AuthManager.OAUTH_STATE_KEY),
+        initiatedAt: localStorage.getItem('oauth_initiated_at'),
         sessionId: localStorage.getItem(AuthManager.SESSION_KEY),
         authData: localStorage.getItem(AuthManager.AUTH_DATA_KEY)
       }
@@ -333,11 +326,11 @@ async initiateOAuth() {
       console.log('Generated state:', state);
       
       // Store state in sessionStorage before making the request
-      sessionStorage.setItem(AuthManager.STATE_KEY, state);
+      sessionStorage.setItem(AuthManager.OAUTH_STATE_KEY, state);
       sessionStorage.setItem('oauth_initiated_at', timestamp.toString());
 
       // Verify state was stored
-      const storedState = sessionStorage.getItem(AuthManager.STATE_KEY);
+      const storedState = sessionStorage.getItem(AuthManager.OAUTH_STATE_KEY);
       if (storedState !== state) {
         console.error('Failed to store OAuth state');
         return false;
@@ -366,7 +359,7 @@ async initiateOAuth() {
       }
 
       // Final state verification before redirect
-      const finalStoredState = sessionStorage.getItem(AuthManager.STATE_KEY);
+      const finalStoredState = sessionStorage.getItem(AuthManager.OAUTH_STATE_KEY);
       if (finalStoredState !== state) {
         throw new Error('State verification failed before redirect');
       }
