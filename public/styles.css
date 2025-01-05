@@ -439,7 +439,6 @@ div#private-report-section {
   font-size: 16px;
   cursor: pointer;
   border: none;
-  border-radius: 50%;
   transition: background-color 0.3s;
 }
 
