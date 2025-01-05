@@ -111,50 +111,50 @@
               <!-- Options populated dynamically -->
             </select>
                     </div>
-                    <div class="form-group">
-                        <label for="free-style" data-i18n="form.freeStyle">Free Style:</label>
-                        <select id="free-style" data-i18n="form.trackConditions">
-              <!-- Options populated dynamically -->
-            </select>
-                    </div>
+		<div class="form-group">
+		<label for="free-style" data-i18n="form.freeStyle">Free Style:</label>
+			<select id="free-style" data-i18n="form.trackConditions">
+				<!-- Options populated dynamically -->
+			</select>
+		</div>
+		
+		<div class="form-group">
+			<label for="snow-depth250" data-i18n="form.snowDepth250">Hĺbka snehu v 250 m.n.m. (cm):</label>
+			<input type="number" id="snow-depth250" name="snowDepth250" min="0" />
+		</div>
+		
+		<div class="form-group">
+			<label for="snow-depth500" data-i18n="form.snowDepth500">Hĺbka snehu v 500 m.n.m. (cm):</label>
+			<input type="number" id="snow-depth500" name="snowDepth500" min="0" />
+		</div>
+		
+		<div class="form-group">
+			<label for="snow-depth750" data-i18n="form.snowDepth750">Hĺbka snehu v 750 m.n.m. (cm):</label>
+			<input type="number" id="snow-depth750" name="snowDepth750" min="0" />
+		</div>
 
-                    <div class="form-group">
-                        <label for="snow-depth250" data-i18n="form.snowDepth250">Hĺbka snehu v 250 m.n.m. (cm):</label>
-                        <input type="number" id="snow-depth250" name="snowDepth250" min="0" />
-                    </div>
-
-                    <div class="form-group">
-                        <label for="snow-depth500" data-i18n="form.snowDepth500">Hĺbka snehu v 500 m.n.m. (cm):</label>
-                        <input type="number" id="snow-depth500" name="snowDepth500" min="0" />
-                    </div>
-
-                    <div class="form-group">
-                        <label for="snow-depth750" data-i18n="form.snowDepth750">Hĺbka snehu v 750 m.n.m. (cm):</label>
-                        <input type="number" id="snow-depth750" name="snowDepth750" min="0" />
-                    </div>
-
-                    <div class="form-group">
-                        <label for="snow-depth1000" data-i18n="form.snowDepth1000">Hĺbka snehu nad 1000 m.n.m. (cm):</label>
-                        <input type="number" id="snow-depth1000" name="snowDepth1000" min="0" />
-                    </div>
-                    <label for="snow-age" data-i18n="form.snowAge">Age:</label>
-                    <select id="snow-age" data-i18n="form.snowAgeOptions">
-            <!-- Options populated dynamically -->
-          </select>
-
-                    <label for="wetness" data-i18n="form.wetness">Moisture:</label>
-                    <select id="wetness" data-i18n="form.wetnessOptions">
-            <!-- Options populated dynamically -->
-          </select>
-                    <div class="common-section-placeholder" data-position="middle"></div>
+		<div class="form-group">
+			<label for="snow-depth1000" data-i18n="form.snowDepth1000">Hĺbka snehu nad 1000 m.n.m. (cm):</label>
+			<input type="number" id="snow-depth1000" name="snowDepth1000" min="0" />
+		</div>
+		<label for="snow-age" data-i18n="form.snowAge">Age:</label>
+		<select id="snow-age" data-i18n="form.snowAgeOptions">
+			<!-- Options populated dynamically -->
+		</select>
+		
+		<label for="wetness" data-i18n="form.wetness">Moisture:</label>
+		<select id="wetness" data-i18n="form.wetnessOptions">
+			<!-- Options populated dynamically -->
+		</select>
+		<div class="common-section-placeholder" data-position="middle"></div>
                     <!-- GPX Section -->
                     <div class="form-section gpx-section">
                         <label data-i18n="form.gpx.groupLabel">GPX Trip Record File</label>
-                        <select id="gpx-option" class="gpx-select">
-                <option value="none" data-i18n="form.gpx.options.none">No record</option>
-                <option id="existing-gpx-option" value="existing" data-i18n="form.gpx.options.existing">Include recorded track</option>
-                <option value="upload" data-i18n="form.gpx.options.upload">Upload new GPX file</option>
-            </select>
+				<select id="gpx-option" class="gpx-select">
+					<option value="none" data-i18n="form.gpx.options.none">No record</option>
+					<option id="existing-gpx-option" value="existing" data-i18n="form.gpx.options.existing">Include recorded track</option>
+					<option value="upload" data-i18n="form.gpx.options.upload">Upload new GPX file</option>
+				</select>
 
                         <div id="gpx-info-display" class="gpx-info" style="display: none"></div>
 
@@ -207,23 +207,23 @@
                 </div>
 
                 <template id="common-section">   
-          <div class="form-group">
-            <label for="snow-type" data-i18n="form.snowType">Typ snehu:</label>
-            <select id="snow-type" name="snowType" data-i18n-validate="form.validation.required">
-              <!-- Options populated dynamically -->
-            </select>
-            <div class="validation-message"></div>
-          </div>
-  
-          <!-- Photos upload -->
-          <div class="form-section photos-section">
-            <div id="photo-preview-container"></div>
-            <button type="button" id="select-photos" class="photo-button" data-i18n="form.selectPhotos">Select Photos</button>
-            <button type="button" id="take-photo" class="photo-button" data-i18n="form.takePhoto">Take Photo</button>
-            <input type="file" id="photo-file-input" accept="image/*" multiple style="display: none;">
-            <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
-          </div>
-        </template>
+	          <div class="form-group">
+	            <label for="snow-type" data-i18n="form.snowType">Typ snehu:</label>
+	            <select id="snow-type" name="snowType" data-i18n-validate="form.validation.required">
+	              <!-- Options populated dynamically -->
+	            </select>
+	            <div class="validation-message"></div>
+	          </div>
+	  
+	          <!-- Photos upload -->
+	          <div class="form-section photos-section">
+	            <div id="photo-preview-container"></div>
+	            <button type="button" id="select-photos" class="photo-button" data-i18n="form.selectPhotos">Select Photos</button>
+	            <button type="button" id="take-photo" class="photo-button" data-i18n="form.takePhoto">Take Photo</button>
+	            <input type="file" id="photo-file-input" accept="image/*" multiple style="display: none;">
+	            <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
+	          </div>
+	        </template>
 
                 <div class="form-group">
                     <label for="report-note" class="required-field" data-i18n="form.reportNote">Report</label>
@@ -248,11 +248,11 @@
                         <span data-i18n="form.rewards.timeElapsed">Time since opening this form:</span>
                         <span id="elapsed-time" class="time-display">
               <span id="elapsed-hours" class="time-unit hours">00</span>
-                        <span class="time-label hours">hrs.</span>
+                        <span class="time-label hours" data-i18n="form.rewards.hrs">hrs.</span>
                         <span id="elapsed-minutes" class="time-unit minutes">00</span>
-                        <span class="time-label minutes">min.</span>
+                        <span class="time-label minutes" data-i18n="form.rewards.min">min.</span>
                         <span id="elapsed-seconds" class="time-unit seconds">00</span>
-                        <span class="time-label seconds">sec.</span>
+                        <span class="time-label seconds" data-i18n="form.rewards.sec">sec.</span>
                         </span>
                     </div>
 
