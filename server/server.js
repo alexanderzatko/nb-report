@@ -567,20 +567,20 @@ app.post('/api/exchange-token', async (req, res) => {
 });
 
 app.post('/api/refresh-token', async (req, res) => {
-  logger.info('Token refresh attempt', { sessionID: req.sessionID });
+  logger.info('Token refresh request received', {
+      sessionID: req.sessionID,
+      hasSession: !!req.session,
+      hasRefreshToken: !!req.session?.refreshToken,
+      cookies: req.cookies
+  });
   
   if (!req.session || !req.session.refreshToken) {
-    logger.warn('No refresh token available', { sessionID: req.sessionID });
+    logger.warn('No refresh token available', {
+        sessionID: req.sessionID,
+        sessionContent: req.session ? Object.keys(req.session) : null
+    });
     return res.status(401).json({ error: 'No refresh token available' });
   }
-
-  // If this is a new login, skip the refresh
-/*
-  if (req.session.isNewLogin) {
-    req.session.isNewLogin = false;
-    return res.json({ success: true, message: 'New login, refresh not needed' });
-  }  
-*/
 
   try {
     const response = await axios.post(TOKEN_URL, {
@@ -590,20 +590,37 @@ app.post('/api/refresh-token', async (req, res) => {
       refresh_token: req.session.refreshToken
     });
 
+    logger.debug('Token refresh response from OAuth provider:', {
+        status: response.status,
+        hasAccessToken: !!response.data.access_token,
+        hasRefreshToken: !!response.data.refresh_token
+    });
+
     if (response.data && response.data.access_token) {
       req.session.accessToken = response.data.access_token;
       if (response.data.refresh_token) {
         req.session.refreshToken = response.data.refresh_token;
       }
-      logger.info('Token refreshed successfully', { sessionID: req.sessionID });
+      logger.info('Token refresh successful', {
+          sessionID: req.sessionID,
+          tokenLength: response.data.access_token.length
+      });
       res.json({ success: true });
     } else {
-      throw new Error('Failed to refresh token: No access token in response');
+      logger.error('Invalid token refresh response:', response.data);
+      res.status(400).json({ error: 'Invalid response from auth server' });
     }
   } catch (error) {
-    logger.error('Error refreshing token:', error.response ? error.response.data : error.message);
-    if (error.response && error.response.status === 400) {
-      // The refresh token might be invalid or expired
+    logger.error('Token refresh error:', {
+        error: error.response?.data || error.message,
+        status: error.response?.status,
+        headers: error.response?.headers
+    });
+    if (error.response?.status === 400 || error.response?.data?.error === 'invalid_grant') {
+      logger.warn('Clearing invalid session', {
+          sessionID: req.sessionID,
+          error: error.response?.data
+      });
       req.session.destroy((err) => {
         if (err) logger.error('Error destroying session:', err);
         res.status(401).json({ error: 'Session expired. Please log in again.' });
