@@ -65,10 +65,10 @@
     "region": "Oblasť:",
     "reportDate": "Dátum:",
     "selectRegion": "Vyberte oblasť",
-    "snowDepth250": "Hĺbka snehu v 250 m.n.m. (cm):",
-    "snowDepth500": "Hĺbka snehu v 500 m.n.m. (cm):",
-    "snowDepth750": "Hĺbka snehu v 750 m.n.m. (cm):",
-    "snowDepth1000": "Hĺbka snehu nad 1000 m.n.m. (cm):",
+    "snowDepth250": "Hĺbka snehu v 250 m n. m. (cm):",
+    "snowDepth500": "Hĺbka snehu v 500 m n. m. (cm):",
+    "snowDepth750": "Hĺbka snehu v 750 m n. m. (cm):",
+    "snowDepth1000": "Hĺbka snehu nad 1000 m n. m. (cm):",
     "snowType": "Typ snehu:",
     "selectSnowType": "Vyberte typ snehu",
     "snowTypes": {
@@ -105,7 +105,7 @@
       "5": "Zjazdné len niektoré úseky",
       "6": "Nevhodné"
     },
-    "snowAge": "Vek:",
+    "snowAge": "Vek snehu:",
     "snowAgeOptions": {
       "0": "Neznámy",
       "1": "Starý",
@@ -123,8 +123,8 @@
     "selectPhotos": "Vybrať fotografie",
     "takePhoto": "Urobiť fotografiu",
     "captionPlaceholder": "Pridať popisku ...",
-    "privateReport": "Nezverejňovať správu",
-    "privateReportHelp": "Ak je zaškrtnuté, správa bude odoslaná na portál nabezky.sk ako nezverejnená. Môžete ju zverejniť neskôr v záložke Správy vo vašom používateľskom profile",
+    "privateReport": "Uložiť ako koncept",
+    "privateReportHelp": "Ak je toto pole zaškrtnuté, správa nebude zverejnená. Môžete ju zverejniť neskôr, nájdete ju v záložke Správy vo vašom používateľskom profile.",
     "gpsTrack": {
       "attachLabel": "Priložiť GPS záznam z {{date}}",
       "details": "Dĺžka trasy: {{distance}} km, Trvanie: {{duration}}"
@@ -149,6 +149,9 @@
       }
     },
     "rewards": {
+      "hrs": "hod.",
+      "min": "min.",
+      "sec": "sek.",
       "sectionTitle": "Odmeňovanie",
       "timeElapsed": "Čas od otvorenia tejto stránky:",
       "laborTime": "Chrony",
