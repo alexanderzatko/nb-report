@@ -442,13 +442,15 @@ div#private-report-section {
   transition: background-color 0.3s;
 }
 
-button#login-button:focus {
-    scale: 1.1;
+button#login-button {
+    background-color: transparent;
+    transform: scale(1);
     transition: transform 0.3s ease;
 }
 
-.auth-button.login {
-  background-color: transparent;
+button#login-button:active {
+    transform: scale(1.1);
+    transition-duration: 0.1s;
 }
 
 .auth-button.logout {
