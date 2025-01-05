@@ -1,3 +1,10 @@
+html, body {
+    -webkit-touch-callout: none; /* Disable callout on long press */
+    -webkit-tap-highlight-color: transparent; /* Disable tap highlight */
+    -webkit-user-select: none; /* Prevent text selection */
+    touch-action: manipulation; /* Reduce delays and enforce active styles */
+}
+
 @font-face {
     font-family: 'Baloo Thambi 2';
     src: url('/fonts/BalooThambi2/BalooThambi2-Bold.woff2') format('woff2'),
