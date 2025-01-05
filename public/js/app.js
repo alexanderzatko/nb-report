@@ -64,83 +64,48 @@ class App {
           network: NetworkManager.getInstance()
         };
   
-        // Add offline status handling
-        window.addEventListener('online', () => {
-          this.handleOnlineStatus();
-        });
-  
-        window.addEventListener('offline', () => {
-          this.handleOfflineStatus();
-        });
+        // Initialize offline detection
+        window.addEventListener('online', () => this.handleOnlineStatus());
+        window.addEventListener('offline', () => this.handleOfflineStatus());
   
         // Single unified auth state change handler
         this.managers.auth.subscribe('authStateChange', async (isAuthenticated) => {
-          if (this.initializationInProgress) {
-            this.logger.debug('Skipping auth state change handler - initialization in progress');
-            return;
-          }
-  
-          if (isAuthenticated) {
-            try {
-              // Check for stored data first
+          if (this.initializationInProgress) return;
+    
+          try {
+            if (isAuthenticated) {
+              // First restore any cached state
               const stateManager = StateManager.getInstance();
-              let userData = stateManager.getState('auth.user');
-              let storageData = stateManager.getState('storage.userData');
-  
-              // If we're online or don't have stored data, try to fetch fresh data
-              if (navigator.onLine || !userData) {
+              await stateManager.restorePersistedState();
+    
+              // Update UI with whatever data we have
+              const userData = stateManager.getState('auth.user');
+              await this.managers.ui.updateUIBasedOnAuthState(true, userData);
+    
+              // If we're online, refresh the data
+              if (navigator.onLine) {
                 try {
-                  userData = await this.refreshUserData();
-                  storageData = stateManager.getState('storage.userData');
+                  await this.refreshUserData();
                 } catch (error) {
-                  if (!navigator.onLine && userData && storageData) {
-                    // If offline and we have stored data, continue with that
-                    this.logger.debug('Using stored data in offline mode');
-                  } else {
-                    throw error;
+                  if (!userData) {
+                    throw error; // Only throw if we don't have cached data
                   }
                 }
               }
-  
-              // Update UI with whatever data we have
-              await this.managers.ui.updateUIBasedOnAuthState(true, userData);
-  
-              // Only initialize feature managers if we have complete data
-              if (storageData) {
-                await this.initializeFeatureManagers();
-              } else {
-                this.logger.debug('Skipping feature managers initialization - waiting for complete data');
-                // If we're online and don't have storage data, something's wrong
-                if (navigator.onLine) {
-                  throw new Error('No storage data available after refresh');
-                }
-              }
-            } catch (error) {
-              this.logger.error('Error handling auth state change:', error);
-              if (navigator.onLine) {
-                // Only logout if we're online - otherwise keep trying with cached data
-                await this.managers.auth.logout();
-              }
+    
+              // Initialize feature managers
+              await this.initializeFeatureManagers();
+            } else {
+              await this.deactivateFeatureManagers();
+              await this.managers.ui.initializeLoginUI();
             }
-          } else {
-            await this.deactivateFeatureManagers();
+          } catch (error) {
+            console.error('Error handling auth state change:', error);
+            if (navigator.onLine) {
+              await this.managers.auth.logout();
+            }
           }
         });
-        
-        // Check for OAuth callback first
-        const didAuth = await this.checkForURLParameters();
-        
-        if (!didAuth) {
-            const isAuthenticated = await this.managers.auth.checkAuthStatus();
-            if (isAuthenticated) {
-                await this.managers.ui.updateUIBasedOnAuthState(true);
-                if (navigator.onLine) {
-                  await this.refreshUserData();
-                }
-            } else {
-                await this.managers.ui.initializeLoginUI();
-            }
-        }
   
         // Initialize service worker for PWA functionality
         if ('serviceWorker' in navigator) {
@@ -148,9 +113,13 @@ class App {
           await this.managers.serviceWorker.initialize();
         }
   
-        this.initialized = true;
-        this.logger.debug('Core system initialized');
-  
+        // Check auth state last
+        const isAuthenticated = await this.managers.auth.checkAuthStatus();
+        if (!isAuthenticated && !await this.checkForURLParameters()) {
+          await this.managers.ui.initializeLoginUI();
+        }
+    
+        this.initialized = true;  
       } catch (error) {
         this.logger.error('Failed to initialize core system:', error);
         throw error;
@@ -216,70 +185,73 @@ class App {
   }
 
   async refreshUserData() {
-      try {
-          this.logger.debug('Fetching user data...');
-          const userData = await this.managers.network.get('/api/user-data');
+    try {
+      const userData = await this.managers.network.get('/api/user-data');
+      if (userData) {
+        // Cache the full user data response
+        localStorage.setItem('cached_user_data', JSON.stringify(userData));
+        
+        const stateManager = StateManager.getInstance();
+        stateManager.setState('storage.userData', userData);
+        
+        // Prepare current user data object
+        const currentUserData = {
+          language: userData.language,
+          nabezky_uid: userData.nabezky_uid,
+          rovas_uid: userData.rovas_uid,
+          ski_center_admin: userData.ski_center_admin,
+          user_name: userData.user_name
+        };
+  
+        // Handle ski center data for admin users
+        if (userData.ski_center_admin === "1" && userData.ski_centers_data?.length > 0) {
+          const storageManager = StorageManager.getInstance();
+          const savedCenterId = storageManager.getSelectedSkiCenter();
           
-          if (!userData) {
-              throw new Error('Failed to fetch user data');
+          let selectedCenter;
+          if (savedCenterId) {
+            // Find saved center in the available centers
+            selectedCenter = userData.ski_centers_data.find(center => 
+              center[0][0] === String(savedCenterId)
+            );
           }
-      
-          this.logger.debug('User data received:', userData);
-          const stateManager = StateManager.getInstance();
-          stateManager.setState('storage.userData', userData, true);
           
-          const currentUserData = {
-              language: userData.language,
-              nabezky_uid: userData.nabezky_uid,
-              rovas_uid: userData.rovas_uid,
-              ski_center_admin: userData.ski_center_admin,
-              user_name: userData.user_name
-          };
-  
-          // Handle ski center data for admin users
-          if (userData.ski_center_admin === "1" && userData.ski_centers_data?.length > 0) {
-              const storageManager = StorageManager.getInstance();
-              const savedCenterId = storageManager.getSelectedSkiCenter();
-              
-              let selectedCenter;
-              if (savedCenterId) {
-                  // Find saved center in the available centers
-                  selectedCenter = userData.ski_centers_data.find(center => 
-                      center[0][0] === String(savedCenterId)
-                  );
-              }
-              
-              // If no saved center or saved center not found, use first center
-              if (!selectedCenter) {
-                  selectedCenter = userData.ski_centers_data[0];
-                  // Save the first center as new preference
-                  await storageManager.setSelectedSkiCenter(selectedCenter[0][0]);
-              }
-  
-              // Add selected center's data to currentUserData
-              currentUserData.ski_center_id = selectedCenter[0][0];
-              currentUserData.ski_center_name = selectedCenter[1][0];
-              currentUserData.trails = selectedCenter[2];
-          } else {
-              // For non-admin users, clear any stored ski center data
-              const storageManager = StorageManager.getInstance();
-              storageManager.clearSelectedSkiCenter();
+          // If no saved center or saved center not found, use first center
+          if (!selectedCenter) {
+            selectedCenter = userData.ski_centers_data[0];
+            // Save the first center as new preference
+            await storageManager.setSelectedSkiCenter(selectedCenter[0][0]);
           }
   
-          // Handle language preference before any UI updates
-          if (userData.language && userData.language !== this.i18next.language) {
-              this.logger.debug(`Changing language to user preference: ${userData.language}`);
-              await this.i18next.changeLanguage(userData.language);
-          }
-      
-          stateManager.setState('auth.user', currentUserData);
-          
-          return currentUserData;
-      
-      } catch (error) {
-          this.logger.error('Error refreshing user data:', error);
-          throw error;
+          // Add selected center's data to currentUserData
+          currentUserData.ski_center_id = selectedCenter[0][0];
+          currentUserData.ski_center_name = selectedCenter[1][0];
+          currentUserData.trails = selectedCenter[2];
+        } else {
+          // For non-admin users, clear any stored ski center data
+          const storageManager = StorageManager.getInstance();
+          storageManager.clearSelectedSkiCenter();
+        }
+  
+        // Update auth data with user context
+        const authManager = AuthManager.getInstance();
+        const currentAuthData = authManager.getStoredAuthData();
+        if (currentAuthData) {
+          await authManager.updateStoredAuthData({
+            ...currentAuthData,
+            userData: currentUserData
+          });
+        }
+  
+        // Set the full user state
+        stateManager.setState('auth.user', currentUserData);
+        
+        return currentUserData;
       }
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+      throw error;
+    }
   }
 
   async initializeFeatureManagers() {
