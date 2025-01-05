@@ -48,25 +48,20 @@ class AuthManager {
 
   async checkAuthStatus() {
     try {
-      const storedSessionId = localStorage.getItem(AuthManager.SESSION_KEY);
-      const storedAuthData = localStorage.getItem(AuthManager.AUTH_DATA_KEY);
+      const storedAuthData = this.getStoredAuthData();
 
-      if (!storedSessionId || !storedAuthData) {
+      if (!storedAuthData) {
         this.notifyAuthStateChange(false);
         return false;
       }
 
       // If offline, use stored auth data
       if (!navigator.onLine) {
-        try {
-          const authData = JSON.parse(storedAuthData);
-          const isValid = this.validateStoredAuthData(authData);
-          if (isValid) {
-            this.notifyAuthStateChange(true);
-            return true;
-          }
-        } catch (e) {
-          this.logger.error('Error parsing stored auth data:', e);
+        const isValid = this.validateStoredAuthData(storedAuthData);
+        if (isValid) {
+          await this.restoreUserState(storedAuthData);
+          this.notifyAuthStateChange(true);
+          return true;
         }
       }
 
@@ -82,42 +77,28 @@ class AuthManager {
         console.log('Auth status response:', data);
       
         if (data.isAuthenticated) {
-          localStorage.setItem(AuthManager.AUTH_DATA_KEY, JSON.stringify({
+          await this.updateStoredAuthData({
+            ...storedAuthData,
             timestamp: Date.now(),
-            sessionId: storedSessionId,
             isAuthenticated: true
-          }));
+          });
   
           if (!this.tokenRefreshInterval) {
                 this.setupTokenRefresh();
             }
-            this.notifyAuthStateChange(true);
-            return true;
-          } else {
-            this.clearAuthData();
-            this.notifyAuthStateChange(false);
-            return false;
-          }
-      }
-
-      return false;
-    } catch (error) {
-      if (error.name === 'TypeError' && error.message.includes('NetworkError')) {
-        const storedAuthData = localStorage.getItem(AuthManager.AUTH_DATA_KEY);
-        if (storedAuthData) {
-          try {
-            const authData = JSON.parse(storedAuthData);
-            const isValid = this.validateStoredAuthData(authData);
-            if (isValid) {
-              this.notifyAuthStateChange(true);
-              return true;
-            }
-           } catch (e) {
-            this.logger.error('Error parsing stored auth data:', e);
-          }
+          this.notifyAuthStateChange(true);
+          return true;
         }
       }
-  
+
+      this.clearAuthData();
+      this.notifyAuthStateChange(false);
+      return false;
+    } catch (error) {
+      if (!navigator.onLine && this.getStoredAuthData()) {
+        // Keep existing auth state when offline
+        return true;
+      }
       console.error('Error checking auth status:', error);
       this.notifyAuthStateChange(false);
       return false;
@@ -125,18 +106,46 @@ class AuthManager {
   }
 
   validateStoredAuthData(authData) {
-    if (!authData || !authData.timestamp || !authData.sessionId) {
+    if (!authData || !authData.timestamp || !authData.sessionId || !authData.isAuthenticated) {
       return false;
     }
 
-    // Consider auth data valid for 30 days
     const thirtyDays = 30 * 24 * 60 * 60 * 1000;
-    const isValid = (Date.now() - authData.timestamp) < thirtyDays;
-    return isValid;
+    return (Date.now() - authData.timestamp) < thirtyDays;
   }
-    
-  setupTokenRefresh() {
 
+  async updateStoredAuthData(authData) {
+    localStorage.setItem(AuthManager.AUTH_DATA_KEY, JSON.stringify(authData));
+    await this.restoreUserState(authData);
+  }
+
+  getStoredAuthData() {
+    try {
+      const data = localStorage.getItem(AuthManager.AUTH_DATA_KEY);
+      return data ? JSON.parse(data) : null;
+    } catch (e) {
+      console.error('Error parsing stored auth data:', e);
+      return null;
+    }
+  }
+
+  async restoreUserState(authData) {
+    const stateManager = StateManager.getInstance();
+    
+    // If we have cached user data, restore it
+    const cachedUserData = localStorage.getItem('cached_user_data');
+    if (cachedUserData) {
+      try {
+        const userData = JSON.parse(cachedUserData);
+        stateManager.setState('auth.user', userData);
+        stateManager.setState('storage.userData', userData);
+      } catch (e) {
+        console.error('Error parsing cached user data:', e);
+      }
+    }
+  }
+  
+  setupTokenRefresh() {
     fetch('/api/log-error', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
