@@ -1,7 +1,12 @@
-const CACHE_VERSION = 'v523';  // Should match ConfigManager.js version
+const CACHE_VERSION = 'v524';  // Should match ConfigManager.js version
 const CACHE_NAME = 'snow-report-cache';
 const FULL_CACHE_NAME = `${CACHE_NAME}-${CACHE_VERSION}`;
 const OFFLINE_PAGE = '/offline.html';
+const AUTH_CACHE_NAME = 'auth-cache';
+const AUTH_ENDPOINTS = [
+  '/api/auth-status',
+  '/api/user-data'
+];
 
 const urlsToCache = [
   '/',
@@ -87,39 +92,41 @@ self.addEventListener('fetch', function(event) {
   const url = new URL(event.request.url);
 
   // Special handling for auth-status endpoint
-  if (url.pathname === '/api/auth-status') {
+  if (AUTH_ENDPOINTS.includes(url.pathname)) {
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request.clone())
         .then(response => {
-          // Clone the response before caching
-          const responseToCache = response.clone();
-          caches.open(FULL_CACHE_NAME)
-            .then(cache => {
-              cache.put(event.request, responseToCache);
-            });
+          // Only cache successful responses
+          if (response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(AUTH_CACHE_NAME)
+              .then(cache => {
+                cache.put(event.request, responseToCache);
+              });
+          }
           return response;
         })
-        .catch(async function() {
-          // On network failure, try to return cached response
-          const cache = await caches.open(FULL_CACHE_NAME);
+        .catch(async () => {
+          // On network failure, try cached response
+          const cache = await caches.open(AUTH_CACHE_NAME);
           const cachedResponse = await cache.match(event.request);
+          
           if (cachedResponse) {
-            return cachedResponse;
-          }
-          // If no cached response, return a fake successful auth response
-          // only if we have valid auth data in localStorage
-          if (self.clients) {
-            const client = await self.clients.get(event.clientId);
-            if (client) {
+            // For auth-status endpoint, verify with localStorage
+            if (url.pathname === '/api/auth-status') {
               const authData = localStorage.getItem('auth_data');
               if (authData) {
-                return new Response(JSON.stringify({ 
-                  isAuthenticated: true,
-                  fromCache: true
-                }), {
-                  headers: { 'Content-Type': 'application/json' }
-                });
+                try {
+                  const parsed = JSON.parse(authData);
+                  if (parsed.isAuthenticated) {
+                    return cachedResponse;
+                  }
+                } catch (e) {
+                  // Invalid auth data
+                }
               }
+            } else {
+              return cachedResponse;
             }
           }
           throw new Error('No cached auth response');
