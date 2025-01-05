@@ -685,7 +685,7 @@ class FormManager {
     freeStyleValue.className = 'selected-value';
     freeStyleValue.dataset.forType = 'free';
     // Set default text for unknown condition
-    freeStyleValue.textContent = ': ' + this.i18next.t('form.trackConditions.0');
+    freeStyleValue.textContent = this.i18next.t('form.trackConditions.0');
     
     freeStyleHeader.appendChild(freeStyleLabel);
     freeStyleHeader.appendChild(freeStyleValue);
@@ -714,7 +714,7 @@ class FormManager {
     classicValue.className = 'selected-value';
     classicValue.dataset.forType = 'classic';
     // Set default text for unknown condition
-    classicValue.textContent = ': ' + this.i18next.t('form.trackConditions.0');
+    classicValue.textContent = this.i18next.t('form.trackConditions.0');
     
     classicHeader.appendChild(classicLabel);
     classicHeader.appendChild(classicValue);
@@ -743,7 +743,7 @@ class FormManager {
     maintenanceValue.className = 'selected-value';
     maintenanceValue.dataset.forType = 'maintenance';
     // Set default text for unknown condition
-    maintenanceValue.textContent = ': ' + this.i18next.t('form.maintenance.unknown');
+    maintenanceValue.textContent = this.i18next.t('form.maintenance.unknown');
     
     maintenanceHeader.appendChild(maintenanceLabel);
     maintenanceHeader.appendChild(maintenanceValue);
