@@ -71,53 +71,55 @@ class AuthManager {
       }
 
       if (navigator.onLine) {
-
-      const response = await fetch('/api/auth-status', {
-        credentials: 'include',
-        headers: {
-          'X-Session-ID': storedSessionId
-        }
-      });
-      
-      const data = await response.json();
-      console.log('Auth status response:', data);
-      
-      if (data.isAuthenticated) {
-        localStorage.setItem(AuthManager.AUTH_DATA_KEY, JSON.stringify({
-          timestamp: Date.now(),
-          sessionId: storedSessionId,
-          isAuthenticated: true
-        }));
-
-        if (!this.tokenRefreshInterval) {
-              this.setupTokenRefresh();
+        const response = await fetch('/api/auth-status', {
+          credentials: 'include',
+          headers: {
+            'X-Session-ID': storedSessionId
           }
-        } else {
-          this.clearAuthData();
-          this.notifyAuthStateChange(false);
-          return false;
-        }
+        });
+      
+        const data = await response.json();
+        console.log('Auth status response:', data);
+      
+        if (data.isAuthenticated) {
+          localStorage.setItem(AuthManager.AUTH_DATA_KEY, JSON.stringify({
+            timestamp: Date.now(),
+            sessionId: storedSessionId,
+            isAuthenticated: true
+          }));
+  
+          if (!this.tokenRefreshInterval) {
+                this.setupTokenRefresh();
+            }
+            this.notifyAuthStateChange(true);
+            return true;
+          } else {
+            this.clearAuthData();
+            this.notifyAuthStateChange(false);
+            return false;
+          }
       }
 
       return false;
     } catch (error) {
 
-    // If network error and we have valid stored auth data, stay authenticated
-    if (error.name === 'TypeError' && error.message.includes('NetworkError')) {
-      const storedAuthData = localStorage.getItem(AuthManager.AUTH_DATA_KEY);
-      if (storedAuthData) {
-        try {
-          const authData = JSON.parse(storedAuthData);
-          const isValid = this.validateStoredAuthData(authData);
-          if (isValid) {
-            this.notifyAuthStateChange(true);
-            return true;
+      // If network error and we have valid stored auth data, stay authenticated
+      if (error.name === 'TypeError' && error.message.includes('NetworkError')) {
+        const storedAuthData = localStorage.getItem(AuthManager.AUTH_DATA_KEY);
+        if (storedAuthData) {
+          try {
+            const authData = JSON.parse(storedAuthData);
+            const isValid = this.validateStoredAuthData(authData);
+            if (isValid) {
+              this.notifyAuthStateChange(true);
+              return true;
+            }
+           } catch (e) {
+            this.logger.error('Error parsing stored auth data:', e);
           }
-        } catch (e) {
-          this.logger.error('Error parsing stored auth data:', e);
         }
       }
-
+  
       this.logger.error('Error checking auth status:', error);
       this.notifyAuthStateChange(false);
       return false;
