@@ -444,6 +444,7 @@ div#private-report-section {
 
 button#login-button:focus {
     scale: 1.1;
+    transition: transform 0.3s ease;
 }
 
 .auth-button.login {
