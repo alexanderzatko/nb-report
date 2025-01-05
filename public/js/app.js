@@ -232,7 +232,11 @@ class App {
           const storageManager = StorageManager.getInstance();
           storageManager.clearSelectedSkiCenter();
         }
-  
+
+        if (userData.language && this.i18next.language !== userData.language) {
+            await this.i18next.changeLanguage(userData.language);
+        }
+    
         // Update auth data with user context
         const authManager = AuthManager.getInstance();
         const currentAuthData = authManager.getStoredAuthData();
