@@ -65,10 +65,10 @@
     "region": "Region:",
     "selectRegion": "Select a region",
     "reportDate": "Date:",
-    "snowDepth250": "Hĺbka snehu v 250 m.n.m. (cm):",
-    "snowDepth500": "Hĺbka snehu v 500 m.n.m. (cm):",
-    "snowDepth750": "Hĺbka snehu v 750 m.n.m. (cm):",
-    "snowDepth1000": "Hĺbka snehu nad 1000 m.n.m. (cm):",
+    "snowDepth250": "Snow depth at 250 m.a.s.l. (cm):",
+    "snowDepth500": "Snow depth at 500 m.a.s.l. (cm):",
+    "snowDepth750": "Snow depth at 750 m.a.s.l. (cm):",
+    "snowDepth1000": "Snow depth above 1000 m.a.s.l. (cm):",
     "snowType": "Snow Type:",
     "selectSnowType": "Select snow type",
     "snowTypes": {
@@ -105,7 +105,7 @@
       "5": "Patches of snow",
       "6": "unsuitable"
     },
-    "snowAge": "Age:",
+    "snowAge": "Snow age:",
     "snowAgeOptions": {
       "0": "Unknown",
       "1": "Old",
@@ -123,8 +123,8 @@
     "selectPhotos": "Select photos",
     "takePhoto": "Take Photo",
     "captionPlaceholder": "Add acaption ...",
-    "privateReport": "Make the report private",
-    "privateReportHelp": "If checked, the report will be sent to the nabezly.sk portal and will be unpublished. You can make it public later in the Reports tab of your user profile",
+    "privateReport": "Save as draft",
+    "privateReportHelp": "If this field is checked, the report will not be published. You can publish it later, you'll find it in the Reports tab in your user profile.",
     "gpsTrack": {
       "attachLabel": "Attach GPS record from {{date}}",
       "details": "Track length: {{distance}} km, Time elapsed: {{duration}}"
@@ -149,6 +149,9 @@
       }
     },
     "rewards": {
+      "hrs": "hrs.",
+      "min": "min.",
+      "sec": "sec.",
       "sectionTitle": "Rewards",
       "timeElapsed": "Time since opening this form:",
       "laborTime": "Labor time",
