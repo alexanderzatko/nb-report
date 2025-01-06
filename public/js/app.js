@@ -51,78 +51,62 @@ class App {
       this.handleInitializationError(error);
     }
   }
-
+  
   async initializeCoreSystem() {
       try {
-        await initI18next();
+          await initI18next();
   
-        // Initialize only essential managers
-        this.managers = {
-          state: StateManager.getInstance(),
-          auth: AuthManager.getInstance(),
-          ui: UIManager.getInstance(),
-          network: NetworkManager.getInstance()
-        };
+          // Initialize essential managers
+          this.managers = {
+              state: StateManager.getInstance(),
+              auth: AuthManager.getInstance(),
+              ui: UIManager.getInstance(),
+              network: NetworkManager.getInstance()
+          };
   
-        // Initialize offline detection
-        window.addEventListener('online', () => this.handleOnlineStatus());
-        window.addEventListener('offline', () => this.handleOfflineStatus());
+          // Initialize offline detection
+          window.addEventListener('online', () => this.handleOnlineStatus());
+          window.addEventListener('offline', () => this.handleOfflineStatus());
   
-        // Single unified auth state change handler
-        this.managers.auth.subscribe('authStateChange', async (isAuthenticated) => {
-          if (this.initializationInProgress) return;
-    
-          try {
-            if (isAuthenticated) {
-              // First restore any cached state
-              const stateManager = StateManager.getInstance();
-              await stateManager.restorePersistedState();
-    
-              // Update UI with whatever data we have
+          // First try to restore any cached state
+          const stateManager = StateManager.getInstance();
+          await stateManager.restorePersistedState();
+  
+          // Check auth status and initialize UI accordingly
+          const isAuthenticated = await this.managers.auth.checkAuthStatus();
+          
+          if (isAuthenticated) {
+              // Update UI with cached data first
               const userData = stateManager.getState('auth.user');
               await this.managers.ui.updateUIBasedOnAuthState(true, userData);
-    
-              // If we're online, refresh the data
+  
+              // If online, refresh the data
               if (navigator.onLine) {
-                try {
-                  await this.refreshUserData();
-                } catch (error) {
-                  if (!userData) {
-                    throw error; // Only throw if we don't have cached data
+                  try {
+                      await this.refreshUserData();
+                  } catch (error) {
+                      // Don't throw if we have cached data
+                      if (!userData) {
+                          throw error;
+                      }
                   }
-                }
               }
-    
-              // Initialize feature managers
+  
               await this.initializeFeatureManagers();
-            } else {
-              await this.deactivateFeatureManagers();
+          } else if (!await this.checkForURLParameters()) {
               await this.managers.ui.initializeLoginUI();
-            }
-          } catch (error) {
-            console.error('Error handling auth state change:', error);
-            if (navigator.onLine) {
-              await this.managers.auth.logout();
-            }
           }
-        });
   
-        // Initialize service worker for PWA functionality
-        if ('serviceWorker' in navigator) {
-          this.managers.serviceWorker = ServiceWorkerManager.getInstance();
-          await this.managers.serviceWorker.initialize();
-        }
+          // Initialize service worker last
+          if ('serviceWorker' in navigator) {
+              this.managers.serviceWorker = ServiceWorkerManager.getInstance();
+              await this.managers.serviceWorker.initialize();
+          }
   
-        // Check auth state last
-        const isAuthenticated = await this.managers.auth.checkAuthStatus();
-        if (!isAuthenticated && !await this.checkForURLParameters()) {
-          await this.managers.ui.initializeLoginUI();
-        }
-    
-        this.initialized = true;  
+          this.initialized = true;
       } catch (error) {
-        this.logger.error('Failed to initialize core system:', error);
-        throw error;
+          this.logger.error('Failed to initialize core system:', error);
+          throw error;
       }
   }
 
