@@ -1,12 +1,8 @@
-const CACHE_VERSION = 'v528';  // Should match ConfigManager.js version
+const CACHE_VERSION = 'v529';  // Should match ConfigManager.js version
 const CACHE_NAME = 'snow-report-cache';
 const FULL_CACHE_NAME = `${CACHE_NAME}-${CACHE_VERSION}`;
 const OFFLINE_PAGE = '/offline.html';
 const AUTH_CACHE_NAME = 'auth-cache';
-const AUTH_ENDPOINTS = [
-  '/api/auth-status',
-  '/api/user-data'
-];
 
 const urlsToCache = [
   '/',
@@ -92,45 +88,37 @@ self.addEventListener('fetch', function(event) {
   const url = new URL(event.request.url);
 
   // Special handling for auth-status endpoint
-  if (AUTH_ENDPOINTS.includes(url.pathname)) {
+  if (url.pathname === '/api/auth-status') {
     event.respondWith(
-      fetch(event.request.clone())
-        .then(response => {
-          // Only cache successful responses
-          if (response.status === 200) {
-            const responseToCache = response.clone();
-            caches.open(AUTH_CACHE_NAME)
-              .then(cache => {
-                cache.put(event.request, responseToCache);
-              });
-          }
-          return response;
-        })
-        .catch(async () => {
-          // On network failure, try cached response
-          const cache = await caches.open(AUTH_CACHE_NAME);
-          const cachedResponse = await cache.match(event.request);
-          
-          if (cachedResponse) {
-            // For auth-status endpoint, verify with localStorage
-            if (url.pathname === '/api/auth-status') {
-              const authData = localStorage.getItem('auth_data');
-              if (authData) {
-                try {
-                  const parsed = JSON.parse(authData);
-                  if (parsed.isAuthenticated) {
+        fetch(event.request)
+            .then(response => {
+                // Clone the response before caching
+                const responseToCache = response.clone();
+                caches.open(FULL_CACHE_NAME)
+                    .then(cache => {
+                        cache.put(event.request, responseToCache);
+                    });
+                return response;
+            })
+            .catch(async function() {
+                const cache = await caches.open(FULL_CACHE_NAME);
+                const cachedResponse = await cache.match(event.request);
+                if (cachedResponse) {
                     return cachedResponse;
-                  }
-                } catch (e) {
-                  // Invalid auth data
                 }
-              }
-            } else {
-              return cachedResponse;
-            }
-          }
-          throw new Error('No cached auth response');
-        })
+                // If no cached response but we have auth data in localStorage,
+                // return a synthetic successful response
+                const authData = localStorage.getItem('auth_data');
+                if (authData && JSON.parse(authData).isAuthenticated) {
+                    return new Response(JSON.stringify({
+                        isAuthenticated: true,
+                        fromCache: true
+                    }), {
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                }
+                throw new Error('No cached auth response');
+            })
     );
     return;
   }
