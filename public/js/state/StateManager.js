@@ -3,7 +3,6 @@
 import Logger from '../utils/Logger.js';
 import StorageManager from '../storage/StorageManager.js';
 import AuthManager from '../auth/AuthManager.js';
-import StorageManager from '../storage/StorageManager.js';
 
 class StateManager {
   static instance = null;
