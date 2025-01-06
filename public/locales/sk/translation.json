@@ -124,7 +124,7 @@
     "takePhoto": "Urobiť fotografiu",
     "captionPlaceholder": "Pridať popisku ...",
     "privateReport": "Uložiť ako koncept",
-    "privateReportHelp": "Ak je toto pole zaškrtnuté, správa nebude zverejnená. Môžete ju zverejniť neskôr, nájdete ju v záložke Správy vo vašom používateľskom profile.",
+    "privateReportHelp": "Ak je toto pole zaškrtnuté, správa nebude zverejnená. Môžete ju zverejniť neskôr, nájdete ju v záložke Správy vo vašom používateľskom profile na portáli Na bežky!.",
     "gpsTrack": {
       "attachLabel": "Priložiť GPS záznam z {{date}}",
       "details": "Dĺžka trasy: {{distance}} km, Trvanie: {{duration}}"
