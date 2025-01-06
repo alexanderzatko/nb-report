@@ -123,7 +123,7 @@
     "selectPhotos": "Vybrat fotografie",
     "captionPlaceholder": "Přidat popisek ...",
     "privateReport": "Uložit jako koncept",
-    "privateReportHelp": "Pokud je toto pole zaškrtnuto, zpráva nebude zveřejněna. Můžete ji zveřejnit později, najdete ji v záložce Zprávy ve vašem uživatelském profilu.",
+    "privateReportHelp": "Pokud je toto pole zaškrtnuto, zpráva nebude zveřejněna. Můžete ji zveřejnit později, najdete ji v záložce Zprávy ve vašem uživatelském profilu v portálu Na bežky!.",
     "gpsTrack": {
       "attachLabel": "Připojit GPS záznam z {{date}}",
       "details": "Délka trasy: {{distance}} km, Trvání: {{duration}}"
