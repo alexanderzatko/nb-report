@@ -291,7 +291,60 @@ class StateManager {
     }
     return result;
   }
-
+  
+  async restorePersistedState() {
+      try {
+          // Try to restore auth data
+          const authData = localStorage.getItem(AuthManager.AUTH_DATA_KEY);
+          if (authData) {
+              const parsedAuthData = JSON.parse(authData);
+              if (parsedAuthData.isAuthenticated) {
+                  this.setState('auth.isAuthenticated', true);
+              }
+          }
+  
+          // Try to restore cached user data
+          const cachedUserData = localStorage.getItem('cached_user_data');
+          if (cachedUserData) {
+              try {
+                  const userData = JSON.parse(cachedUserData);
+                  this.setState('auth.user', userData);
+                  this.setState('storage.userData', userData);
+              } catch (e) {
+                  this.logger.error('Error parsing cached user data:', e);
+              }
+          }
+  
+          // Restore selected ski center if exists
+          const storageManager = StorageManager.getInstance();
+          const selectedSkiCenter = storageManager.getSelectedSkiCenter();
+          if (selectedSkiCenter) {
+              this.setState('skiCenter.selected', selectedSkiCenter);
+          }
+  
+          // Load any persisted state from localStorage
+          const persistedState = localStorage.getItem('appState');
+          if (persistedState) {
+              try {
+                  const parsedState = JSON.parse(persistedState);
+                  this.batchUpdate(parsedState);
+              } catch (error) {
+                  this.logger.error('Error parsing persisted state:', error);
+              }
+          }
+  
+          this.logger.debug('State restoration complete', {
+              hasAuthData: !!authData,
+              hasUserData: !!cachedUserData,
+              hasSelectedSkiCenter: !!selectedSkiCenter,
+              hasPersistedState: !!persistedState
+          });
+  
+      } catch (error) {
+          this.logger.error('Error restoring persisted state:', error);
+          throw error;
+      }
+  }
   async selectSkiCenter(skiCenterId) {
     const storage = this.getState('storage.userData');
     
