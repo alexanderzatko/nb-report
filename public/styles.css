@@ -195,10 +195,6 @@
     transition: all 0.2s ease;
 }
 
-.ski-center-item.active {
-    border-color: #0078d4;
-    background: #f0f7ff;
-}
 .ski-center-item.active input {
     background: radial-gradient(
         circle,
