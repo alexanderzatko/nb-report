@@ -109,7 +109,32 @@ class App {
           throw error;
       }
   }
-
+  
+  async handleOnlineStatus() {
+      this.logger.debug('Application is online');
+      try {
+          // If we have auth, verify with server and refresh data
+          const authManager = AuthManager.getInstance();
+          const isAuthenticated = await authManager.checkAuthStatus();
+          
+          if (isAuthenticated) {
+              // Refresh user data
+              await this.refreshUserData();
+              
+              // If we have feature managers initialized, refresh their data too
+              if (this.featureManagersInitialized) {
+                  await this.initializeFeatureManagers();
+              }
+          }
+      } catch (error) {
+          this.logger.error('Error handling online status:', error);
+      }
+  }
+  
+  handleOfflineStatus() {
+      this.logger.debug('Application is offline');
+  }
+  
   async initializeCorei18n() {
     // Only initialize if not already initialized
     if (!this.i18next.isInitialized) {
