@@ -61,33 +61,39 @@ class AuthManager {
         if (isValid) {
           await this.restoreUserState(storedAuthData);
           this.notifyAuthStateChange(true);
+          this.setupTokenRefresh(); // Setup refresh for when online
           return true;
         }
       }
 
       if (navigator.onLine) {
-        const response = await fetch('/api/auth-status', {
-          credentials: 'include',
-          headers: {
-            'X-Session-ID': storedSessionId
-          }
-        });
-      
-        const data = await response.json();
-        console.log('Auth status response:', data);
-      
-        if (data.isAuthenticated) {
-          await this.updateStoredAuthData({
-            ...storedAuthData,
-            timestamp: Date.now(),
-            isAuthenticated: true
-          });
-  
-          if (!this.tokenRefreshInterval) {
-                this.setupTokenRefresh();
+        try {
+            const response = await fetch('/api/auth-status', {
+                credentials: 'include',
+                headers: {
+                    'X-Session-ID': storedAuthData.sessionId
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.isAuthenticated) {
+                // Update stored data with fresh timestamp
+                await this.updateStoredAuthData({
+                    ...storedAuthData,
+                    timestamp: Date.now()
+                });
+
+                if (!this.tokenRefreshInterval) {
+                    this.setupTokenRefresh();
+                }
+                return true;
             }
-          this.notifyAuthStateChange(true);
-          return true;
+        } catch (error) {
+            // If server check fails but we have valid stored data, stay logged in
+            if (this.validateStoredAuthData(storedAuthData)) {
+                return true;
+            }
         }
       }
 
@@ -95,28 +101,46 @@ class AuthManager {
       this.notifyAuthStateChange(false);
       return false;
     } catch (error) {
-      if (!navigator.onLine && this.getStoredAuthData()) {
-        // Keep existing auth state when offline
-        return true;
-      }
-      console.error('Error checking auth status:', error);
-      this.notifyAuthStateChange(false);
-      return false;
+        console.error('Error checking auth status:', error);
+        // If error occurs but we have valid stored data, stay logged in
+        if (storedAuthData && this.validateStoredAuthData(storedAuthData)) {
+            return true;
+        }
+        this.notifyAuthStateChange(false);
+        return false;
     }
   }
 
   validateStoredAuthData(authData) {
-    if (!authData || !authData.timestamp || !authData.sessionId || !authData.isAuthenticated) {
-      return false;
+    if (!authData || !authData.timestamp || !authData.isAuthenticated) {
+        return false;
     }
 
     const thirtyDays = 30 * 24 * 60 * 60 * 1000;
-    return (Date.now() - authData.timestamp) < thirtyDays;
+    const timeSinceAuth = Date.now() - authData.timestamp;
+
+    // Be more lenient with validation when offline
+    if (!navigator.onLine) {
+        // Allow session to persist longer when offline
+        return timeSinceAuth < (thirtyDays * 2);
+    }
+
+    return timeSinceAuth < thirtyDays;
   }
 
   async updateStoredAuthData(authData) {
+
+    // Ensure all required fields are present
+    const updatedAuthData = {
+        ...authData,
+        timestamp: authData.timestamp || Date.now(),
+        isAuthenticated: true,
+    };
+    
     localStorage.setItem(AuthManager.AUTH_DATA_KEY, JSON.stringify(authData));
     await this.restoreUserState(authData);
+
+    this.notifyAuthStateChange(true);
   }
 
   getStoredAuthData() {
@@ -391,6 +415,15 @@ async initiateOAuth() {
     }
   }
 
+  createAuthData(sessionId, userData = null) {
+      return {
+          timestamp: Date.now(),
+          sessionId: sessionId,
+          isAuthenticated: true,
+          userData: userData
+      };
+  }
+  
   async exchangeToken(code) {
     console.log('Attempting to exchange token with code:', code);
     try {
@@ -422,10 +455,16 @@ async initiateOAuth() {
         console.log('Token exchange successful');
         
         if (data.sessionId) {
+          // Create and store complete auth data
+          const authData = this.createAuthData(data.sessionId);
+          await this.updateStoredAuthData(authData);
+
           console.log('Storing session ID:', data.sessionId);
           localStorage.setItem(AuthManager.SESSION_KEY, data.sessionId);
         }
-        
+
+        this.setupTokenRefresh();
+
         return true;
       } else {
         throw new Error('Token exchange failed');
