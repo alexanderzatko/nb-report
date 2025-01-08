@@ -52,13 +52,13 @@ const urlsToCache = [
 ];
 
 const CACHE_ENDPOINTS = [
-  '/api/auth-status',
-  '/api/user-data'
+  '/api/auth-status'
 ];
 
 const NEVER_CACHE_ENDPOINTS = [
   '/api/nblogin',
-  '/api/refresh-token'
+  '/api/refresh-token',
+  '/api/user-data'
 ];
 
 self.addEventListener('install', function(event) {
