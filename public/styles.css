@@ -586,14 +586,14 @@ input[type="date"] {
 
 input[type="date"]::-webkit-calendar-picker-indicator {
     cursor: pointer;
-    padding: 5px;
+    padding: 0px;
     position: relative;
     left: 12px;
-    top:17px;
+    top:26px;
     transform: translateY(-50%);
     width: 20px;
     height: 20px;
-    margin-right: 5px;
+    margin-right: 10px;
     height: 37px;
 }
 
@@ -613,6 +613,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   input[type="date"]::-webkit-calendar-picker-indicator {
     width: 24px;
     height: 24px;
+    top: 13px;
   }
 }
 
