@@ -497,6 +497,7 @@ input[type=number] {
     width: 70px;
     padding: 10px;
     height: 37px;
+    font-size: 14px;
 }
 
 textarea#report-note {
