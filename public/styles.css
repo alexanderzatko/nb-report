@@ -340,6 +340,17 @@ input#report-date {
     font-size: 14px;
 }
 
+button#gpx-upload-btn {
+    height: 37px;
+    padding-left: 20px;
+    padding-right: 20px;
+    background-color: cadetblue;
+    border-color: unset;
+    border-radius: 5px;
+    color: white;
+    border: unset;
+}
+
 .modal {
     display: none;
     position: fixed;
@@ -665,6 +676,7 @@ div#photo-preview-container {
     cursor: pointer;
     font-size: 14px;
     height: 37px;
+    margin-right: 5px;
 }
 
 .photo-button:hover {
