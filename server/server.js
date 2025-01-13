@@ -12,7 +12,7 @@ import axios from 'axios';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 // OAuth Configuration
 const OAUTH_CLIENT_ID = process.env.OAUTH_CLIENT_ID;
