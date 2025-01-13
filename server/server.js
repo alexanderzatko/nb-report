@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import * as dotenv from 'dotenv';
 import express from 'express';
 import session from 'express-session';
 import path from 'path';
@@ -10,6 +10,10 @@ import winston from 'winston';
 import MySQLStore from 'express-mysql-session';
 import axios from 'axios';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
 // OAuth Configuration
 const OAUTH_CLIENT_ID = process.env.OAUTH_CLIENT_ID;
 const OAUTH_CLIENT_SECRET = process.env.OAUTH_CLIENT_SECRET;
@@ -17,10 +21,12 @@ const OAUTH_REDIRECT_URI = 'https://report.nabezky.sk/api/nblogin/';
 const OAUTH_PROVIDER_URL = 'https://nabezky.sk';
 const TOKEN_URL = process.env.TOKEN_URL || 'https://nabezky.sk/oauth2/token';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Create logs directory
+const logDir = path.resolve(__dirname, '../logs');
+if (!fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir, { recursive: true });
+}
 
-// Configure Winston logger
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
@@ -28,8 +34,13 @@ const logger = winston.createLogger({
     winston.format.json()
   ),
   transports: [
-    new winston.transports.File({ filename: 'server-error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'server-combined.log' })
+    new winston.transports.File({ 
+      filename: path.resolve(logDir, 'server-error.log'), 
+      level: 'error' 
+    }),
+    new winston.transports.File({ 
+      filename: path.resolve(logDir, 'server-combined.log')
+    })
   ]
 });
 
