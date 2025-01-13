@@ -14,12 +14,25 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
-console.log('Environment variables check:', {
-    hasClientId: !!process.env.OAUTH_CLIENT_ID,
-    hasClientSecret: !!process.env.OAUTH_CLIENT_SECRET,
-    hasTokenUrl: !!process.env.TOKEN_URL,
-    hasDbConfig: !!(process.env.DB_HOST && process.env.DB_NAME)
-});
+const requiredEnvVars = [
+    'OAUTH_CLIENT_ID',
+    'OAUTH_CLIENT_SECRET',
+    'TOKEN_URL',
+    'DB_HOST',
+    'DB_PORT',
+    'DB_USER',
+    'DB_PASSWORD',
+    'DB_NAME',
+    'SESSION_SECRET'
+];
+
+const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+if (missingEnvVars.length > 0) {
+    console.error('Missing required environment variables:', missingEnvVars);
+    process.exit(1);
+}
+
+console.log('All required environment variables are present');
 
 // OAuth Configuration
 const OAUTH_CLIENT_ID = process.env.OAUTH_CLIENT_ID;
