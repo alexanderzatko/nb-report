@@ -14,6 +14,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
+console.log('Environment variables check:', {
+    hasClientId: !!process.env.OAUTH_CLIENT_ID,
+    hasClientSecret: !!process.env.OAUTH_CLIENT_SECRET,
+    hasTokenUrl: !!process.env.TOKEN_URL,
+    hasDbConfig: !!(process.env.DB_HOST && process.env.DB_NAME)
+});
+
 // OAuth Configuration
 const OAUTH_CLIENT_ID = process.env.OAUTH_CLIENT_ID;
 const OAUTH_CLIENT_SECRET = process.env.OAUTH_CLIENT_SECRET;
@@ -22,7 +29,7 @@ const OAUTH_PROVIDER_URL = 'https://nabezky.sk';
 const TOKEN_URL = process.env.TOKEN_URL || 'https://nabezky.sk/oauth2/token';
 
 // Create logs directory
-const logDir = path.resolve(__dirname, '../logs');
+const logDir = path.resolve(__dirname, 'logs');
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });
 }
@@ -40,6 +47,9 @@ const logger = winston.createLogger({
     }),
     new winston.transports.File({ 
       filename: path.resolve(logDir, 'server-combined.log')
+    }),
+    new winston.transports.Console({
+      format: winston.format.simple()
     })
   ]
 });
