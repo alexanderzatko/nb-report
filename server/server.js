@@ -17,7 +17,6 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
 const requiredEnvVars = [
     'OAUTH_CLIENT_ID',
     'OAUTH_CLIENT_SECRET',
-    'TOKEN_URL',
     'DB_HOST',
     'DB_PORT',
     'DB_USER',
