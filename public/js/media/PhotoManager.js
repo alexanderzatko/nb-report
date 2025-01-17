@@ -9,6 +9,9 @@ class PhotoManager {
       if (PhotoManager.instance) {
           return PhotoManager.instance;
       }
+      this.photoEntries = [];  // Array of {id, file, caption, order} objects
+      this.nextId = 1;
+
       this.photos = [];
       this.photoCaptions = new Map();
       this.logger = Logger.getInstance();
@@ -438,8 +441,18 @@ class PhotoManager {
           img.src = e.target.result;
           img.dataset.rotation = '0';
 
-          const photoIndex = this.photos.indexOf(file);
-          wrapper.dataset.photoIndex = photoIndex;
+          // Generate unique ID and add to photoEntries
+          const photoId = `photo_${this.nextId++}`;
+          const photoOrder = this.photoEntries.length;
+          const photoEntry = {
+            id: photoId,
+            file: file,
+            caption: '',
+            order: photoOrder
+          };
+          this.photoEntries.push(photoEntry);
+          
+          wrapper.dataset.photoId = photoId;
 
           // Create photo info container
           const photoInfo = document.createElement('div');
@@ -449,17 +462,15 @@ class PhotoManager {
           const captionInput = document.createElement('input');
           captionInput.type = 'text';
           captionInput.className = 'photo-caption';
-          captionInput.placeholder = i18next.t('form.captionPlaceholder', 'Add a caption...');
+          captionInput.placeholder = this.i18next.t('form.captionPlaceholder', 'Add a caption...');
           captionInput.maxLength = 200;
-                    
-          // Restore caption if it exists
-          if (this.photoCaptions.has(photoIndex)) {
-            captionInput.value = this.photoCaptions.get(photoIndex);
-          }
 
-          // Save caption on input
+          // Save caption to the photoEntry
           captionInput.addEventListener('input', (e) => {
-            this.photoCaptions.set(photoIndex, e.target.value);
+            const entry = this.photoEntries.find(entry => entry.id === photoId);
+            if (entry) {
+              entry.caption = e.target.value;
+            }
           });
 
           const controlsDiv = document.createElement('div');
@@ -472,7 +483,7 @@ class PhotoManager {
           rotateBtn.onclick = async (event) => {
             event.preventDefault();
             event.stopPropagation();
-            await this.rotatePhoto(img, file, photoIndex);
+            await this.rotatePhoto(img, file, photoId);
           };
 
           const removeBtn = document.createElement('button');
@@ -481,8 +492,7 @@ class PhotoManager {
           removeBtn.onclick = (event) => {
             event.preventDefault();
             event.stopPropagation();
-            const currentIndex = parseInt(wrapper.dataset.photoIndex);
-            this.removePhoto(currentIndex, wrapper);
+            this.removePhoto(photoId, wrapper);
           };
 
           controlsDiv.appendChild(rotateBtn);
@@ -523,32 +533,21 @@ class PhotoManager {
     }
   }
 
-  removePhoto(photoIndex, wrapper) {
-    this.logger.debug('Removing photo at index:', photoIndex, 'Current photos array:', this.photos);
-    
-    if (photoIndex >= 0 && photoIndex < this.photos.length) {
-      // Remove from arrays
-      this.photos.splice(photoIndex, 1);
-      this.photoCaptions.delete(photoIndex);
+  removePhoto(photoId, wrapper) {
+    // Find and remove the entry
+    const entryIndex = this.photoEntries.findIndex(entry => entry.id === photoId);
+    if (entryIndex >= 0) {
+      this.photoEntries.splice(entryIndex, 1);
       
-      // Remove from UI
-      wrapper.remove();
-      
-      // Update all remaining photo indices and their captions
-      const allPreviews = document.querySelectorAll('.photo-preview');
-      allPreviews.forEach((preview, newIndex) => {
-        preview.dataset.photoIndex = newIndex;
-        const oldIndex = parseInt(preview.dataset.photoIndex);
-        if (this.photoCaptions.has(oldIndex)) {
-          const caption = this.photoCaptions.get(oldIndex);
-          this.photoCaptions.delete(oldIndex);
-          this.photoCaptions.set(newIndex, caption);
-        }
+      // Update order values for remaining entries
+      this.photoEntries.forEach((entry, index) => {
+        entry.order = index;
       });
       
-      this.logger.debug('Photo removed. Remaining photos:', this.photos);
+      wrapper.remove();
+      this.logger.debug('Photo removed. Remaining photos:', this.photoEntries);
     } else {
-      this.logger.error('Invalid photo index:', photoIndex);
+      this.logger.error('Invalid photo ID:', photoId);
     }
   }
 
@@ -597,15 +596,18 @@ class PhotoManager {
   }
 
   getPhotos() {
-    return this.photos.map((photo, index) => ({
-      file: photo,
-      caption: this.photoCaptions.get(index) || ''
-    }));
+    // Return photos sorted by their original order
+    return this.photoEntries
+      .sort((a, b) => a.order - b.order)
+      .map(entry => ({
+        file: entry.file,
+        caption: entry.caption,
+        id: entry.id
+      }));
   }
 
   clearPhotos() {
-    this.photos = [];
-    this.photoCaptions.clear();
+    this.photoEntries = [];
     const previewContainer = document.getElementById('photo-preview-container');
     if (previewContainer) {
       previewContainer.innerHTML = '';
