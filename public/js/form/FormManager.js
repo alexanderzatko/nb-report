@@ -1302,86 +1302,93 @@ class FormManager {
       }
   }
 
-  async handlePhotoUploads(progressDiv, totalPhotos) {
-      const photoManager = PhotoManager.getInstance();
-      const photos = photoManager.getPhotos();
-      const photoIds = [];
-      const photoCaptions = {};
-      let currentPhoto = 0;
-
-      if (photos && photos.length > 0) {
-          for (const photo of photos) {
-              try {
-                  currentPhoto++;
-                  const progressText = this.i18next.t('form.uploadingPhotos', {
-                      current: currentPhoto,
-                      total: photos.length
-                  });
-                  if (progressDiv) {
-                      progressDiv.textContent = progressText;
-                  }
-                  
-                  this.logger.debug('Preparing photo upload:', {
-                      filename: photo.file.name,
-                      size: photo.file.size,
-                      type: photo.file.type,
-                      hasCaption: !!photo.caption,
-                      progress: `${currentPhoto}/${totalPhotos}`
-                  });
+  async handlePhotoUploads(progressDiv) {
+    const photoManager = PhotoManager.getInstance();
+    const photos = photoManager.getPhotos();  // Now returns ordered array of {file, caption, id}
+    const photoIds = [];
+    const photoCaptions = {};
+    const photoOrder = new Map();  // Track original order
+    let currentPhoto = 0;
   
-                  const photoData = new FormData();
-                  photoData.append('filedata', photo.file);
-                  if (photo.caption) {
-                      photoData.append('caption', photo.caption);
-                      this.logger.debug('Added caption to FormData:', photo.caption);
-                  }
-
-                  let formDataEntries = [];
-                  for (let pair of photoData.entries()) {
-                      formDataEntries.push({key: pair[0], value: pair[1] instanceof File ? pair[1].name : pair[1]});
-                  }
-                  this.logger.debug('FormData contents:', formDataEntries);
-
-                  const response = await fetch('/api/upload-file', {
-                      method: 'POST',
-                      credentials: 'include',
-                      body: photoData
-                  });
-                  
-                  if (!response.ok) {
-                      const errorData = await response.json();
-                      this.logger.error('Photo upload failed:', {
-                          status: response.status,
-                          statusText: response.statusText,
-                          error: errorData
-                      });
-                      throw new Error(errorData.details || errorData.error || 'Upload failed');
-                  }
-                  
-                  const result = await response.json();
-                  this.logger.debug('Photo upload successful:', result);
-                  photoIds.push(result.fid);
-                  if (photo.caption) {
-                      photoCaptions[result.fid] = photo.caption;
-                  }
-              } catch (error) {
-                  this.logger.error('Error uploading photo:', {
-                    error: error.message,
-                    details: error.response?.data,
-                    status: error.response?.status
-                  });
-                  throw new Error(`Failed to upload photo: ${error.response?.data?.details || error.message}`);
-              }
-          }
+    if (photos && photos.length > 0) {
+      for (const photo of photos) {
+        try {
+          currentPhoto++;
+          const progressText = this.i18next.t('form.uploadingPhotos', {
+            current: currentPhoto,
+            total: photos.length
+          });
           if (progressDiv) {
-              progressDiv.textContent = this.i18next.t('form.photosUploaded');
+            progressDiv.textContent = progressText;
           }
+  
+          this.logger.debug('Preparing photo upload:', {
+            filename: photo.file.name,
+            size: photo.file.size,
+            type: photo.file.type,
+            hasCaption: !!photo.caption,
+            photoId: photo.id,
+            progress: `${currentPhoto}/${photos.length}`
+          });
+  
+          const photoData = new FormData();
+          photoData.append('filedata', photo.file);
+          if (photo.caption) {
+            photoData.append('caption', photo.caption);
+            this.logger.debug('Added caption to FormData:', photo.caption);
+          }
+  
+          const response = await fetch('/api/upload-file', {
+            method: 'POST',
+            credentials: 'include',
+            body: photoData
+          });
+  
+          if (!response.ok) {
+            const errorData = await response.json();
+            this.logger.error('Photo upload failed:', {
+              status: response.status,
+              statusText: response.statusText,
+              error: errorData
+            });
+            throw new Error(errorData.details || errorData.error || 'Upload failed');
+          }
+  
+          const result = await response.json();
+          this.logger.debug('Photo upload successful:', result);
+          
+          // Store fid and maintain order
+          photoIds.push(result.fid);
+          photoOrder.set(result.fid, photo.id);  // Link server fid to original photo ID
+          if (photo.caption) {
+            photoCaptions[result.fid] = photo.caption;
+          }
+        } catch (error) {
+          this.logger.error('Error uploading photo:', {
+            error: error.message,
+            details: error.response?.data,
+            status: error.response?.status
+          });
+          throw new Error(`Failed to upload photo: ${error.response?.data?.details || error.message}`);
+        }
       }
       
-      return {
-          photoIds: photoIds,
-          photoCaptions: photoCaptions
-      };
+      if (progressDiv) {
+        progressDiv.textContent = this.i18next.t('form.photosUploaded');
+      }
+    }
+  
+    // Sort photoIds array based on original order
+    const sortedPhotoIds = photoIds.sort((a, b) => {
+      const orderA = photos.findIndex(p => p.id === photoOrder.get(a));
+      const orderB = photos.findIndex(p => p.id === photoOrder.get(b));
+      return orderA - orderB;
+    });
+  
+    return {
+      photoIds: sortedPhotoIds,
+      photoCaptions: photoCaptions
+    };
   }
   
   async handleGpxUpload() {
