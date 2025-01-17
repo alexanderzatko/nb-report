@@ -36,9 +36,9 @@ console.log('All required environment variables are present');
 // OAuth Configuration
 const OAUTH_CLIENT_ID = process.env.OAUTH_CLIENT_ID;
 const OAUTH_CLIENT_SECRET = process.env.OAUTH_CLIENT_SECRET;
-const OAUTH_REDIRECT_URI = 'https://report.nabezky.sk/api/nblogin/';
-const OAUTH_PROVIDER_URL = 'https://nabezky.sk';
-const TOKEN_URL = process.env.TOKEN_URL || 'https://nabezky.sk/oauth2/token';
+const OAUTH_REDIRECT_URI = process.env.OAUTH_REDIRECT_URI;
+const OAUTH_PROVIDER_URL = process.env.OAUTH_PROVIDER_URL;
+const TOKEN_URL = process.env.TOKEN_URL;
 
 // Create logs directory
 const logDir = path.resolve(__dirname, 'logs');
