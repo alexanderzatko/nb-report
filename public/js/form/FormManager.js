@@ -6,6 +6,7 @@ import PhotoManager from '../media/PhotoManager.js';
 import Logger from '../utils/Logger.js';
 import GPSManager from '../managers/GPSManager.js';
 import StateManager from '../state/StateManager.js';
+import AuthManager from '../auth/AuthManager.js';
 
 class FormManager {
   static instance = null;
@@ -1005,6 +1006,13 @@ class FormManager {
     const progressDiv = document.getElementById('submission-progress');
 
     try {
+
+      const authManager = AuthManager.getInstance();
+      const tokenRefreshed = await authManager.checkAndRefreshToken();
+      if (!tokenRefreshed) {
+          throw new Error('Authentication expired. Please log in again.');
+      }
+
       this.isSubmitting = true;
       submitButton.classList.add('submitting');
       this.logger.debug('Form submission started');
