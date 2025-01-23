@@ -212,22 +212,10 @@ class AuthManager {
 
       try {
         const success = await this.checkAndRefreshToken();
-        if (!success) {
-
-          await fetch('/api/log-error', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                  level: 'warn',
-                  message: 'Token refresh failed, preparing for reload',
-                  data: {
-                      timestamp: new Date().toISOString()
-                  }
-              })
-          });
-          
+        if (!success && !FormManager.getInstance().isFormActive()) {
+          // Only clear auth if not actively using form
           this.clearAuthData();
-          window.location.reload();
+          StateManager.getInstance().setState('auth.isAuthenticated', false);
         }
       } catch (error) {
         await fetch('/api/log-error', {
@@ -476,27 +464,21 @@ async initiateOAuth() {
   }
 
   async checkAndRefreshToken() {
-
       if (!navigator.onLine) {
           this.logger.debug('Offline - skipping token refresh');
-          return true; // Return true to prevent logout/reload
+          return true;
       }
   
       try {
-
           await fetch('/api/log-error', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                   level: 'info',
-                  message: 'Token refresh starting',
-                  data: {
-                      hasSessionId: !!localStorage.getItem(AuthManager.SESSION_KEY),
-                      timestamp: new Date().toISOString()
-                  }
+                  message: 'Token refresh starting'
               })
           });
-        
+  
           const response = await fetch('/api/refresh-token', {
               method: 'POST',
               credentials: 'include',
@@ -504,78 +486,22 @@ async initiateOAuth() {
                   'Content-Type': 'application/json'
               }
           });
-
-          await fetch('/api/log-error', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                  level: 'info',
-                  message: 'Token refresh response received',
-                  data: {
-                      status: response.status,
-                      ok: response.ok,
-                      timestamp: new Date().toISOString()
-                  }
-              })
-          });
-          
+  
           if (response.ok) {
               const data = await response.json();
               if (data.success) {
-                  console.log('Token refreshed successfully');
                   return true;
               }
           } else if (response.status === 401) {
-
-              await fetch('/api/log-error', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                      level: 'warn',
-                      message: 'Token refresh 401 received',
-                      data: {
-                          responseText: await response.text(),
-                          timestamp: new Date().toISOString()
-                      }
-                  })
-              });
-            
-              const isLoggedIn = await this.checkAuthStatus();
-              if (!isLoggedIn) {
-                  if (this.tokenRefreshInterval) {
-                      clearInterval(this.tokenRefreshInterval);
-                      this.tokenRefreshInterval = null;
-                  }
-
-                  await fetch('/api/log-error', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                          level: 'warn',
-                          message: 'Auth check failed after 401',
-                          data: {
-                              timestamp: new Date().toISOString()
-                          }
-                      })
-                  });
-
-                  return false;
+              const formManager = FormManager.getInstance();
+              if (!formManager.isSubmitting) {
+                  this.clearAuthData();
+                  StateManager.getInstance().setState('auth.isAuthenticated', false);
               }
+              return false;
           }
       } catch (error) {
-          await fetch('/api/log-error', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                  level: 'error',
-                  message: 'Token refresh error',
-                  data: {
-                      error: error.message,
-                      stack: error.stack,
-                      timestamp: new Date().toISOString()
-                  }
-              })
-          });
+          this.logger.error('Token refresh error:', error);
           return false;
       }
   }
