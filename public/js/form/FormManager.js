@@ -1578,26 +1578,23 @@ class FormManager {
   }
 
   resetForm() {
+    // First handle database cleanup if we have a form ID
+    if (this.currentFormId) {
+        try {
+            this.dbManager.clearForm(this.currentFormId);
+            this.currentFormId = null;
+        } catch (error) {
+            this.logger.error('Error clearing form data:', error);
+        }
+    }
+    
     const form = document.getElementById('snow-report-form');
     if (form) {
       form.reset();
       this.trailConditions = {};
       this.photoManager.clearPhotos();
       this.stopTrackingFormTime();
-      if (this.currentFormId) {
-        try {
-            // Clear form data from database
-            await this.dbManager.clearForm(this.currentFormId);
-            this.currentFormId = null;
-        } catch (error) {
-            this.logger.error('Error clearing form data:', error);
-        }
-      }
-
       this.formStartTime = null;
-      
-      // Clear select manager state
-      this.selectManager.clearState();
       
       const hoursElement = document.getElementById('elapsed-hours');
       const minutesElement = document.getElementById('elapsed-minutes');
