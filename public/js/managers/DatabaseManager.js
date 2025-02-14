@@ -142,73 +142,114 @@ class DatabaseManager {
 
     // Photo methods
     async savePhoto(formId, file, caption = '') {
-        const db = await this.getDatabase();
-        const transaction = db.transaction(['photos'], 'readwrite');
-        const store = transaction.objectStore('photos');
-    
-        // Convert File to storable format
-        const photoData = {
-            id: Date.now().toString(),
-            formId,
-            caption,
-            timestamp: new Date().toISOString(),
-            // Store file metadata
-            file: {
+        try {
+            // Convert file to base64 BEFORE starting the transaction
+            const fileData = {
                 name: file.name,
                 type: file.type,
                 lastModified: file.lastModified,
-                // Convert file to base64
                 data: await this.fileToBase64(file)
-            }
-        };
+            };
     
-        return new Promise((resolve, reject) => {
-            const request = store.add(photoData);
-            request.onsuccess = () => resolve(photoData.id);
-            request.onerror = () => reject(request.error);
-        });
+            const photoData = {
+                id: Date.now().toString(),
+                formId,
+                caption,
+                timestamp: new Date().toISOString(),
+                file: fileData
+            };
+    
+            // Now start the transaction with the prepared data
+            const db = await this.getDatabase();
+            const transaction = db.transaction(['photos'], 'readwrite');
+            const store = transaction.objectStore('photos');
+    
+            return new Promise((resolve, reject) => {
+                const request = store.add(photoData);
+                
+                request.onsuccess = () => resolve(photoData.id);
+                
+                request.onerror = () => reject(request.error);
+                
+                // Handle transaction errors
+                transaction.onerror = () => reject(transaction.error);
+                
+                // Ensure transaction completes
+                transaction.oncomplete = () => {
+                    this.logger.debug('Photo transaction completed successfully');
+                };
+            });
+        } catch (error) {
+            this.logger.error('Error in savePhoto:', error);
+            throw error;
+        }
     }
 
     async fileToBase64(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
+            
             reader.onload = () => resolve(reader.result);
-            reader.onerror = reject;
+            
+            reader.onerror = () => {
+                this.logger.error('Error reading file:', reader.error);
+                reject(reader.error);
+            };
+            
+            reader.onabort = () => {
+                this.logger.warn('File reading aborted');
+                reject(new Error('File reading aborted'));
+            };
+            
             reader.readAsDataURL(file);
         });
     }
     
     async getPhotos(formId) {
-        const db = await this.getDatabase();
-        const transaction = db.transaction(['photos'], 'readonly');
-        const store = transaction.objectStore('photos');
-        const index = store.index('formId');
+        try {
+            const db = await this.getDatabase();
+            const transaction = db.transaction(['photos'], 'readonly');
+            const store = transaction.objectStore('photos');
+            const index = store.index('formId');
     
-        return new Promise((resolve, reject) => {
-            const request = index.getAll(formId);
-            request.onsuccess = async () => {
-                const photos = request.result;
-                // Convert base64 back to File objects
-                const processedPhotos = photos.map(photo => ({
-                    ...photo,
-                    photo: this.base64ToFile(photo.file.data, photo.file.name, photo.file.type)
-                }));
-                resolve(processedPhotos);
-            };
-            request.onerror = () => reject(request.error);
-        });
+            return new Promise((resolve, reject) => {
+                const request = index.getAll(formId);
+                
+                request.onsuccess = () => {
+                    const photos = request.result;
+                    const processedPhotos = photos.map(photo => ({
+                        ...photo,
+                        photo: this.base64ToFile(photo.file.data, photo.file.name, photo.file.type)
+                    }));
+                    resolve(processedPhotos);
+                };
+                
+                request.onerror = () => reject(request.error);
+                
+                transaction.onerror = () => reject(transaction.error);
+            });
+        } catch (error) {
+            this.logger.error('Error in getPhotos:', error);
+            throw error;
+        }
     }
 
     base64ToFile(base64, filename, type) {
-        const arr = base64.split(',');
-        const mime = arr[0].match(/:(.*?);/)[1];
-        const bstr = atob(arr[1]);
-        let n = bstr.length;
-        const u8arr = new Uint8Array(n);
-        while(n--) {
-            u8arr[n] = bstr.charCodeAt(n);
+        try {
+            const arr = base64.split(',');
+            const mime = arr[0].match(/:(.*?);/)[1];
+            const bstr = atob(arr[1]);
+            let n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            while(n--) {
+                u8arr[n] = bstr.charCodeAt(n);
+            }
+            return new File([u8arr], filename, { type: type || mime });
+        } catch (error) {
+            this.logger.error('Error converting base64 to File:', error);
+            // Return a minimal File object if conversion fails
+            return new File([""], filename, { type: type || 'image/jpeg' });
         }
-        return new File([u8arr], filename, { type: type || mime });
     }
     
     async deletePhoto(photoId) {
