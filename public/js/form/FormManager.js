@@ -164,6 +164,45 @@ class FormManager {
       }
   }
 
+  populateFormFields(formData) {
+      if (!formData) return;
+      
+      Object.entries(formData).forEach(([fieldId, value]) => {
+          const element = document.getElementById(fieldId);
+          if (element) {
+              if (element.type === 'checkbox') {
+                  element.checked = value;
+              } else {
+                  element.value = value;
+              }
+          }
+      });
+  
+      // Handle special cases like trail conditions
+      if (formData.trailConditions) {
+          this.trailConditions = formData.trailConditions;
+          this.updateTrailConditionsUI();
+      }
+  }
+  
+  // Helper method to update trail conditions UI
+  updateTrailConditionsUI() {
+      Object.entries(this.trailConditions).forEach(([trailId, conditions]) => {
+          const trailElement = document.querySelector(`[data-trail-id="${trailId}"]`);
+          if (trailElement) {
+              Object.entries(conditions).forEach(([type, value]) => {
+                  const btnContainer = trailElement.querySelector(`[data-type="${type}"]`);
+                  if (btnContainer) {
+                      const button = btnContainer.querySelector(`[data-value="${value}"]`);
+                      if (button) {
+                          button.click(); // This will trigger the UI update
+                      }
+                  }
+              });
+          }
+      });
+  }
+  
   setupEventListeners() {
       console.log('Setting up form event listeners');
       const form = document.getElementById('snow-report-form');
