@@ -1,6 +1,7 @@
 import Logger from '../utils/Logger.js';
 import i18next from '/node_modules/i18next/dist/esm/i18next.js';
 import StateManager from '../state/StateManager.js';
+import DatabaseManager from '../managers/DatabaseManager.js';
 
 class PhotoManager {
   static instance = null;
@@ -18,6 +19,8 @@ class PhotoManager {
       this.initialized = false;
       this.i18next = i18next;
       PhotoManager.instance = this;
+      this.dbManager = DatabaseManager.getInstance();
+      this.currentFormId = null;
   }
 
   static getInstance() {
@@ -261,111 +264,114 @@ class PhotoManager {
   }
   
   async handleFiles(fileList) {
-    if (!fileList || fileList.length === 0) {
-      this.logger.warn('No files selected');
-      return;
-    }
-  
-    const previewContainer = document.getElementById('photo-preview-container');
-    if (!previewContainer) {
-      this.logger.error('Preview container not found');
-      return;
-    }
-  
-    // Check if user is admin
-    const stateManager = StateManager.getInstance();
-    const userData = stateManager.getState('auth.user');
-    const isAdmin = userData?.ski_center_admin === "1";
-  
-    try {
-      for (const file of fileList) {
-        if (!file.type.startsWith('image/')) {
-          this.logger.warn(`Skipping non-image file: ${file.name}`);
-          continue;
-        }
-  
-        // Get timestamp from EXIF data before any processing
-        let photoTimestamp;
-        if (isAdmin) {
-          photoTimestamp = await this.getPhotoTimestamp(file);
-          this.logger.debug('Original photo timestamp:', photoTimestamp);
-        }
-  
-        // Process the image
-        let processedFile = await this.resizeImage(file);
-  
-        if (isAdmin && photoTimestamp) {
-          // Create a new canvas with timestamp
-          const canvas = document.createElement('canvas');
-          const img = new Image();
-          
-          await new Promise((resolve, reject) => {
-            const handleLoad = () => {
-              try {
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-  
-                // Draw the image
-                ctx.drawImage(img, 0, 0);
-  
-                // Configure text style
-                ctx.fillStyle = 'white';
-                ctx.strokeStyle = 'black';
-                ctx.lineWidth = 3;
-                const fontSize = Math.max(Math.min(img.width * 0.04, 48), 16);
-                ctx.font = `${fontSize}px Arial`;
-  
-                // Format the timestamp using the stored timestamp
-                const timestampText = photoTimestamp.toLocaleString(this.i18next.language, {
-                  year: 'numeric',
-                  month: '2-digit',
-                  day: '2-digit',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                });
-  
-                // Position text
-                const padding = fontSize;
-                const textMetrics = ctx.measureText(timestampText);
-                const x = canvas.width - textMetrics.width - padding;
-                const y = canvas.height - padding;
-  
-                // Draw text
-                ctx.strokeText(timestampText, x, y);
-                ctx.fillText(timestampText, x, y);
-  
-                // Convert to blob
-                canvas.toBlob((blob) => {
-                  processedFile = new File([blob], file.name, {
-                    type: 'image/jpeg',
-                    lastModified: photoTimestamp.getTime()
-                  });
-                  resolve();
-                }, 'image/jpeg', 0.9);
-              } catch (error) {
-                reject(error);
-              }
-            };
-  
-            img.onload = handleLoad;
-            img.onerror = reject;
-  
-            // Create object URL for the resized image
-            const url = URL.createObjectURL(processedFile);
-            img.src = url;
-            // Clean up object URL after use
-            URL.revokeObjectURL(url);
-          });
-        }
-  
-        this.photos.push(processedFile);
-        await this.addPhotoPreview(processedFile);
+      if (!fileList || fileList.length === 0) {
+          this.logger.warn('No files selected');
+          return;
       }
-    } catch (error) {
-      this.logger.error('Error handling files:', error);
-      throw error;
-    }
+  
+      const previewContainer = document.getElementById('photo-preview-container');
+      if (!previewContainer) {
+          this.logger.error('Preview container not found');
+          return;
+      }
+  
+      // Check if user is admin
+      const stateManager = StateManager.getInstance();
+      const userData = stateManager.getState('auth.user');
+      const isAdmin = userData?.ski_center_admin === "1";
+  
+      try {
+          for (const file of fileList) {
+              if (!file.type.startsWith('image/')) {
+                  this.logger.warn(`Skipping non-image file: ${file.name}`);
+                  continue;
+              }
+  
+              // Get timestamp from EXIF data before any processing
+              let photoTimestamp;
+              let processedFile = await this.resizeImage(file);
+  
+              if (isAdmin) {
+                  photoTimestamp = await this.getPhotoTimestamp(file);
+                  this.logger.debug('Original photo timestamp:', photoTimestamp);
+  
+                  // Create a new canvas with timestamp
+                  const canvas = document.createElement('canvas');
+                  const img = new Image();
+  
+                  await new Promise((resolve, reject) => {
+                      const handleLoad = () => {
+                          try {
+                              canvas.width = img.width;
+                              canvas.height = img.height;
+                              const ctx = canvas.getContext('2d');
+  
+                              // Draw the image
+                              ctx.drawImage(img, 0, 0);
+  
+                              // Configure text style
+                              ctx.fillStyle = 'white';
+                              ctx.strokeStyle = 'black';
+                              ctx.lineWidth = 3;
+                              const fontSize = Math.max(Math.min(img.width * 0.04, 48), 16);
+                              ctx.font = `${fontSize}px Arial`;
+  
+                              // Format the timestamp using the stored timestamp
+                              const timestampText = photoTimestamp.toLocaleString(this.i18next.language, {
+                                  year: 'numeric',
+                                  month: '2-digit',
+                                  day: '2-digit',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                              });
+  
+                              // Position text
+                              const padding = fontSize;
+                              const textMetrics = ctx.measureText(timestampText);
+                              const x = canvas.width - textMetrics.width - padding;
+                              const y = canvas.height - padding;
+  
+                              // Draw text
+                              ctx.strokeText(timestampText, x, y);
+                              ctx.fillText(timestampText, x, y);
+  
+                              // Convert to blob
+                              canvas.toBlob((blob) => {
+                                  processedFile = new File([blob], file.name, {
+                                      type: 'image/jpeg',
+                                      lastModified: photoTimestamp.getTime()
+                                  });
+                                  resolve();
+                              }, 'image/jpeg', 0.9);
+                          } catch (error) {
+                              reject(error);
+                          }
+                      };
+  
+                      img.onload = handleLoad;
+                      img.onerror = reject;
+  
+                      // Create object URL for the resized image
+                      const url = URL.createObjectURL(processedFile);
+                      img.src = url;
+                      // Clean up object URL after use
+                      URL.revokeObjectURL(url);
+                  });
+              }
+  
+              // Save to database first
+              if (this.currentFormId) {
+                  const photoId = await this.dbManager.savePhoto(this.currentFormId, processedFile);
+                  this.logger.debug('Saved photo to database:', photoId);
+              }
+  
+              this.photos.push(processedFile);
+              await this.addPhotoPreview(processedFile);
+          }
+      } catch (error) {
+          this.logger.error('Error handling files:', error);
+          throw error;
+      }
   }
 
   async resizeImage(file) {
@@ -533,22 +539,37 @@ class PhotoManager {
     }
   }
 
-  removePhoto(photoId, wrapper) {
-    // Find and remove the entry
-    const entryIndex = this.photoEntries.findIndex(entry => entry.id === photoId);
-    if (entryIndex >= 0) {
-      this.photoEntries.splice(entryIndex, 1);
-      
-      // Update order values for remaining entries
-      this.photoEntries.forEach((entry, index) => {
-        entry.order = index;
-      });
-      
-      wrapper.remove();
-      this.logger.debug('Photo removed. Remaining photos:', this.photoEntries);
-    } else {
-      this.logger.error('Invalid photo ID:', photoId);
-    }
+  async removePhoto(photoIndex, wrapper) {
+      try {
+          if (photoIndex >= 0 && photoIndex < this.photos.length) {
+              // Get the photo data
+              const photoData = await this.dbManager.getPhotos(this.currentFormId);
+              if (photoData && photoData[photoIndex]) {
+                  // Delete from database
+                  await this.dbManager.deletePhoto(photoData[photoIndex].id);
+              }
+
+              // Remove from arrays and UI
+              this.photos.splice(photoIndex, 1);
+              this.photoCaptions.delete(photoIndex);
+              wrapper.remove();
+
+              // Update remaining indices
+              const allPreviews = document.querySelectorAll('.photo-preview');
+              allPreviews.forEach((preview, newIndex) => {
+                  preview.dataset.photoIndex = newIndex;
+                  const oldIndex = parseInt(preview.dataset.photoIndex);
+                  if (this.photoCaptions.has(oldIndex)) {
+                      const caption = this.photoCaptions.get(oldIndex);
+                      this.photoCaptions.delete(oldIndex);
+                      this.photoCaptions.set(newIndex, caption);
+                  }
+              });
+          }
+      } catch (error) {
+          this.logger.error('Error removing photo:', error);
+          throw error;
+      }
   }
 
   async rotateImage(file, degrees) {
@@ -612,6 +633,48 @@ class PhotoManager {
     if (previewContainer) {
       previewContainer.innerHTML = '';
     }
+  }
+
+  setCurrentFormId(formId) {
+        this.currentFormId = formId;
+        // Attempt to restore photos for this form
+        if (formId) {
+            this.restorePhotos(formId);
+        }
+    }
+
+    async restorePhotos(formId) {
+        try {
+            const photos = await this.dbManager.getPhotos(formId);
+            this.photos = [];
+            this.photoCaptions.clear();
+            
+            for (const photoData of photos) {
+                this.photos.push(photoData.photo);
+                if (photoData.caption) {
+                    this.photoCaptions.set(this.photos.length - 1, photoData.caption);
+                }
+                await this.addPhotoPreview(photoData.photo, photoData.caption);
+            }
+        } catch (error) {
+            this.logger.error('Error restoring photos:', error);
+        }
+    }
+
+  async updatePhotoCaption(photoIndex, caption) {
+      try {
+          if (this.currentFormId) {
+              const photos = await this.dbManager.getPhotos(this.currentFormId);
+              if (photos && photos[photoIndex]) {
+                  const photoData = photos[photoIndex];
+                  photoData.caption = caption;
+                  await this.dbManager.savePhoto(this.currentFormId, photoData.photo, caption);
+              }
+          }
+          this.photoCaptions.set(photoIndex, caption);
+      } catch (error) {
+          this.logger.error('Error updating photo caption:', error);
+      }
   }
 }
 
