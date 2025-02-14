@@ -42,7 +42,7 @@ class PhotoManager {
         // Log all available tags for debugging
         logger.debug('All EXIF tags:');
         const allTags = EXIF.getAllTags(img);
-        logger.debug(JSON.stringify(allTags, null, 2));
+//        logger.debug(JSON.stringify(allTags, null, 2));
         
         // Try GPS timestamp first (it's in UTC)
         const gpsDateStamp = EXIF.getTag(img, "GPSDateStamp");
@@ -280,98 +280,112 @@ class PhotoManager {
       const userData = stateManager.getState('auth.user');
       const isAdmin = userData?.ski_center_admin === "1";
   
-      try {
-          for (const file of fileList) {
+      for (const file of fileList) {
+          try {
               if (!file.type.startsWith('image/')) {
                   this.logger.warn(`Skipping non-image file: ${file.name}`);
                   continue;
               }
   
-              // Get timestamp from EXIF data before any processing
-              let photoTimestamp;
+              // Process image first
               let processedFile = await this.resizeImage(file);
+              let photoTimestamp;
   
               if (isAdmin) {
                   photoTimestamp = await this.getPhotoTimestamp(file);
                   this.logger.debug('Original photo timestamp:', photoTimestamp);
   
-                  // Create a new canvas with timestamp
-                  const canvas = document.createElement('canvas');
-                  const img = new Image();
-  
-                  await new Promise((resolve, reject) => {
-                      const handleLoad = () => {
-                          try {
-                              canvas.width = img.width;
-                              canvas.height = img.height;
-                              const ctx = canvas.getContext('2d');
-  
-                              // Draw the image
-                              ctx.drawImage(img, 0, 0);
-  
-                              // Configure text style
-                              ctx.fillStyle = 'white';
-                              ctx.strokeStyle = 'black';
-                              ctx.lineWidth = 3;
-                              const fontSize = Math.max(Math.min(img.width * 0.04, 48), 16);
-                              ctx.font = `${fontSize}px Arial`;
-  
-                              // Format the timestamp using the stored timestamp
-                              const timestampText = photoTimestamp.toLocaleString(this.i18next.language, {
-                                  year: 'numeric',
-                                  month: '2-digit',
-                                  day: '2-digit',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                              });
-  
-                              // Position text
-                              const padding = fontSize;
-                              const textMetrics = ctx.measureText(timestampText);
-                              const x = canvas.width - textMetrics.width - padding;
-                              const y = canvas.height - padding;
-  
-                              // Draw text
-                              ctx.strokeText(timestampText, x, y);
-                              ctx.fillText(timestampText, x, y);
-  
-                              // Convert to blob
-                              canvas.toBlob((blob) => {
-                                  processedFile = new File([blob], file.name, {
-                                      type: 'image/jpeg',
-                                      lastModified: photoTimestamp.getTime()
-                                  });
-                                  resolve();
-                              }, 'image/jpeg', 0.9);
-                          } catch (error) {
-                              reject(error);
-                          }
-                      };
-  
-                      img.onload = handleLoad;
-                      img.onerror = reject;
-  
-                      // Create object URL for the resized image
-                      const url = URL.createObjectURL(processedFile);
-                      img.src = url;
-                      // Clean up object URL after use
-                      URL.revokeObjectURL(url);
-                  });
+                  // Process the image with timestamp
+                  processedFile = await this.addTimestampToImage(processedFile, photoTimestamp);
               }
   
-              // Save to database first
+              // Save to database
+              let photoId = null;
               if (this.currentFormId) {
-                  const photoId = await this.dbManager.savePhoto(this.currentFormId, processedFile);
-                  this.logger.debug('Saved photo to database:', photoId);
+                  try {
+                      photoId = await this.dbManager.savePhoto(this.currentFormId, processedFile);
+                      this.logger.debug('Saved photo to database:', photoId);
+                  } catch (error) {
+                      this.logger.error('Failed to save photo to database:', error);
+                      throw error;
+                  }
               }
   
-              this.photos.push(processedFile);
-              await this.addPhotoPreview(processedFile);
+              // Only add to photos array and preview if database save was successful
+              if (photoId || !this.currentFormId) {
+                  this.photos.push(processedFile);
+                  await this.addPhotoPreview(processedFile);
+              }
+  
+          } catch (error) {
+              this.logger.error('Error processing file:', error);
+              // Continue with next file instead of breaking the whole upload
+              continue;
           }
-      } catch (error) {
-          this.logger.error('Error handling files:', error);
-          throw error;
       }
+  }
+  
+  async addTimestampToImage(file, timestamp) {
+      return new Promise((resolve, reject) => {
+          const img = new Image();
+          const reader = new FileReader();
+  
+          reader.onload = () => {
+              img.src = reader.result;
+          };
+  
+          img.onload = () => {
+              try {
+                  const canvas = document.createElement('canvas');
+                  canvas.width = img.width;
+                  canvas.height = img.height;
+                  const ctx = canvas.getContext('2d');
+  
+                  // Draw the image
+                  ctx.drawImage(img, 0, 0);
+  
+                  // Configure text style
+                  ctx.fillStyle = 'white';
+                  ctx.strokeStyle = 'black';
+                  ctx.lineWidth = 3;
+                  const fontSize = Math.max(Math.min(img.width * 0.04, 48), 16);
+                  ctx.font = `${fontSize}px Arial`;
+  
+                  // Format the timestamp
+                  const timestampText = timestamp.toLocaleString(this.i18next.language, {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                  });
+  
+                  // Position text
+                  const padding = fontSize;
+                  const textMetrics = ctx.measureText(timestampText);
+                  const x = canvas.width - textMetrics.width - padding;
+                  const y = canvas.height - padding;
+  
+                  // Draw text
+                  ctx.strokeText(timestampText, x, y);
+                  ctx.fillText(timestampText, x, y);
+  
+                  canvas.toBlob((blob) => {
+                      resolve(new File([blob], file.name, {
+                          type: 'image/jpeg',
+                          lastModified: timestamp.getTime()
+                      }));
+                  }, 'image/jpeg', 0.9);
+              } catch (error) {
+                  reject(error);
+              }
+          };
+  
+          img.onerror = reject;
+          reader.onerror = reject;
+  
+          reader.readAsDataURL(file);
+      });
   }
 
   async resizeImage(file) {
