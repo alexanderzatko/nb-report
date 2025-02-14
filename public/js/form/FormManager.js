@@ -7,6 +7,7 @@ import Logger from '../utils/Logger.js';
 import GPSManager from '../managers/GPSManager.js';
 import StateManager from '../state/StateManager.js';
 import AuthManager from '../auth/AuthManager.js';
+import DatabaseManager from '../managers/DatabaseManager.js';
 
 class FormManager {
   static instance = null;
@@ -71,6 +72,11 @@ class FormManager {
     this.logger = Logger.getInstance();
     this.isSubmitting = false;
 
+    this.dbManager = DatabaseManager.getInstance();
+    this.currentFormId = null;
+    this.autoSaveInterval = null;
+    this.setupAutoSave();
+    
     FormManager.instance = this;
   }
 
@@ -120,6 +126,44 @@ class FormManager {
       }
   }
 
+  setupAutoSave() {
+      // Auto-save form data every 30 seconds
+      this.autoSaveInterval = setInterval(() => {
+          if (this.currentFormId) {
+              this.saveFormState();
+          }
+      }, 30000);
+  }
+
+  async saveFormState() {
+      if (!this.currentFormId) return;
+
+      try {
+          const formData = this.collectFormData();
+          await this.dbManager.updateFormData(this.currentFormId, {
+              formState: formData,
+              lastSaved: new Date().toISOString()
+          });
+          this.logger.debug('Form state saved successfully');
+      } catch (error) {
+          this.logger.error('Error saving form state:', error);
+      }
+  }
+
+  async restoreFormState() {
+      if (!this.currentFormId) return;
+
+      try {
+          const savedData = await this.dbManager.getFormData(this.currentFormId);
+          if (savedData?.formState) {
+              this.populateFormFields(savedData.formState);
+              this.logger.debug('Form state restored successfully');
+          }
+      } catch (error) {
+          this.logger.error('Error restoring form state:', error);
+      }
+  }
+
   setupEventListeners() {
       console.log('Setting up form event listeners');
       const form = document.getElementById('snow-report-form');
@@ -165,7 +209,21 @@ class FormManager {
   
   async initializeForm(userData) {
       this.logger.debug('Initializing form with user data:', userData);
+
+      // Create new form entry in database
+      const formData = {
+          userId: userData?.nabezky_uid,
+          startTime: new Date().toISOString(),
+          isAdmin: userData?.ski_center_admin === "1",
+          formState: {}
+      };
+  
+      this.currentFormId = await this.dbManager.saveFormData(formData);
+      this.photoManager.setCurrentFormId(this.currentFormId);
       
+      // Try to restore any saved form state
+      await this.restoreFormState();
+
       // Get required elements
       const regularUserSection = document.getElementById('regular-user-section');
       const adminSection = document.getElementById('admin-section');
@@ -1526,6 +1584,16 @@ class FormManager {
       this.trailConditions = {};
       this.photoManager.clearPhotos();
       this.stopTrackingFormTime();
+      if (this.currentFormId) {
+        try {
+            // Clear form data from database
+            await this.dbManager.clearForm(this.currentFormId);
+            this.currentFormId = null;
+        } catch (error) {
+            this.logger.error('Error clearing form data:', error);
+        }
+      }
+
       this.formStartTime = null;
       
       // Clear select manager state
