@@ -12,7 +12,7 @@ class DatabaseManager {
 
         this.logger = Logger.getInstance();
         this.dbName = 'AppDB';
-        this.dbVersion = 2;
+        this.dbVersion = 3; // Increased version for new stores
         this.db = null;
         DatabaseManager.instance = this;
     }
@@ -50,7 +50,7 @@ class DatabaseManager {
     }
 
     createStores(db) {
-        // GPS tracking stores
+        // Existing stores
         if (!db.objectStoreNames.contains('tracks')) {
             const trackStore = db.createObjectStore('tracks', { keyPath: 'id' });
             trackStore.createIndex('startTime', 'startTime', { unique: false });
@@ -65,6 +65,18 @@ class DatabaseManager {
             db.createObjectStore('trackMetadata', { keyPath: 'id' });
         }
 
+        // New stores for form data
+        if (!db.objectStoreNames.contains('formData')) {
+            const formStore = db.createObjectStore('formData', { keyPath: 'id' });
+            formStore.createIndex('timestamp', 'timestamp', { unique: false });
+        }
+
+        if (!db.objectStoreNames.contains('photos')) {
+            const photoStore = db.createObjectStore('photos', { keyPath: 'id' });
+            photoStore.createIndex('timestamp', 'timestamp', { unique: false });
+            photoStore.createIndex('formId', 'formId', { unique: false });
+        }
+
         // Add schema version info store
         if (!db.objectStoreNames.contains('metadata')) {
             const metaStore = db.createObjectStore('metadata', { keyPath: 'key' });
@@ -74,6 +86,135 @@ class DatabaseManager {
                 lastUpdated: new Date().toISOString()
             });
         }
+    }
+
+    // Form data methods
+    async saveFormData(data) {
+        const db = await this.getDatabase();
+        const transaction = db.transaction(['formData'], 'readwrite');
+        const store = transaction.objectStore('formData');
+
+        const formData = {
+            id: Date.now().toString(),  // Unique ID for the form
+            timestamp: new Date().toISOString(),
+            ...data
+        };
+
+        return new Promise((resolve, reject) => {
+            const request = store.add(formData);
+            request.onsuccess = () => resolve(formData.id);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async getFormData(formId) {
+        const db = await this.getDatabase();
+        const transaction = db.transaction(['formData'], 'readonly');
+        const store = transaction.objectStore('formData');
+
+        return new Promise((resolve, reject) => {
+            const request = store.get(formId);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async updateFormData(formId, data) {
+        const db = await this.getDatabase();
+        const transaction = db.transaction(['formData'], 'readwrite');
+        const store = transaction.objectStore('formData');
+
+        return new Promise((resolve, reject) => {
+            const request = store.get(formId);
+            request.onsuccess = () => {
+                const updatedData = {
+                    ...request.result,
+                    ...data,
+                    lastUpdated: new Date().toISOString()
+                };
+                const updateRequest = store.put(updatedData);
+                updateRequest.onsuccess = () => resolve();
+                updateRequest.onerror = () => reject(updateRequest.error);
+            };
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    // Photo methods
+    async savePhoto(formId, photo, caption = '') {
+        const db = await this.getDatabase();
+        const transaction = db.transaction(['photos'], 'readwrite');
+        const store = transaction.objectStore('photos');
+
+        const photoData = {
+            id: Date.now().toString(),
+            formId,
+            photo,  // This will be the processed File/Blob
+            caption,
+            timestamp: new Date().toISOString()
+        };
+
+        return new Promise((resolve, reject) => {
+            const request = store.add(photoData);
+            request.onsuccess = () => resolve(photoData.id);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async getPhotos(formId) {
+        const db = await this.getDatabase();
+        const transaction = db.transaction(['photos'], 'readonly');
+        const store = transaction.objectStore('photos');
+        const index = store.index('formId');
+
+        return new Promise((resolve, reject) => {
+            const request = index.getAll(formId);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async deletePhoto(photoId) {
+        const db = await this.getDatabase();
+        const transaction = db.transaction(['photos'], 'readwrite');
+        const store = transaction.objectStore('photos');
+
+        return new Promise((resolve, reject) => {
+            const request = store.delete(photoId);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async clearForm(formId) {
+        const db = await this.getDatabase();
+        const transaction = db.transaction(['formData', 'photos'], 'readwrite');
+        
+        // Delete form data
+        const formStore = transaction.objectStore('formData');
+        const photoStore = transaction.objectStore('photos');
+        const photoIndex = photoStore.index('formId');
+
+        return new Promise((resolve, reject) => {
+            // First get all photos for this form
+            const photoRequest = photoIndex.getAll(formId);
+            
+            photoRequest.onsuccess = () => {
+                // Delete each photo
+                const photos = photoRequest.result;
+                photos.forEach(photo => {
+                    photoStore.delete(photo.id);
+                });
+
+                // Delete form data
+                const formRequest = formStore.delete(formId);
+                formRequest.onsuccess = () => resolve();
+                formRequest.onerror = () => reject(formRequest.error);
+            };
+            
+            photoRequest.onerror = () => reject(photoRequest.error);
+            transaction.onerror = () => reject(transaction.error);
+        });
     }
 
     async clearDatabase() {
