@@ -141,19 +141,27 @@ class DatabaseManager {
     }
 
     // Photo methods
-    async savePhoto(formId, photo, caption = '') {
+    async savePhoto(formId, file, caption = '') {
         const db = await this.getDatabase();
         const transaction = db.transaction(['photos'], 'readwrite');
         const store = transaction.objectStore('photos');
-
+    
+        // Convert File to storable format
         const photoData = {
             id: Date.now().toString(),
             formId,
-            photo,  // This will be the processed File/Blob
             caption,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            // Store file metadata
+            file: {
+                name: file.name,
+                type: file.type,
+                lastModified: file.lastModified,
+                // Convert file to base64
+                data: await this.fileToBase64(file)
+            }
         };
-
+    
         return new Promise((resolve, reject) => {
             const request = store.add(photoData);
             request.onsuccess = () => resolve(photoData.id);
@@ -161,19 +169,48 @@ class DatabaseManager {
         });
     }
 
+    async fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+    
     async getPhotos(formId) {
         const db = await this.getDatabase();
         const transaction = db.transaction(['photos'], 'readonly');
         const store = transaction.objectStore('photos');
         const index = store.index('formId');
-
+    
         return new Promise((resolve, reject) => {
             const request = index.getAll(formId);
-            request.onsuccess = () => resolve(request.result);
+            request.onsuccess = async () => {
+                const photos = request.result;
+                // Convert base64 back to File objects
+                const processedPhotos = photos.map(photo => ({
+                    ...photo,
+                    photo: this.base64ToFile(photo.file.data, photo.file.name, photo.file.type)
+                }));
+                resolve(processedPhotos);
+            };
             request.onerror = () => reject(request.error);
         });
     }
 
+    base64ToFile(base64, filename, type) {
+        const arr = base64.split(',');
+        const mime = arr[0].match(/:(.*?);/)[1];
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while(n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new File([u8arr], filename, { type: type || mime });
+    }
+    
     async deletePhoto(photoId) {
         const db = await this.getDatabase();
         const transaction = db.transaction(['photos'], 'readwrite');
