@@ -137,9 +137,11 @@ class FormManager {
 
   async saveFormState() {
       if (!this.currentFormId) return;
-
+  
       try {
-          const formData = this.collectFormData();
+          // Collect only serializable form data
+          const formData = this.collectSerializableFormData();
+          
           await this.dbManager.updateFormData(this.currentFormId, {
               formState: formData,
               lastSaved: new Date().toISOString()
@@ -148,6 +150,81 @@ class FormManager {
       } catch (error) {
           this.logger.error('Error saving form state:', error);
       }
+  }
+
+  collectSerializableFormData() {
+      const data = {};
+      const isAdmin = document.getElementById('admin-section')?.style.display !== 'none';
+      
+      // Common fields
+      const commonFields = [
+          'report-date',
+          'report-note',
+          'snow-type'
+      ];
+  
+      // Admin-specific fields
+      const adminFields = [
+          'snow-depth-total',
+          'snow-depth-new',
+          'ski-center-id'
+      ];
+  
+      // Regular user fields
+      const regularFields = [
+          'report-title',
+          'country',
+          'region',
+          'snow-depth250',
+          'snow-depth500',
+          'snow-depth750',
+          'snow-depth1000',
+          'classic-style',
+          'free-style',
+          'snow-age',
+          'wetness'
+      ];
+  
+      // Collect common fields
+      commonFields.forEach(fieldId => {
+          const element = document.getElementById(fieldId);
+          if (element && element.value) {
+              data[fieldId] = element.value;
+          }
+      });
+  
+      // Collect user-type specific fields
+      const specificFields = isAdmin ? adminFields : regularFields;
+      specificFields.forEach(fieldId => {
+          const element = document.getElementById(fieldId);
+          if (element && element.value) {
+              data[fieldId] = element.value;
+          }
+      });
+  
+      // Handle checkboxes separately
+      const privateReportCheckbox = document.getElementById('private-report');
+      if (privateReportCheckbox) {
+          data['private-report'] = privateReportCheckbox.checked;
+      }
+  
+      // Handle rewards section if visible
+      const rewardsSection = document.getElementById('rewards-section');
+      if (rewardsSection?.style.display !== 'none') {
+          const laborTime = document.getElementById('labor-time')?.value;
+          const rewardRequested = document.getElementById('reward-requested')?.value;
+          
+          if (laborTime) data['labor-time'] = laborTime;
+          if (rewardRequested) data['reward-requested'] = rewardRequested;
+      }
+  
+      // Handle trail conditions for admin
+      if (isAdmin && this.trailConditions) {
+          // Make a clean copy of trail conditions
+          data.trailConditions = JSON.parse(JSON.stringify(this.trailConditions));
+      }
+  
+      return data;
   }
 
   async restoreFormState() {
