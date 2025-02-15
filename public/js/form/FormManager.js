@@ -288,17 +288,25 @@ class FormManager {
   
               // Restore dropdown values
               if (savedData?.formState?.dropdownValues) {
-                Object.entries(savedData.formState.dropdownValues).forEach(([id, value]) => {
-                  this.logger.debug('Restoring dropDown :', [id, value]);
-            
-                  const element = document.getElementById(id);
-                  if (element) {
-                    this.logger.debug('In element :', element);
-                    element.value = value;
-                  } else {
-                    this.logger.warn(`Dropdown with ID "${id}" not found in the DOM.`);
-                  }
-                });
+                  // Wait for all dropdowns to be populated and then set their values
+                  await Promise.all(
+                      Object.entries(savedData.formState.dropdownValues).map(async ([id, value]) => {
+                          this.logger.debug('Restoring dropDown :', [id, value]);
+                          
+                          // Wait for element to be available and populated
+                          const element = await this.waitForSelect(id);
+                          if (element) {
+                              this.logger.debug('In element :', element);
+                              element.value = value;
+                              // Verify the value was set
+                              if (element.value !== value) {
+                                  this.logger.warn(`Failed to set value ${value} for dropdown ${id}`);
+                              }
+                          } else {
+                              this.logger.warn(`Dropdown with ID "${id}" not found in the DOM.`);
+                          }
+                      })
+                  );
               }
   
               // Restore trail conditions
@@ -319,6 +327,17 @@ class FormManager {
       }
   }
 
+  async waitForSelect(id, maxAttempts = 10) {
+      for (let i = 0; i < maxAttempts; i++) {
+          const element = document.getElementById(id);
+          if (element && element.options.length > 0) {
+              return element;
+          }
+          await new Promise(resolve => setTimeout(resolve, 50));
+      }
+      return null;
+  }
+  
   restoreTrailConditions(conditions) {
       Object.entries(conditions).forEach(([trailId, trailConditions]) => {
           const trailElement = document.querySelector(`[data-trail-id="${trailId}"]`);
