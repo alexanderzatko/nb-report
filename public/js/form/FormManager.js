@@ -444,15 +444,11 @@ class FormManager {
           
           placeholders.forEach((placeholder) => {
               this.logger.debug(`Replacing placeholder`);
-              // Create a new div to hold the common content
-              const container = document.createElement('div');
               // Clone the template content
               const commonContent = commonTemplate.content.cloneNode(true);
-              // Append to our container first
-              container.appendChild(commonContent);
-              // Clear and replace placeholder content
+              // Clear and replace placeholder content directly
               placeholder.innerHTML = '';
-              placeholder.appendChild(container);
+              placeholder.appendChild(commonContent);
           });
       } catch (error) {
           this.logger.error('Error replacing common sections:', error);
@@ -479,37 +475,6 @@ class FormManager {
   
         // Start auto-save after form is initialized
         this.startAutoSave();
-      
-        // Find unsubmitted form if it exists
-        const unsubmittedForm = forms.find(form => !form.submitted);
-        
-        if (unsubmittedForm) {
-            // Use existing unsubmitted form
-            this.currentFormId = unsubmittedForm.id;
-            this.photoManager.setCurrentFormId(this.currentFormId);
-
-            // Initialize dropdowns first
-            await this.selectManager.refreshAllDropdowns();
-            
-            // Then initialize trails if needed
-            if (isAdmin && hasTrails) {
-                await this.initializeTrailsSection(currentCenter.trails);
-            }
-
-            await this.restoreFormState();
-        } else {
-
-          // Create new form entry in database
-          const formData = {
-              userId: userData?.nabezky_uid,
-              startTime: new Date().toISOString(),
-              isAdmin: userData?.ski_center_admin === "1",
-              formState: {}
-          };
-      
-          this.currentFormId = await this.dbManager.saveFormData(formData);
-          this.photoManager.setCurrentFormId(this.currentFormId);
-        }
   
         // Get required elements
         const regularUserSection = document.getElementById('regular-user-section');
@@ -610,7 +575,36 @@ class FormManager {
         if (privateReportSection) {
           privateReportSection.style.display = isAdmin ? 'none' : 'block';
         }
-        // Initialize form components that need to be refreshed
+
+        // Find unsubmitted form if it exists
+        const unsubmittedForm = forms.find(form => !form.submitted);
+        if (unsubmittedForm) {
+            this.currentFormId = unsubmittedForm.id;
+            this.photoManager.setCurrentFormId(this.currentFormId);
+
+            // Initialize dropdowns first
+            await this.selectManager.refreshAllDropdowns();
+            
+            // Then initialize trails if needed
+            if (isAdmin && hasTrails) {
+                await this.initializeTrailsSection(currentCenter.trails);
+            }
+
+            await this.restoreFormState();
+        } else {
+
+          // Create new form entry in database
+          const formData = {
+              userId: userData?.nabezky_uid,
+              startTime: new Date().toISOString(),
+              isAdmin: userData?.ski_center_admin === "1",
+              formState: {}
+          };
+      
+          this.currentFormId = await this.dbManager.saveFormData(formData);
+          this.photoManager.setCurrentFormId(this.currentFormId);
+        }
+      
         await this.refreshFormComponents();
     } catch (error) {
         this.logger.error('Error initializing form:', error);
