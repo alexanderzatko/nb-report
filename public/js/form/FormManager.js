@@ -289,9 +289,14 @@ class FormManager {
               // Restore dropdown values
               if (savedData.formState.dropdownValues) {
                   Object.entries(savedData.formState.dropdownValues).forEach(([id, value]) => {
-                      const element = document.getElementById(id);
+
+                    this.logger.debug('Restoring dropDown :', [id, value]);
+
+                    const element = document.getElementById(id);
                       if (element) {
-                          element.value = value;
+
+                        this.logger.debug('I element :', element);
+                        element.value = value;
                       }
                   });
               }
