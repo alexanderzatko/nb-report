@@ -324,129 +324,153 @@ class FormManager {
   }
   
   async initializeForm(userData) {
-      this.logger.debug('Initializing form with user data:', userData);
+    this.logger.debug('Initializing form with user data:', userData);
+    try {
+        const db = await this.dbManager.getDatabase();
+        const forms = await new Promise((resolve, reject) => {
+            const transaction = db.transaction(['formData'], 'readonly');
+            const store = transaction.objectStore('formData');
+            const request = store.getAll();
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
 
-      // Create new form entry in database
-      const formData = {
-          userId: userData?.nabezky_uid,
-          startTime: new Date().toISOString(),
-          isAdmin: userData?.ski_center_admin === "1",
-          formState: {}
-      };
-  
-      this.currentFormId = await this.dbManager.saveFormData(formData);
-      this.photoManager.setCurrentFormId(this.currentFormId);
-      
-      // Try to restore any saved form state
-      await this.restoreFormState();
-
-      // Get required elements
-      const regularUserSection = document.getElementById('regular-user-section');
-      const adminSection = document.getElementById('admin-section');
-      const trailsSection = document.getElementById('trails-section');
-      const rewardsSection = document.getElementById('rewards-section');
-      const commonTemplate = document.getElementById('common-section');
-  
-      if (!regularUserSection || !adminSection || !commonTemplate) {
-          this.logger.error('Required form sections not found');
-          return;
-      }
-  
-      const isAdmin = userData?.ski_center_admin === "1";
-      const stateManager = StateManager.getInstance();
-      const currentCenter = stateManager.getSkiCenterData();
-      const hasTrails = currentCenter?.trails && Array.isArray(currentCenter.trails) && currentCenter.trails.length > 0;
-
-      this.logger.debug('Form initialization:', {
-        isAdmin,
-        hasTrails,
-        currentCenter,
-      });
+        // Find unsubmitted form if it exists
+        const unsubmittedForm = forms.find(form => !form.submitted);
         
-      if (isAdmin && currentCenter) {
-          const skiCenterNameDiv = document.getElementById('ski-center-name');
-          if (skiCenterNameDiv) {
-            skiCenterNameDiv.textContent = currentCenter.name;
+        if (unsubmittedForm) {
+            // Use existing unsubmitted form
+            this.currentFormId = unsubmittedForm.id;
+            this.photoManager.setCurrentFormId(this.currentFormId);
+            await this.restoreFormState();
+        } else {
 
-              const storage = stateManager.getState('storage.userData');
-              if (storage?.ski_centers_data?.length > 1) {
-                  const switchLink = document.createElement('a');
-                  switchLink.href = '#';
-                  switchLink.className = 'switch-center-link';
-                  switchLink.textContent = this.i18next.t('form.switchSkiCenter');
-                  switchLink.onclick = (e) => {
-                      e.preventDefault();
-                      const event = new Event('showSettings');
-                      window.dispatchEvent(event);
-                      
-                      // Hide the form
-                      const form = document.getElementById('snow-report-form');
-                      if (form) {
-                          form.style.display = 'none';
-                      }
-                      
-                      // Show settings
-                      const settingsContainer = document.getElementById('settings-container');
-                      if (settingsContainer) {
-                          settingsContainer.style.display = 'block';
-                      }
-                  };
-                  skiCenterNameDiv.appendChild(switchLink);
-              }
-          } else {
-              this.logger.warn('Ski center name div not found');
-          }
-  
-          // Set the hidden input value
-          const skiCenterIdInput = document.getElementById('ski-center-id');
-          if (skiCenterIdInput) {
-              skiCenterIdInput.value = currentCenter.id;
-          } else {
-              this.logger.warn('Ski center ID input not found');
-          }
-      }
-  
-      // Clear existing content from sections to prevent duplication
-      regularUserSection.style.display = isAdmin ? 'none' : 'block';
-      adminSection.style.display = isAdmin ? 'block' : 'none';
-
-      // Handle common sections
-      const activeSection = isAdmin ? adminSection : regularUserSection;
-  
-      try {
-          await this.replaceCommonSections(activeSection, commonTemplate);
-          await this.photoManager.initializePhotoUpload(true);
-      } catch (error) {
-          this.logger.error('Failed to replace common sections:', error);
-          throw error;
-      }
-  
-          
-      // Set visibility for trails section
-      trailsSection.style.display = 'none';
-      if (isAdmin && hasTrails) {
-        trailsSection.style.display = 'block';
-        // Now pass the trails from currentCenter instead of userData
-        this.initializeTrailsSection(currentCenter.trails);
-      }
-  
-      // Set visibility for rewards section based on rovas_uid
-      if (rewardsSection) {
-          rewardsSection.style.display = 
-              (userData?.rovas_uid && !isNaN(userData.rovas_uid)) ? 'block' : 'none';
-      }
+          // Create new form entry in database
+          const formData = {
+              userId: userData?.nabezky_uid,
+              startTime: new Date().toISOString(),
+              isAdmin: userData?.ski_center_admin === "1",
+              formState: {}
+          };
       
-      // Initialize form fields based on user type
-      const config = isAdmin ? this.formConfig.admin : this.formConfig.regular;
-      this.initializeFormFields(config);
+          this.currentFormId = await this.dbManager.saveFormData(formData);
+          this.photoManager.setCurrentFormId(this.currentFormId);
+        }
 
-      const privateReportSection = document.getElementById('private-report-section');
-      if (privateReportSection) {
-        privateReportSection.style.display = isAdmin ? 'none' : 'block';
-      }
-      // Initialize form components that need to be refreshed
-      await this.refreshFormComponents();
-  }
+        // Try to restore any saved form state
+        await this.restoreFormState();
+  
+        // Get required elements
+        const regularUserSection = document.getElementById('regular-user-section');
+        const adminSection = document.getElementById('admin-section');
+        const trailsSection = document.getElementById('trails-section');
+        const rewardsSection = document.getElementById('rewards-section');
+        const commonTemplate = document.getElementById('common-section');
+    
+        if (!regularUserSection || !adminSection || !commonTemplate) {
+            this.logger.error('Required form sections not found');
+            return;
+        }
+    
+        const isAdmin = userData?.ski_center_admin === "1";
+        const stateManager = StateManager.getInstance();
+        const currentCenter = stateManager.getSkiCenterData();
+        const hasTrails = currentCenter?.trails && Array.isArray(currentCenter.trails) && currentCenter.trails.length > 0;
+  
+        this.logger.debug('Form initialization:', {
+          isAdmin,
+          hasTrails,
+          currentCenter,
+        });
+          
+        if (isAdmin && currentCenter) {
+            const skiCenterNameDiv = document.getElementById('ski-center-name');
+            if (skiCenterNameDiv) {
+              skiCenterNameDiv.textContent = currentCenter.name;
+  
+                const storage = stateManager.getState('storage.userData');
+                if (storage?.ski_centers_data?.length > 1) {
+                    const switchLink = document.createElement('a');
+                    switchLink.href = '#';
+                    switchLink.className = 'switch-center-link';
+                    switchLink.textContent = this.i18next.t('form.switchSkiCenter');
+                    switchLink.onclick = (e) => {
+                        e.preventDefault();
+                        const event = new Event('showSettings');
+                        window.dispatchEvent(event);
+                        
+                        // Hide the form
+                        const form = document.getElementById('snow-report-form');
+                        if (form) {
+                            form.style.display = 'none';
+                        }
+                        
+                        // Show settings
+                        const settingsContainer = document.getElementById('settings-container');
+                        if (settingsContainer) {
+                            settingsContainer.style.display = 'block';
+                        }
+                    };
+                    skiCenterNameDiv.appendChild(switchLink);
+                }
+            } else {
+                this.logger.warn('Ski center name div not found');
+            }
+    
+            // Set the hidden input value
+            const skiCenterIdInput = document.getElementById('ski-center-id');
+            if (skiCenterIdInput) {
+                skiCenterIdInput.value = currentCenter.id;
+            } else {
+                this.logger.warn('Ski center ID input not found');
+            }
+        }
+    
+        // Clear existing content from sections to prevent duplication
+        regularUserSection.style.display = isAdmin ? 'none' : 'block';
+        adminSection.style.display = isAdmin ? 'block' : 'none';
+  
+        // Handle common sections
+        const activeSection = isAdmin ? adminSection : regularUserSection;
+    
+        try {
+            await this.replaceCommonSections(activeSection, commonTemplate);
+            await this.photoManager.initializePhotoUpload(true);
+        } catch (error) {
+            this.logger.error('Failed to replace common sections:', error);
+            throw error;
+        }
+    
+            
+        // Set visibility for trails section
+        trailsSection.style.display = 'none';
+        if (isAdmin && hasTrails) {
+          trailsSection.style.display = 'block';
+          // Now pass the trails from currentCenter instead of userData
+          this.initializeTrailsSection(currentCenter.trails);
+        }
+    
+        // Set visibility for rewards section based on rovas_uid
+        if (rewardsSection) {
+            rewardsSection.style.display = 
+                (userData?.rovas_uid && !isNaN(userData.rovas_uid)) ? 'block' : 'none';
+        }
+        
+        // Initialize form fields based on user type
+        const config = isAdmin ? this.formConfig.admin : this.formConfig.regular;
+        this.initializeFormFields(config);
+  
+        const privateReportSection = document.getElementById('private-report-section');
+        if (privateReportSection) {
+          privateReportSection.style.display = isAdmin ? 'none' : 'block';
+        }
+        // Initialize form components that need to be refreshed
+        await this.refreshFormComponents();
+    } catch (error) {
+        this.logger.error('Error initializing form:', error);
+        throw error;
+    }
+}
 
   async refreshFormComponents() {
       // Refresh dropdowns if SelectManager is available
@@ -1290,6 +1314,9 @@ class FormManager {
       const result = await this.submitFormData(submissionData, isAdmin);
 
       if (result.success) {
+
+          await this.dbManager.markFormAsSubmitted(this.currentFormId);
+
           this.showSuccess(this.i18next.t('form.validation.submitSuccess'));
           this.stopTrackingFormTime();
           this.resetForm();
