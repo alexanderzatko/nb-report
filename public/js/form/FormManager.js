@@ -141,9 +141,26 @@ class FormManager {
       try {
           // Collect only serializable form data
           const formData = this.collectSerializableFormData();
+
+          if (this.trailConditions) {
+              formData.trailConditions = this.trailConditions;
+          }
+  
+          // Add dropdown values
+          const dropdownValues = {
+              snowType: document.getElementById('snow-type')?.value,
+              classicStyle: document.getElementById('classic-style')?.value,
+              freeStyle: document.getElementById('free-style')?.value,
+              snowAge: document.getElementById('snow-age')?.value,
+              wetness: document.getElementById('wetness')?.value
+          };
           
           await this.dbManager.updateFormData(this.currentFormId, {
-              formState: formData,
+              formState: {
+                  ...formData,
+                  dropdownValues,
+                  trailConditions: this.trailConditions
+              },
               lastSaved: new Date().toISOString()
           });
           this.logger.debug('Form state saved successfully');
@@ -163,65 +180,80 @@ class FormManager {
           'snow-type'
       ];
   
-      // Admin-specific fields
-      const adminFields = [
-          'snow-depth-total',
-          'snow-depth-new',
-          'ski-center-id'
-      ];
-  
-      // Regular user fields
-      const regularFields = [
-          'report-title',
-          'country',
-          'region',
-          'snow-depth250',
-          'snow-depth500',
-          'snow-depth750',
-          'snow-depth1000',
-          'classic-style',
-          'free-style',
-          'snow-age',
-          'wetness'
-      ];
-  
-      // Collect common fields
+      // Common fields processing
       commonFields.forEach(fieldId => {
           const element = document.getElementById(fieldId);
           if (element && element.value) {
-              data[fieldId] = element.value;
+              data[fieldId.replace('-', '')] = element.value;
           }
       });
+      
+      if (isAdmin) {
+          // Admin-specific fields
+          const adminFields = {
+              'snow-depth-total': 'snowDepthTotal',
+              'snow-depth-new': 'snowDepthNew',
+              'ski-center-id': 'skiCenterId'
+          };
   
-      // Collect user-type specific fields
-      const specificFields = isAdmin ? adminFields : regularFields;
-      specificFields.forEach(fieldId => {
-          const element = document.getElementById(fieldId);
-          if (element && element.value) {
-              data[fieldId] = element.value;
+          Object.entries(adminFields).forEach(([elementId, dataKey]) => {
+              const element = document.getElementById(elementId);
+              if (element && element.value) {
+                  data[dataKey] = element.value;
+              }
+          });
+          
+          // Add trail conditions
+          if (this.trailConditions) {
+              data.trailConditions = this.trailConditions;
           }
-      });
+      } else {
+          // Regular user fields
+          const regularFields = {
+              'report-title': 'reportTitle',
+              'country': 'country',
+              'region': 'region',
+              'snow-depth250': 'snowDepth250',
+              'snow-depth500': 'snowDepth500',
+              'snow-depth750': 'snowDepth750',
+              'snow-depth1000': 'snowDepth1000',
+              'classic-style': 'classicstyle',
+              'free-style': 'freestyle',
+              'snow-age': 'snowage',
+              'wetness': 'wetness'
+          };
   
-      // Handle checkboxes separately
-      const privateReportCheckbox = document.getElementById('private-report');
-      if (privateReportCheckbox) {
-          data['private-report'] = privateReportCheckbox.checked;
+          Object.entries(regularFields).forEach(([elementId, dataKey]) => {
+              const element = document.getElementById(elementId);
+              if (element && element.value) {
+                  data[dataKey] = element.value;
+              }
+          });
+  
+          // Handle private report checkbox
+          const privateReportCheckbox = document.getElementById('private-report');
+          if (privateReportCheckbox) {
+              data.privateReport = privateReportCheckbox.checked;
+          }
       }
-  
-      // Handle rewards section if visible
+      
+      // Add rewards data if visible
       const rewardsSection = document.getElementById('rewards-section');
       if (rewardsSection?.style.display !== 'none') {
           const laborTime = document.getElementById('labor-time')?.value;
           const rewardRequested = document.getElementById('reward-requested')?.value;
           
-          if (laborTime) data['labor-time'] = laborTime;
-          if (rewardRequested) data['reward-requested'] = rewardRequested;
+          if (laborTime) data.laborTime = laborTime;
+          if (rewardRequested) data.rewardRequested = rewardRequested;
       }
   
-      // Handle trail conditions for admin
-      if (isAdmin && this.trailConditions) {
-          // Make a clean copy of trail conditions
-          data.trailConditions = JSON.parse(JSON.stringify(this.trailConditions));
+      // Add GPS/GPX data
+      const gpxOption = document.getElementById('gpx-option');
+      if (gpxOption && gpxOption.value !== 'none') {
+          const gpsManager = GPSManager.getInstance();
+          if (gpsManager.hasExistingTrack()) {
+              data.gpxData = gpsManager.exportGPX();
+          }
       }
   
       return data;
@@ -229,16 +261,66 @@ class FormManager {
 
   async restoreFormState() {
       if (!this.currentFormId) return;
-
+  
       try {
           const savedData = await this.dbManager.getFormData(this.currentFormId);
           if (savedData?.formState) {
+              // Restore basic form fields
               this.populateFormFields(savedData.formState);
+              
+              // Restore dropdown values
+              if (savedData.formState.dropdownValues) {
+                  const { dropdownValues } = savedData.formState;
+                  for (const [id, value] of Object.entries(dropdownValues)) {
+                      const element = document.getElementById(id);
+                      if (element) {
+                          element.value = value;
+                      }
+                  }
+              }
+  
+              // Restore trail conditions
+              if (savedData.formState.trailConditions) {
+                  this.trailConditions = savedData.formState.trailConditions;
+                  this.restoreTrailConditions(savedData.formState.trailConditions);
+              }
+  
               this.logger.debug('Form state restored successfully');
           }
       } catch (error) {
           this.logger.error('Error restoring form state:', error);
       }
+  }
+
+  restoreTrailConditions(conditions) {
+      Object.entries(conditions).forEach(([trailId, trailConditions]) => {
+          const trailElement = document.querySelector(`[data-trail-id="${trailId}"]`);
+          if (trailElement) {
+              // Restore classic style
+              if (trailConditions.classic) {
+                  const classicBtn = trailElement.querySelector(`.condition-btn[data-value="${trailConditions.classic}"]`);
+                  if (classicBtn) {
+                      classicBtn.click();
+                  }
+              }
+              
+              // Restore free style
+              if (trailConditions.free) {
+                  const freeBtn = trailElement.querySelector(`.condition-btn[data-value="${trailConditions.free}"]`);
+                  if (freeBtn) {
+                      freeBtn.click();
+                  }
+              }
+              
+              // Restore maintenance
+              if (trailConditions.maintenance) {
+                  const maintenanceBtn = trailElement.querySelector(`.condition-btn[data-value="${trailConditions.maintenance}"]`);
+                  if (maintenanceBtn) {
+                      maintenanceBtn.click();
+                  }
+              }
+          }
+      });
   }
 
   populateFormFields(formData) {
@@ -1337,49 +1419,6 @@ class FormManager {
         submissionModal.querySelector('.modal-content').classList.remove('submitting');
         progressDiv.textContent = '';
     }
-  }
-
-  collectFormData() {
-      const formData = new FormData();
-      
-      // Determine which form type is visible
-      const isAdmin = document.getElementById('admin-section')?.style.display !== 'none';
-      
-      // Get common fields that are visible
-      const visibleData = this.collectVisibleData(isAdmin);
-      
-      // Add each visible field to FormData
-      Object.entries(visibleData).forEach(([key, value]) => {
-          if (value !== null && value !== undefined && value !== '') {
-              formData.append(key, value);
-          }
-      });
-  
-      // Add trail conditions for admin
-      if (isAdmin && Object.keys(this.trailConditions).length > 0) {
-          formData.append('trailConditions', JSON.stringify(this.trailConditions));
-      }
-  
-      // Add rewards data if rewards section is visible
-      const rewardsSection = document.getElementById('rewards-section');
-      if (rewardsSection?.style.display !== 'none') {
-          const laborTime = document.getElementById('labor-time')?.value;
-          const rewardRequested = document.getElementById('reward-requested')?.value;
-          
-          if (laborTime) formData.append('laborTime', laborTime);
-          if (rewardRequested) formData.append('rewardRequested', rewardRequested);
-      }
-  
-      // Handle GPS/GPX data
-      const gpxOption = document.getElementById('gpx-option');
-      if (gpxOption && gpxOption.value !== 'none') {
-          const gpsManager = GPSManager.getInstance();
-          if (gpsManager.hasExistingTrack()) {
-              formData.append('gpx', gpsManager.exportGPX());
-          }
-      }
-  
-      return formData;
   }
 
   collectVisibleData(isAdmin) {
