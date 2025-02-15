@@ -602,7 +602,7 @@ class FormManager {
             this.photoManager.setCurrentFormId(this.currentFormId);
 
             // Initialize dropdowns first
-            await this.selectManager.refreshAllDropdowns();
+//            await this.selectManager.refreshAllDropdowns();
             
             // Then initialize trails if needed
             if (isAdmin && hasTrails) {
@@ -627,7 +627,7 @@ class FormManager {
         this.logger.error('Error initializing form:', error);
         throw error;
     }
-}
+  }
   
   initializeFormFields(config) {
     config.requiredFields.forEach(field => {
