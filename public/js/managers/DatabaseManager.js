@@ -362,6 +362,35 @@ class DatabaseManager {
             transaction.onerror = () => reject(transaction.error);
         });
     }
+
+    async updateCaption(photoId, caption) {
+        try {
+            const db = await this.getDatabase();
+            const transaction = db.transaction(['photos'], 'readwrite');
+            const store = transaction.objectStore('photos');
+    
+            return new Promise((resolve, reject) => {
+                const request = store.get(photoId);
+                
+                request.onsuccess = () => {
+                    const photo = request.result;
+                    if (photo) {
+                        photo.caption = caption;
+                        const updateRequest = store.put(photo);
+                        updateRequest.onsuccess = () => resolve();
+                        updateRequest.onerror = () => reject(updateRequest.error);
+                    } else {
+                        reject(new Error('Photo not found'));
+                    }
+                };
+                
+                request.onerror = () => reject(request.error);
+            });
+        } catch (error) {
+            this.logger.error('Error updating photo caption:', error);
+            throw error;
+        }
+    }
 }
 
 export default DatabaseManager;
