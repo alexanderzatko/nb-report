@@ -623,21 +623,11 @@ class FormManager {
           this.currentFormId = await this.dbManager.saveFormData(formData);
           this.photoManager.setCurrentFormId(this.currentFormId);
         }
-      
-        await this.refreshFormComponents();
     } catch (error) {
         this.logger.error('Error initializing form:', error);
         throw error;
     }
 }
-
-  async refreshFormComponents() {
-      // Refresh dropdowns if SelectManager is available
-      const selectManager = SelectManager.getInstance();
-      if (selectManager) {
-          await selectManager.refreshAllDropdowns();
-      }
-  }
   
   initializeFormFields(config) {
     config.requiredFields.forEach(field => {
