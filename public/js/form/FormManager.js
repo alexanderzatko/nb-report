@@ -135,6 +135,24 @@ class FormManager {
       }, 30000);
   }
 
+  startAutoSave() {
+    if (this.autoSaveInterval) {
+      clearInterval(this.autoSaveInterval);
+    }
+    this.autoSaveInterval = setInterval(() => {
+      if (this.currentFormId && document.getElementById('snow-report-form').style.display !== 'none') {
+        this.saveFormState();
+      }
+    }, 30000);
+  }
+  
+  stopAutoSave() {
+    if (this.autoSaveInterval) {
+      clearInterval(this.autoSaveInterval);
+      this.autoSaveInterval = null;
+    }
+  }
+  
   async saveFormState() {
       if (!this.currentFormId) return;
   
@@ -142,18 +160,7 @@ class FormManager {
           // Collect only serializable form data
           const formData = this.collectSerializableFormData();
 
-          if (this.trailConditions) {
-              formData.trailConditions = this.trailConditions;
-          }
-  
-          // Add dropdown values
-          const dropdownValues = {
-              snowType: document.getElementById('snow-type')?.value,
-              classicStyle: document.getElementById('classic-style')?.value,
-              freeStyle: document.getElementById('free-style')?.value,
-              snowAge: document.getElementById('snow-age')?.value,
-              wetness: document.getElementById('wetness')?.value
-          };
+          formData.lastModified = new Date().toISOString();
           
           await this.dbManager.updateFormData(this.currentFormId, {
               formState: {
@@ -417,6 +424,9 @@ class FormManager {
             request.onerror = () => reject(request.error);
         });
 
+        // Start auto-save after form is initialized
+        this.startAutoSave();
+      
         // Find unsubmitted form if it exists
         const unsubmittedForm = forms.find(form => !form.submitted);
         
@@ -1753,6 +1763,7 @@ class FormManager {
   }
 
   handleCancel() {
+    this.stopAutoSave();
     this.stopTrackingFormTime();
     this.resetForm();
     document.getElementById('dashboard-container').style.display = 'block';
