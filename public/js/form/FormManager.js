@@ -284,28 +284,34 @@ class FormManager {
   
       try {
           const savedData = await this.dbManager.getFormData(this.currentFormId);
-          if (savedData?.formState) {
-              // Restore basic form fields
-              this.populateFormFields(savedData.formState);
-              
+          this.logger.debug('Retrieved form data:', savedData);
+          
+          if (savedData && savedData.formState) {
+              // Restore main form fields
+              this.populateFormFields(savedData);
+  
               // Restore dropdown values
               if (savedData.formState.dropdownValues) {
-                  const { dropdownValues } = savedData.formState;
-                  for (const [id, value] of Object.entries(dropdownValues)) {
+                  Object.entries(savedData.formState.dropdownValues).forEach(([id, value]) => {
                       const element = document.getElementById(id);
                       if (element) {
                           element.value = value;
                       }
-                  }
+                  });
               }
   
               // Restore trail conditions
               if (savedData.formState.trailConditions) {
                   this.trailConditions = savedData.formState.trailConditions;
-                  this.restoreTrailConditions(savedData.formState.trailConditions);
+                  this.updateTrailConditionsUI();
               }
   
-              this.logger.debug('Form state restored successfully');
+              this.logger.debug('Form state restored successfully', {
+                  hasDropdowns: !!savedData.formState.dropdownValues,
+                  hasTrailConditions: !!savedData.formState.trailConditions
+              });
+          } else {
+              this.logger.warn('No valid form state found in saved data');
           }
       } catch (error) {
           this.logger.error('Error restoring form state:', error);
@@ -344,24 +350,52 @@ class FormManager {
   }
 
   populateFormFields(formData) {
-      if (!formData) return;
+      if (!formData?.formState) return;
       
-      Object.entries(formData).forEach(([fieldId, value]) => {
-          const element = document.getElementById(fieldId);
-          if (element) {
-              if (element.type === 'checkbox') {
-                  element.checked = value;
-              } else {
-                  element.value = value;
+      // Handle main form fields
+      const fieldMapping = {
+          reportnote: 'report-note',
+          snowDepthTotal: 'snow-depth-total',
+          snowDepthNew: 'snow-depth-new',
+          skiCenterId: 'ski-center-id'
+      };
+  
+      // Populate main form fields
+      Object.entries(formData.formState).forEach(([key, value]) => {
+          if (key !== 'dropdownValues' && key !== 'trailConditions') {
+              const elementId = fieldMapping[key] || key;
+              const element = document.getElementById(elementId);
+              if (element) {
+                  if (element.type === 'checkbox') {
+                      element.checked = value;
+                  } else {
+                      element.value = value;
+                  }
               }
           }
       });
   
-      // Handle special cases like trail conditions
-      if (formData.trailConditions) {
-          this.trailConditions = formData.trailConditions;
+      // Handle dropdown values separately
+      if (formData.formState.dropdownValues) {
+          Object.entries(formData.formState.dropdownValues).forEach(([key, value]) => {
+              const element = document.getElementById(key);
+              if (element) {
+                  element.value = value;
+              }
+          });
+      }
+  
+      // Handle trail conditions
+      if (formData.formState.trailConditions) {
+          this.trailConditions = formData.formState.trailConditions;
           this.updateTrailConditionsUI();
       }
+  
+      this.logger.debug('Form fields populated:', {
+          mainFields: formData.formState,
+          dropdowns: formData.formState.dropdownValues,
+          trails: formData.formState.trailConditions
+      });
   }
   
   // Helper method to update trail conditions UI
