@@ -650,30 +650,55 @@ class PhotoManager {
   }
 
   setCurrentFormId(formId) {
-        this.currentFormId = formId;
-        // Attempt to restore photos for this form
-        if (formId) {
-            this.restorePhotos(formId);
-        }
-    }
+      this.currentFormId = formId;
+      // Attempt to restore photos for this form
+      if (formId) {
+          this.restorePhotos(formId);
+      }
+  }
 
-    async restorePhotos(formId) {
-        try {
-            const photos = await this.dbManager.getPhotos(formId);
-            this.photos = [];
-            this.photoCaptions.clear();
-            
-            for (const photoData of photos) {
-                this.photos.push(photoData.photo);
-                if (photoData.caption) {
-                    this.photoCaptions.set(this.photos.length - 1, photoData.caption);
-                }
-                await this.addPhotoPreview(photoData.photo, photoData.caption);
-            }
-        } catch (error) {
-            this.logger.error('Error restoring photos:', error);
-        }
-    }
+  async restorePhotos(formId) {
+      try {
+          const photos = await this.dbManager.getPhotos(formId);
+          if (!photos || photos.length === 0) return;
+  
+          // Wait for the preview container to be available
+          const maxAttempts = 10;
+          let attempts = 0;
+          
+          const waitForContainer = () => {
+              return new Promise((resolve, reject) => {
+                  const check = () => {
+                      const container = document.getElementById('photo-preview-container');
+                      if (container) {
+                          resolve(container);
+                      } else if (attempts >= maxAttempts) {
+                          reject(new Error('Preview container not found after maximum attempts'));
+                      } else {
+                          attempts++;
+                          setTimeout(check, 100);
+                      }
+                  };
+                  check();
+              });
+          };
+  
+          await waitForContainer();
+          
+          this.photos = [];
+          this.photoCaptions.clear();
+          
+          for (const photoData of photos) {
+              this.photos.push(photoData.photo);
+              if (photoData.caption) {
+                  this.photoCaptions.set(this.photos.length - 1, photoData.caption);
+              }
+              await this.addPhotoPreview(photoData.photo, photoData.caption);
+          }
+      } catch (error) {
+          this.logger.error('Error restoring photos:', error);
+      }
+  }
 
   async updatePhotoCaption(photoIndex, caption) {
       try {
