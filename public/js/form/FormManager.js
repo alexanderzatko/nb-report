@@ -488,7 +488,6 @@ class FormManager {
             
             // Then initialize trails if needed
             if (isAdmin && hasTrails) {
-                trailsSection.style.display = 'block';
                 await this.initializeTrailsSection(currentCenter.trails);
             }
 
