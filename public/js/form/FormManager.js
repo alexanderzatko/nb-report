@@ -287,21 +287,19 @@ class FormManager {
               this.populateFormFields(savedData);
   
               // Restore dropdown values
-              document.addEventListener("DOMContentLoaded", function () {
-                if (savedData?.formState?.dropdownValues) {
-                  Object.entries(savedData.formState.dropdownValues).forEach(([id, value]) => {
-                    this.logger.debug('Restoring dropDown :', [id, value]);
-              
-                    const element = document.getElementById(id);
-                    if (element) {
-                      this.logger.debug('I element :', element);
-                      element.value = value;
-                    } else {
-                      this.logger.warn(`Dropdown with ID "${id}" not found in the DOM.`);
-                    }
-                  });
-                }
-              });
+              if (savedData?.formState?.dropdownValues) {
+                Object.entries(savedData.formState.dropdownValues).forEach(([id, value]) => {
+                  this.logger.debug('Restoring dropDown :', [id, value]);
+            
+                  const element = document.getElementById(id);
+                  if (element) {
+                    this.logger.debug('In element :', element);
+                    element.value = value;
+                  } else {
+                    this.logger.warn(`Dropdown with ID "${id}" not found in the DOM.`);
+                  }
+                });
+              }
   
               // Restore trail conditions
               if (savedData.formState.trailConditions) {
