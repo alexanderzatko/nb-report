@@ -93,18 +93,71 @@ class DatabaseManager {
         const db = await this.getDatabase();
         const transaction = db.transaction(['formData'], 'readwrite');
         const store = transaction.objectStore('formData');
-
+    
+        // Find all existing forms except the most recently submitted one
+        const existingForms = await new Promise((resolve, reject) => {
+            const request = store.getAll();
+            request.onsuccess = () => {
+                const forms = request.result.sort((a, b) => 
+                    new Date(b.timestamp) - new Date(a.timestamp)
+                );
+                resolve(forms);
+            };
+            request.onerror = () => reject(request.error);
+        });
+    
+        // If we have forms, keep only the most recent submitted one
+        if (existingForms.length > 0) {
+            const submittedForm = existingForms.find(form => form.submitted);
+            
+            // Delete all forms except the most recent submitted one
+            for (const form of existingForms) {
+                if (form !== submittedForm) {
+                    await store.delete(form.id);
+                }
+            }
+        }
+    
+        // Add new form
         const formData = {
-            id: Date.now().toString(),  // Unique ID for the form
+            id: Date.now().toString(),
             timestamp: new Date().toISOString(),
+            submitted: false,  // Flag to indicate if this is a submitted form
             ...data
         };
-
+    
         return new Promise((resolve, reject) => {
             const request = store.add(formData);
             request.onsuccess = () => resolve(formData.id);
             request.onerror = () => reject(request.error);
         });
+    }
+
+    async markFormAsSubmitted(formId) {
+        const db = await this.getDatabase();
+        const transaction = db.transaction(['formData'], 'readwrite');
+        const store = transaction.objectStore('formData');
+    
+        // Get all forms
+        const forms = await new Promise((resolve, reject) => {
+            const request = store.getAll();
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    
+        // Delete all forms except the one being submitted
+        for (const form of forms) {
+            if (form.id !== formId) {
+                await store.delete(form.id);
+            }
+        }
+    
+        // Update the submitted form
+        const form = await store.get(formId);
+        if (form) {
+            form.submitted = true;
+            await store.put(form);
+        }
     }
 
     async getFormData(formId) {
