@@ -160,6 +160,19 @@ class FormManager {
           // Collect only serializable form data
           const formData = this.collectSerializableFormData();
 
+          if (this.trailConditions) {
+              formData.trailConditions = this.trailConditions;
+          }
+  
+          // Add dropdown values
+          const dropdownValues = {
+              snowType: document.getElementById('snow-type')?.value,
+              classicStyle: document.getElementById('classic-style')?.value,
+              freeStyle: document.getElementById('free-style')?.value,
+              snowAge: document.getElementById('snow-age')?.value,
+              wetness: document.getElementById('wetness')?.value
+          };
+        
           formData.lastModified = new Date().toISOString();
           
           await this.dbManager.updateFormData(this.currentFormId, {
