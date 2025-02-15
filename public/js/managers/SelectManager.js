@@ -247,40 +247,47 @@ class SelectManager {
     this.selectedValues.region = regionSelect.value;
   }
 
-  populateXCDropdowns() {
-    if (!this.data.xcConditions) {
-      this.logger.error('No XC conditions data available');
-      return;
-    }
-
-    this.updateSnowTypeDropdown();
-    this.updateTrackConditionsDropdowns();
-    this.updateSnowAgeDropdown();
-    this.updateWetnessDropdown();
-  }
-
-  updateSnowTypeDropdown() {
-    const snowTypeSelect = document.getElementById('snow-type');
-    if (!snowTypeSelect) {
-      if (!this.initialized) {
+  async populateXCDropdowns() {
+      if (!this.data.xcConditions) {
+          this.logger.error('No XC conditions data available');
           return;
       }
-      this.logger.warn('Snow type select element not found');
-      return;
-    }
+  
+      // Make each populate function return a promise
+      await Promise.all([
+          this.updateSnowTypeDropdown(),
+          this.updateTrackConditionsDropdowns(),
+          this.updateSnowAgeDropdown(),
+          this.updateWetnessDropdown()
+      ]);
+  }
 
-    snowTypeSelect.innerHTML = '';
-    const defaultOption = document.createElement('option');
-    defaultOption.value = '';
-    defaultOption.textContent = this.i18next.t('form.selectSnowType', 'Select snow type');
-    snowTypeSelect.appendChild(defaultOption);
-
-    this.data.xcConditions.snowTypes.forEach(type => {
-      const option = document.createElement('option');
-      option.value = type.code;
-      option.textContent = this.i18next.t(`form.snowTypes.${type.code}`, { defaultValue: type.name });
-      snowTypeSelect.appendChild(option);
-    });
+  async updateSnowTypeDropdown() {
+      const snowTypeSelect = document.getElementById('snow-type');
+      if (!snowTypeSelect) {
+          if (!this.initialized) {
+              return;
+          }
+          this.logger.warn('Snow type select element not found');
+          return;
+      }
+  
+      return new Promise((resolve) => {
+          snowTypeSelect.innerHTML = '';
+          const defaultOption = document.createElement('option');
+          defaultOption.value = '';
+          defaultOption.textContent = this.i18next.t('form.selectSnowType', 'Select snow type');
+          snowTypeSelect.appendChild(defaultOption);
+  
+          this.data.xcConditions.snowTypes.forEach(type => {
+              const option = document.createElement('option');
+              option.value = type.code;
+              option.textContent = this.i18next.t(`form.snowTypes.${type.code}`, { defaultValue: type.name });
+              snowTypeSelect.appendChild(option);
+          });
+  
+          resolve();
+      });
   }
 
   updateTrackConditionsDropdowns() {
