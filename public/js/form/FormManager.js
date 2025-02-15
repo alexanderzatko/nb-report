@@ -157,21 +157,15 @@ class FormManager {
       if (!this.currentFormId) return;
   
       try {
-          // Collect only serializable form data
           const formData = this.collectSerializableFormData();
-
-          if (this.trailConditions) {
-              formData.trailConditions = this.trailConditions;
-          }
-  
-          // Add dropdown values
-          const dropdownValues = {
-              snowType: document.getElementById('snow-type')?.value,
-              classicStyle: document.getElementById('classic-style')?.value,
-              freeStyle: document.getElementById('free-style')?.value,
-              snowAge: document.getElementById('snow-age')?.value,
-              wetness: document.getElementById('wetness')?.value
-          };
+ 
+          const dropdownValues = {};
+          const dropdowns = document.querySelectorAll('select');
+          dropdowns.forEach(dropdown => {
+              if (dropdown.id) {
+                  dropdownValues[dropdown.id] = dropdown.value;
+              }
+          });
         
           formData.lastModified = new Date().toISOString();
           
@@ -179,7 +173,7 @@ class FormManager {
               formState: {
                   ...formData,
                   dropdownValues,
-                  trailConditions: this.trailConditions
+                  trailConditions: this.trailConditions || {}
               },
               lastSaved: new Date().toISOString()
           });
@@ -281,7 +275,9 @@ class FormManager {
 
   async restoreFormState() {
       if (!this.currentFormId) return;
-  
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       try {
           const savedData = await this.dbManager.getFormData(this.currentFormId);
           this.logger.debug('Retrieved form data:', savedData);
@@ -471,6 +467,11 @@ class FormManager {
             request.onerror = () => reject(request.error);
         });
 
+        const isAdmin = userData?.ski_center_admin === "1";
+        const stateManager = StateManager.getInstance();
+        const currentCenter = stateManager.getSkiCenterData();
+        const hasTrails = currentCenter?.trails && Array.isArray(currentCenter.trails) && currentCenter.trails.length > 0;
+  
         // Start auto-save after form is initialized
         this.startAutoSave();
       
@@ -481,6 +482,16 @@ class FormManager {
             // Use existing unsubmitted form
             this.currentFormId = unsubmittedForm.id;
             this.photoManager.setCurrentFormId(this.currentFormId);
+
+            // Initialize dropdowns first
+            await this.selectManager.refreshAllDropdowns();
+            
+            // Then initialize trails if needed
+            if (isAdmin && hasTrails) {
+                trailsSection.style.display = 'block';
+                await this.initializeTrailsSection(currentCenter.trails);
+            }
+
             await this.restoreFormState();
         } else {
 
@@ -495,9 +506,6 @@ class FormManager {
           this.currentFormId = await this.dbManager.saveFormData(formData);
           this.photoManager.setCurrentFormId(this.currentFormId);
         }
-
-        // Try to restore any saved form state
-        await this.restoreFormState();
   
         // Get required elements
         const regularUserSection = document.getElementById('regular-user-section');
@@ -511,11 +519,6 @@ class FormManager {
             return;
         }
     
-        const isAdmin = userData?.ski_center_admin === "1";
-        const stateManager = StateManager.getInstance();
-        const currentCenter = stateManager.getSkiCenterData();
-        const hasTrails = currentCenter?.trails && Array.isArray(currentCenter.trails) && currentCenter.trails.length > 0;
-  
         this.logger.debug('Form initialization:', {
           isAdmin,
           hasTrails,
