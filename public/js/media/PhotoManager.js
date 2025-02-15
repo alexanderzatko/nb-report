@@ -486,11 +486,20 @@ class PhotoManager {
           captionInput.maxLength = 200;
 
           // Save caption to the photoEntry
-          captionInput.addEventListener('input', (e) => {
-            const entry = this.photoEntries.find(entry => entry.id === photoId);
-            if (entry) {
-              entry.caption = e.target.value;
-            }
+          captionInput.addEventListener('input', async (e) => {
+              const entry = this.photoEntries.find(entry => entry.id === photoId);
+              if (entry) {
+                  entry.caption = e.target.value;
+                  // Get the index of this photo in the photoEntries array
+                  const photoIndex = this.photoEntries.findIndex(p => p.id === photoId);
+                  if (photoIndex !== -1) {
+                      try {
+                          await this.updatePhotoCaption(photoIndex, e.target.value);
+                      } catch (error) {
+                          this.logger.error('Failed to save caption:', error);
+                      }
+                  }
+              }
           });
 
           const controlsDiv = document.createElement('div');
