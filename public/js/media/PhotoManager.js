@@ -572,31 +572,34 @@ class PhotoManager {
 
   async removePhoto(photoIndex, wrapper) {
       try {
-          if (photoIndex >= 0 && photoIndex < this.photos.length) {
-              // Get the photo data
-              const photoData = await this.dbManager.getPhotos(this.currentFormId);
-              if (photoData && photoData[photoIndex]) {
-                  // Delete from database
-                  await this.dbManager.deletePhoto(photoData[photoIndex].id);
-              }
-
-              // Remove from arrays and UI
-              this.photos.splice(photoIndex, 1);
-              this.photoCaptions.delete(photoIndex);
-              wrapper.remove();
-
-              // Update remaining indices
-              const allPreviews = document.querySelectorAll('.photo-preview');
-              allPreviews.forEach((preview, newIndex) => {
-                  preview.dataset.photoIndex = newIndex;
-                  const oldIndex = parseInt(preview.dataset.photoIndex);
-                  if (this.photoCaptions.has(oldIndex)) {
-                      const caption = this.photoCaptions.get(oldIndex);
-                      this.photoCaptions.delete(oldIndex);
-                      this.photoCaptions.set(newIndex, caption);
-                  }
-              });
+        const photoEntry = this.photoEntries.find(entry => entry.id === photoId);
+      if (photoEntry) {
+          // If we have a database ID, delete from database
+          if (photoEntry.dbId) {
+              await this.dbManager.deletePhoto(photoEntry.dbId);
           }
+
+          this.photoEntries = this.photoEntries.filter(entry => entry.id !== photoId);
+          this.photoCaptions.delete(photoId);
+          wrapper.remove();
+
+          // Reorder remaining photos
+          this.photoEntries.forEach((entry, index) => {
+              entry.order = index;
+          });
+      
+          // Update remaining indices
+          const allPreviews = document.querySelectorAll('.photo-preview');
+          allPreviews.forEach((preview, newIndex) => {
+              preview.dataset.photoIndex = newIndex;
+              const oldIndex = parseInt(preview.dataset.photoIndex);
+              if (this.photoCaptions.has(oldIndex)) {
+                  const caption = this.photoCaptions.get(oldIndex);
+                  this.photoCaptions.delete(oldIndex);
+                  this.photoCaptions.set(newIndex, caption);
+              }
+          });
+        }
       } catch (error) {
           this.logger.error('Error removing photo:', error);
           throw error;
