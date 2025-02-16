@@ -706,15 +706,13 @@ class PhotoManager {
   
           await waitForContainer();
           
+          // Clear existing photos
           this.photos = [];
           this.photoCaptions.clear();
+          this.photoEntries = [];  // Clear photo entries as well
           
+          // Restore each photo
           for (const photoData of photos) {
-              this.photos.push(photoData.photo);
-              if (photoData.caption) {
-                  this.photoCaptions.set(this.photos.length - 1, photoData.caption);
-              }
-              await this.addPhotoPreview(photoData.photo, photoData.caption);
               await this.addPhotoPreview(photoData.photo, photoData.id, photoData.caption);
           }
       } catch (error) {
