@@ -314,7 +314,7 @@ class PhotoManager {
               // Only add to photos array and preview if database save was successful
               if (photoId || !this.currentFormId) {
                   this.photos.push(processedFile);
-                  await this.addPhotoPreview(processedFile);
+                  await this.addPhotoPreview(processedFile, photoId);
               }
   
           } catch (error) {
@@ -466,6 +466,7 @@ class PhotoManager {
           const photoOrder = this.photoEntries.length;
           const photoEntry = {
             id: photoId,
+            dbId: file.dbId,
             file: file,
             caption: '',
             order: photoOrder
@@ -491,7 +492,7 @@ class PhotoManager {
             if (entry) {
               entry.caption = e.target.value;
               try {
-                await this.updatePhotoCaption(parseInt(photoId), e.target.value);
+                await this.updatePhotoCaption(entry.dbId, e.target.value);
                 this.logger.debug('Caption updated in database:', { photoId, caption: e.target.value });
               } catch (error) {
                 this.logger.error('Error updating caption in database:', error);
