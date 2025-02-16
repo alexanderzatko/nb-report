@@ -370,24 +370,26 @@ class DatabaseManager {
             const store = transaction.objectStore('photos');
     
             return new Promise((resolve, reject) => {
-                const request = store.get(photoId);
+                const getRequest = store.get(photoId);
                 
-                request.onsuccess = () => {
-                    const photo = request.result;
+                getRequest.onsuccess = () => {
+                    const photo = getRequest.result;
                     if (photo) {
                         photo.caption = caption;
                         const updateRequest = store.put(photo);
-                        updateRequest.onsuccess = () => resolve();
+                        updateRequest.onsuccess = () => {
+                            this.logger.debug('Caption updated successfully:', { photoId, caption });
+                            resolve();
+                        };
                         updateRequest.onerror = () => reject(updateRequest.error);
                     } else {
                         reject(new Error('Photo not found'));
                     }
                 };
-                
-                request.onerror = () => reject(request.error);
+                getRequest.onerror = () => reject(getRequest.error);
             });
         } catch (error) {
-            this.logger.error('Error updating photo caption:', error);
+            this.logger.error('Error updating caption:', error);
             throw error;
         }
     }
