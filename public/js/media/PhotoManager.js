@@ -444,7 +444,7 @@ class PhotoManager {
     });
   }
 
-  async addPhotoPreview(file, dbId) {
+  async addPhotoPreview(file, dbId, caption = '') {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       
@@ -469,7 +469,7 @@ class PhotoManager {
             id: photoId,
             dbId: dbId,
             file: file,
-            caption: '',
+            caption: caption,
             order: photoOrder
           };
           this.photoEntries.push(photoEntry);
@@ -486,6 +486,13 @@ class PhotoManager {
           captionInput.className = 'photo-caption';
           captionInput.placeholder = this.i18next.t('form.captionPlaceholder', 'Add a caption...');
           captionInput.maxLength = 200;
+
+          if (dbId) {
+              const entry = this.photoEntries.find(entry => entry.dbId === dbId);
+              if (entry && entry.caption) {
+                  captionInput.value = entry.caption;
+              }
+          }
 
           // Save caption to the photoEntry
           captionInput.addEventListener('input', async (e) => {
@@ -708,6 +715,7 @@ class PhotoManager {
                   this.photoCaptions.set(this.photos.length - 1, photoData.caption);
               }
               await this.addPhotoPreview(photoData.photo, photoData.caption);
+              await this.addPhotoPreview(photoData.photo, photoData.id, photoData.caption);
           }
       } catch (error) {
           this.logger.error('Error restoring photos:', error);
