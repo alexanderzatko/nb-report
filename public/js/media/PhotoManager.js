@@ -701,6 +701,7 @@ class PhotoManager {
   }
 
   async updatePhotoCaption(photoIndex, caption) {
+      this.logger.debug('Updating caption:', caption);
       try {
           if (this.currentFormId) {
               const photos = await this.dbManager.getPhotos(this.currentFormId);
