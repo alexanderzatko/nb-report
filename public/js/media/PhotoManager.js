@@ -486,10 +486,16 @@ class PhotoManager {
           captionInput.maxLength = 200;
 
           // Save caption to the photoEntry
-          captionInput.addEventListener('input', (e) => {
+          captionInput.addEventListener('input', async (e) => {
             const entry = this.photoEntries.find(entry => entry.id === photoId);
             if (entry) {
               entry.caption = e.target.value;
+              try {
+                await this.updatePhotoCaption(parseInt(photoId), e.target.value);
+                this.logger.debug('Caption updated in database:', { photoId, caption: e.target.value });
+              } catch (error) {
+                this.logger.error('Error updating caption in database:', error);
+              }
             }
           });
 
