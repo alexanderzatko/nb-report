@@ -570,7 +570,7 @@ class PhotoManager {
     }
   }
 
-  async removePhoto(photoIndex, wrapper) {
+  async removePhoto(photoId, wrapper) {
       try {
         const photoEntry = this.photoEntries.find(entry => entry.id === photoId);
       if (photoEntry) {
