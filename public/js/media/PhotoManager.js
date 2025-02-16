@@ -443,7 +443,7 @@ class PhotoManager {
     });
   }
 
-  async addPhotoPreview(file) {
+  async addPhotoPreview(file, dbId) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       
@@ -466,7 +466,7 @@ class PhotoManager {
           const photoOrder = this.photoEntries.length;
           const photoEntry = {
             id: photoId,
-            dbId: file.dbId,
+            dbId: dbId,
             file: file,
             caption: '',
             order: photoOrder
