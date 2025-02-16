@@ -303,6 +303,7 @@ class PhotoManager {
               let photoId = null;
               if (this.currentFormId) {
                   try {
+                      const initialCaption = '';
                       photoId = await this.dbManager.savePhoto(this.currentFormId, processedFile);
                       this.logger.debug('Saved photo to database:', photoId);
                   } catch (error) {
@@ -488,16 +489,22 @@ class PhotoManager {
 
           // Save caption to the photoEntry
           captionInput.addEventListener('input', async (e) => {
-            const entry = this.photoEntries.find(entry => entry.id === photoId);
-            if (entry) {
-              entry.caption = e.target.value;
-              try {
-                await this.updatePhotoCaption(entry.dbId, e.target.value);
-                this.logger.debug('Caption updated in database:', { photoId, caption: e.target.value });
-              } catch (error) {
-                this.logger.error('Error updating caption in database:', error);
+              const entry = this.photoEntries.find(entry => entry.id === photoId);
+              if (entry) {
+                  entry.caption = e.target.value;
+                  try {
+                      // Use the database ID (dbId) rather than the UI ID
+                      if (entry.dbId) {
+                          await this.dbManager.updateCaption(entry.dbId, e.target.value);
+                          this.logger.debug('Caption updated in database:', { 
+                              dbId: entry.dbId, 
+                              caption: e.target.value 
+                          });
+                      }
+                  } catch (error) {
+                      this.logger.error('Error updating caption in database:', error);
+                  }
               }
-            }
           });
 
           const controlsDiv = document.createElement('div');
