@@ -378,7 +378,6 @@ class DatabaseManager {
                         photo.caption = caption;
                         const updateRequest = store.put(photo);
                         updateRequest.onsuccess = () => {
-                            this.logger.debug('Caption updated successfully:', { photoId, caption });
                             resolve();
                         };
                         updateRequest.onerror = () => reject(updateRequest.error);
