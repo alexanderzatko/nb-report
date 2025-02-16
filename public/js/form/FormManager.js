@@ -420,15 +420,35 @@ class FormManager {
   
   // Helper method to update trail conditions UI
   updateTrailConditionsUI() {
+      this.logger.debug('Updating trail conditions UI with data:', this.trailConditions);
+      
       Object.entries(this.trailConditions).forEach(([trailId, conditions]) => {
           const trailElement = document.querySelector(`[data-trail-id="${trailId}"]`);
+          this.logger.debug(`Looking for trail element with ID ${trailId}:`, !!trailElement);
+          
           if (trailElement) {
               Object.entries(conditions).forEach(([type, value]) => {
-                  const btnContainer = trailElement.querySelector(`[data-type="${type}"]`);
-                  if (btnContainer) {
-                      const button = btnContainer.querySelector(`[data-value="${value}"]`);
-                      if (button) {
-                          button.click(); // This will trigger the UI update
+                  // Find the condition group by looking for the selected-value span with matching data-for-type
+                  const headerSpan = trailElement.querySelector(`span.selected-value[data-for-type="${type}"]`);
+                  if (headerSpan) {
+                      // Get the parent condition group
+                      const conditionGroup = headerSpan.closest('.condition-group');
+                      if (conditionGroup) {
+                          // Find button with matching value within this condition group
+                          const button = conditionGroup.querySelector(`button[data-value="${value}"]`);
+                          this.logger.debug(`Looking for button with value ${value} for type ${type}:`, !!button);
+                          
+                          if (button) {
+                              // Clear previous selection in this group
+                              conditionGroup.querySelectorAll('.condition-btn').forEach(btn => {
+                                  btn.classList.remove('selected');
+                              });
+                              // Select the new button
+                              button.classList.add('selected');
+                              
+                              // Update the selected value text
+                              headerSpan.textContent = ': ' + button.title;
+                          }
                       }
                   }
               });
