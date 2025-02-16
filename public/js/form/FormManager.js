@@ -132,7 +132,7 @@ class FormManager {
           if (this.currentFormId) {
               this.saveFormState();
           }
-      }, 30000);
+      }, 10000);
   }
 
   startAutoSave() {
