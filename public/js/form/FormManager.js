@@ -622,6 +622,7 @@ class FormManager {
       
           this.currentFormId = await this.dbManager.saveFormData(formData);
           this.photoManager.setCurrentFormId(this.currentFormId);
+          await this.selectManager.refreshAllDropdowns();
         }
     } catch (error) {
         this.logger.error('Error initializing form:', error);
