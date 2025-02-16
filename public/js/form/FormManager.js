@@ -75,7 +75,7 @@ class FormManager {
     this.dbManager = DatabaseManager.getInstance();
     this.currentFormId = null;
     this.autoSaveInterval = null;
-    this.setupAutoSave();
+    this.autoSaveIntervalMs = 10000; // form autosave interval in ms
     
     FormManager.instance = this;
   }
@@ -126,15 +126,6 @@ class FormManager {
       }
   }
 
-  setupAutoSave() {
-      // Auto-save form data every 30 seconds
-      this.autoSaveInterval = setInterval(() => {
-          if (this.currentFormId) {
-              this.saveFormState();
-          }
-      }, 10000);
-  }
-
   startAutoSave() {
     if (this.autoSaveInterval) {
       clearInterval(this.autoSaveInterval);
@@ -143,7 +134,7 @@ class FormManager {
       if (this.currentFormId && document.getElementById('snow-report-form').style.display !== 'none') {
         this.saveFormState();
       }
-    }, 30000);
+    }, this.autoSaveIntervalMs);
   }
   
   stopAutoSave() {
