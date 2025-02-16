@@ -281,13 +281,10 @@ class FormManager {
               if (savedData?.formState?.dropdownValues) {
                   // Wait for all dropdowns to be populated and then set their values
                   await Promise.all(
-                      Object.entries(savedData.formState.dropdownValues).map(async ([id, value]) => {
-                          this.logger.debug('Restoring dropDown :', [id, value]);
-                          
+                      Object.entries(savedData.formState.dropdownValues).map(async ([id, value]) => {                          
                           // Wait for element to be available and populated
                           const element = await this.waitForSelect(id);
                           if (element) {
-                              this.logger.debug('In element :', element);
                               element.value = value;
                               // Verify the value was set
                               if (element.value !== value) {
@@ -415,7 +412,6 @@ class FormManager {
       
       Object.entries(this.trailConditions).forEach(([trailId, conditions]) => {
           const trailElement = document.querySelector(`[data-trail-id="${trailId}"]`);
-          this.logger.debug(`Looking for trail element with ID ${trailId}:`, !!trailElement);
           
           if (trailElement) {
               Object.entries(conditions).forEach(([type, value]) => {
@@ -427,7 +423,6 @@ class FormManager {
                       if (conditionGroup) {
                           // Find button with matching value within this condition group
                           const button = conditionGroup.querySelector(`button[data-value="${value}"]`);
-                          this.logger.debug(`Looking for button with value ${value} for type ${type}:`, !!button);
                           
                           if (button) {
                               // Clear previous selection in this group
