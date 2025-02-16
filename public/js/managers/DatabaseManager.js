@@ -138,26 +138,20 @@ class DatabaseManager {
         const transaction = db.transaction(['formData'], 'readwrite');
         const store = transaction.objectStore('formData');
     
-        // Get all forms
-        const forms = await new Promise((resolve, reject) => {
-            const request = store.getAll();
-            request.onsuccess = () => resolve(request.result);
+        // Simply add submitted flag to the current form
+        const request = store.get(formId);
+        await new Promise((resolve, reject) => {
+            request.onsuccess = () => {
+                const form = request.result;
+                if (form) {
+                    form.submitted = true;
+                    form.submittedAt = new Date().toISOString();
+                    store.put(form);
+                }
+                resolve();
+            };
             request.onerror = () => reject(request.error);
         });
-    
-        // Delete all forms except the one being submitted
-        for (const form of forms) {
-            if (form.id !== formId) {
-                await store.delete(form.id);
-            }
-        }
-    
-        // Update the submitted form
-        const form = await store.get(formId);
-        if (form) {
-            form.submitted = true;
-            await store.put(form);
-        }
     }
 
     async getFormData(formId) {
