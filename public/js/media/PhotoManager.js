@@ -503,10 +503,6 @@ class PhotoManager {
                       // Use the database ID (dbId) rather than the UI ID
                       if (entry.dbId) {
                           await this.dbManager.updateCaption(entry.dbId, e.target.value);
-                          this.logger.debug('Caption updated in database:', { 
-                              dbId: entry.dbId, 
-                              caption: e.target.value 
-                          });
                       }
                   } catch (error) {
                       this.logger.error('Error updating caption in database:', error);
