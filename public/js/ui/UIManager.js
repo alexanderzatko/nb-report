@@ -5,6 +5,7 @@ import SelectManager from '../managers/SelectManager.js';
 import FormManager from '../form/FormManager.js';
 import StateManager from '../state/StateManager.js';
 import GPSManager from '../managers/GPSManager.js';
+import DatabaseManager from '../managers/DatabaseManager.js';
 
 class UIManager {
   static instance = null;
@@ -155,24 +156,63 @@ class UIManager {
     }
   }
   
-  async setupDashboardCards() {
+async setupDashboardCards() {
     console.log('Setting up dashboard cards');
     
-    // Snow Report Card
-    const snowReportLink = document.getElementById('snow-report-link');
-    if (snowReportLink) {
-        console.log('Found snow report link');
-        // Remove existing href to prevent default behavior
-        snowReportLink.removeAttribute('href');
-        
-        snowReportLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Snow report card clicked');
-            this.showSnowReportForm();
+    const setupCard = (cardElement, handler) => {
+        if (cardElement) {
+            console.log(`Found card: ${cardElement.id}`);
+            cardElement.removeAttribute('href');
+            
+            cardElement.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log(`Card clicked: ${cardElement.id}`);
+                await handler();
+            });
+
+            // Add hover effect
+            cardElement.style.cursor = 'pointer';
+            cardElement.addEventListener('mouseenter', () => {
+                cardElement.style.transform = 'translateY(-3px)';
+                cardElement.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+            });
+            cardElement.addEventListener('mouseleave', () => {
+                cardElement.style.transform = 'none';
+                cardElement.style.boxShadow = 'none';
+            });
+        }
+    };
+
+    // Continue Report Card
+    const continueReportLink = document.getElementById('snow-report-link');
+    setupCard(continueReportLink, () => this.showSnowReportForm());
+
+    // New Report Card
+    const newReportLink = document.getElementById('new-report-link');
+    setupCard(newReportLink, async () => {
+        // Clear any existing draft before showing new form
+        const dbManager = DatabaseManager.getInstance();
+        const db = await dbManager.getDatabase();
+        const forms = await new Promise((resolve, reject) => {
+            const transaction = db.transaction(['formData'], 'readonly');
+            const store = transaction.objectStore('formData');
+            const request = store.getAll();
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
         });
-    } else {
-        console.log('Snow report link not found');
+
+        const draftForm = forms.find(form => !form.submitted);
+        if (draftForm) {
+            await dbManager.clearForm(draftForm.id);
+        }
+
+        this.showSnowReportForm();
+    });
+    
+    if (!continueReportLink && !newReportLink) {
+        console.log('No report cards found');
+        return;
     }
 
     // Settings Card
@@ -244,23 +284,7 @@ class UIManager {
             }
         });
     }
-
-    // Make cards visually clickable
-    [snowReportLink].forEach(card => {
-        if (card) {
-            card.style.cursor = 'pointer';
-            // Add hover effect
-            card.addEventListener('mouseenter', () => {
-                card.style.transform = 'translateY(-3px)';
-                card.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-            });
-            card.addEventListener('mouseleave', () => {
-                card.style.transform = 'none';
-                card.style.boxShadow = 'none';
-            });
-        }
-    });
-  }
+}
 
   async setupSettingsButtons() {
     console.log('Setting up settings buttons');
