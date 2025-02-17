@@ -11,6 +11,8 @@
   },
   "dashboard": {
     "title": "Na bežky! reportér",
+    "continueReport": "Dokončiť správu",
+    "continueReportDesc": "Pokračovať v úprave uloženej správy",
     "newReport": "Nová správa",
     "newReportDesc": "Vytvoriť a odoslať novú správu z terénu",
     "recordGps": "Nový GPS záznam",
