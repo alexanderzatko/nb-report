@@ -1525,7 +1525,7 @@ class FormManager {
 
           this.showSuccess(this.i18next.t('form.validation.submitSuccess'));
           this.stopTrackingFormTime();
-          this.resetForm();
+          this.resetForm(true);
           
           // Show dashboard
           document.getElementById('dashboard-container').style.display = 'block';
@@ -1884,9 +1884,9 @@ class FormManager {
     document.getElementById('snow-report-form').style.display = 'none';
   }
 
-  resetForm() {
-    // First handle database cleanup if we have a form ID
-    if (this.currentFormId) {
+  resetForm(keepDatabaseData = false) {
+    // Only clear database if explicitly requested
+    if (!keepDatabaseData && this.currentFormId) {
         try {
             this.dbManager.clearForm(this.currentFormId);
             this.currentFormId = null;
