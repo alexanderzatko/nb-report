@@ -377,7 +377,7 @@ class FormManager {
   
       // Populate main form fields
       Object.entries(formData.formState).forEach(([key, value]) => {
-          if (key !== 'dropdownValues' && key !== 'trailConditions') {
+          if (key !== 'dropdownValues' && key !== 'trailConditions' && key !== 'gpxData') {
               const elementId = fieldMapping[key] || key;
               const element = document.getElementById(elementId);
               if (element) {
@@ -389,6 +389,55 @@ class FormManager {
               }
           }
       });
+  
+      // Handle GPX data
+      if (formData.formState.gpxData) {
+          const gpsManager = GPSManager.getInstance();
+          gpsManager.importGPXFile(formData.formState.gpxData)
+              .then(async () => {
+                  // Update GPX dropdown and info display
+                  const gpxSelect = document.getElementById('gpx-option');
+                  const infoDisplay = document.getElementById('gpx-info-display');
+                  const uploadContainer = document.getElementById('gpx-upload-container');
+  
+                  if (gpxSelect) {
+                      // Ensure the 'existing' option is available
+                      const existingOption = gpxSelect.querySelector('option[value="existing"]');
+                      if (!existingOption) {
+                          const option = document.createElement('option');
+                          option.value = 'existing';
+                          option.textContent = this.i18next.t('form.gpx.options.existing');
+                          // Insert after the 'none' option
+                          const noneOption = gpxSelect.querySelector('option[value="none"]');
+                          if (noneOption) {
+                              noneOption.after(option);
+                          } else {
+                              gpxSelect.appendChild(option);
+                          }
+                      }
+                      gpxSelect.value = 'existing';
+                  }
+  
+                  // Show track info
+                  const trackStats = await gpsManager.getTrackStats();
+                  if (infoDisplay && trackStats) {
+                      infoDisplay.style.display = '';
+                      infoDisplay.innerHTML = this.i18next.t('form.gpx.trackInfo', {
+                          date: new Date(trackStats.startTime).toLocaleDateString(),
+                          distance: trackStats.distance.toString(),
+                          duration: `${trackStats.duration.hours}:${String(trackStats.duration.minutes).padStart(2, '0')}`
+                      });
+                  }
+  
+                  // Hide upload container
+                  if (uploadContainer) {
+                      uploadContainer.style.display = 'none';
+                  }
+              })
+              .catch(error => {
+                  this.logger.error('Error restoring GPX data:', error);
+              });
+      }
   
       // Handle dropdown values separately
       if (formData.formState.dropdownValues) {
@@ -405,12 +454,6 @@ class FormManager {
           this.trailConditions = formData.formState.trailConditions;
           this.updateTrailConditionsUI();
       }
-  
-      this.logger.debug('Form fields populated:', {
-          mainFields: formData.formState,
-          dropdowns: formData.formState.dropdownValues,
-          trails: formData.formState.trailConditions
-      });
   }
   
   // Helper method to update trail conditions UI
