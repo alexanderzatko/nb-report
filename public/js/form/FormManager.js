@@ -75,7 +75,7 @@ class FormManager {
     this.dbManager = DatabaseManager.getInstance();
     this.currentFormId = null;
     this.autoSaveInterval = null;
-    this.autoSaveIntervalMs = 10000; // form autosave interval in ms
+    this.autoSaveIntervalMs = 5000; // form autosave interval in ms
     
     FormManager.instance = this;
   }
