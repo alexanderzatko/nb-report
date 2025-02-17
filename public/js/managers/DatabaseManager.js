@@ -88,41 +88,44 @@ class DatabaseManager {
         }
     }
 
-    // Form data methods
     async saveFormData(data) {
         const db = await this.getDatabase();
         const transaction = db.transaction(['formData'], 'readwrite');
         const store = transaction.objectStore('formData');
     
-        // Find all existing forms except the most recently submitted one
+        // Find all existing forms
         const existingForms = await new Promise((resolve, reject) => {
             const request = store.getAll();
-            request.onsuccess = () => {
-                const forms = request.result.sort((a, b) => 
-                    new Date(b.timestamp) - new Date(a.timestamp)
-                );
-                resolve(forms);
-            };
+            request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.error);
         });
     
-        // If we have forms, keep only the most recent submitted one
-        if (existingForms.length > 0) {
-            const submittedForm = existingForms.find(form => form.submitted);
-            
-            // Delete all forms except the most recent submitted one
+        // Filter to find unsubmitted form
+        const unsubmittedForm = existingForms.find(form => !form.submitted);
+    
+        // If we have an unsubmitted form, keep only that and the most recent submitted one
+        if (unsubmittedForm) {
+            const submittedForms = existingForms
+                .filter(form => form.submitted)
+                .sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+    
+            // Keep only the most recent submitted form
+            const recentSubmitted = submittedForms[0];
+    
+            // Delete all other forms
             for (const form of existingForms) {
-                if (form !== submittedForm) {
+                if (form !== unsubmittedForm && form !== recentSubmitted) {
                     await store.delete(form.id);
                 }
             }
         }
     
-        // Add new form
+        // Prepare new form data
         const formData = {
             id: Date.now().toString(),
             timestamp: new Date().toISOString(),
-            submitted: false,  // Flag to indicate if this is a submitted form
+            submitted: false,  // Default to draft status
+            submittedAt: null,
             ...data
         };
     
@@ -133,25 +136,49 @@ class DatabaseManager {
         });
     }
 
+
     async markFormAsSubmitted(formId) {
-        const db = await this.getDatabase();
-        const transaction = db.transaction(['formData'], 'readwrite');
-        const store = transaction.objectStore('formData');
+        try {
+            const db = await this.getDatabase();
+            const transaction = db.transaction(['formData'], 'readwrite');
+            const store = transaction.objectStore('formData');
     
-        // Simply add submitted flag to the current form
-        const request = store.get(formId);
-        await new Promise((resolve, reject) => {
-            request.onsuccess = () => {
-                const form = request.result;
-                if (form) {
-                    form.submitted = true;
-                    form.submittedAt = new Date().toISOString();
-                    store.put(form);
-                }
-                resolve();
-            };
-            request.onerror = () => reject(request.error);
-        });
+            // Get all forms
+            const forms = await new Promise((resolve, reject) => {
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+    
+            // Delete any previously submitted forms
+            const oldSubmittedForms = forms.filter(form => form.submitted);
+            for (const oldForm of oldSubmittedForms) {
+                await store.delete(oldForm.id);
+            }
+    
+            // Update current form to submitted status
+            const currentForm = await new Promise((resolve, reject) => {
+                const request = store.get(formId);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+    
+            if (currentForm) {
+                currentForm.submitted = true;
+                currentForm.submittedAt = new Date().toISOString();
+                
+                await new Promise((resolve, reject) => {
+                    const request = store.put(currentForm);
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => reject(request.error);
+                });
+            }
+    
+            return true;
+        } catch (error) {
+            this.logger.error('Error marking form as submitted:', error);
+            throw error;
+        }
     }
 
     async getFormData(formId) {
@@ -170,7 +197,7 @@ class DatabaseManager {
         const db = await this.getDatabase();
         const transaction = db.transaction(['formData'], 'readwrite');
         const store = transaction.objectStore('formData');
-
+    
         return new Promise((resolve, reject) => {
             const request = store.get(formId);
             request.onsuccess = () => {
@@ -179,6 +206,10 @@ class DatabaseManager {
                     ...data,
                     lastUpdated: new Date().toISOString()
                 };
+                // Ensure we don't accidentally change submitted status during update
+                if (!updatedData.submitted) {
+                    updatedData.submittedAt = null;
+                }
                 const updateRequest = store.put(updatedData);
                 updateRequest.onsuccess = () => resolve();
                 updateRequest.onerror = () => reject(updateRequest.error);
