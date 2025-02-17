@@ -362,8 +362,8 @@ class FormManager {
       
       // Handle main form fields
       const fieldMapping = {
-          reportnote: 'report-note',
-          reportdate: 'report-title',
+          reportTitle: 'report-title',
+          reportdate: 'report-date',
           snowDepth250: 'snow-depth250',
           snowDepth500: 'snow-depth500',
           snowDepth750: 'snow-depth750',
@@ -371,6 +371,7 @@ class FormManager {
           snowDepthTotal: 'snow-depth-total',
           snowDepthNew: 'snow-depth-new',
           skiCenterId: 'ski-center-id',
+          reportnote: 'report-note',
           privateReport: 'private-report'
       };
   
