@@ -11,6 +11,8 @@
   },
   "dashboard": {
     "title": "Dashboard",
+    "continueReport": "Complete Report",
+    "continueReportDesc": "Continue editing saved report",
     "newReport": "New Report",
     "newReportDesc": "Submit a new report",
     "recordGps": "New GPS Record",
