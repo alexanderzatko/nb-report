@@ -59,7 +59,9 @@ class DashboardManager {
       });
 
       const draftForm = forms.find(form => !form.submitted);
-      
+
+      this.logger.debug('draft exists? ',draftForm);
+
       // Get or create cards
       let continueCard = document.getElementById('snow-report-link');
       let newReportCard = document.getElementById('new-report-link');
