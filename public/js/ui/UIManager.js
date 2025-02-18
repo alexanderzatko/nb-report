@@ -158,23 +158,7 @@ class UIManager {
   
 async setupDashboardCards() {
     console.log('Setting up dashboard cards');
-
-    this.logger.debug('Checking database for draft forms');
-    const db = await this.dbManager.getDatabase();
-    const forms = await new Promise((resolve, reject) => {
-        const transaction = db.transaction(['formData'], 'readonly');
-        const store = transaction.objectStore('formData');
-        const request = store.getAll();
-        request.onsuccess = () => {
-            this.logger.debug('Retrieved forms:', request.result);
-            resolve(request.result);
-        };
-        request.onerror = () => reject(request.error);
-    });
-    
-    const draftForm = forms.find(form => !form.submitted);
-    this.logger.debug('Draft form found:', draftForm);
-      
+     
     const setupCard = (cardElement, handler) => {
         if (cardElement) {
             console.log(`Found card: ${cardElement.id}`);
@@ -209,16 +193,21 @@ async setupDashboardCards() {
     setupCard(newReportLink, async () => {
         // Clear any existing draft before showing new form
         const dbManager = DatabaseManager.getInstance();
+this.logger.debug('Checking database for draft forms');
         const db = await dbManager.getDatabase();
         const forms = await new Promise((resolve, reject) => {
             const transaction = db.transaction(['formData'], 'readonly');
             const store = transaction.objectStore('formData');
             const request = store.getAll();
-            request.onsuccess = () => resolve(request.result);
+            request.onsuccess = () => {
+                this.logger.debug('Retrieved forms:', request.result);
+                resolve(request.result);
+            };
             request.onerror = () => reject(request.error);
         });
 
         const draftForm = forms.find(form => !form.submitted);
+this.logger.debug('Draft form found:', draftForm);
         if (draftForm) {
             await dbManager.clearForm(draftForm.id);
         }
