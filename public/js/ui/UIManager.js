@@ -190,6 +190,7 @@ async setupDashboardCards() {
 
     // New Report Card
     const newReportLink = document.getElementById('new-report-link');
+console.log('New report link ',newReportLink);
     setupCard(newReportLink, async () => {
         // Clear any existing draft before showing new form
         const dbManager = DatabaseManager.getInstance();
