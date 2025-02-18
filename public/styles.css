@@ -237,10 +237,6 @@ select {
     font-size: 14px;
 }
 
-[style*="display: none"] {
-    display: none !important;
-}
-
 main {
 /*  padding: 20px; */
   width: 100%;
