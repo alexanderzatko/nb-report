@@ -65,29 +65,21 @@ class DashboardManager {
       let newReportCard = document.getElementById('new-report-link');
 
       if (draftForm) {
-        // Update existing card for continuing draft
-        if (continueCard) {
-          continueCard.querySelector('h3').setAttribute('data-i18n', 'dashboard.continueReport');
-          continueCard.querySelector('p').setAttribute('data-i18n', 'dashboard.continueReportDesc');
-        }
-
-        // Show both cards and update continue card text
-        if (newReportCard) {
-          newReportCard.style.display = 'block';
-        }
-        if (continueCard) {
-          continueCard.querySelector('h3').setAttribute('data-i18n', 'dashboard.continueReport');
-          continueCard.querySelector('p').setAttribute('data-i18n', 'dashboard.continueReportDesc');
-        }
+          // Show both cards when there's a draft
+          if (newReportCard) {
+              newReportCard.style.display = 'block';
+          }
+          if (continueCard) {
+              continueCard.style.display = 'block';
+          }
       } else {
-        // No draft - show only continue card with new report text
-        if (newReportCard) {
-          newReportCard.style.display = 'none';
-        }
-        if (continueCard) {
-          continueCard.querySelector('h3').setAttribute('data-i18n', 'dashboard.newReport');
-          continueCard.querySelector('p').setAttribute('data-i18n', 'dashboard.newReportDesc');
-        }
+          // Only show one card when no draft
+          if (newReportCard) {
+              newReportCard.style.display = 'none';
+          }
+          if (continueCard) {
+              continueCard.style.display = 'block';
+          }
       }
 
       // Update translations
