@@ -194,7 +194,7 @@ console.log('New report link ',newReportLink);
     setupCard(newReportLink, async () => {
         // Clear any existing draft before showing new form
         const dbManager = DatabaseManager.getInstance();
-this.logger.debug('Checking database for draft forms');
+console.log('Checking database for draft forms');
         const db = await dbManager.getDatabase();
         const forms = await new Promise((resolve, reject) => {
             const transaction = db.transaction(['formData'], 'readonly');
@@ -208,7 +208,7 @@ this.logger.debug('Checking database for draft forms');
         });
 
         const draftForm = forms.find(form => !form.submitted);
-this.logger.debug('Draft form found:', draftForm);
+console.log('Draft form found:', draftForm);
         if (draftForm) {
             await dbManager.clearForm(draftForm.id);
         }
