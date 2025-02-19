@@ -327,11 +327,11 @@ async setupDashboardCards() {
     const dashboardButton = document.getElementById('dashboard-button');
     if (dashboardButton) {
         console.log('Found dashboard button');
-        dashboardButton.addEventListener('click', (e) => {
+        dashboardButton.addEventListener('click', async (e) => {
             e.preventDefault();
             e.stopPropagation();
             console.log('Dashboard button clicked');
-            this.showDashboard();
+            await this.showDashboard();
         });
 
         // Add visual feedback
