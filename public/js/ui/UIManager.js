@@ -102,7 +102,7 @@ class UIManager {
       });
 
       const draftForm = forms.find(form => !form.submitted);
-      const newReportCard = document.getElementById('new-report-link');
+      const newReportCard = document.getElementById('continue-draft-link');
       if (draftForm && newReportCard) {
           newReportCard.style.display = 'block';
       }
@@ -211,23 +211,19 @@ async setupDashboardCards() {
     });
 
     const draftForm = forms.find(form => !form.submitted);
-    const newReportCard = document.getElementById('new-report-link');
+    const newReportCard = document.getElementById('continue-draft-link');
     if (draftForm && newReportCard) {
         newReportCard.style.removeProperty('display');
     }
 
-  
     // Continue Report Card
-    const continueReportLink = document.getElementById('snow-report-link');
+    const continueReportLink = document.getElementById('continue-draft-link');
     setupCard(continueReportLink, () => this.showSnowReportForm());
 
     // New Report Card
-    const newReportLink = document.getElementById('new-report-link');
-console.log('New report link ',newReportLink);
+    const newReportLink = document.getElementById('create-report-link');
     setupCard(newReportLink, async () => {
-        // Clear any existing draft before showing new form
         const dbManager = DatabaseManager.getInstance();
-console.log('Checking database for draft forms');
         const db = await dbManager.getDatabase();
         const forms = await new Promise((resolve, reject) => {
             const transaction = db.transaction(['formData'], 'readonly');
@@ -241,7 +237,6 @@ console.log('Checking database for draft forms');
         });
 
         const draftForm = forms.find(form => !form.submitted);
-console.log('Draft form found:', draftForm);
         if (draftForm) {
             await dbManager.clearForm(draftForm.id);
         }
