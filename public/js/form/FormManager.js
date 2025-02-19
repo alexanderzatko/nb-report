@@ -131,7 +131,7 @@ class FormManager {
       clearInterval(this.autoSaveInterval);
     }
     this.autoSaveInterval = setInterval(() => {
-      if (this.currentFormId && document.getElementById('snow-report-form').style.display !== 'none') {
+      if (this.currentFormId && document.getElementById('create-report-link').style.display !== 'none') {
         this.saveFormState();
       }
     }, this.autoSaveIntervalMs);
@@ -494,7 +494,7 @@ class FormManager {
   
   setupEventListeners() {
       console.log('Setting up form event listeners');
-      const form = document.getElementById('snow-report-form');
+      const form = document.getElementById('create-report-link');
       if (form) {
           console.log('Form found, setting up submit handler');
           // Remove any existing submit handler to avoid duplicates
@@ -586,7 +586,7 @@ class FormManager {
                         window.dispatchEvent(event);
                         
                         // Hide the form
-                        const form = document.getElementById('snow-report-form');
+                        const form = document.getElementById('create-report-link');
                         if (form) {
                             form.style.display = 'none';
                         }
@@ -1529,7 +1529,7 @@ class FormManager {
           
           // Show dashboard
           document.getElementById('dashboard-container').style.display = 'block';
-          document.getElementById('snow-report-form').style.display = 'none';
+          document.getElementById('continue-draft-link').style.display = 'none';
       } else {
           this.showError(result.message || this.i18next.t('form.validation.submitError'));
       }
@@ -1881,7 +1881,7 @@ class FormManager {
     this.stopTrackingFormTime();
     this.resetForm();
     document.getElementById('dashboard-container').style.display = 'block';
-    document.getElementById('snow-report-form').style.display = 'none';
+    document.getElementById('continue-draft-link').style.display = 'none';
   }
 
   resetForm(keepDatabaseData = false) {
@@ -1895,7 +1895,7 @@ class FormManager {
         }
     }
     
-    const form = document.getElementById('snow-report-form');
+    const form = document.getElementById('create-report-link');
     if (form) {
       form.reset();
       this.trailConditions = {};
