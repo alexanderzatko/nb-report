@@ -91,6 +91,21 @@ class UIManager {
     console.log('Initializing authenticated UI');
 
     try {
+      const db = await this.dbManager.getDatabase();
+      const forms = await new Promise((resolve, reject) => {
+          const transaction = db.transaction(['formData'], 'readonly');
+          const store = transaction.objectStore('formData');
+          const request = store.getAll();
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+      });
+
+      const draftForm = forms.find(form => !form.submitted);
+      const newReportCard = document.getElementById('new-report-link');
+      if (draftForm && newReportCard) {
+          newReportCard.style.display = 'block';
+      }
+
       const loginContainer = document.getElementById('login-container');
       const dashboardContainer = document.getElementById('dashboard-container');
       
@@ -184,6 +199,23 @@ async setupDashboardCards() {
         }
     };
 
+
+    const db = await this.dbManager.getDatabase();
+    const forms = await new Promise((resolve, reject) => {
+        const transaction = db.transaction(['formData'], 'readonly');
+        const store = transaction.objectStore('formData');
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+
+    const draftForm = forms.find(form => !form.submitted);
+    const newReportCard = document.getElementById('new-report-link');
+    if (draftForm && newReportCard) {
+        newReportCard.style.removeProperty('display');
+    }
+
+  
     // Continue Report Card
     const continueReportLink = document.getElementById('snow-report-link');
     setupCard(continueReportLink, () => this.showSnowReportForm());
