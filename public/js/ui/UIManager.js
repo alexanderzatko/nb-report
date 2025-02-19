@@ -401,7 +401,7 @@ async setupDashboardCards() {
     }
   }
 
-  showDashboard() {
+  async showDashboard() {
     console.log('Showing dashboard');
     this.logger.debug('Showing dashboard');
     
