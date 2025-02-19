@@ -42,7 +42,9 @@ class DashboardManager {
 
   async updateDashboardCards() {
     const dashboardGrid = document.querySelector('.dashboard-grid');
+    console.log('Looking for dashboard grid:', !!dashboardGrid);
     if (!dashboardGrid) {
+      console.error('Dashboard grid not found');
       this.logger.error('Dashboard grid not found');
       return;
     }
@@ -59,6 +61,7 @@ class DashboardManager {
       });
 
       const draftForm = forms.find(form => !form.submitted);
+      console.log('Draft form found:', draftForm); // Add this
 
       this.logger.debug('draft exists? ',draftForm);
 
