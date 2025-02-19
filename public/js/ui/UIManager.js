@@ -20,7 +20,8 @@ class UIManager {
     this.initialized = false;
     this.loginInProgress = false;
     this.loginClickTimeout = null;
-    
+    this.dbManager = DatabaseManager.getInstance(); // Add this line
+
     UIManager.instance = this;
   }
 
