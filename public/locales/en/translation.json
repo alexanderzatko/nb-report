@@ -49,6 +49,8 @@
     "loginError": "Unable to connect to login service. Please try again later."
   },
   "form": {
+    "cloneReport": "Clone",
+    "cloneReportHelp": "Use the previous report as a template",
     "validation": {
       "required": "Please fill out this field",
       "numberMin": "Value must be greater than or equal to {{min}}",
