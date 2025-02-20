@@ -602,7 +602,18 @@ class FormManager {
             } else {
                 this.logger.warn('Ski center name div not found');
             }
+
+            const submittedForms = forms
+                .filter(form => form.submitted)
+                .sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
     
+            const cloneSection = document.getElementById('clone-section');
+            if (submittedForms[0] && cloneSection) {
+                cloneSection.style.display = 'block';
+                this.lastSubmittedForm = submittedForms[0];
+                this.initializeCloneFeature();
+            }
+
             // Set the hidden input value
             const skiCenterIdInput = document.getElementById('ski-center-id');
             if (skiCenterIdInput) {
@@ -684,6 +695,33 @@ class FormManager {
         this.logger.error('Error initializing form:', error);
         throw error;
     }
+  }
+
+  initializeCloneFeature() {
+      const cloneCheckbox = document.getElementById('clone-previous');
+      if (!cloneCheckbox) return;
+  
+      // Single event listener for the clone checkbox
+      cloneCheckbox.addEventListener('change', async (e) => {
+          if (e.target.checked && this.lastSubmittedForm) {
+              await this.populateFormWithLastSubmitted();
+              cloneCheckbox.disabled = true;
+              
+              // Use existing state management to detect changes
+              const originalState = this.collectSerializableFormData();
+              this.lastClonedState = originalState;
+  
+              // Listen to existing autosave event which fires on form changes
+              this.autoSaveInterval = setInterval(() => {
+                  const currentState = this.collectSerializableFormData();
+                  if (JSON.stringify(currentState) !== JSON.stringify(this.lastClonedState)) {
+                      cloneCheckbox.disabled = false;
+                      cloneCheckbox.checked = false;
+                      clearInterval(this.autoSaveInterval);
+                  }
+              }, 1000); // Check less frequently than autosave
+          }
+      });
   }
   
   initializeFormFields(config) {
