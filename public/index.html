@@ -191,6 +191,15 @@
                 <div id="admin-section" class="form-section" style="display: none;">
                     <div class="form-title" data-i18n="form.formTitleAdmin">Vytvoriť správu</div>
 
+		    <!-- Add the clone checkbox section -->
+		    <div id="clone-section" style="display: none;" class="form-group">
+			<div class="checkbox-container">
+			    <input type="checkbox" id="clone-previous" name="clone-previous">
+			    <label for="clone-previous" data-i18n="form.cloneReport">Clone</label>
+			</div>
+			<p class="help-text" data-i18n="form.cloneReportHelp">Use the previous report as a template</p>
+		    </div>
+
                     <div class="form-group">
                         <label for="ski-center-name" data-i18n="form.skicenterName">Stredisko:</label>
                         <input type="hidden" id="ski-center-id" />
