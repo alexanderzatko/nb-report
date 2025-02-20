@@ -49,6 +49,8 @@
     "loginError": "Nedarí sa mi pripojiť sa na prihlasovací server. Skúste prosím neskôr."
   },
   "form": {
+    "cloneReport": "Klonovať",
+    "cloneReportHelp": "Skopírovať dáta z predošlej správy do tejto",
     "validation": {
       "required": "Prosím, vyplňte toto pole",
       "numberMin": "Hodnota musí byť väčšia alebo rovná {{min}}",
