@@ -76,6 +76,9 @@ class FormManager {
     this.currentFormId = null;
     this.autoSaveInterval = null;
     this.autoSaveIntervalMs = 5000; // form autosave interval in ms
+
+    this.lastSubmittedForm = null;
+    this.lastClonedState = null;
     
     FormManager.instance = this;
   }
@@ -557,12 +560,26 @@ class FormManager {
         const trailsSection = document.getElementById('trails-section');
         const rewardsSection = document.getElementById('rewards-section');
         const commonTemplate = document.getElementById('common-section');
-    
+        const cloneSection = document.getElementById('clone-section');
+
         if (!regularUserSection || !adminSection || !commonTemplate) {
             this.logger.error('Required form sections not found');
             return;
         }
-    
+
+        // For admin users, check for previously submitted form
+        if (isAdmin && cloneSection) {
+            const submittedForms = forms
+                .filter(form => form.submitted)
+                .sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+
+            if (submittedForms[0]) {
+                cloneSection.style.display = 'block';
+                this.lastSubmittedForm = submittedForms[0];
+                this.initializeCloneFeature();
+            }
+        }
+      
         this.logger.debug('Form initialization:', {
           isAdmin,
           hasTrails,
@@ -722,6 +739,25 @@ class FormManager {
               }, 1000); // Check less frequently than autosave
           }
       });
+  }
+
+  async populateFormWithLastSubmitted() {
+      if (!this.lastSubmittedForm?.formState) return;
+  
+      try {
+          // Populate form fields using existing method
+          this.populateFormFields(this.lastSubmittedForm);
+          
+          // Restore trail conditions if present
+          if (this.lastSubmittedForm.formState.trailConditions) {
+              this.trailConditions = this.lastSubmittedForm.formState.trailConditions;
+              this.updateTrailConditionsUI();
+          }
+  
+          this.logger.debug('Form populated with last submitted data');
+      } catch (error) {
+          this.logger.error('Error populating form with last submitted data:', error);
+      }
   }
   
   initializeFormFields(config) {
@@ -1925,6 +1961,15 @@ class FormManager {
   }
 
   resetForm(keepDatabaseData = false) {
+
+    // Clear clone interval if exists
+    if (this.autoSaveInterval) {
+        clearInterval(this.autoSaveInterval);
+        this.autoSaveInterval = null;
+    }
+    this.lastSubmittedForm = null;
+    this.lastClonedState = null;
+    
     // Only clear database if explicitly requested
     if (!keepDatabaseData && this.currentFormId) {
         try {
