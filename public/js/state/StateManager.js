@@ -77,7 +77,7 @@ class StateManager {
 
   // State setters
   setState(path, value, silent = false) {
-    this.logger.debug(`Setting state at ${path}:`, value);
+//    this.logger.debug(`Setting state at ${path}:`, value);
     
     const oldValue = this.getNestedValue(this.state, path);
     if (this.setNestedValue(this.state, path, value)) {
