@@ -374,6 +374,11 @@ class StateManager {
         currentUser.ski_center_id = skiCenterId;
         currentUser.ski_center_name = newCenter[1][0];
         currentUser.trails = newCenter[2];
+        
+        if (storage.fb_pages) {
+            currentUser.fb_pages = storage.fb_pages;
+        }
+        
         this.setState('auth.user', currentUser);
     }
     
