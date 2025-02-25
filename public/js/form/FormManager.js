@@ -1660,7 +1660,7 @@ class FormManager {
           };
 
           const postToFbCheckbox = document.getElementById('post-to-fb');
-          if (postToFbCheckbox && postToFbCheckbox.closest('div').style.display !== 'none') {
+          if (postToFbCheckbox) {
             data.post_to_fb = postToFbCheckbox.checked ? 1 : 0;
           }
 
