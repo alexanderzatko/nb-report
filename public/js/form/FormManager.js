@@ -676,6 +676,14 @@ class FormManager {
 
         // Handle Facebook pages section if available
         const fbPagesSection = document.getElementById('fb-pages-section');
+
+        console.log('FB Pages Debug:', {
+          sectionFound: !!fbPagesSection,
+          isAdmin: userData?.ski_center_admin === "1",
+          fbPages: userData?.fb_pages,
+          hasFbPages: userData?.fb_pages && Array.isArray(userData.fb_pages) && userData.fb_pages.length > 0
+        });
+
         if (fbPagesSection) {
           const hasFbPages = userData?.fb_pages && Array.isArray(userData.fb_pages) && userData.fb_pages.length > 0;
           fbPagesSection.style.display = (isAdmin && hasFbPages) ? 'block' : 'none';
