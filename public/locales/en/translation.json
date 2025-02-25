@@ -173,7 +173,8 @@
     "sendingReport": "Finalizing submission...",
     "submitSuccess": "Report sent successfully!",
     "submitError": "Failed to send report",
-    "photoUploadError": "Failed to upload photos"
+    "photoUploadError": "Failed to upload photos",
+    "postToFacebookPages": "Publish to these Facebook pages"
   },
   "countries": {
     "austria": "Austria",
