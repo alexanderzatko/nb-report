@@ -829,6 +829,28 @@ div#photo-preview-container {
 
 /* Rewards section STOP */
 
+
+/* Facebook checkbox section START */
+
+.fb-pages-list {
+  margin-top: 10px;
+  margin-bottom: 15px;
+  padding-left: 25px;
+  list-style-type: disc;
+}
+
+.fb-pages-list li {
+  margin-bottom: 5px;
+  color: #333;
+}
+
+#fb-pages-section {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+/* Facebook checkbox section STOP */
+
 /* Alert messages START */
 
 .required-field::after {
