@@ -299,6 +299,14 @@
                     <p class="help-text" data-i18n="form.privateReportHelp">If checked, the report will be sent to the nabezky.sk portal and will be unpublished. You can make it public later in the Reports tab of your user profile</p>
                 </div>
 
+		<div id="fb-pages-section" class="form-section" style="display: none;">
+		  <div class="checkbox-container">
+		    <input type="checkbox" id="post-to-fb" name="post-to-fb" checked>
+		    <label for="post-to-fb" data-i18n="form.postToFacebookPages">Publish to these Facebook pages</label>
+		  </div>
+		  <ul id="fb-pages-list" class="fb-pages-list"></ul>
+		</div>
+		    
                 <div class="form-buttons">
                     <button type="button" id="cancel-button" class="cancel-button" data-i18n="form.cancel">Cancel</button>
                     <button type="submit" data-i18n="form.submit">Submit Report</button>
