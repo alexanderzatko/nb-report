@@ -673,7 +673,19 @@ class FormManager {
         // Initialize form fields based on user type
         const config = isAdmin ? this.formConfig.admin : this.formConfig.regular;
         this.initializeFormFields(config);
-  
+
+        // Handle Facebook pages section if available
+        const fbPagesSection = document.getElementById('fb-pages-section');
+        if (fbPagesSection) {
+          const hasFbPages = userData?.fb_pages && Array.isArray(userData.fb_pages) && userData.fb_pages.length > 0;
+          fbPagesSection.style.display = (isAdmin && hasFbPages) ? 'block' : 'none';
+          
+          // Create list of Facebook pages
+          if (hasFbPages) {
+            this.initializeFacebookPages(userData.fb_pages);
+          }
+        }
+
         const privateReportSection = document.getElementById('private-report-section');
         if (privateReportSection) {
           privateReportSection.style.display = isAdmin ? 'none' : 'block';
@@ -1645,7 +1657,12 @@ class FormManager {
               'snow-depth-new': 'snowDepthNew',
               'ski-center-id': 'skiCenterId'
           };
-  
+
+          const postToFbCheckbox = document.getElementById('post-to-fb');
+          if (postToFbCheckbox && postToFbCheckbox.closest('div').style.display !== 'none') {
+            data.post_to_fb = postToFbCheckbox.checked ? 1 : 0;
+          }
+
           Object.entries(adminFields).forEach(([elementId, dataKey]) => {
               const element = document.getElementById(elementId);
               if (element && element.value) {
@@ -1949,6 +1966,28 @@ class FormManager {
       }
   
       this.logger.debug('GPX UI elements reset completed');
+  }
+
+  initializeFacebookPages(fbPages) {
+    const fbPagesListElement = document.getElementById('fb-pages-list');
+    if (!fbPagesListElement) return;
+    
+    // Clear existing content
+    fbPagesListElement.innerHTML = '';
+    
+    // Add each Facebook page to the list
+    fbPages.forEach(page => {
+      const listItem = document.createElement('li');
+      listItem.textContent = page.page_name;
+      listItem.dataset.pageId = page.page_id;
+      fbPagesListElement.appendChild(listItem);
+    });
+    
+    // Check the post to FB checkbox by default
+    const postToFbCheckbox = document.getElementById('post-to-fb');
+    if (postToFbCheckbox) {
+      postToFbCheckbox.checked = true;
+    }
   }
 
   handleCancel() {
