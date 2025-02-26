@@ -590,32 +590,39 @@ class FormManager {
             const skiCenterNameDiv = document.getElementById('ski-center-name');
             if (skiCenterNameDiv) {
               skiCenterNameDiv.textContent = currentCenter.name;
-  
-                const storage = stateManager.getState('storage.userData');
-                if (storage?.ski_centers_data?.length > 1) {
-                    const switchLink = document.createElement('a');
-                    switchLink.href = '#';
-                    switchLink.className = 'switch-center-link';
-                    switchLink.textContent = this.i18next.t('form.switchSkiCenter');
-                    switchLink.onclick = (e) => {
-                        e.preventDefault();
-                        const event = new Event('showSettings');
-                        window.dispatchEvent(event);
-                        
-                        // Hide the form
-                        const form = document.getElementById('snow-report-form');
-                        if (form) {
-                            form.style.display = 'none';
-                        }
-                        
-                        // Show settings
-                        const settingsContainer = document.getElementById('settings-container');
-                        if (settingsContainer) {
-                            settingsContainer.style.display = 'block';
-                        }
-                    };
-                    skiCenterNameDiv.appendChild(switchLink);
-                }
+
+              const skiCenterIdInput = document.getElementById('ski-center-id');
+              if (skiCenterIdInput) {
+                  skiCenterIdInput.value = currentCenter.id;
+              } else {
+                  this.logger.warn('Ski center ID input not found');
+              }
+
+              const storage = stateManager.getState('storage.userData');
+              if (storage?.ski_centers_data?.length > 1) {
+                  const switchLink = document.createElement('a');
+                  switchLink.href = '#';
+                  switchLink.className = 'switch-center-link';
+                  switchLink.textContent = this.i18next.t('form.switchSkiCenter');
+                  switchLink.onclick = (e) => {
+                      e.preventDefault();
+                      const event = new Event('showSettings');
+                      window.dispatchEvent(event);
+                      
+                      // Hide the form
+                      const form = document.getElementById('snow-report-form');
+                      if (form) {
+                          form.style.display = 'none';
+                      }
+                      
+                      // Show settings
+                      const settingsContainer = document.getElementById('settings-container');
+                      if (settingsContainer) {
+                          settingsContainer.style.display = 'block';
+                      }
+                  };
+                  skiCenterNameDiv.appendChild(switchLink);
+              }
             } else {
                 this.logger.warn('Ski center name div not found');
             }
