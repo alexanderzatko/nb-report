@@ -381,7 +381,18 @@ class StateManager {
         
         this.setState('auth.user', currentUser);
     }
+
+    const skiCenterIdInput = document.getElementById('ski-center-id');
+    if (skiCenterIdInput) {
+        skiCenterIdInput.value = skiCenterId;
+        this.logger.debug('Updated ski-center-id input to:', skiCenterId);
+    }
     
+    const skiCenterNameDiv = document.getElementById('ski-center-name');
+    if (skiCenterNameDiv) {
+        skiCenterNameDiv.textContent = newCenter[1][0];
+    }
+
     // Notify about selection change
     this.notifySubscribers('skiCenter.selected', skiCenterId);
     return true;
