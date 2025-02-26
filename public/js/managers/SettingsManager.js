@@ -160,6 +160,14 @@ class SettingsManager {
                                 item.classList.remove('active');
                             });
                             centerItem.classList.add('active');
+                            
+                            // Update the ski center ID input field if it exists on the form
+                            const skiCenterIdInput = document.getElementById('ski-center-id');
+                            if (skiCenterIdInput) {
+                                skiCenterIdInput.value = centerId;
+                                this.logger.debug('Updated ski-center-id input to:', centerId);
+                            }
+                            
                             // Force refresh of the settings view to reflect changes
                             await this.updateSkiCentersSection();
                         }
