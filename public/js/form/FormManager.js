@@ -589,40 +589,33 @@ class FormManager {
         if (isAdmin && currentCenter) {
             const skiCenterNameDiv = document.getElementById('ski-center-name');
             if (skiCenterNameDiv) {
-              skiCenterNameDiv.textContent = currentCenter.name;
-
-              const skiCenterIdInput = document.getElementById('ski-center-id');
-              if (skiCenterIdInput) {
-                  skiCenterIdInput.value = currentCenter.id;
-              } else {
-                  this.logger.warn('Ski center ID input not found');
-              }
-
-              const storage = stateManager.getState('storage.userData');
-              if (storage?.ski_centers_data?.length > 1) {
-                  const switchLink = document.createElement('a');
-                  switchLink.href = '#';
-                  switchLink.className = 'switch-center-link';
-                  switchLink.textContent = this.i18next.t('form.switchSkiCenter');
-                  switchLink.onclick = (e) => {
-                      e.preventDefault();
-                      const event = new Event('showSettings');
-                      window.dispatchEvent(event);
-                      
-                      // Hide the form
-                      const form = document.getElementById('snow-report-form');
-                      if (form) {
-                          form.style.display = 'none';
-                      }
-                      
-                      // Show settings
-                      const settingsContainer = document.getElementById('settings-container');
-                      if (settingsContainer) {
-                          settingsContainer.style.display = 'block';
-                      }
-                  };
-                  skiCenterNameDiv.appendChild(switchLink);
-              }
+                skiCenterNameDiv.textContent = currentCenter.name;
+  
+                const storage = stateManager.getState('storage.userData');
+                if (storage?.ski_centers_data?.length > 1) {
+                    const switchLink = document.createElement('a');
+                    switchLink.href = '#';
+                    switchLink.className = 'switch-center-link';
+                    switchLink.textContent = this.i18next.t('form.switchSkiCenter');
+                    switchLink.onclick = (e) => {
+                        e.preventDefault();
+                        const event = new Event('showSettings');
+                        window.dispatchEvent(event);
+                        
+                        // Hide the form
+                        const form = document.getElementById('snow-report-form');
+                        if (form) {
+                            form.style.display = 'none';
+                        }
+                        
+                        // Show settings
+                        const settingsContainer = document.getElementById('settings-container');
+                        if (settingsContainer) {
+                            settingsContainer.style.display = 'block';
+                        }
+                    };
+                    skiCenterNameDiv.appendChild(switchLink);
+                }
             } else {
                 this.logger.warn('Ski center name div not found');
             }
@@ -642,6 +635,7 @@ class FormManager {
             const skiCenterIdInput = document.getElementById('ski-center-id');
             if (skiCenterIdInput) {
                 skiCenterIdInput.value = currentCenter.id;
+                this.logger.debug('Set ski center ID input to:', currentCenter.id);
             } else {
                 this.logger.warn('Ski center ID input not found');
             }
@@ -715,7 +709,6 @@ class FormManager {
 
             await this.restoreFormState();
         } else {
-
           // Create new form entry in database
           const formData = {
               userId: userData?.nabezky_uid,
@@ -1522,6 +1515,18 @@ class FormManager {
       const isAdmin = document.getElementById('admin-section')?.style.display !== 'none';
       this.logger.debug('Is admin form:', isAdmin);
 
+      if (isAdmin) {
+          const skiCenterIdInput = document.getElementById('ski-center-id');
+          const stateManager = StateManager.getInstance();
+          const currentCenter = stateManager.getSkiCenterData();
+          
+          this.logger.debug('Ski Center data before submission:', {
+              formInputValue: skiCenterIdInput ? skiCenterIdInput.value : 'not found',
+              stateManagerId: currentCenter ? currentCenter.id : 'not found',
+              stateManagerName: currentCenter ? currentCenter.name : 'not found'
+          });
+      }
+
       const config = isAdmin ? this.formConfig.admin : this.formConfig.regular;
       const requiredFields = config.requiredFields.map(field => ({
         element: document.getElementById(field.id),
@@ -1599,6 +1604,8 @@ class FormManager {
 
       const formContent = this.collectVisibleData(isAdmin);
 
+      this.logger.debug('Form submission data:', formContent);
+
       // Include the photo data in the submission
       const submissionData = {
           data: {
@@ -1659,25 +1666,34 @@ class FormManager {
       });
       
       if (isAdmin) {
-          // Admin-specific fields
-          const adminFields = {
-              'snow-depth-total': 'snowDepthTotal',
-              'snow-depth-new': 'snowDepthNew',
-              'ski-center-id': 'skiCenterId'
-          };
+        // Admin-specific fields
+        const adminFields = {
+            'snow-depth-total': 'snowDepthTotal',
+            'snow-depth-new': 'snowDepthNew',
+            'ski-center-id': 'skiCenterId'
+        };
 
-          const postToFbCheckbox = document.getElementById('post-to-fb');
-          if (postToFbCheckbox) {
-            data.post_to_fb = postToFbCheckbox.checked ? 1 : 0;
-          }
+        const postToFbCheckbox = document.getElementById('post-to-fb');
+        if (postToFbCheckbox) {
+          data.post_to_fb = postToFbCheckbox.checked ? 1 : 0;
+        }
 
-          Object.entries(adminFields).forEach(([elementId, dataKey]) => {
-              const element = document.getElementById(elementId);
-              if (element && element.value) {
-                  data[dataKey] = element.value;
-              }
-          });
-          
+        Object.entries(adminFields).forEach(([elementId, dataKey]) => {
+            const element = document.getElementById(elementId);
+            if (element && element.value) {
+                data[dataKey] = element.value;
+            }
+        });
+
+        // If the ski center ID is missing or empty in the form, get it from state
+        if (!data.skiCenterId) {
+            const stateManager = StateManager.getInstance();
+            const currentCenter = stateManager.getSkiCenterData();
+            if (currentCenter && currentCenter.id) {
+                data.skiCenterId = currentCenter.id;
+                this.logger.debug('Using ski center ID from state manager:', currentCenter.id);
+            }
+        }
       } else {
           // Regular user-specific fields
           const regularUserFields = {
