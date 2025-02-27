@@ -687,6 +687,20 @@ class FormManager {
           }
         }
 
+        // Handle Facebook timeline section if available
+        const fbTimelineSection = document.getElementById('fb-timeline-section');
+        if (fbTimelineSection) {
+          const showFbTimeline = userData?.fb_timeline === "1";
+          fbTimelineSection.style.display = showFbTimeline ? 'block' : 'none';
+          
+          if (showFbTimeline) {
+            const postToFbTimelineCheckbox = document.getElementById('post-to-fb-timeline');
+            if (postToFbTimelineCheckbox) {
+              postToFbTimelineCheckbox.checked = true;
+            }
+          }
+        }
+
         const privateReportSection = document.getElementById('private-report-section');
         if (privateReportSection) {
           privateReportSection.style.display = isAdmin ? 'none' : 'block';
@@ -1663,7 +1677,13 @@ class FormManager {
           if (postToFbCheckbox && postToFbCheckbox.closest('div').style.display !== 'none') {
               data.post_to_fb = postToFbCheckbox.checked ? 1 : 0;
           }
-  
+
+          const postToFbTimelineCheckbox = document.getElementById('post-to-fb-timeline');
+          if (postToFbTimelineCheckbox && 
+              postToFbTimelineCheckbox.closest('div').style.display !== 'none') {
+              data.post2FbTimeline = postToFbTimelineCheckbox.checked ? 1 : 0;
+          }
+        
           Object.entries(adminFields).forEach(([elementId, dataKey]) => {
               const element = document.getElementById(elementId);
               if (element && element.value) {
