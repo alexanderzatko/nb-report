@@ -378,7 +378,11 @@ class StateManager {
         if (storage.fb_pages) {
             currentUser.fb_pages = storage.fb_pages;
         }
-        
+
+        if (storage.fb_timeline) {
+            currentUser.fb_timeline = storage.fb_timeline;
+        }
+
         this.setState('auth.user', currentUser);
     }
     
