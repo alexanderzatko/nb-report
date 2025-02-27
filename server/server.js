@@ -463,6 +463,7 @@ app.post('/api/submit-snow-report', async (req, res) => {
         trailConditions: formData.trailConditions,
         ski_center_id: formData.skiCenterId,
         post_to_fb: formData.post_to_fb,
+        post2FbTimeline: formData.post2FbTimeline || 0,
 
         // Rewards data
         laborTime: formData.laborTime,
