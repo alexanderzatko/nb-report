@@ -174,7 +174,8 @@
     "submitSuccess": "Správa bola úspešne odoslaná!",
     "submitError": "Správu sa nepodarilo odoslať",
     "photoUploadError": "Nepodarilo sa nahrať fotografie",
-    "postToFacebookPages": "Publikovať tiež na tieto Facebook stránky"
+    "postToFacebookPages": "Publikovať aj na tieto Facebook stránky",
+    "postToFacebookTimeline": "Publikovať aj do môjho Facebook účtu",
   },
   "countries": {
     "austria": "Rakúsko",
