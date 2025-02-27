@@ -690,7 +690,7 @@ class FormManager {
         // Handle Facebook timeline section if available
         const fbTimelineSection = document.getElementById('fb-timeline-section');
         if (fbTimelineSection) {
-          const showFbTimeline = userData?.fb_timeline === "1";
+          const showFbTimeline = userData?.fb_timeline == "1";
           fbTimelineSection.style.display = showFbTimeline ? 'block' : 'none';
           
           if (showFbTimeline) {
