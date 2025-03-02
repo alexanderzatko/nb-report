@@ -172,6 +172,12 @@
     "photosUploaded": "All photos uploaded successfully",
     "sendingReport": "Finalizing submission...",
     "submitSuccess": "Report sent successfully!",
+    "viewOnNaBezky": "View the post on the Na bezky portal",
+    "viewOnFacebookPage": "View the post on Facebook page {{pageName}}",
+    "viewOnFacebookPages": "View the post on Facebook pages",
+    "viewOnFacebookProfile": "View the post on your Facebook profile",
+    "facebookPage": "Facebook page",
+    "ok": "OK",
     "submitError": "Failed to send report",
     "photoUploadError": "Failed to upload photos",
     "postToFacebookPages": "Publish also to these Facebook pages"
