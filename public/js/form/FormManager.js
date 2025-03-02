@@ -1636,22 +1636,48 @@ class FormManager {
   }
 
   showSuccessWithLinks(result) {
-    // Create a modal element if it doesn't exist
-    let successModal = document.getElementById('success-links-modal');
-    if (!successModal) {
-      successModal = document.createElement('div');
-      successModal.id = 'success-links-modal';
-      successModal.className = 'modal';
-      document.body.appendChild(successModal);
+    // Get the existing modal
+    const submissionModal = document.getElementById('submission-modal');
+    if (!submissionModal) {
+      this.logger.error('Submission modal not found');
+      this.showSuccess(this.i18next.t('form.submitSuccess'));
+      return;
     }
   
-    // Create the content for the modal
-    let linksHtml = '';
+    const modalContent = submissionModal.querySelector('.modal-content');
+    if (!modalContent) {
+      this.logger.error('Modal content not found');
+      this.showSuccess(this.i18next.t('form.submitSuccess'));
+      return;
+    }
+  
+    // Clear existing content but keep the success message
+    // First, save the existing h3 element (success message)
+    const successMessage = modalContent.querySelector('h3');
+    
+    // Clear the content except for buttons
+    const buttonContainer = modalContent.querySelector('.modal-buttons');
+    modalContent.innerHTML = '';
+    
+    // Add the success message back
+    if (successMessage) {
+      modalContent.appendChild(successMessage);
+    } else {
+      const newSuccessMessage = document.createElement('h3');
+      newSuccessMessage.textContent = this.i18next.t('form.submitSuccess');
+      modalContent.appendChild(newSuccessMessage);
+    }
+  
+    // Create a container for the links
+    const linksContainer = document.createElement('div');
+    linksContainer.className = 'result-links';
     
     // Add link to nabezky.sk portal if available
     if (result.nb_node_url) {
-      linksHtml += `<p><a href="${result.nb_node_url}" target="_blank" class="result-link">
-        ${this.i18next.t('form.viewOnNaBezky')}</a></p>`;
+      const nabezkyLink = document.createElement('p');
+      nabezkyLink.innerHTML = `<a href="${result.nb_node_url}" target="_blank" class="result-link">
+        ${this.i18next.t('form.viewOnNaBezky')}</a>`;
+      linksContainer.appendChild(nabezkyLink);
     }
     
     // Add Facebook page links if available
@@ -1670,49 +1696,59 @@ class FormManager {
       if (fbPageUrls.length === 1) {
         // Find the page name if available
         const pageName = this.getFacebookPageName(fbPageUrls[0], fbPages);
-        linksHtml += `<p><a href="${fbPageUrls[0]}" target="_blank" class="result-link">
-          ${this.i18next.t('form.viewOnFacebookPage', { pageName })}</a></p>`;
+        const fbPageLink = document.createElement('p');
+        fbPageLink.innerHTML = `<a href="${fbPageUrls[0]}" target="_blank" class="result-link">
+          ${this.i18next.t('form.viewOnFacebookPage', { pageName })}</a>`;
+        linksContainer.appendChild(fbPageLink);
       } else if (fbPageUrls.length > 1) {
-        linksHtml += `<p>${this.i18next.t('form.viewOnFacebookPages')}:</p><ul>`;
+        const fbPageHeader = document.createElement('p');
+        fbPageHeader.textContent = this.i18next.t('form.viewOnFacebookPages') + ':';
+        linksContainer.appendChild(fbPageHeader);
+        
+        const pageList = document.createElement('ul');
         fbPageUrls.forEach(url => {
           const pageName = this.getFacebookPageName(url, fbPages);
-          linksHtml += `<li><a href="${url}" target="_blank" class="result-link">${pageName}</a></li>`;
+          const listItem = document.createElement('li');
+          listItem.innerHTML = `<a href="${url}" target="_blank" class="result-link">${pageName}</a>`;
+          pageList.appendChild(listItem);
         });
-        linksHtml += '</ul>';
+        linksContainer.appendChild(pageList);
       }
     }
     
     // Add timeline link if present
     if (result.fb_timeline_url) {
-      linksHtml += `<p><a href="${result.fb_timeline_url}" target="_blank" class="result-link">
-        ${this.i18next.t('form.viewOnFacebookProfile')}</a></p>`;
+      const timelineLink = document.createElement('p');
+      timelineLink.innerHTML = `<a href="${result.fb_timeline_url}" target="_blank" class="result-link">
+        ${this.i18next.t('form.viewOnFacebookProfile')}</a>`;
+      linksContainer.appendChild(timelineLink);
     }
   
-    // Create the modal content
-    successModal.innerHTML = `
-      <div class="modal-content">
-        <h3>${this.i18next.t('form.submitSuccess')}</h3>
-        <div class="result-links">
-          ${linksHtml}
-        </div>
-        <div class="modal-buttons" style="justify-content: center;">
-          <button type="button" id="success-close-button" class="photo-button">
-            ${this.i18next.t('form.ok')}
-          </button>
-        </div>
-      </div>
-    `;
-  
-    // Add event listener to close button
-    const closeButton = document.getElementById('success-close-button');
-    if (closeButton) {
-      closeButton.addEventListener('click', () => {
-        successModal.style.display = 'none';
-      });
+    // Add the links container to the modal
+    modalContent.appendChild(linksContainer);
+    
+    // Add back the button container or create a new one
+    if (buttonContainer) {
+      modalContent.appendChild(buttonContainer);
+    } else {
+      const newButtonContainer = document.createElement('div');
+      newButtonContainer.className = 'modal-buttons';
+      newButtonContainer.style.justifyContent = 'center';
+      
+      const okButton = document.createElement('button');
+      okButton.type = 'button';
+      okButton.className = 'photo-button';
+      okButton.textContent = this.i18next.t('form.ok');
+      okButton.onclick = () => {
+        submissionModal.style.display = 'none';
+      };
+      
+      newButtonContainer.appendChild(okButton);
+      modalContent.appendChild(newButtonContainer);
     }
   
     // Show the modal
-    successModal.style.display = 'block';
+    submissionModal.style.display = 'block';
   }
   
   // Helper function to get Facebook page name from URL
