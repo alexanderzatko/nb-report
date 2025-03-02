@@ -172,6 +172,12 @@
     "photosUploaded": "Všechny fotografie byly úspěšně nahrány",
     "sendingReport": "Dokončuje se odeslání...",
     "submitSuccess": "Zpráva byla úspěšně odeslána!",
+    "viewOnNaBezky": "Zobrazit příspěvek na portálu Na běžky",
+    "viewOnFacebookPage": "Zobrazit příspěvek na Facebook stránce {{pageName}}",
+    "viewOnFacebookPages": "Zobrazit příspěvek na Facebook stránkách",
+    "viewOnFacebookProfile": "Zobrazit příspěvek na vašem Facebook profilu",
+    "facebookPage": "Facebook stránka",
+    "ok": "OK",
     "submitError": "Zprávu se nepodařilo odeslat",
     "photoUploadError": "Nepodařilo se nahrát fotografie",
     "postToFacebookPages": "Publikovat také na tyto Facebook stránky"
