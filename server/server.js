@@ -505,11 +505,26 @@ app.post('/api/submit-snow-report', async (req, res) => {
       data: response.data
     });
 
-    // Response will be true/false from the nabezky endpoint
-    res.json({ 
+    const responseData = {
       success: response.data.success === "1",
       message: response.data.success === "1" ? 'Snow report submitted successfully' : 'Failed to submit snow report'
-    });
+    };
+
+    // Add URLs if they exist in the response
+    if (response.data.nb_node_url) {
+      responseData.nb_node_url = response.data.nb_node_url;
+    }
+    
+    if (response.data.fb_page_url) {
+      responseData.fb_page_url = response.data.fb_page_url;
+    }
+    
+    if (response.data.fb_timeline_url) {
+      responseData.fb_timeline_url = response.data.fb_timeline_url;
+    }
+
+    logger.info('Sending response to client:', responseData);
+    res.json(responseData);
 
   } catch (error) {
     logger.error('Error in submit-snow-report:', {
