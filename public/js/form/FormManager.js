@@ -1706,24 +1706,42 @@ class FormManager {
     
     // Add Facebook page links if available
     if (result.fb_page_url) {
+      console.log('Processing Facebook page URL:', result.fb_page_url);
+      
       // Convert to array if it's a single string
       const fbPageUrls = Array.isArray(result.fb_page_url) 
         ? result.fb_page_url 
         : [result.fb_page_url];
       
-      // Get page names from user data if available
+      console.log('FB page URLs:', fbPageUrls);
+      
+      // Get user data directly
       const stateManager = StateManager.getInstance();
       const userData = stateManager.getState('auth.user');
-      const fbPages = userData?.fb_pages || [];
+      console.log('User data for Facebook pages:', userData);
       
       // Create the link text based on how many pages there are
       if (fbPageUrls.length === 1) {
         // Find the page name if available
-        const pageName = this.getFacebookPageName(fbPageUrls[0], fbPages);
+        let pageName = "Facebook stránka"; // Default value
         
-        // Create paragraph with unlinked text followed by link
+        // Try direct matching
+        if (userData && userData.fb_pages && userData.fb_pages.length > 0) {
+          for (const page of userData.fb_pages) {
+            if (fbPageUrls[0].includes(page.page_id)) {
+              pageName = page.page_name;
+              console.log('Found matching page:', pageName);
+              break;
+            }
+          }
+        }
+        
+        // Create paragraph with unlinked text
         const fbPageParagraph = document.createElement('p');
-        fbPageParagraph.innerHTML = `${this.i18next.t('form.viewOnFacebookPage')} `;
+        
+        // Add the text prefix without the placeholder
+        const textNode = document.createTextNode(this.i18next.t('form.viewOnFacebookPrefix') + ' ');
+        fbPageParagraph.appendChild(textNode);
         
         // Create the link element
         const linkElement = document.createElement('a');
@@ -1736,25 +1754,33 @@ class FormManager {
         fbPageParagraph.appendChild(linkElement);
         linksContainer.appendChild(fbPageParagraph);
       } else if (fbPageUrls.length > 1) {
-        // Create header paragraph with unlinked text
+        // Multiple pages
         const fbPageHeader = document.createElement('p');
-        fbPageHeader.textContent = this.i18next.t('form.viewOnFacebookPages');
+        fbPageHeader.textContent = this.i18next.t('form.viewOnFacebookPagesPrefix');
         linksContainer.appendChild(fbPageHeader);
         
-        // Create list of page links
         const pageList = document.createElement('ul');
         fbPageUrls.forEach(url => {
-          const pageName = this.getFacebookPageName(url, fbPages);
-          const listItem = document.createElement('li');
+          // Default page name
+          let pageName = "Facebook stránka";
           
-          // Create link element
+          // Try to extract the page ID and look it up
+          if (userData && userData.fb_pages) {
+            for (const page of userData.fb_pages) {
+              if (url.includes(page.page_id)) {
+                pageName = page.page_name;
+                break;
+              }
+            }
+          }
+          
+          const listItem = document.createElement('li');
           const linkElement = document.createElement('a');
           linkElement.href = url;
           linkElement.target = '_blank';
           linkElement.className = 'result-link';
           linkElement.textContent = pageName;
           
-          // Add link to list item
           listItem.appendChild(linkElement);
           pageList.appendChild(listItem);
         });
