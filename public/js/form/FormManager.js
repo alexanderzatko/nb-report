@@ -1798,10 +1798,12 @@ class FormManager {
   }
   
   getFacebookPageName(url, fbPages) {
-  
-    this.logger.debug('url and fbPages:', [url,fbPages]);
-
+    // Add console.log in addition to this.logger for guaranteed output
+    console.log('getFacebookPageName called with:', { url, fbPages });
+    this.logger.debug('getFacebookPageName called with:', { url, fbPages });
+    
     if (!url || !fbPages || !fbPages.length) {
+      console.log('Missing required data, returning default page name');
       return this.i18next.t('form.facebookPage');
     }
     
@@ -1809,20 +1811,64 @@ class FormManager {
       // Extract the page ID from the URL
       // URL format is typically https://www.facebook.com/PAGE_ID/posts/POST_ID
       const urlParts = url.split('/');
-      const pageIdIndex = urlParts.indexOf('facebook.com') + 1;
+      console.log('URL parts:', urlParts);
+      
+      const facebookIndex = urlParts.indexOf('facebook.com');
+      console.log('Facebook index:', facebookIndex);
+      
+      if (facebookIndex === -1) {
+        // Try another approach if facebook.com isn't found as a separate part
+        const fbIndex = urlParts.findIndex(part => part.includes('facebook.com'));
+        console.log('Alternative FB index:', fbIndex);
+        
+        if (fbIndex !== -1) {
+          // Extract the page ID from the URL differently
+          // It might be something like "www.facebook.com/596487096875201/posts/..."
+          const fullPath = urlParts[fbIndex];
+          console.log('Full path with facebook.com:', fullPath);
+          
+          const afterFB = fullPath.split('facebook.com/')[1];
+          console.log('After facebook.com/:', afterFB);
+          
+          if (afterFB) {
+            const pageId = afterFB.split('/')[0];
+            console.log('Extracted page ID (alternative method):', pageId);
+            
+            // Find matching page in user data
+            const page = fbPages.find(p => p.page_id === pageId);
+            console.log('Found page object:', page);
+            
+            if (page && page.page_name) {
+              console.log('Returning page name:', page.page_name);
+              return page.page_name;
+            }
+          }
+        }
+        
+        console.log('Could not find facebook.com in URL parts');
+        return this.i18next.t('form.facebookPage');
+      }
+      
+      const pageIdIndex = facebookIndex + 1;
       if (pageIdIndex < urlParts.length) {
         const pageId = urlParts[pageIdIndex];
+        console.log('Extracted page ID (standard method):', pageId);
         
         // Find matching page in user data
         const page = fbPages.find(p => p.page_id === pageId);
+        console.log('Found page object:', page);
+        
         if (page && page.page_name) {
+          console.log('Returning page name:', page.page_name);
           return page.page_name;
         }
       }
     } catch (error) {
+      console.error('Error extracting Facebook page name:', error);
       this.logger.error('Error extracting Facebook page name:', error);
     }
     
+    console.log('Falling back to default page name');
     return this.i18next.t('form.facebookPage');
   }
   
