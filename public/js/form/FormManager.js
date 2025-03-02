@@ -1491,19 +1491,18 @@ class FormManager {
       this.logger.debug('Form submission already in progress');
       return;
     }
-
+  
     const submitButton = document.querySelector('button[type="submit"]');
     const submissionModal = document.getElementById('submission-modal');
     const progressDiv = document.getElementById('submission-progress');
-
+  
     try {
-
       const authManager = AuthManager.getInstance();
       const tokenRefreshed = await authManager.checkAndRefreshToken();
       if (!tokenRefreshed) {
-          throw new Error('Authentication expired. Please log in again.');
+        throw new Error('Authentication expired. Please log in again.');
       }
-
+  
       this.isSubmitting = true;
       submitButton.classList.add('submitting');
       this.logger.debug('Form submission started');
@@ -1511,18 +1510,18 @@ class FormManager {
       // Show the modal
       submissionModal.style.display = 'block';
       submissionModal.querySelector('.modal-content').classList.add('submitting');
-
+  
       const isAdmin = document.getElementById('admin-section')?.style.display !== 'none';
       this.logger.debug('Is admin form:', isAdmin);
-
+  
       const config = isAdmin ? this.formConfig.admin : this.formConfig.regular;
       const requiredFields = config.requiredFields.map(field => ({
         element: document.getElementById(field.id),
         required: true
       }));
-
+  
       this.logger.debug('Found fields to validate:', requiredFields.length);
-
+  
       let isValid = true;
       let firstInvalidElement = null;
       
@@ -1531,7 +1530,7 @@ class FormManager {
           this.logger.warn('Required element not found in DOM');
           return;
         }
-
+  
         if (required && !element.value.trim()) {
           isValid = false;
           element.classList.add('field-invalid');
@@ -1560,77 +1559,187 @@ class FormManager {
         });
         setTimeout(() => firstInvalidElement.focus(), 500);
         this.isSubmitting = false;
+        submissionModal.style.display = 'none';
+        submissionModal.querySelector('.modal-content').classList.remove('submitting');
         return;
       }
-
+  
       let uploadedPhotoData = { photoIds: [], photoCaptions: {} };
-
+  
       // Handle photo uploads if present
       const photos = this.photoManager.getPhotos();
       if (photos && photos.length > 0) {
-          progressDiv.textContent = this.i18next.t('form.uploadingPhotos', { 
-              current: 0, 
-              total: photos.length 
-          });
-
-          try {
-              uploadedPhotoData = await this.handlePhotoUploads(progressDiv);
-              this.logger.debug('Photos uploaded successfully:', uploadedPhotoData);
-          } catch (error) {
-              throw new Error(this.i18next.t('form.photoUploadError'));
-          }
+        progressDiv.textContent = this.i18next.t('form.uploadingPhotos', { 
+          current: 0, 
+          total: photos.length 
+        });
+  
+        try {
+          uploadedPhotoData = await this.handlePhotoUploads(progressDiv);
+          this.logger.debug('Photos uploaded successfully:', uploadedPhotoData);
+        } catch (error) {
+          throw new Error(this.i18next.t('form.photoUploadError'));
+        }
       }
-
+  
       // Update progress for form submission
       progressDiv.textContent = this.i18next.t('form.sendingReport');
-
+  
       // Continue with form submission if validation passes
       const formData = this.collectVisibleData(isAdmin);
-
+  
       // Handle GPX data
       const gpxId = await this.handleGpxUpload();
-
+  
       const formContent = this.collectVisibleData(isAdmin);
-
+  
       // Include the photo data in the submission
       const submissionData = {
-          data: {
-              ...formContent,
-              photoIds: uploadedPhotoData.photoIds,
-              photoCaptions: uploadedPhotoData.photoCaptions,
-              gpxId,
-              reportType: isAdmin ? 'admin' : 'regular',
-              trailConditions: isAdmin ? this.trailConditions : undefined
-          }
+        data: {
+          ...formContent,
+          photoIds: uploadedPhotoData.photoIds,
+          photoCaptions: uploadedPhotoData.photoCaptions,
+          gpxId,
+          reportType: isAdmin ? 'admin' : 'regular',
+          trailConditions: isAdmin ? this.trailConditions : undefined
+        }
       };
       
       const result = await this.submitFormData(submissionData, isAdmin);
-
+  
       if (result.success) {
-
-          await this.dbManager.markFormAsSubmitted(this.currentFormId);
-
-          this.showSuccess(this.i18next.t('form.validation.submitSuccess'));
-          this.stopTrackingFormTime();
-          this.resetForm(true);
-          
-          // Show dashboard
-          document.getElementById('dashboard-container').style.display = 'block';
-          document.getElementById('snow-report-form').style.display = 'none';
-          document.getElementById('continue-draft-link').style.display = 'none';
+        await this.dbManager.markFormAsSubmitted(this.currentFormId);
+  
+        // Create and show the success modal with links
+        this.showSuccessWithLinks(result);
+        
+        this.stopTrackingFormTime();
+        this.resetForm(true);
+        
+        // Show dashboard
+        document.getElementById('dashboard-container').style.display = 'block';
+        document.getElementById('snow-report-form').style.display = 'none';
+        document.getElementById('continue-draft-link').style.display = 'none';
       } else {
-          this.showError(result.message || this.i18next.t('form.validation.submitError'));
+        this.showError(result.message || this.i18next.t('form.validation.submitError'));
       }
     } catch (error) {
       this.logger.error('Error submitting snow report:', error);
       this.showError(this.i18next.t('form.validation.submitError'));
     } finally {
-        this.isSubmitting = false;
-        submitButton.classList.remove('submitting');
-        submissionModal.style.display = 'none';
-        submissionModal.querySelector('.modal-content').classList.remove('submitting');
-        progressDiv.textContent = '';
+      this.isSubmitting = false;
+      submitButton.classList.remove('submitting');
+      submissionModal.style.display = 'none';
+      submissionModal.querySelector('.modal-content').classList.remove('submitting');
+      progressDiv.textContent = '';
     }
+  }
+
+  showSuccessWithLinks(result) {
+    // Create a modal element if it doesn't exist
+    let successModal = document.getElementById('success-links-modal');
+    if (!successModal) {
+      successModal = document.createElement('div');
+      successModal.id = 'success-links-modal';
+      successModal.className = 'modal';
+      document.body.appendChild(successModal);
+    }
+  
+    // Create the content for the modal
+    let linksHtml = '';
+    
+    // Add link to nabezky.sk portal if available
+    if (result.nb_node_url) {
+      linksHtml += `<p><a href="${result.nb_node_url}" target="_blank" class="result-link">
+        ${this.i18next.t('form.viewOnNaBezky')}</a></p>`;
+    }
+    
+    // Add Facebook page links if available
+    if (result.fb_page_url) {
+      // Convert to array if it's a single string
+      const fbPageUrls = Array.isArray(result.fb_page_url) 
+        ? result.fb_page_url 
+        : [result.fb_page_url];
+      
+      // Get page names from user data if available
+      const stateManager = StateManager.getInstance();
+      const userData = stateManager.getState('auth.user');
+      const fbPages = userData?.fb_pages || [];
+      
+      // Create the link text based on how many pages there are
+      if (fbPageUrls.length === 1) {
+        // Find the page name if available
+        const pageName = this.getFacebookPageName(fbPageUrls[0], fbPages);
+        linksHtml += `<p><a href="${fbPageUrls[0]}" target="_blank" class="result-link">
+          ${this.i18next.t('form.viewOnFacebookPage', { pageName })}</a></p>`;
+      } else if (fbPageUrls.length > 1) {
+        linksHtml += `<p>${this.i18next.t('form.viewOnFacebookPages')}:</p><ul>`;
+        fbPageUrls.forEach(url => {
+          const pageName = this.getFacebookPageName(url, fbPages);
+          linksHtml += `<li><a href="${url}" target="_blank" class="result-link">${pageName}</a></li>`;
+        });
+        linksHtml += '</ul>';
+      }
+    }
+    
+    // Add timeline link if present
+    if (result.fb_timeline_url) {
+      linksHtml += `<p><a href="${result.fb_timeline_url}" target="_blank" class="result-link">
+        ${this.i18next.t('form.viewOnFacebookProfile')}</a></p>`;
+    }
+  
+    // Create the modal content
+    successModal.innerHTML = `
+      <div class="modal-content">
+        <h3>${this.i18next.t('form.submitSuccess')}</h3>
+        <div class="result-links">
+          ${linksHtml}
+        </div>
+        <div class="modal-buttons" style="justify-content: center;">
+          <button type="button" id="success-close-button" class="photo-button">
+            ${this.i18next.t('form.ok')}
+          </button>
+        </div>
+      </div>
+    `;
+  
+    // Add event listener to close button
+    const closeButton = document.getElementById('success-close-button');
+    if (closeButton) {
+      closeButton.addEventListener('click', () => {
+        successModal.style.display = 'none';
+      });
+    }
+  
+    // Show the modal
+    successModal.style.display = 'block';
+  }
+  
+  // Helper function to get Facebook page name from URL
+  getFacebookPageName(url, fbPages) {
+    if (!url || !fbPages || !fbPages.length) {
+      return this.i18next.t('form.facebookPage');
+    }
+    
+    try {
+      // Extract the page ID from the URL
+      // URL format is typically https://www.facebook.com/PAGE_ID/posts/POST_ID
+      const urlParts = url.split('/');
+      const pageIdIndex = urlParts.indexOf('facebook.com') + 1;
+      if (pageIdIndex < urlParts.length) {
+        const pageId = urlParts[pageIdIndex];
+        
+        // Find matching page in user data
+        const page = fbPages.find(p => p.page_id === pageId);
+        if (page && page.page_name) {
+          return page.page_name;
+        }
+      }
+    } catch (error) {
+      this.logger.error('Error extracting Facebook page name:', error);
+    }
+    
+    return this.i18next.t('form.facebookPage');
   }
 
   collectVisibleData(isAdmin) {
