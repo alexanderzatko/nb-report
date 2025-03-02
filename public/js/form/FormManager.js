@@ -1674,6 +1674,17 @@ class FormManager {
     // Clear existing content
     modalContent.innerHTML = '';
     
+    // Create success icon
+    const successIcon = document.createElement('div');
+    successIcon.className = 'success-icon';
+    successIcon.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M8 12l2 2 4-4"></path>
+      </svg>
+    `;
+    modalContent.appendChild(successIcon);
+    
     // Add success message
     const successMessage = document.createElement('h3');
     successMessage.textContent = this.i18next.t('form.submitSuccess');
@@ -1709,20 +1720,42 @@ class FormManager {
       if (fbPageUrls.length === 1) {
         // Find the page name if available
         const pageName = this.getFacebookPageName(fbPageUrls[0], fbPages);
-        const fbPageLink = document.createElement('p');
-        fbPageLink.innerHTML = `<a href="${fbPageUrls[0]}" target="_blank" class="result-link">
-          ${this.i18next.t('form.viewOnFacebookPage', { pageName })}</a>`;
-        linksContainer.appendChild(fbPageLink);
+        
+        // Create paragraph with unlinked text followed by link
+        const fbPageParagraph = document.createElement('p');
+        fbPageParagraph.innerHTML = `${this.i18next.t('form.viewOnFacebookPrefix')} `;
+        
+        // Create the link element
+        const linkElement = document.createElement('a');
+        linkElement.href = fbPageUrls[0];
+        linkElement.target = '_blank';
+        linkElement.className = 'result-link';
+        linkElement.textContent = pageName;
+        
+        // Add link to paragraph
+        fbPageParagraph.appendChild(linkElement);
+        linksContainer.appendChild(fbPageParagraph);
       } else if (fbPageUrls.length > 1) {
+        // Create header paragraph with unlinked text
         const fbPageHeader = document.createElement('p');
-        fbPageHeader.textContent = this.i18next.t('form.viewOnFacebookPages') + ':';
+        fbPageHeader.textContent = this.i18next.t('form.viewOnFacebookPagesPrefix');
         linksContainer.appendChild(fbPageHeader);
         
+        // Create list of page links
         const pageList = document.createElement('ul');
         fbPageUrls.forEach(url => {
           const pageName = this.getFacebookPageName(url, fbPages);
           const listItem = document.createElement('li');
-          listItem.innerHTML = `<a href="${url}" target="_blank" class="result-link">${pageName}</a>`;
+          
+          // Create link element
+          const linkElement = document.createElement('a');
+          linkElement.href = url;
+          linkElement.target = '_blank';
+          linkElement.className = 'result-link';
+          linkElement.textContent = pageName;
+          
+          // Add link to list item
+          listItem.appendChild(linkElement);
           pageList.appendChild(listItem);
         });
         linksContainer.appendChild(pageList);
@@ -1762,6 +1795,33 @@ class FormManager {
   
     // Show the modal (it should already be visible, but just in case)
     submissionModal.style.display = 'block';
+  }
+  
+  // Updated getFacebookPageName method
+  getFacebookPageName(url, fbPages) {
+    if (!url || !fbPages || !fbPages.length) {
+      return this.i18next.t('form.facebookPage');
+    }
+    
+    try {
+      // Extract the page ID from the URL
+      // URL format is typically https://www.facebook.com/PAGE_ID/posts/POST_ID
+      const urlParts = url.split('/');
+      const pageIdIndex = urlParts.indexOf('facebook.com') + 1;
+      if (pageIdIndex < urlParts.length) {
+        const pageId = urlParts[pageIdIndex];
+        
+        // Find matching page in user data
+        const page = fbPages.find(p => p.page_id === pageId);
+        if (page && page.page_name) {
+          return page.page_name;
+        }
+      }
+    } catch (error) {
+      this.logger.error('Error extracting Facebook page name:', error);
+    }
+    
+    return this.i18next.t('form.facebookPage');
   }
   
   // Helper function to get Facebook page name from URL
