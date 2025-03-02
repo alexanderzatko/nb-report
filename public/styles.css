@@ -1019,6 +1019,49 @@ textarea:invalid + .validation-message {
 }
 /* Styles for progress bar STOP */
 
+
+/* Form submission modal START */
+
+.result-links {
+  margin: 20px 0;
+  text-align: left;
+}
+
+.result-link {
+  color: #0078d4;
+  text-decoration: none;
+  display: inline-block;
+  margin: 5px 0;
+  transition: color 0.2s;
+}
+
+.result-link:hover {
+  color: #005a9e;
+  text-decoration: underline;
+}
+
+.result-links ul {
+  list-style-type: none;
+  padding-left: 10px;
+  margin: 10px 0;
+}
+
+.result-links li {
+  margin-bottom: 8px;
+}
+
+#success-links-modal .modal-content {
+  max-width: 500px;
+  padding-bottom: 20px;
+}
+
+#success-close-button {
+  min-width: 100px;
+  margin-top: 10px;
+}
+
+/* Form submission modal STOP */
+
 /* Disable the gps card START */
 [data-feature="gps-recording"] {
     display: none !important;
