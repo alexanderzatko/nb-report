@@ -1723,7 +1723,7 @@ class FormManager {
         
         // Create paragraph with unlinked text followed by link
         const fbPageParagraph = document.createElement('p');
-        fbPageParagraph.innerHTML = `${this.i18next.t('form.viewOnFacebookPrefix')} `;
+        fbPageParagraph.innerHTML = `${this.i18next.t('form.viewOnFacebookPage')} `;
         
         // Create the link element
         const linkElement = document.createElement('a');
@@ -1738,7 +1738,7 @@ class FormManager {
       } else if (fbPageUrls.length > 1) {
         // Create header paragraph with unlinked text
         const fbPageHeader = document.createElement('p');
-        fbPageHeader.textContent = this.i18next.t('form.viewOnFacebookPagesPrefix');
+        fbPageHeader.textContent = this.i18next.t('form.viewOnFacebookPages');
         linksContainer.appendChild(fbPageHeader);
         
         // Create list of page links
@@ -1797,8 +1797,10 @@ class FormManager {
     submissionModal.style.display = 'block';
   }
   
-  // Updated getFacebookPageName method
   getFacebookPageName(url, fbPages) {
+  
+    this.logger.debug('url and fbPages:', [url,fbPages]);
+
     if (!url || !fbPages || !fbPages.length) {
       return this.i18next.t('form.facebookPage');
     }
