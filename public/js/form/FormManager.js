@@ -1507,10 +1507,11 @@ class FormManager {
       submitButton.classList.add('submitting');
       this.logger.debug('Form submission started');
   
-      // Show the modal
+      // Show the modal with submitting message
       submissionModal.style.display = 'block';
       submissionModal.querySelector('.modal-content').classList.add('submitting');
   
+      // Form validation code (unchanged)...
       const isAdmin = document.getElementById('admin-section')?.style.display !== 'none';
       this.logger.debug('Is admin form:', isAdmin);
   
@@ -1559,11 +1560,13 @@ class FormManager {
         });
         setTimeout(() => firstInvalidElement.focus(), 500);
         this.isSubmitting = false;
+        // Hide the modal if validation fails
         submissionModal.style.display = 'none';
         submissionModal.querySelector('.modal-content').classList.remove('submitting');
         return;
       }
   
+      // Photo upload handling (unchanged)...
       let uploadedPhotoData = { photoIds: [], photoCaptions: {} };
   
       // Handle photo uploads if present
@@ -1585,12 +1588,9 @@ class FormManager {
       // Update progress for form submission
       progressDiv.textContent = this.i18next.t('form.sendingReport');
   
-      // Continue with form submission if validation passes
+      // Form data collection and submission (unchanged)...
       const formData = this.collectVisibleData(isAdmin);
-  
-      // Handle GPX data
       const gpxId = await this.handleGpxUpload();
-  
       const formContent = this.collectVisibleData(isAdmin);
   
       // Include the photo data in the submission
@@ -1605,12 +1605,19 @@ class FormManager {
         }
       };
       
+      // Submit the form data
       const result = await this.submitFormData(submissionData, isAdmin);
   
-      if (result.success) {
-        await this.dbManager.markFormAsSubmitted(this.currentFormId);
+      // IMPORTANT CHANGE: Don't hide the modal in the finally block if successful
+      let showingSuccessModal = false;
   
-        // Create and show the success modal with links
+      if (result.success) {
+        showingSuccessModal = true;
+        await this.dbManager.markFormAsSubmitted(this.currentFormId);
+        
+        this.logger.debug('Form submission successful, showing links modal');
+        
+        // Show success modal with links (don't hide the modal first)
         this.showSuccessWithLinks(result);
         
         this.stopTrackingFormTime();
@@ -1621,6 +1628,7 @@ class FormManager {
         document.getElementById('snow-report-form').style.display = 'none';
         document.getElementById('continue-draft-link').style.display = 'none';
       } else {
+        this.logger.error('Form submission failed with result:', result);
         this.showError(result.message || this.i18next.t('form.validation.submitError'));
       }
     } catch (error) {
@@ -1629,8 +1637,14 @@ class FormManager {
     } finally {
       this.isSubmitting = false;
       submitButton.classList.remove('submitting');
-      submissionModal.style.display = 'none';
-      submissionModal.querySelector('.modal-content').classList.remove('submitting');
+      
+      // IMPORTANT CHANGE: Only hide modal if not showing success
+      if (!this.isShowingSuccessModal) {
+        this.logger.debug('Hiding submission modal');
+        submissionModal.style.display = 'none';
+        submissionModal.querySelector('.modal-content').classList.remove('submitting');
+      }
+      
       progressDiv.textContent = '';
     }
   }
@@ -1644,6 +1658,9 @@ class FormManager {
       return;
     }
   
+    // Set flag to indicate we're showing the success modal
+    this.isShowingSuccessModal = true;
+  
     const modalContent = submissionModal.querySelector('.modal-content');
     if (!modalContent) {
       this.logger.error('Modal content not found');
@@ -1651,22 +1668,18 @@ class FormManager {
       return;
     }
   
-    // Clear existing content but keep the success message
-    // First, save the existing h3 element (success message)
-    const successMessage = modalContent.querySelector('h3');
-    
-    // Clear the content except for buttons
-    const buttonContainer = modalContent.querySelector('.modal-buttons');
+    // Remove 'submitting' class if present
+    modalContent.classList.remove('submitting');
+  
+    // Clear existing content
     modalContent.innerHTML = '';
     
-    // Add the success message back
-    if (successMessage) {
-      modalContent.appendChild(successMessage);
-    } else {
-      const newSuccessMessage = document.createElement('h3');
-      newSuccessMessage.textContent = this.i18next.t('form.submitSuccess');
-      modalContent.appendChild(newSuccessMessage);
-    }
+    // Add success message
+    const successMessage = document.createElement('h3');
+    successMessage.textContent = this.i18next.t('form.submitSuccess');
+    modalContent.appendChild(successMessage);
+  
+    this.logger.debug('Adding links to modal with result:', result);
   
     // Create a container for the links
     const linksContainer = document.createElement('div');
@@ -1724,30 +1737,30 @@ class FormManager {
       linksContainer.appendChild(timelineLink);
     }
   
+    // Log what links we're adding
+    this.logger.debug('Adding links container with content:', linksContainer.innerHTML);
+  
     // Add the links container to the modal
     modalContent.appendChild(linksContainer);
     
-    // Add back the button container or create a new one
-    if (buttonContainer) {
-      modalContent.appendChild(buttonContainer);
-    } else {
-      const newButtonContainer = document.createElement('div');
-      newButtonContainer.className = 'modal-buttons';
-      newButtonContainer.style.justifyContent = 'center';
-      
-      const okButton = document.createElement('button');
-      okButton.type = 'button';
-      okButton.className = 'photo-button';
-      okButton.textContent = this.i18next.t('form.ok');
-      okButton.onclick = () => {
-        submissionModal.style.display = 'none';
-      };
-      
-      newButtonContainer.appendChild(okButton);
-      modalContent.appendChild(newButtonContainer);
-    }
+    // Create button container and OK button
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'modal-buttons';
+    buttonContainer.style.justifyContent = 'center';
+    
+    const okButton = document.createElement('button');
+    okButton.type = 'button';
+    okButton.className = 'photo-button';
+    okButton.textContent = this.i18next.t('form.ok');
+    okButton.onclick = () => {
+      submissionModal.style.display = 'none';
+      this.isShowingSuccessModal = false;
+    };
+    
+    buttonContainer.appendChild(okButton);
+    modalContent.appendChild(buttonContainer);
   
-    // Show the modal
+    // Show the modal (it should already be visible, but just in case)
     submissionModal.style.display = 'block';
   }
   
@@ -1905,27 +1918,32 @@ class FormManager {
   }
   
   async submitFormData(submissionData, isAdmin) {
-      try {
-          this.logger.debug('Submitting form data:', submissionData);
+    try {
+      this.logger.debug('Submitting form data:', submissionData);
   
-          const response = await fetch('/api/submit-snow-report', {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-              },
-              credentials: 'include',
-              body: JSON.stringify(submissionData)
-          });
+      const response = await fetch('/api/submit-snow-report', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(submissionData)
+      });
   
-          if (!response.ok) {
-              throw new Error(await response.text());
-          }
-  
-          return await response.json();
-      } catch (error) {
-          this.logger.error('Form submission error:', error);
-          throw error;
+      if (!response.ok) {
+        throw new Error(await response.text());
       }
+  
+      const result = await response.json();
+      
+      // Debug the result to see what we're getting back from the server
+      this.logger.debug('Form submission response:', result);
+      
+      return result;
+    } catch (error) {
+      this.logger.error('Form submission error:', error);
+      throw error;
+    }
   }
 
   async handlePhotoUploads(progressDiv) {
