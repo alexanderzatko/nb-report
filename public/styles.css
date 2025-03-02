@@ -374,6 +374,9 @@ button#gpx-upload-btn {
 .modal-content h3 {
     margin-top: 0;
     margin-bottom: 15px;
+    text-align: center;
+    font-weight: 500;
+    font-size: 16px;
 }
 
 .modal-buttons {
@@ -1023,8 +1026,7 @@ textarea:invalid + .validation-message {
 /* Form submission modal START */
 
 .result-links {
-  margin: 20px 0;
-  text-align: left;
+  text-align: center;
 }
 
 .result-link {
@@ -1058,6 +1060,11 @@ textarea:invalid + .validation-message {
 #success-close-button {
   min-width: 100px;
   margin-top: 10px;
+}
+
+#submission-modal .modal-buttons {
+    margin-top: 15px;
+
 }
 
 /* Form submission modal STOP */
