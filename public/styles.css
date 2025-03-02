@@ -1025,6 +1025,10 @@ textarea:invalid + .validation-message {
 
 /* Form submission modal START */
 
+.success-icon {
+    text-align: center;
+}
+
 .result-links {
   text-align: center;
 }
