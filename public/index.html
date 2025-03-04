@@ -241,6 +241,14 @@
 	          </div>
 	        </template>
 
+		<!-- Videos upload -->
+		<div class="form-section videos-section">
+		  <h3 data-i18n="form.videos">Videos</h3>
+		  <div id="video-preview-container"></div>
+		  <button type="button" id="select-videos" class="photo-button" data-i18n="form.selectVideos">Select Videos</button>
+		  <input type="file" id="video-file-input" accept="video/*" multiple style="display: none;">
+		</div>
+
                 <div class="form-group">
                     <label for="report-note" class="required-field" data-i18n="form.reportNote">Report</label>
                     <textarea id="report-note" required name="report_note" data-i18n-validate="form.validation.required"></textarea>
