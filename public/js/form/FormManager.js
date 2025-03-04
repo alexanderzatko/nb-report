@@ -700,6 +700,7 @@ class FormManager {
         if (unsubmittedForm) {
             this.currentFormId = unsubmittedForm.id;
             this.photoManager.setCurrentFormId(this.currentFormId);
+            this.videoManager.setCurrentFormId(this.currentFormId);
 
             // Initialize dropdowns first
             await this.selectManager.refreshAllDropdowns();
