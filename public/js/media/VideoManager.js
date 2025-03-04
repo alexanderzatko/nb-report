@@ -176,11 +176,23 @@ class VideoManager {
                   }
               }
   
-              // Only add to videos array and preview if database save was successful or form ID doesn't exist
-              if (videoId || !this.currentFormId) {
-                  this.videoEntries.push(file);
-                  await this.addVideoPreview(file, videoId);
-              }
+              // Generate a unique ID for the video
+              const uniqueVideoId = `video_${this.nextId++}`;
+              
+              // Create a properly structured video entry
+              const videoEntry = {
+                  id: uniqueVideoId,
+                  dbId: videoId,
+                  file: file,
+                  caption: '',
+                  order: this.videoEntries.length
+              };
+  
+              // Add to videoEntries array
+              this.videoEntries.push(videoEntry);
+              
+              // Add preview
+              await this.addVideoPreview(file, videoId);
   
           } catch (error) {
               this.logger.error('Error processing file:', error);
@@ -211,17 +223,24 @@ class VideoManager {
           video.style.width = '100%';
           video.style.height = '150px';
 
-          // Generate unique ID and add to videoEntries
-          const videoId = `video_${this.nextId++}`;
-          const videoOrder = this.videoEntries.length;
-          const videoEntry = {
-            id: videoId,
-            dbId: dbId,
-            file: file,
-            caption: caption,
-            order: videoOrder
-          };
-          this.videoEntries.push(videoEntry);
+          // If a video entry with this dbId already exists, don't create a new one
+          const existingEntry = this.videoEntries.find(entry => entry.dbId === dbId);
+          if (!existingEntry) {
+              // Generate unique ID and add to videoEntries only if not already there
+              const videoId = `video_${this.nextId++}`;
+              const videoOrder = this.videoEntries.length;
+              const videoEntry = {
+                  id: videoId,
+                  dbId: dbId,
+                  file: file,
+                  caption: caption,
+                  order: videoOrder
+              };
+              this.videoEntries.push(videoEntry);
+              wrapper.dataset.videoId = videoId;
+          } else {
+              wrapper.dataset.videoId = existingEntry.id;
+          }
           
           wrapper.dataset.videoId = videoId;
 
