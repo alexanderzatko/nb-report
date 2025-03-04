@@ -126,6 +126,12 @@
     "photos": "Fotografie:",
     "selectPhotos": "Vybrat fotografie",
     "captionPlaceholder": "Přidat popisek ...",
+    "videos": "Videa:",
+    "selectVideos": "Vybrat videa",
+    "uploadingVideos": "Nahrává se video {{current}} z {{total}}...",
+    "videosUploaded": "Všechna videa byla úspěšně nahrána",
+    "videoUploadError": "Nepodařilo se nahrát videa",
+    "videoTooLarge": "Video je příliš velké. Maximální velikost je 50MB",
     "privateReport": "Uložit jako koncept",
     "privateReportHelp": "Pokud je toto pole zaškrtnuto, zpráva nebude zveřejněna. Můžete ji zveřejnit později, najdete ji v záložce Zprávy ve vašem uživatelském profilu v portálu Na bežky!.",
     "gpsTrack": {
