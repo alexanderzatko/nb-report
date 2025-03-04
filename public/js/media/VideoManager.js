@@ -203,109 +203,112 @@ class VideoManager {
   }
 
   async addVideoPreview(file, dbId, caption = '') {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      
-      reader.onload = (e) => {
-        try {
-          const previewContainer = document.getElementById('video-preview-container');
-          if (!previewContainer) {
-            throw new Error('Preview container not found');
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        
+        reader.onload = (e) => {
+          try {
+            const previewContainer = document.getElementById('video-preview-container');
+            if (!previewContainer) {
+              throw new Error('Preview container not found');
+            }
+  
+            const wrapper = document.createElement('div');
+            wrapper.className = 'video-preview';
+  
+            // Create video element
+            const video = document.createElement('video');
+            video.controls = true;
+            video.src = URL.createObjectURL(file);
+            video.style.width = '100%';
+            video.style.height = '150px';
+  
+            // Generate unique ID and add to videoEntries
+            let videoId;
+            
+            // If a video entry with this dbId already exists, use that entry
+            const existingEntry = this.videoEntries.find(entry => entry.dbId === dbId);
+            if (existingEntry) {
+                videoId = existingEntry.id;
+                wrapper.dataset.videoId = videoId;
+            } else {
+                // Otherwise create a new entry
+                videoId = `video_${this.nextId++}`;
+                const videoOrder = this.videoEntries.length;
+                const videoEntry = {
+                    id: videoId,
+                    dbId: dbId,
+                    file: file,
+                    caption: caption,
+                    order: videoOrder
+                };
+                this.videoEntries.push(videoEntry);
+                wrapper.dataset.videoId = videoId;
+            }
+  
+            // Create video info container
+            const videoInfo = document.createElement('div');
+            videoInfo.className = 'video-info';
+  
+            // Create caption input
+            const captionInput = document.createElement('input');
+            captionInput.type = 'text';
+            captionInput.className = 'video-caption';
+            captionInput.placeholder = this.i18next.t('form.captionPlaceholder', 'Add a caption...');
+            captionInput.maxLength = 200;
+  
+            if (caption) {
+              captionInput.value = caption;
+            }
+  
+            // Save caption to the videoEntry using the correctly assigned videoId
+            captionInput.addEventListener('input', async (e) => {
+                const entry = this.videoEntries.find(entry => entry.id === videoId);
+                if (entry) {
+                    entry.caption = e.target.value;
+                    try {
+                        // Use the database ID (dbId) rather than the UI ID
+                        if (entry.dbId) {
+                            await this.dbManager.updateVideoCaption(entry.dbId, e.target.value);
+                        }
+                    } catch (error) {
+                        this.logger.error('Error updating caption in database:', error);
+                    }
+                }
+            });
+  
+            const controlsDiv = document.createElement('div');
+            controlsDiv.className = 'video-controls';
+  
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-video';
+            removeBtn.innerHTML = '×';
+            removeBtn.onclick = (event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              this.removeVideo(videoId, wrapper);
+            };
+  
+            controlsDiv.appendChild(removeBtn);
+            
+            videoInfo.appendChild(captionInput);
+            wrapper.appendChild(video);
+            wrapper.appendChild(controlsDiv);
+            wrapper.appendChild(videoInfo);
+            previewContainer.appendChild(wrapper);
+  
+            resolve();
+          } catch (error) {
+            reject(error);
           }
-
-          const wrapper = document.createElement('div');
-          wrapper.className = 'video-preview';
-
-          // Create video element
-          const video = document.createElement('video');
-          video.controls = true;
-          video.src = URL.createObjectURL(file);
-          video.style.width = '100%';
-          video.style.height = '150px';
-
-          // If a video entry with this dbId already exists, don't create a new one
-          const existingEntry = this.videoEntries.find(entry => entry.dbId === dbId);
-          let videoId;
-          if (!existingEntry) {
-              // Generate unique ID and add to videoEntries only if not already there
-              const videoId = `video_${this.nextId++}`;
-              const videoOrder = this.videoEntries.length;
-              const videoEntry = {
-                  id: videoId,
-                  dbId: dbId,
-                  file: file,
-                  caption: caption,
-                  order: videoOrder
-              };
-              this.videoEntries.push(videoEntry);
-              wrapper.dataset.videoId = videoId;
-          } else {
-              wrapper.dataset.videoId = existingEntry.id;
-          }
-
-          // Create video info container
-          const videoInfo = document.createElement('div');
-          videoInfo.className = 'video-info';
-
-          // Create caption input
-          const captionInput = document.createElement('input');
-          captionInput.type = 'text';
-          captionInput.className = 'video-caption';
-          captionInput.placeholder = this.i18next.t('form.captionPlaceholder', 'Add a caption...');
-          captionInput.maxLength = 200;
-
-          if (caption) {
-            captionInput.value = caption;
-          }
-
-          // Save caption to the videoEntry
-          captionInput.addEventListener('input', async (e) => {
-              const entry = this.videoEntries.find(entry => entry.id === videoId);
-              if (entry) {
-                  entry.caption = e.target.value;
-                  try {
-                      // Use the database ID (dbId) rather than the UI ID
-                      if (entry.dbId) {
-                          await this.dbManager.updateVideoCaption(entry.dbId, e.target.value);
-                      }
-                  } catch (error) {
-                      this.logger.error('Error updating caption in database:', error);
-                  }
-              }
-          });
-
-          const controlsDiv = document.createElement('div');
-          controlsDiv.className = 'video-controls';
-
-          const removeBtn = document.createElement('button');
-          removeBtn.className = 'remove-video';
-          removeBtn.innerHTML = '×';
-          removeBtn.onclick = (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            this.removeVideo(videoId, wrapper);
-          };
-
-          controlsDiv.appendChild(removeBtn);
-          
-          videoInfo.appendChild(captionInput);
-          wrapper.appendChild(video);
-          wrapper.appendChild(controlsDiv);
-          wrapper.appendChild(videoInfo);
-          previewContainer.appendChild(wrapper);
-
-          resolve();
-        } catch (error) {
-          reject(error);
-        }
-      };
-
-      reader.onerror = () => {
-        reject(new Error('Failed to read file for preview'));
-      };
-
-      reader.readAsArrayBuffer(file.slice(0, 1024)); // Just read the start of the file
-    });
+        };
+  
+        reader.onerror = () => {
+          reject(new Error('Failed to read file for preview'));
+        };
+  
+        reader.readAsArrayBuffer(file.slice(0, 1024)); // Just read the start of the file
+      });
   }
 
   async removeVideo(videoId, wrapper) {
@@ -387,11 +390,19 @@ class VideoManager {
           await waitForContainer();
           
           // Clear existing videos
+          const previewContainer = document.getElementById('video-preview-container');
+          if (previewContainer) {
+              previewContainer.innerHTML = '';
+          }
           this.videoEntries = [];
           
           // Restore each video
           for (const videoData of videos) {
-              await this.addVideoPreview(videoData.video, videoData.id, videoData.caption);
+              this.logger.debug('Restoring video from database:', {
+                  id: videoData.id,
+                  caption: videoData.caption
+              });
+              await this.addVideoPreview(videoData.video, videoData.id, videoData.caption || '');
           }
       } catch (error) {
           this.logger.error('Error restoring videos:', error);
