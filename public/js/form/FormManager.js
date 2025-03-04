@@ -257,6 +257,23 @@ class FormManager {
           if (rewardRequested) data.rewardRequested = rewardRequested;
       }
   
+      // Add references to videos that have been added
+      try {
+          if (this.videoManager) {
+              const videos = this.videoManager.getVideos();
+              if (videos && videos.length > 0) {
+                  data.videoReferences = videos.map(video => ({
+                      id: video.id,
+                      dbId: video.dbId,
+                      caption: video.caption,
+                      order: video.order
+                  }));
+              }
+          }
+      } catch (error) {
+          this.logger.error('Error capturing video references for form state:', error);
+      }
+  
       // Add GPS/GPX data
       const gpxOption = document.getElementById('gpx-option');
       if (gpxOption && gpxOption.value !== 'none') {
@@ -395,6 +412,13 @@ class FormManager {
           }
       });
   
+      // Handle video references
+      if (formData.formState.videoReferences && this.videoManager) {
+          this.logger.debug('Found video references in saved form state:', formData.formState.videoReferences);
+          // videoManager.setCurrentFormId has already been called earlier in the form initialization
+          // This ensures videos are restored from the database
+      }
+
       // Handle GPX data
       if (formData.formState.gpxData) {
           const gpsManager = GPSManager.getInstance();
