@@ -12,7 +12,7 @@ class DatabaseManager {
 
         this.logger = Logger.getInstance();
         this.dbName = 'AppDB';
-        this.dbVersion = 3; // Increased version for new stores
+        this.dbVersion = 4; // Increased version for new stores
         this.db = null;
         DatabaseManager.instance = this;
     }
@@ -78,9 +78,9 @@ class DatabaseManager {
         }
 
         if (!db.objectStoreNames.contains('videos')) {
-            const photoStore = db.createObjectStore('videos', { keyPath: 'id' });
-            photoStore.createIndex('timestamp', 'timestamp', { unique: false });
-            photoStore.createIndex('formId', 'formId', { unique: false });
+            const videoStore = db.createObjectStore('videos', { keyPath: 'id' });
+            videoStore.createIndex('timestamp', 'timestamp', { unique: false });
+            videoStore.createIndex('formId', 'formId', { unique: false });
         }
 
         if (!db.objectStoreNames.contains('metadata')) {
