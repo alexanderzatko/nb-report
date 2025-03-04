@@ -1592,19 +1592,19 @@ class FormManager {
       
       // Handle video uploads if present
       const videos = this.videoManager.getVideos();
-      if (videos && videos.length > 0) {
-          progressDiv.textContent = this.i18next.t('form.uploadingVideos', { 
-              current: 0, 
-              total: videos.length 
-          });
-          
-          try {
-              uploadedVideoData = await this.handleVideoUploads(progressDiv);
-              this.logger.debug('Videos uploaded successfully:', uploadedVideoData);
-          } catch (error) {
-              throw new Error(this.i18next.t('form.videoUploadError'));
-          }
-      }
+    if (videos && videos.length > 0) {
+        progressDiv.textContent = this.i18next.t('form.uploadingVideos', { 
+            current: 0, 
+            total: videos.length 
+        });
+        
+        try {
+            uploadedVideoData = await this.handleVideoUploads(progressDiv);
+            this.logger.debug('Videos uploaded successfully:', uploadedVideoData);
+        } catch (error) {
+            throw new Error(this.i18next.t('form.videoUploadError'));
+        }
+    }
 
       // Update progress for form submission
       progressDiv.textContent = this.i18next.t('form.sendingReport');
@@ -1848,12 +1848,12 @@ class FormManager {
 
   async handleVideoUploads(progressDiv) {
       const videoManager = VideoManager.getInstance();
-      const videos = videoManager.getVideos();
+      const videos = videoManager.getVideos();  // Returns ordered array of {file, caption, id}
       const videoIds = [];
       const videoCaptions = {};
-      const videoOrder = new Map();
+      const videoOrder = new Map();  // Track original order
       let currentVideo = 0;
-      
+  
       if (videos && videos.length > 0) {
           for (const video of videos) {
               try {
@@ -1865,7 +1865,7 @@ class FormManager {
                   if (progressDiv) {
                       progressDiv.textContent = progressText;
                   }
-                  
+  
                   this.logger.debug('Preparing video upload:', {
                       filename: video.file.name,
                       size: video.file.size,
@@ -1874,21 +1874,22 @@ class FormManager {
                       videoId: video.id,
                       progress: `${currentVideo}/${videos.length}`
                   });
-                  
+  
                   const videoData = new FormData();
                   videoData.append('filedata', video.file);
-                  videoData.append('fileType', 'video');
+                  
+                  // Ensure caption is properly added to FormData
                   if (video.caption) {
                       videoData.append('caption', video.caption);
                       this.logger.debug('Added caption to FormData:', video.caption);
                   }
-                  
+  
                   const response = await fetch('/api/upload-file', {
                       method: 'POST',
                       credentials: 'include',
                       body: videoData
                   });
-                  
+  
                   if (!response.ok) {
                       const errorData = await response.json();
                       this.logger.error('Video upload failed:', {
@@ -1898,15 +1899,21 @@ class FormManager {
                       });
                       throw new Error(errorData.details || errorData.error || 'Upload failed');
                   }
-                  
+  
                   const result = await response.json();
                   this.logger.debug('Video upload successful:', result);
                   
                   // Store fid and maintain order
                   videoIds.push(result.fid);
-                  videoOrder.set(result.fid, video.id);
+                  videoOrder.set(result.fid, video.id);  // Link server fid to original video ID
+                  
+                  // Make sure to store the caption with the server-assigned fid
                   if (video.caption) {
                       videoCaptions[result.fid] = video.caption;
+                      this.logger.debug('Storing caption for video:', {
+                          fid: result.fid,
+                          caption: video.caption
+                      });
                   }
               } catch (error) {
                   this.logger.error('Error uploading video:', {
@@ -1922,14 +1929,19 @@ class FormManager {
               progressDiv.textContent = this.i18next.t('form.videosUploaded');
           }
       }
-      
+  
       // Sort videoIds array based on original order
       const sortedVideoIds = videoIds.sort((a, b) => {
           const orderA = videos.findIndex(p => p.id === videoOrder.get(a));
           const orderB = videos.findIndex(p => p.id === videoOrder.get(b));
           return orderA - orderB;
       });
-      
+  
+      this.logger.debug('Completed video uploads with data:', {
+          videoIds: sortedVideoIds,
+          videoCaptions: videoCaptions
+      });
+  
       return {
           videoIds: sortedVideoIds,
           videoCaptions: videoCaptions
