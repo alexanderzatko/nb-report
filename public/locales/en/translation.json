@@ -127,6 +127,12 @@
     "selectPhotos": "Select photos",
     "takePhoto": "Take Photo",
     "captionPlaceholder": "Add acaption ...",
+    "videos": "Videos:",
+    "selectVideos": "Select Videos",
+    "videoTooLarge": "Video is too large. Maximum is 50MB",
+    "uploadingVideos": "Uploading video {{current}} of {{total}}...",
+    "videosUploaded": "All videos have been successfully uploaded",
+    "videoUploadError": "Failed to upload videos",
     "privateReport": "Save as draft",
     "privateReportHelp": "If this field is checked, the report will not be published. You can publish it later, you'll find it in the Reports tab in your user profile on the Na bezky! portal.",
     "gpsTrack": {
