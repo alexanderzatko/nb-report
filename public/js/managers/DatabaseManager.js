@@ -77,7 +77,6 @@ class DatabaseManager {
             photoStore.createIndex('formId', 'formId', { unique: false });
         }
 
-        // Add schema version info store
         if (!db.objectStoreNames.contains('metadata')) {
             const metaStore = db.createObjectStore('metadata', { keyPath: 'key' });
             metaStore.put({
@@ -85,6 +84,12 @@ class DatabaseManager {
                 value: this.dbVersion,
                 lastUpdated: new Date().toISOString()
             });
+        }
+
+        if (!db.objectStoreNames.contains('videos')) {
+            const videoStore = db.createObjectStore('videos', { keyPath: 'id' });
+            videoStore.createIndex('timestamp', 'timestamp', { unique: false });
+            videoStore.createIndex('formId', 'formId', { unique: false });
         }
     }
 
@@ -414,6 +419,119 @@ class DatabaseManager {
             });
         } catch (error) {
             this.logger.error('Error updating caption:', error);
+            throw error;
+        }
+    }
+
+    async saveVideo(formId, file, caption = '') {
+        try {
+            // Convert file to base64 BEFORE starting the transaction
+            const fileData = {
+                name: file.name,
+                type: file.type,
+                lastModified: file.lastModified,
+                data: await this.fileToBase64(file)
+            };
+    
+            const videoData = {
+                id: Date.now().toString(),
+                formId,
+                caption,
+                timestamp: new Date().toISOString(),
+                file: fileData
+            };
+    
+            // Now start the transaction with the prepared data
+            const db = await this.getDatabase();
+            const transaction = db.transaction(['videos'], 'readwrite');
+            const store = transaction.objectStore('videos');
+    
+            return new Promise((resolve, reject) => {
+                const request = store.add(videoData);
+                
+                request.onsuccess = () => resolve(videoData.id);
+                
+                request.onerror = () => reject(request.error);
+                
+                transaction.onerror = () => reject(transaction.error);
+                
+                transaction.oncomplete = () => {
+                    this.logger.debug('Video transaction completed successfully');
+                };
+            });
+        } catch (error) {
+            this.logger.error('Error in saveVideo:', error);
+            throw error;
+        }
+    }
+    
+    async getVideos(formId) {
+        try {
+            const db = await this.getDatabase();
+            const transaction = db.transaction(['videos'], 'readonly');
+            const store = transaction.objectStore('videos');
+            const index = store.index('formId');
+    
+            return new Promise((resolve, reject) => {
+                const request = index.getAll(formId);
+                
+                request.onsuccess = () => {
+                    const videos = request.result;
+                    const processedVideos = videos.map(video => ({
+                        ...video,
+                        video: this.base64ToFile(video.file.data, video.file.name, video.file.type)
+                    }));
+                    resolve(processedVideos);
+                };
+                
+                request.onerror = () => reject(request.error);
+                
+                transaction.onerror = () => reject(transaction.error);
+            });
+        } catch (error) {
+            this.logger.error('Error in getVideos:', error);
+            throw error;
+        }
+    }
+    
+    async deleteVideo(videoId) {
+        const db = await this.getDatabase();
+        const transaction = db.transaction(['videos'], 'readwrite');
+        const store = transaction.objectStore('videos');
+    
+        return new Promise((resolve, reject) => {
+            const request = store.delete(videoId);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+    
+    async updateVideoCaption(videoId, caption) {
+        try {
+            const db = await this.getDatabase();
+            const transaction = db.transaction(['videos'], 'readwrite');
+            const store = transaction.objectStore('videos');
+    
+            return new Promise((resolve, reject) => {
+                const getRequest = store.get(videoId);
+                
+                getRequest.onsuccess = () => {
+                    const video = getRequest.result;
+                    if (video) {
+                        video.caption = caption;
+                        const updateRequest = store.put(video);
+                        updateRequest.onsuccess = () => {
+                            resolve();
+                        };
+                        updateRequest.onerror = () => reject(updateRequest.error);
+                    } else {
+                        reject(new Error('Video not found'));
+                    }
+                };
+                getRequest.onerror = () => reject(getRequest.error);
+            });
+        } catch (error) {
+            this.logger.error('Error updating video caption:', error);
             throw error;
         }
     }
