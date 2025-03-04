@@ -225,6 +225,7 @@ class VideoManager {
 
           // If a video entry with this dbId already exists, don't create a new one
           const existingEntry = this.videoEntries.find(entry => entry.dbId === dbId);
+          let videoId;
           if (!existingEntry) {
               // Generate unique ID and add to videoEntries only if not already there
               const videoId = `video_${this.nextId++}`;
