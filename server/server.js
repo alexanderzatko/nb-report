@@ -314,7 +314,8 @@ app.get('/api/auth-status', (req, res) => {
 // Handle photo and gpx files uploads
 app.post('/api/upload-file', (req, res, next) => {
     logger.debug('Upload request received:', {
-        contentType: req.headers['content-type']
+        contentType: req.headers['content-type'],
+        contentLength: req.headers['content-length']
     });
 
     upload(req, res, async (err) => {
@@ -330,8 +331,13 @@ app.post('/api/upload-file', (req, res, next) => {
         try {
             logger.debug('Upload request processing:', {
                 hasFiles: !!req.files,
-                fields: req.body,
-                files: req.files
+                fieldNames: Object.keys(req.body || {}),
+                fileDetails: req.files ? Object.keys(req.files).map(key => ({
+                    fieldName: key,
+                    count: req.files[key].length,
+                    mimeType: req.files[key][0]?.mimetype,
+                    size: req.files[key][0]?.size
+                })) : []
             });
 
             if (!req.session?.accessToken) {
@@ -346,6 +352,15 @@ app.post('/api/upload-file', (req, res, next) => {
 
             const file = req.files.filedata[0];
             const caption = req.body.caption;
+
+            // Log file details and caption
+            logger.debug('Processing file upload:', {
+                filename: file.originalname,
+                mimetype: file.mimetype,
+                size: file.size,
+                hasCaption: !!caption,
+                captionLength: caption ? caption.length : 0
+            });
 
             // Create form data
             const formData = new FormData();
@@ -409,15 +424,17 @@ app.post('/api/upload-file', (req, res, next) => {
 
 app.post('/api/submit-snow-report', async (req, res) => {
   try {
-    // Log the incoming request
+    // Log the incoming request with more details about video data
     logger.info('Snow report submission received', {
       headers: req.headers,
-      body: req.body,
       hasData: !!req.body.data,
       bodyKeys: Object.keys(req.body),
       sessionExists: !!req.session,
       hasAccessToken: !!req.session?.accessToken,
-      tokenValue: req.session?.accessToken ? 'exists' : 'missing'
+      hasPhotoData: !!(req.body.data?.photoIds?.length > 0),
+      hasVideoData: !!(req.body.data?.videoIds?.length > 0),
+      photoCaptionsCount: Object.keys(req.body.data?.photoCaptions || {}).length,
+      videoCaptionsCount: Object.keys(req.body.data?.videoCaptions || {}).length
     });
 
     if (!req.session || !req.session.accessToken) {
@@ -477,14 +494,26 @@ app.post('/api/submit-snow-report', async (req, res) => {
         gpxId: formData.gpxId || null,
 
         privateReport: formData.privateReport || false
-
       }
     };
+
+    // Add detailed logging for video captions
+    if (formData.videoIds && formData.videoIds.length > 0) {
+      logger.info('Video data being sent to nabezky service:', {
+        videoIds: formData.videoIds,
+        videoCaptions: formData.videoCaptions || {},
+        videoIdsWithCaptions: formData.videoIds.filter(id => formData.videoCaptions && formData.videoCaptions[id])
+      });
+    }
 
     logger.info('Making request to nabezky service', {
       url: `${OAUTH_PROVIDER_URL}/nabezky/rules/rules_process_data_from_the_nb_report_app`,
       hasAuthHeader: true,
-      requestBody: submissionData
+      requestBodyStructure: {
+        keys: Object.keys(submissionData.data),
+        hasVideoCaptions: !!submissionData.data.videoCaptions && 
+                          Object.keys(submissionData.data.videoCaptions).length > 0
+      }
     });
 
     const response = await axios.post(
