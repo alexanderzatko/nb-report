@@ -77,6 +77,12 @@ class DatabaseManager {
             photoStore.createIndex('formId', 'formId', { unique: false });
         }
 
+        if (!db.objectStoreNames.contains('videos')) {
+            const photoStore = db.createObjectStore('videos', { keyPath: 'id' });
+            photoStore.createIndex('timestamp', 'timestamp', { unique: false });
+            photoStore.createIndex('formId', 'formId', { unique: false });
+        }
+
         if (!db.objectStoreNames.contains('metadata')) {
             const metaStore = db.createObjectStore('metadata', { keyPath: 'key' });
             metaStore.put({
