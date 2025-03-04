@@ -241,8 +241,6 @@ class VideoManager {
           } else {
               wrapper.dataset.videoId = existingEntry.id;
           }
-          
-          wrapper.dataset.videoId = videoId;
 
           // Create video info container
           const videoInfo = document.createElement('div');
