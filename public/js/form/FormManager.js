@@ -3,6 +3,7 @@
 import i18next from '/node_modules/i18next/dist/esm/i18next.js';
 import SelectManager from '../managers/SelectManager.js';
 import PhotoManager from '../media/PhotoManager.js';
+import VideoManager from '../media/VideoManager.js';
 import Logger from '../utils/Logger.js';
 import GPSManager from '../managers/GPSManager.js';
 import StateManager from '../state/StateManager.js';
@@ -69,6 +70,7 @@ class FormManager {
     this.elapsedTimeInterval = null;
     this.selectManager = SelectManager.getInstance();
     this.photoManager = PhotoManager.getInstance();
+    this.videoManager = VideoManager.getInstance();
     this.logger = Logger.getInstance();
     this.isSubmitting = false;
 
@@ -650,6 +652,7 @@ class FormManager {
         try {
             await this.replaceCommonSections(activeSection, commonTemplate);
             await this.photoManager.initializePhotoUpload(true);
+            await this.videoManager.initializeVideoUpload(true);
         } catch (error) {
             this.logger.error('Failed to replace common sections:', error);
             throw error;
@@ -1511,7 +1514,7 @@ class FormManager {
       submissionModal.style.display = 'block';
       submissionModal.querySelector('.modal-content').classList.add('submitting');
   
-      // Form validation code (unchanged)...
+      // Form validation code
       const isAdmin = document.getElementById('admin-section')?.style.display !== 'none';
       this.logger.debug('Is admin form:', isAdmin);
   
@@ -1566,7 +1569,7 @@ class FormManager {
         return;
       }
   
-      // Photo upload handling (unchanged)...
+      // Photo upload handling
       let uploadedPhotoData = { photoIds: [], photoCaptions: {} };
   
       // Handle photo uploads if present
@@ -1584,7 +1587,25 @@ class FormManager {
           throw new Error(this.i18next.t('form.photoUploadError'));
         }
       }
-  
+
+      let uploadedVideoData = { videoIds: [], videoCaptions: {} };
+      
+      // Handle video uploads if present
+      const videos = this.videoManager.getVideos();
+      if (videos && videos.length > 0) {
+          progressDiv.textContent = this.i18next.t('form.uploadingVideos', { 
+              current: 0, 
+              total: videos.length 
+          });
+          
+          try {
+              uploadedVideoData = await this.handleVideoUploads(progressDiv);
+              this.logger.debug('Videos uploaded successfully:', uploadedVideoData);
+          } catch (error) {
+              throw new Error(this.i18next.t('form.videoUploadError'));
+          }
+      }
+
       // Update progress for form submission
       progressDiv.textContent = this.i18next.t('form.sendingReport');
   
@@ -1595,14 +1616,16 @@ class FormManager {
   
       // Include the photo data in the submission
       const submissionData = {
-        data: {
-          ...formContent,
-          photoIds: uploadedPhotoData.photoIds,
-          photoCaptions: uploadedPhotoData.photoCaptions,
-          gpxId,
-          reportType: isAdmin ? 'admin' : 'regular',
-          trailConditions: isAdmin ? this.trailConditions : undefined
-        }
+          data: {
+              ...formContent,
+              photoIds: uploadedPhotoData.photoIds,
+              photoCaptions: uploadedPhotoData.photoCaptions,
+              videoIds: uploadedVideoData.videoIds,
+              videoCaptions: uploadedVideoData.videoCaptions,
+              gpxId,
+              reportType: isAdmin ? 'admin' : 'regular',
+              trailConditions: isAdmin ? this.trailConditions : undefined
+          }
       };
       
       // Submit the form data
@@ -1821,6 +1844,96 @@ class FormManager {
   
     // Show the modal (it should already be visible, but just in case)
     submissionModal.style.display = 'block';
+  }
+
+  async handleVideoUploads(progressDiv) {
+      const videoManager = VideoManager.getInstance();
+      const videos = videoManager.getVideos();
+      const videoIds = [];
+      const videoCaptions = {};
+      const videoOrder = new Map();
+      let currentVideo = 0;
+      
+      if (videos && videos.length > 0) {
+          for (const video of videos) {
+              try {
+                  currentVideo++;
+                  const progressText = this.i18next.t('form.uploadingVideos', {
+                      current: currentVideo,
+                      total: videos.length
+                  });
+                  if (progressDiv) {
+                      progressDiv.textContent = progressText;
+                  }
+                  
+                  this.logger.debug('Preparing video upload:', {
+                      filename: video.file.name,
+                      size: video.file.size,
+                      type: video.file.type,
+                      hasCaption: !!video.caption,
+                      videoId: video.id,
+                      progress: `${currentVideo}/${videos.length}`
+                  });
+                  
+                  const videoData = new FormData();
+                  videoData.append('filedata', video.file);
+                  videoData.append('fileType', 'video');
+                  if (video.caption) {
+                      videoData.append('caption', video.caption);
+                      this.logger.debug('Added caption to FormData:', video.caption);
+                  }
+                  
+                  const response = await fetch('/api/upload-file', {
+                      method: 'POST',
+                      credentials: 'include',
+                      body: videoData
+                  });
+                  
+                  if (!response.ok) {
+                      const errorData = await response.json();
+                      this.logger.error('Video upload failed:', {
+                          status: response.status,
+                          statusText: response.statusText,
+                          error: errorData
+                      });
+                      throw new Error(errorData.details || errorData.error || 'Upload failed');
+                  }
+                  
+                  const result = await response.json();
+                  this.logger.debug('Video upload successful:', result);
+                  
+                  // Store fid and maintain order
+                  videoIds.push(result.fid);
+                  videoOrder.set(result.fid, video.id);
+                  if (video.caption) {
+                      videoCaptions[result.fid] = video.caption;
+                  }
+              } catch (error) {
+                  this.logger.error('Error uploading video:', {
+                      error: error.message,
+                      details: error.response?.data,
+                      status: error.response?.status
+                  });
+                  throw new Error(`Failed to upload video: ${error.response?.data?.details || error.message}`);
+              }
+          }
+          
+          if (progressDiv) {
+              progressDiv.textContent = this.i18next.t('form.videosUploaded');
+          }
+      }
+      
+      // Sort videoIds array based on original order
+      const sortedVideoIds = videoIds.sort((a, b) => {
+          const orderA = videos.findIndex(p => p.id === videoOrder.get(a));
+          const orderB = videos.findIndex(p => p.id === videoOrder.get(b));
+          return orderA - orderB;
+      });
+      
+      return {
+          videoIds: sortedVideoIds,
+          videoCaptions: videoCaptions
+      };
   }
   
   getFacebookPageName(url, fbPages) {
@@ -2338,6 +2451,7 @@ class FormManager {
       form.reset();
       this.trailConditions = {};
       this.photoManager.clearPhotos();
+      this.videoManager.clearVideos();
       this.stopTrackingFormTime();
       this.formStartTime = null;
       
