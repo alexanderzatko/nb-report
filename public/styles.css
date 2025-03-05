@@ -1095,22 +1095,27 @@ textarea:invalid + .validation-message {
   background-color: #f1f1f1;
   border-radius: 4px;
   margin: 15px 0;
-  height: 10px;
+  height: 8px;
   overflow: hidden;
-  display: none;
 }
 
 .progress-bar {
   width: 0%;
   height: 100%;
   background-color: #0078d4;
-  border-radius: 4px;
   transition: width 0.3s ease;
 }
 
-/* Show progress container when uploading */
-.uploading .progress-container {
-  display: block;
+.progress-text {
+  margin: 10px 0;
+  text-align: center;
+  font-size: 14px;
+  color: #333;
+}
+
+/* Hide progress container by default, show when uploading */
+.modal-content:not(.uploading) .progress-container {
+  display: none;
 }
 
 /* Styles for progress bar STOP */
