@@ -1088,6 +1088,31 @@ textarea:invalid + .validation-message {
 .modal-content.submitting h3 {
     margin-bottom: 20px;
 }
+
+/* Progress bar styling */
+.progress-container {
+  width: 100%;
+  background-color: #f1f1f1;
+  border-radius: 4px;
+  margin: 15px 0;
+  height: 10px;
+  overflow: hidden;
+  display: none;
+}
+
+.progress-bar {
+  width: 0%;
+  height: 100%;
+  background-color: #0078d4;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* Show progress container when uploading */
+.uploading .progress-container {
+  display: block;
+}
+
 /* Styles for progress bar STOP */
 
 
