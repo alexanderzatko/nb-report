@@ -1890,7 +1890,10 @@ class FormManager {
       const videoCaptions = {};
       const videoOrder = new Map();  // Track original order
       let currentVideo = 0;
-  
+
+      const progressBar = document.getElementById('upload-progress-bar');
+      if (progressBar) progressBar.style.width = '0%';
+
       if (videos && videos.length > 0) {
           for (const video of videos) {
               try {
