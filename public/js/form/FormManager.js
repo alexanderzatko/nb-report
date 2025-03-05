@@ -1539,6 +1539,18 @@ class FormManager {
       submissionModal.style.display = 'block';
       submissionModal.querySelector('.modal-content').classList.add('submitting');
   
+      // Initialize progress div with progress bar + text
+      progressDiv.innerHTML = `
+        <div class="progress-text"></div>
+        <div class="progress-container">
+          <div class="progress-bar" id="upload-progress-bar"></div>
+        </div>
+      `;
+      const progressTextDiv = progressDiv.querySelector('.progress-text');
+      const progressBar = document.getElementById('upload-progress-bar');
+      
+      if (progressBar) progressBar.style.width = '0%';
+  
       // Form validation code
       const isAdmin = document.getElementById('admin-section')?.style.display !== 'none';
       this.logger.debug('Is admin form:', isAdmin);
@@ -1600,54 +1612,50 @@ class FormManager {
       // Handle photo uploads if present
       const photos = this.photoManager.getPhotos();
       if (photos && photos.length > 0) {
-        progressDiv.textContent = this.i18next.t('form.uploadingPhotos', { 
+        submissionModal.querySelector('.modal-content').classList.add('uploading');
+        progressTextDiv.textContent = this.i18next.t('form.uploadingPhotos', { 
           current: 0, 
           total: photos.length 
         });
-
-        submissionModal.querySelector('.modal-content').classList.add('uploading');
-
+  
         try {
-          uploadedPhotoData = await this.handlePhotoUploads(progressDiv);
+          uploadedPhotoData = await this.handlePhotoUploads(progressTextDiv, progressBar);
           this.logger.debug('Photos uploaded successfully:', uploadedPhotoData);
         } catch (error) {
-          submissionModal.querySelector('.modal-content').classList.remove('uploading');
           throw new Error(this.i18next.t('form.photoUploadError'));
         }
-        submissionModal.querySelector('.modal-content').classList.remove('uploading');
       }
-
+  
       let uploadedVideoData = { videoIds: [], videoCaptions: {} };
       
       // Handle video uploads if present
       const videos = this.videoManager.getVideos();
-    if (videos && videos.length > 0) {
-        progressDiv.textContent = this.i18next.t('form.uploadingVideos', { 
+      if (videos && videos.length > 0) {
+        submissionModal.querySelector('.modal-content').classList.add('uploading');
+        progressTextDiv.textContent = this.i18next.t('form.uploadingVideos', { 
             current: 0, 
             total: videos.length 
         });
         
-        submissionModal.querySelector('.modal-content').classList.add('uploading');
-
         try {
-            uploadedVideoData = await this.handleVideoUploads(progressDiv);
+            uploadedVideoData = await this.handleVideoUploads(progressTextDiv, progressBar);
             this.logger.debug('Videos uploaded successfully:', uploadedVideoData);
         } catch (error) {
-            submissionModal.querySelector('.modal-content').classList.remove('uploading');
             throw new Error(this.i18next.t('form.videoUploadError'));
         }
-        submissionModal.querySelector('.modal-content').classList.remove('uploading');
-    }
-
-      // Update progress for form submission
-      progressDiv.textContent = this.i18next.t('form.sendingReport');
+      }
   
-      // Form data collection and submission (unchanged)...
+      // Update progress for form submission
+      submissionModal.querySelector('.modal-content').classList.remove('uploading');
+      progressTextDiv.textContent = this.i18next.t('form.sendingReport');
+      if (progressBar) progressBar.style.width = '100%';
+  
+      // Form data collection and submission...
       const formData = this.collectVisibleData(isAdmin);
       const gpxId = await this.handleGpxUpload();
       const formContent = this.collectVisibleData(isAdmin);
   
-      // Include the photo data in the submission
+      // Include the photo and video data in the submission
       const submissionData = {
           data: {
               ...formContent,
@@ -1664,7 +1672,6 @@ class FormManager {
       // Submit the form data
       const result = await this.submitFormData(submissionData, isAdmin);
   
-      // IMPORTANT CHANGE: Don't hide the modal in the finally block if successful
       let showingSuccessModal = false;
   
       if (result.success) {
@@ -1673,7 +1680,7 @@ class FormManager {
         
         this.logger.debug('Form submission successful, showing links modal');
         
-        // Show success modal with links (don't hide the modal first)
+        // Show success modal with links
         this.showSuccessWithLinks(result);
         
         this.stopTrackingFormTime();
@@ -1693,19 +1700,14 @@ class FormManager {
     } finally {
       this.isSubmitting = false;
       submitButton.classList.remove('submitting');
-
-      // Reset progress bar
-      const progressBar = document.getElementById('upload-progress-bar');
-      if (progressBar) progressBar.style.width = '0%';
-
-      //Only hide modal if not showing success
+      
+      // Only hide modal if not showing success
       if (!this.isShowingSuccessModal) {
         this.logger.debug('Hiding submission modal');
         submissionModal.style.display = 'none';
         submissionModal.querySelector('.modal-content').classList.remove('submitting');
+        submissionModal.querySelector('.modal-content').classList.remove('uploading');
       }
-      
-      progressDiv.textContent = '';
     }
   }
 
@@ -1883,116 +1885,118 @@ class FormManager {
     submissionModal.style.display = 'block';
   }
 
-  async handleVideoUploads(progressDiv) {
-      const videoManager = VideoManager.getInstance();
-      const videos = videoManager.getVideos();  // Returns ordered array of {file, caption, id}
-      const videoIds = [];
-      const videoCaptions = {};
-      const videoOrder = new Map();  // Track original order
-      let currentVideo = 0;
-
-      const progressBar = document.getElementById('upload-progress-bar');
-      if (progressBar) progressBar.style.width = '0%';
-
-      if (videos && videos.length > 0) {
-          for (const video of videos) {
-              try {
-                  currentVideo++;
-                  const progressText = this.i18next.t('form.uploadingVideos', {
-                      current: currentVideo,
-                      total: videos.length
-                  });
-                  if (progressDiv) {
-                      progressDiv.textContent = progressText;
-                  }
+  async handleVideoUploads(progressTextDiv, progressBar) {
+    const videoManager = VideoManager.getInstance();
+    const videos = videoManager.getVideos();  // Returns ordered array of {file, caption, id}
+    const videoIds = [];
+    const videoCaptions = {};
+    const videoOrder = new Map();  // Track original order
+    let currentVideo = 0;
   
-                  // Update progress bar
-                  if (progressBar) {
-                    const percentage = Math.round((currentPhoto / photos.length) * 100);
-                    progressBar.style.width = `${percentage}%`;
-                  }
-
-                  this.logger.debug('Preparing video upload:', {
-                      filename: video.file.name,
-                      size: video.file.size,
-                      type: video.file.type,
-                      hasCaption: !!video.caption,
-                      videoId: video.id,
-                      progress: `${currentVideo}/${videos.length}`
-                  });
-  
-                  const videoData = new FormData();
-                  videoData.append('filedata', video.file);
-                  
-                  // Ensure caption is properly added to FormData
-                  if (video.caption) {
-                      videoData.append('caption', video.caption);
-                      this.logger.debug('Added caption to FormData:', video.caption);
-                  }
-  
-                  const response = await fetch('/api/upload-file', {
-                      method: 'POST',
-                      credentials: 'include',
-                      body: videoData
-                  });
-  
-                  if (!response.ok) {
-                      const errorData = await response.json();
-                      this.logger.error('Video upload failed:', {
-                          status: response.status,
-                          statusText: response.statusText,
-                          error: errorData
-                      });
-                      throw new Error(errorData.details || errorData.error || 'Upload failed');
-                  }
-  
-                  const result = await response.json();
-                  this.logger.debug('Video upload successful:', result);
-                  
-                  // Store fid and maintain order
-                  videoIds.push(result.fid);
-                  videoOrder.set(result.fid, video.id);  // Link server fid to original video ID
-                  
-                  // Make sure to store the caption with the server-assigned fid
-                  if (video.caption) {
-                      videoCaptions[result.fid] = video.caption;
-                      this.logger.debug('Storing caption for video:', {
-                          fid: result.fid,
-                          caption: video.caption
-                      });
-                  }
-              } catch (error) {
-                  this.logger.error('Error uploading video:', {
-                      error: error.message,
-                      details: error.response?.data,
-                      status: error.response?.status
-                  });
-                  throw new Error(`Failed to upload video: ${error.response?.data?.details || error.message}`);
-              }
-              if (progressBar) progressBar.style.width = '100%';
+    if (videos && videos.length > 0) {
+      for (const video of videos) {
+        try {
+          currentVideo++;
+          const progressText = this.i18next.t('form.uploadingVideos', {
+            current: currentVideo,
+            total: videos.length
+          });
+          
+          if (progressTextDiv) {
+            progressTextDiv.textContent = progressText;
           }
           
-          if (progressDiv) {
-              progressDiv.textContent = this.i18next.t('form.videosUploaded');
+          // Update progress bar
+          if (progressBar) {
+            const percentage = Math.round((currentVideo / videos.length) * 100);
+            progressBar.style.width = `${percentage}%`;
           }
+  
+          this.logger.debug('Preparing video upload:', {
+            filename: video.file.name,
+            size: video.file.size,
+            type: video.file.type,
+            hasCaption: !!video.caption,
+            videoId: video.id,
+            progress: `${currentVideo}/${videos.length}`
+          });
+  
+          const videoData = new FormData();
+          videoData.append('filedata', video.file);
+          
+          // Ensure caption is properly added to FormData
+          if (video.caption) {
+            videoData.append('caption', video.caption);
+            this.logger.debug('Added caption to FormData:', video.caption);
+          }
+  
+          const response = await fetch('/api/upload-file', {
+            method: 'POST',
+            credentials: 'include',
+            body: videoData
+          });
+  
+          if (!response.ok) {
+            const errorData = await response.json();
+            this.logger.error('Video upload failed:', {
+              status: response.status,
+              statusText: response.statusText,
+              error: errorData
+            });
+            throw new Error(errorData.details || errorData.error || 'Upload failed');
+          }
+  
+          const result = await response.json();
+          this.logger.debug('Video upload successful:', result);
+          
+          // Store fid and maintain order
+          videoIds.push(result.fid);
+          videoOrder.set(result.fid, video.id);  // Link server fid to original video ID
+          
+          // Make sure to store the caption with the server-assigned fid
+          if (video.caption) {
+            videoCaptions[result.fid] = video.caption;
+            this.logger.debug('Storing caption for video:', {
+              fid: result.fid,
+              caption: video.caption
+            });
+          }
+        } catch (error) {
+          this.logger.error('Error uploading video:', {
+            error: error.message,
+            details: error.response?.data,
+            status: error.response?.status
+          });
+          throw new Error(`Failed to upload video: ${error.response?.data?.details || error.message}`);
+        }
       }
+      
+      if (progressTextDiv) {
+        progressTextDiv.textContent = this.i18next.t('form.videosUploaded');
+      }
+      
+      // Set to 100% when done
+      if (progressBar) {
+        progressBar.style.width = '100%';
+      }
+    }
   
-      // Sort videoIds array based on original order
-      const sortedVideoIds = videoIds.sort((a, b) => {
-          const orderA = videos.findIndex(p => p.id === videoOrder.get(a));
-          const orderB = videos.findIndex(p => p.id === videoOrder.get(b));
-          return orderA - orderB;
-      });
+    // Sort videoIds array based on original order
+    const sortedVideoIds = videoIds.sort((a, b) => {
+      const orderA = videos.findIndex(p => p.id === videoOrder.get(a));
+      const orderB = videos.findIndex(p => p.id === videoOrder.get(b));
+      return orderA - orderB;
+    });
   
-      this.logger.debug('Completed video uploads with data:', {
-          videoIds: sortedVideoIds,
-          videoCaptions: videoCaptions
-      });
+    this.logger.debug('Completed video uploads with data:', {
+      videoIds: sortedVideoIds,
+      videoCaptions: videoCaptions
+    });
   
-      return {
-          videoIds: sortedVideoIds,
-          videoCaptions: videoCaptions
-      };
+    return {
+      videoIds: sortedVideoIds,
+      videoCaptions: videoCaptions
+    };
   }
   
   getFacebookPageName(url, fbPages) {
@@ -2252,17 +2256,14 @@ class FormManager {
     }
   }
 
-  async handlePhotoUploads(progressDiv) {
+  async handlePhotoUploads(progressTextDiv, progressBar) {
     const photoManager = PhotoManager.getInstance();
-    const photos = photoManager.getPhotos();  // Now returns ordered array of {file, caption, id}
+    const photos = photoManager.getPhotos();  // Returns ordered array of {file, caption, id}
     const photoIds = [];
     const photoCaptions = {};
     const photoOrder = new Map();  // Track original order
     let currentPhoto = 0;
-
-    const progressBar = document.getElementById('upload-progress-bar');
-    if (progressBar) progressBar.style.width = '0%';
-
+  
     if (photos && photos.length > 0) {
       for (const photo of photos) {
         try {
@@ -2271,16 +2272,17 @@ class FormManager {
             current: currentPhoto,
             total: photos.length
           });
-          if (progressDiv) {
-            progressDiv.textContent = progressText;
+          
+          if (progressTextDiv) {
+            progressTextDiv.textContent = progressText;
           }
-
+          
           // Update progress bar
           if (progressBar) {
             const percentage = Math.round((currentPhoto / photos.length) * 100);
             progressBar.style.width = `${percentage}%`;
           }
-
+  
           this.logger.debug('Preparing photo upload:', {
             filename: photo.file.name,
             size: photo.file.size,
@@ -2332,10 +2334,14 @@ class FormManager {
         }
       }
       
-      if (progressDiv) {
-        progressDiv.textContent = this.i18next.t('form.photosUploaded');
+      if (progressTextDiv) {
+        progressTextDiv.textContent = this.i18next.t('form.photosUploaded');
       }
-      if (progressBar) progressBar.style.width = '100%';
+      
+      // Set to 100% when done
+      if (progressBar) {
+        progressBar.style.width = '100%';
+      }
     }
   
     // Sort photoIds array based on original order
