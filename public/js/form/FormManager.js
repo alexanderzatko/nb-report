@@ -1543,13 +1543,18 @@ class FormManager {
       progressDiv.innerHTML = `
         <div class="progress-text"></div>
         <div class="progress-container">
-          <div class="progress-bar" id="upload-progress-bar"></div>
+          <div class="progress-bar" id="upload-progress-bar" style="width: 0%;"></div>
         </div>
       `;
+      this.logger.debug('Progress bar initialized with width: 0%');
       const progressTextDiv = progressDiv.querySelector('.progress-text');
       const progressBar = document.getElementById('upload-progress-bar');
       
-      if (progressBar) progressBar.style.width = '0%';
+      // Ensure progress bar is reset to 0%
+      if (progressBar) {
+        progressBar.style.width = '0%';
+        this.logger.debug('Progress bar width reset to 0%');
+      }
   
       // Form validation code
       const isAdmin = document.getElementById('admin-section')?.style.display !== 'none';
@@ -1906,9 +1911,11 @@ class FormManager {
             progressTextDiv.textContent = progressText;
           }
           
-          // Update progress bar
+          // Update progress bar - calculate based on current progress
           if (progressBar) {
-            const percentage = Math.round((currentVideo / videos.length) * 100);
+            // Calculate the percentage of completion - convert to number to ensure proper calculation
+            const percentage = Math.round((Number(currentVideo) / Number(videos.length)) * 100);
+            this.logger.debug(`Setting progress bar to ${percentage}% (${currentVideo}/${videos.length})`);
             progressBar.style.width = `${percentage}%`;
           }
   
@@ -2277,9 +2284,11 @@ class FormManager {
             progressTextDiv.textContent = progressText;
           }
           
-          // Update progress bar
+          // Update progress bar - calculate based on current progress
           if (progressBar) {
-            const percentage = Math.round((currentPhoto / photos.length) * 100);
+            // Calculate the percentage of completion - convert to number to ensure proper calculation
+            const percentage = Math.round((Number(currentPhoto) / Number(photos.length)) * 100);
+            this.logger.debug(`Setting progress bar to ${percentage}% (${currentPhoto}/${photos.length})`);
             progressBar.style.width = `${percentage}%`;
           }
   
