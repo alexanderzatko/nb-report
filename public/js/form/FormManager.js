@@ -1928,178 +1928,6 @@ class FormManager {
     // Show the modal (it should already be visible, but just in case)
     submissionModal.style.display = 'block';
   }
-
-  async handleVideoUploads(progressTextDiv, progressBar) {
-    this.logger.debug('Starting video uploads with progress tracking');
-    
-    const videoManager = VideoManager.getInstance();
-    const videos = videoManager.getVideos();
-    
-    this.logger.debug(`Found ${videos.length} videos to upload`);
-    
-    // Make sure progress bar is visible and at 0%
-    if (progressBar) {
-      progressBar.style.width = '0%';
-      this.logger.debug('Video progress bar initialized at 0%');
-    } else {
-      this.logger.warn('Progress bar element not found for video uploads');
-    }
-    
-    const videoIds = [];
-    const videoCaptions = {};
-    const videoOrder = new Map();
-    let currentVideo = 0;
-    let overallProgress = 0;
-  
-    if (videos && videos.length > 0) {
-      for (const video of videos) {
-        try {
-          currentVideo++;
-          const progressText = this.i18next.t('form.uploadingVideos', {
-            current: currentVideo,
-            total: videos.length
-          });
-          
-          if (progressTextDiv) {
-            progressTextDiv.textContent = progressText;
-          }
-          
-          this.logger.debug('Preparing video upload:', {
-            filename: video.file.name,
-            size: video.file.size,
-            type: video.file.type,
-            hasCaption: !!video.caption,
-            videoId: video.id,
-            progress: `${currentVideo}/${videos.length}`
-          });
-  
-          // Each file contributes equally to the overall progress
-          const fileWeight = 100 / videos.length;
-          let lastFileProgress = 0;
-          
-          // Use the upload with progress function
-          const result = await uploadFileWithProgress(
-            video.file, 
-            video.caption,
-            (percentComplete) => {
-              // Calculate overall progress:
-              // Previous completed files + progress of current file
-              const previousFilesProgress = (currentVideo - 1) * fileWeight;
-              const thisFileProgress = (percentComplete / 100) * fileWeight;
-              overallProgress = previousFilesProgress + thisFileProgress;
-              
-              if (progressBar) {
-                progressBar.style.width = `${overallProgress}%`;
-                this.logger.debug(`Progress: ${Math.round(overallProgress)}%`);
-              }
-              
-              // Only log significant changes to avoid spam
-              if (Math.floor(percentComplete / 10) > Math.floor(lastFileProgress / 10)) {
-                this.logger.debug(`File ${currentVideo}/${videos.length} progress: ${Math.round(percentComplete)}%`);
-                lastFileProgress = percentComplete;
-              }
-            }
-          );
-  
-          this.logger.debug('Video upload successful:', result);
-          
-          // Store fid and maintain order
-          videoIds.push(result.fid);
-          videoOrder.set(result.fid, video.id);
-          
-          // Make sure to store the caption with the server-assigned fid
-          if (video.caption) {
-            videoCaptions[result.fid] = video.caption;
-            this.logger.debug('Storing caption for video:', {
-              fid: result.fid,
-              caption: video.caption
-            });
-          }
-        } catch (error) {
-          this.logger.error('Error uploading video:', {
-            error: error.message
-          });
-          throw new Error(`Failed to upload video: ${error.message}`);
-        }
-      }
-      
-      if (progressTextDiv) {
-        progressTextDiv.textContent = this.i18next.t('form.videosUploaded');
-      }
-      
-      // Set to 100% when done
-      if (progressBar) {
-        progressBar.style.width = '100%';
-      }
-    }
-  
-    // Sort videoIds array based on original order
-    const sortedVideoIds = videoIds.sort((a, b) => {
-      const orderA = videos.findIndex(p => p.id === videoOrder.get(a));
-      const orderB = videos.findIndex(p => p.id === videoOrder.get(b));
-      return orderA - orderB;
-    });
-  
-    this.logger.debug('Completed video uploads with data:', {
-      videoIds: sortedVideoIds,
-      videoCaptions: videoCaptions
-    });
-  
-    return {
-      videoIds: sortedVideoIds,
-      videoCaptions: videoCaptions
-    };
-  }
-
-  async function uploadFileWithProgress(file, caption, progressCallback) {
-    return new Promise((resolve, reject) => {
-      // Create FormData
-      const formData = new FormData();
-      formData.append('filedata', file);
-      if (caption) {
-        formData.append('caption', caption);
-      }
-      
-      // Create XHR request for progress tracking
-      const xhr = new XMLHttpRequest();
-      
-      // Set up progress tracking
-      xhr.upload.addEventListener('progress', (event) => {
-        if (event.lengthComputable) {
-          const percentComplete = (event.loaded / event.total) * 100;
-          progressCallback(percentComplete);
-        }
-      });
-      
-      // Handle completion
-      xhr.addEventListener('load', () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            const response = JSON.parse(xhr.responseText);
-            resolve(response);
-          } catch (error) {
-            reject(new Error('Invalid response format'));
-          }
-        } else {
-          reject(new Error(`Upload failed with status: ${xhr.status}`));
-        }
-      });
-      
-      // Handle errors
-      xhr.addEventListener('error', () => {
-        reject(new Error('Network error during upload'));
-      });
-      
-      xhr.addEventListener('abort', () => {
-        reject(new Error('Upload aborted'));
-      });
-      
-      // Open and send the request
-      xhr.open('POST', '/api/upload-file', true);
-      xhr.withCredentials = true; // Include credentials for cross-origin requests if needed
-      xhr.send(formData);
-    });
-  }
   
   getFacebookPageName(url, fbPages) {
     // Add console.log in addition to this.logger for guaranteed output
@@ -2358,6 +2186,56 @@ class FormManager {
     }
   }
 
+  async uploadFileWithProgress(file, caption, progressCallback) {
+    return new Promise((resolve, reject) => {
+      // Create FormData
+      const formData = new FormData();
+      formData.append('filedata', file);
+      if (caption) {
+        formData.append('caption', caption);
+      }
+      
+      // Create XHR request for progress tracking
+      const xhr = new XMLHttpRequest();
+      
+      // Set up progress tracking
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = (event.loaded / event.total) * 100;
+          progressCallback(percentComplete);
+        }
+      });
+      
+      // Handle completion
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            resolve(response);
+          } catch (error) {
+            reject(new Error('Invalid response format'));
+          }
+        } else {
+          reject(new Error(`Upload failed with status: ${xhr.status}`));
+        }
+      });
+      
+      // Handle errors
+      xhr.addEventListener('error', () => {
+        reject(new Error('Network error during upload'));
+      });
+      
+      xhr.addEventListener('abort', () => {
+        reject(new Error('Upload aborted'));
+      });
+      
+      // Open and send the request
+      xhr.open('POST', '/api/upload-file', true);
+      xhr.withCredentials = true; // Include credentials for cross-origin requests if needed
+      xhr.send(formData);
+    });
+  }
+  
   async handlePhotoUploads(progressTextDiv, progressBar) {
     this.logger.debug('Starting photo uploads with progress tracking');
     
@@ -2406,7 +2284,7 @@ class FormManager {
           let lastFileProgress = 0;
           
           // Use the upload with progress function
-          const result = await uploadFileWithProgress(
+          const result = await this.uploadFileWithProgress(
             photo.file, 
             photo.caption,
             (percentComplete) => {
@@ -2465,7 +2343,129 @@ class FormManager {
       photoCaptions: photoCaptions
     };
   }
+
+  async handleVideoUploads(progressTextDiv, progressBar) {
+    this.logger.debug('Starting video uploads with progress tracking');
+    
+    const videoManager = VideoManager.getInstance();
+    const videos = videoManager.getVideos();
+    
+    this.logger.debug(`Found ${videos.length} videos to upload`);
+    
+    // Make sure progress bar is visible and at 0%
+    if (progressBar) {
+      progressBar.style.width = '0%';
+      this.logger.debug('Video progress bar initialized at 0%');
+    } else {
+      this.logger.warn('Progress bar element not found for video uploads');
+    }
+    
+    const videoIds = [];
+    const videoCaptions = {};
+    const videoOrder = new Map();
+    let currentVideo = 0;
+    let overallProgress = 0;
   
+    if (videos && videos.length > 0) {
+      for (const video of videos) {
+        try {
+          currentVideo++;
+          const progressText = this.i18next.t('form.uploadingVideos', {
+            current: currentVideo,
+            total: videos.length
+          });
+          
+          if (progressTextDiv) {
+            progressTextDiv.textContent = progressText;
+          }
+          
+          this.logger.debug('Preparing video upload:', {
+            filename: video.file.name,
+            size: video.file.size,
+            type: video.file.type,
+            hasCaption: !!video.caption,
+            videoId: video.id,
+            progress: `${currentVideo}/${videos.length}`
+          });
+  
+          // Each file contributes equally to the overall progress
+          const fileWeight = 100 / videos.length;
+          let lastFileProgress = 0;
+          
+          // Use the upload with progress function
+          const result = await this.uploadFileWithProgress(
+            video.file, 
+            video.caption,
+            (percentComplete) => {
+              // Calculate overall progress:
+              // Previous completed files + progress of current file
+              const previousFilesProgress = (currentVideo - 1) * fileWeight;
+              const thisFileProgress = (percentComplete / 100) * fileWeight;
+              overallProgress = previousFilesProgress + thisFileProgress;
+              
+              if (progressBar) {
+                progressBar.style.width = `${overallProgress}%`;
+                this.logger.debug(`Progress: ${Math.round(overallProgress)}%`);
+              }
+              
+              // Only log significant changes to avoid spam
+              if (Math.floor(percentComplete / 10) > Math.floor(lastFileProgress / 10)) {
+                this.logger.debug(`File ${currentVideo}/${videos.length} progress: ${Math.round(percentComplete)}%`);
+                lastFileProgress = percentComplete;
+              }
+            }
+          );
+  
+          this.logger.debug('Video upload successful:', result);
+          
+          // Store fid and maintain order
+          videoIds.push(result.fid);
+          videoOrder.set(result.fid, video.id);
+          
+          // Make sure to store the caption with the server-assigned fid
+          if (video.caption) {
+            videoCaptions[result.fid] = video.caption;
+            this.logger.debug('Storing caption for video:', {
+              fid: result.fid,
+              caption: video.caption
+            });
+          }
+        } catch (error) {
+          this.logger.error('Error uploading video:', {
+            error: error.message
+          });
+          throw new Error(`Failed to upload video: ${error.message}`);
+        }
+      }
+      
+      if (progressTextDiv) {
+        progressTextDiv.textContent = this.i18next.t('form.videosUploaded');
+      }
+      
+      // Set to 100% when done
+      if (progressBar) {
+        progressBar.style.width = '100%';
+      }
+    }
+  
+    // Sort videoIds array based on original order
+    const sortedVideoIds = videoIds.sort((a, b) => {
+      const orderA = videos.findIndex(p => p.id === videoOrder.get(a));
+      const orderB = videos.findIndex(p => p.id === videoOrder.get(b));
+      return orderA - orderB;
+    });
+  
+    this.logger.debug('Completed video uploads with data:', {
+      videoIds: sortedVideoIds,
+      videoCaptions: videoCaptions
+    });
+  
+    return {
+      videoIds: sortedVideoIds,
+      videoCaptions: videoCaptions
+    };
+  }
+
   async handleGpxUpload() {
       const gpxOption = document.getElementById('gpx-option');
       if (!gpxOption || (gpxOption.value !== 'existing' && gpxOption.value !== 'upload')) {
