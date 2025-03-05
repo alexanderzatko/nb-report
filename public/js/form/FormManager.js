@@ -2186,93 +2186,137 @@ class FormManager {
     }
   }
 
-  async uploadFileWithProgress(file, caption, progressCallback) {
-    return new Promise((resolve, reject) => {
-      // Create FormData
-      const formData = new FormData();
-      formData.append('filedata', file);
-      if (caption) {
-        formData.append('caption', caption);
-      }
+  async uploadFileWithSimulatedProgress(file, caption, progressCallback) {
+    // Create a simulation of progress that runs alongside the actual upload
+    let aborted = false;
+    let simulationDone = false;
+    
+    // Start progress simulation based on file size
+    // Larger files will simulate slower progress
+    const startSimulation = () => {
+      let progress = 0;
+      const fileSize = file.size;
       
-      // Add explicit logging
-      this.logger.debug('Starting XHR upload for file:', file.name);
+      // Calculate expected upload time based on file size
+      // This is approximate and should be adjusted based on your typical network speed
+      const estimatedTimeMs = Math.max(1000, Math.min(60000, fileSize / 10000)); // Between 1-60 seconds
+      const updateIntervalMs = 100; // Update every 100ms
+      const totalSteps = estimatedTimeMs / updateIntervalMs;
+      const increment = 90 / totalSteps; // Go up to 90% with simulation
       
-      // Create XHR request for progress tracking
-      const xhr = new XMLHttpRequest();
+      this.logger.debug(`Starting progress simulation for ${file.name} (${fileSize} bytes)`, {
+        estimatedTimeMs,
+        totalSteps,
+        incrementPerStep: increment
+      });
       
-      // Set up progress tracking - make this very explicit
-      xhr.upload.addEventListener('progress', (event) => {
-        if (event.lengthComputable) {
-          const percentComplete = Math.round((event.loaded / event.total) * 100);
-          this.logger.debug(`XHR Upload progress: ${percentComplete}% (${event.loaded}/${event.total} bytes)`);
-          
-          // Call the callback with the percentage
-          progressCallback(percentComplete);
-        } else {
-          this.logger.debug('Upload progress event not computable');
+      const interval = setInterval(() => {
+        if (aborted || simulationDone) {
+          clearInterval(interval);
+          return;
         }
-      });
+        
+        progress += increment;
+        if (progress >= 90) {
+          // Cap at 90% - the real completion will push to 100%
+          progress = 90;
+          clearInterval(interval);
+        }
+        
+        progressCallback(progress);
+      }, updateIntervalMs);
       
-      // Add load start event
-      xhr.upload.addEventListener('loadstart', () => {
-        this.logger.debug('Upload started');
-      });
+      // Safety cleanup - if something goes wrong, don't let simulation run forever
+      setTimeout(() => {
+        if (!simulationDone) {
+          clearInterval(interval);
+        }
+      }, estimatedTimeMs * 2);
       
-      // Handle completion
-      xhr.addEventListener('load', () => {
-        this.logger.debug(`Upload completed with status: ${xhr.status}`);
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            const response = JSON.parse(xhr.responseText);
-            this.logger.debug('Upload response:', response);
-            resolve(response);
-          } catch (error) {
-            this.logger.error('Error parsing upload response:', error);
-            reject(new Error('Invalid response format'));
+      return interval;
+    };
+    
+    // Start the simulation
+    const simulationInterval = startSimulation();
+    
+    // Perform the actual upload
+    try {
+      return await new Promise((resolve, reject) => {
+        const formData = new FormData();
+        formData.append('filedata', file);
+        if (caption) {
+          formData.append('caption', caption);
+        }
+        
+        const xhr = new XMLHttpRequest();
+        
+        // Try to use real progress events if available
+        xhr.upload.addEventListener('progress', (event) => {
+          if (event.lengthComputable) {
+            const percentComplete = Math.round((event.loaded / event.total) * 100);
+            this.logger.debug(`Actual upload progress: ${percentComplete}%`);
+            progressCallback(percentComplete);
           }
-        } else {
-          this.logger.error(`Upload failed with status: ${xhr.status}`);
-          reject(new Error(`Upload failed with status: ${xhr.status}`));
-        }
+        });
+        
+        // On load, consider it 100% complete
+        xhr.addEventListener('load', () => {
+          simulationDone = true;
+          clearInterval(simulationInterval);
+          
+          if (xhr.status >= 200 && xhr.status < 300) {
+            // Set to 100% complete
+            progressCallback(100);
+            
+            try {
+              const response = JSON.parse(xhr.responseText);
+              resolve(response);
+            } catch (error) {
+              reject(new Error('Invalid response format'));
+            }
+          } else {
+            reject(new Error(`Upload failed with status: ${xhr.status}`));
+          }
+        });
+        
+        xhr.addEventListener('error', () => {
+          simulationDone = true;
+          aborted = true;
+          clearInterval(simulationInterval);
+          reject(new Error('Network error during upload'));
+        });
+        
+        xhr.addEventListener('abort', () => {
+          simulationDone = true;
+          aborted = true;
+          clearInterval(simulationInterval);
+          reject(new Error('Upload aborted'));
+        });
+        
+        xhr.open('POST', '/api/upload-file', true);
+        xhr.withCredentials = true;
+        xhr.send(formData);
       });
-      
-      // Handle errors
-      xhr.addEventListener('error', (e) => {
-        this.logger.error('Network error during upload:', e);
-        reject(new Error('Network error during upload'));
-      });
-      
-      xhr.addEventListener('abort', () => {
-        this.logger.warn('Upload aborted');
-        reject(new Error('Upload aborted'));
-      });
-      
-      // Open and send the request
-      xhr.open('POST', '/api/upload-file', true);
-      xhr.withCredentials = true;
-      xhr.send(formData);
-    });
+    } catch (error) {
+      simulationDone = true;
+      aborted = true;
+      clearInterval(simulationInterval);
+      throw error;
+    }
   }
   
   async handlePhotoUploads(progressTextDiv, progressBar) {
-    this.logger.debug('Starting photo uploads with progress tracking');
+    this.logger.debug('Starting photo uploads with simulated progress');
     
     const photoManager = PhotoManager.getInstance();
     const photos = photoManager.getPhotos();
     
     this.logger.debug(`Found ${photos.length} photos to upload`);
     
-    // Clear explicit width style if it exists
+    // Initialize progress bar to 0%
     if (progressBar) {
       progressBar.style.width = '0%';
-      // Log the current state of the progress bar
-      this.logger.debug('Initial progress bar state:', {
-        width: progressBar.style.width,
-        element: progressBar.outerHTML
-      });
-    } else {
-      this.logger.error('Progress bar element not found!');
+      this.logger.debug('Progress bar initialized to 0%');
     }
     
     const photoIds = [];
@@ -2294,18 +2338,13 @@ class FormManager {
             progressTextDiv.textContent = progressText;
           }
           
-          this.logger.debug('Preparing photo upload:', {
-            filename: photo.file.name,
-            size: photo.file.size,
-            type: photo.file.type,
-            hasCaption: !!photo.caption
-          });
+          this.logger.debug(`Uploading photo ${currentPhoto}/${photos.length}: ${photo.file.name}`);
   
           // Each file contributes equally to the overall progress
           const fileWeight = 100 / photos.length;
           
-          // Use the upload with progress function
-          const result = await this.uploadFileWithProgress(
+          // Use simulated progress
+          const result = await this.uploadFileWithSimulatedProgress(
             photo.file, 
             photo.caption,
             (percentComplete) => {
@@ -2314,24 +2353,19 @@ class FormManager {
               const thisFileProgress = (percentComplete / 100) * fileWeight;
               overallProgress = previousFilesProgress + thisFileProgress;
               
-              // Use a more direct approach to update the progress bar
               if (progressBar) {
-                const widthValue = `${Math.round(overallProgress)}%`;
-                progressBar.style.width = widthValue;
+                progressBar.style.width = `${Math.round(overallProgress)}%`;
                 
-                // Debug log every progress update
-                this.logger.debug(`Setting progress bar width to: ${widthValue}`, {
-                  fileProgress: percentComplete,
-                  overallProgress: overallProgress,
-                  element: progressBar.id
-                });
+                // Log less frequently to avoid console spam
+                if (Math.round(percentComplete) % 10 === 0) {
+                  this.logger.debug(`Photo ${currentPhoto}/${photos.length} progress: ${Math.round(percentComplete)}%, Overall: ${Math.round(overallProgress)}%`);
+                }
               }
             }
           );
   
-          this.logger.debug('Photo upload successful:', result);
+          this.logger.debug(`Photo ${currentPhoto} upload complete:`, result);
           
-          // Store fid and maintain order
           photoIds.push(result.fid);
           photoOrder.set(result.fid, photo.id);
           if (photo.caption) {
@@ -2347,13 +2381,9 @@ class FormManager {
         progressTextDiv.textContent = this.i18next.t('form.photosUploaded');
       }
       
-      // Set to 100% when done - using direct DOM manipulation to ensure it's set
+      // Ensure we end at 100%
       if (progressBar) {
         progressBar.style.width = '100%';
-        this.logger.debug('Final progress bar state:', {
-          width: progressBar.style.width,
-          element: progressBar.outerHTML
-        });
       }
     }
   
@@ -2369,29 +2399,9 @@ class FormManager {
       photoCaptions: photoCaptions
     };
   }
-
-  updateProgressBarWidth(progressBar, percentValue) {
-    if (!progressBar) return;
-    
-    // Ensure percentage is a number and valid
-    const percent = Math.max(0, Math.min(100, Math.round(percentValue)));
-    
-    // Try multiple approaches to update the bar
-    try {
-      // Direct style assignment
-      progressBar.style.width = `${percent}%`;
-      
-      // Force browser repaint
-      progressBar.offsetHeight;
-      
-      this.logger.debug(`Progress bar updated to ${percent}%`);
-    } catch (error) {
-      this.logger.error('Error updating progress bar:', error);
-    }
-  }
   
   async handleVideoUploads(progressTextDiv, progressBar) {
-    this.logger.debug('Starting video uploads with progress tracking');
+    this.logger.debug('Starting video uploads with simulated progress');
     
     const videoManager = VideoManager.getInstance();
     const videos = videoManager.getVideos();
@@ -2400,9 +2410,7 @@ class FormManager {
     
     // Initialize progress bar to 0%
     if (progressBar) {
-      this.updateProgressBarWidth(progressBar, 0);
-    } else {
-      this.logger.warn('Progress bar element not found for video uploads');
+      progressBar.style.width = '0%';
     }
     
     const videoIds = [];
@@ -2424,11 +2432,13 @@ class FormManager {
             progressTextDiv.textContent = progressText;
           }
           
+          this.logger.debug(`Uploading video ${currentVideo}/${videos.length}: ${video.file.name} (${(video.file.size / 1024 / 1024).toFixed(2)}MB)`);
+  
           // Each file contributes equally to the overall progress
           const fileWeight = 100 / videos.length;
           
-          // Use the upload with progress function
-          const result = await this.uploadFileWithProgress(
+          // Use simulated progress with slower progression for videos (they're typically larger)
+          const result = await this.uploadFileWithSimulatedProgress(
             video.file, 
             video.caption,
             (percentComplete) => {
@@ -2437,24 +2447,26 @@ class FormManager {
               const thisFileProgress = (percentComplete / 100) * fileWeight;
               overallProgress = previousFilesProgress + thisFileProgress;
               
-              // Use our helper to update the progress bar
               if (progressBar) {
-                this.updateProgressBarWidth(progressBar, overallProgress);
+                progressBar.style.width = `${Math.round(overallProgress)}%`;
+                
+                // Log less frequently to avoid console spam
+                if (Math.round(percentComplete) % 10 === 0) {
+                  this.logger.debug(`Video ${currentVideo}/${videos.length} progress: ${Math.round(percentComplete)}%, Overall: ${Math.round(overallProgress)}%`);
+                }
               }
             }
           );
   
-          // Store fid and maintain order
+          this.logger.debug(`Video ${currentVideo} upload complete:`, result);
+          
           videoIds.push(result.fid);
           videoOrder.set(result.fid, video.id);
-          
           if (video.caption) {
             videoCaptions[result.fid] = video.caption;
           }
         } catch (error) {
-          this.logger.error('Error uploading video:', {
-            error: error.message
-          });
+          this.logger.error('Error uploading video:', error);
           throw new Error(`Failed to upload video: ${error.message}`);
         }
       }
@@ -2463,9 +2475,9 @@ class FormManager {
         progressTextDiv.textContent = this.i18next.t('form.videosUploaded');
       }
       
-      // Set to 100% when done
+      // Ensure we end at 100%
       if (progressBar) {
-        this.updateProgressBarWidth(progressBar, 100);
+        progressBar.style.width = '100%';
       }
     }
   
