@@ -1604,13 +1604,17 @@ class FormManager {
           current: 0, 
           total: photos.length 
         });
-  
+
+        submissionModal.querySelector('.modal-content').classList.add('uploading');
+
         try {
           uploadedPhotoData = await this.handlePhotoUploads(progressDiv);
           this.logger.debug('Photos uploaded successfully:', uploadedPhotoData);
         } catch (error) {
+          submissionModal.querySelector('.modal-content').classList.remove('uploading');
           throw new Error(this.i18next.t('form.photoUploadError'));
         }
+        submissionModal.querySelector('.modal-content').classList.remove('uploading');
       }
 
       let uploadedVideoData = { videoIds: [], videoCaptions: {} };
@@ -1623,12 +1627,16 @@ class FormManager {
             total: videos.length 
         });
         
+        submissionModal.querySelector('.modal-content').classList.add('uploading');
+
         try {
             uploadedVideoData = await this.handleVideoUploads(progressDiv);
             this.logger.debug('Videos uploaded successfully:', uploadedVideoData);
         } catch (error) {
+            submissionModal.querySelector('.modal-content').classList.remove('uploading');
             throw new Error(this.i18next.t('form.videoUploadError'));
         }
+        submissionModal.querySelector('.modal-content').classList.remove('uploading');
     }
 
       // Update progress for form submission
@@ -1685,8 +1693,12 @@ class FormManager {
     } finally {
       this.isSubmitting = false;
       submitButton.classList.remove('submitting');
-      
-      // IMPORTANT CHANGE: Only hide modal if not showing success
+
+      // Reset progress bar
+      const progressBar = document.getElementById('upload-progress-bar');
+      if (progressBar) progressBar.style.width = '0%';
+
+      //Only hide modal if not showing success
       if (!this.isShowingSuccessModal) {
         this.logger.debug('Hiding submission modal');
         submissionModal.style.display = 'none';
@@ -1891,6 +1903,12 @@ class FormManager {
                       progressDiv.textContent = progressText;
                   }
   
+                  // Update progress bar
+                  if (progressBar) {
+                    const percentage = Math.round((currentPhoto / photos.length) * 100);
+                    progressBar.style.width = `${percentage}%`;
+                  }
+
                   this.logger.debug('Preparing video upload:', {
                       filename: video.file.name,
                       size: video.file.size,
@@ -1948,6 +1966,7 @@ class FormManager {
                   });
                   throw new Error(`Failed to upload video: ${error.response?.data?.details || error.message}`);
               }
+              if (progressBar) progressBar.style.width = '100%';
           }
           
           if (progressDiv) {
@@ -2237,7 +2256,10 @@ class FormManager {
     const photoCaptions = {};
     const photoOrder = new Map();  // Track original order
     let currentPhoto = 0;
-  
+
+    const progressBar = document.getElementById('upload-progress-bar');
+    if (progressBar) progressBar.style.width = '0%';
+
     if (photos && photos.length > 0) {
       for (const photo of photos) {
         try {
@@ -2249,7 +2271,13 @@ class FormManager {
           if (progressDiv) {
             progressDiv.textContent = progressText;
           }
-  
+
+          // Update progress bar
+          if (progressBar) {
+            const percentage = Math.round((currentPhoto / photos.length) * 100);
+            progressBar.style.width = `${percentage}%`;
+          }
+
           this.logger.debug('Preparing photo upload:', {
             filename: photo.file.name,
             size: photo.file.size,
@@ -2304,6 +2332,7 @@ class FormManager {
       if (progressDiv) {
         progressDiv.textContent = this.i18next.t('form.photosUploaded');
       }
+      if (progressBar) progressBar.style.width = '100%';
     }
   
     // Sort photoIds array based on original order
