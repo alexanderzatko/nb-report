@@ -1100,10 +1100,11 @@ textarea:invalid + .validation-message {
 }
 
 .progress-bar {
-  width: 0%;
+  width: 0%; /* Start at 0% */
   height: 100%;
   background-color: #0078d4;
-  transition: width 0.3s ease;
+  transition: width 0.3s ease-out; /* Smooth transition for better visual effect */
+  will-change: width; /* Performance hint for browsers */
 }
 
 .progress-text {
