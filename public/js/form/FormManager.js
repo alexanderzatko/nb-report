@@ -1522,9 +1522,28 @@ class FormManager {
   
     const submitButton = document.querySelector('button[type="submit"]');
     const submissionModal = document.getElementById('submission-modal');
+    
+    // Check if modal exists
+    if (!submissionModal) {
+      this.logger.error('Submission modal not found');
+      alert(this.i18next.t('form.validation.submitError'));
+      return;
+    }
+    
+    // Reset the modal to a clean state
+    submissionModal.querySelector('.modal-content').innerHTML = `
+      <h3 data-i18n="form.submitting">${this.i18next.t('form.submitting')}</h3>
+      <div id="submission-progress"></div>
+      <div class="modal-buttons" style="justify-content: center;"></div>
+    `;
+    
     const progressDiv = document.getElementById('submission-progress');
   
     try {
+      // Reset the success modal flag at the beginning
+      this.isShowingSuccessModal = false;
+      this.logger.debug('Reset isShowingSuccessModal flag to false');
+      
       const authManager = AuthManager.getInstance();
       const tokenRefreshed = await authManager.checkAndRefreshToken();
       if (!tokenRefreshed) {
@@ -1618,10 +1637,13 @@ class FormManager {
       const photos = this.photoManager.getPhotos();
       if (photos && photos.length > 0) {
         submissionModal.querySelector('.modal-content').classList.add('uploading');
-        progressTextDiv.textContent = this.i18next.t('form.uploadingPhotos', { 
-          current: 0, 
-          total: photos.length 
-        });
+        
+        if (progressTextDiv) {
+          progressTextDiv.textContent = this.i18next.t('form.uploadingPhotos', { 
+            current: 0, 
+            total: photos.length 
+          });
+        }
   
         try {
           uploadedPhotoData = await this.handlePhotoUploads(progressTextDiv, progressBar);
@@ -1637,23 +1659,38 @@ class FormManager {
       const videos = this.videoManager.getVideos();
       if (videos && videos.length > 0) {
         submissionModal.querySelector('.modal-content').classList.add('uploading');
-        progressTextDiv.textContent = this.i18next.t('form.uploadingVideos', { 
+        
+        if (progressTextDiv) {
+          progressTextDiv.textContent = this.i18next.t('form.uploadingVideos', { 
             current: 0, 
             total: videos.length 
-        });
+          });
+        }
+        
+        // Reset progress bar for video uploads
+        if (progressBar) {
+          progressBar.style.width = '0%';
+          this.logger.debug('Progress bar reset to 0% for video uploads');
+        }
         
         try {
-            uploadedVideoData = await this.handleVideoUploads(progressTextDiv, progressBar);
-            this.logger.debug('Videos uploaded successfully:', uploadedVideoData);
+          uploadedVideoData = await this.handleVideoUploads(progressTextDiv, progressBar);
+          this.logger.debug('Videos uploaded successfully:', uploadedVideoData);
         } catch (error) {
-            throw new Error(this.i18next.t('form.videoUploadError'));
+          throw new Error(this.i18next.t('form.videoUploadError'));
         }
       }
   
       // Update progress for form submission
       submissionModal.querySelector('.modal-content').classList.remove('uploading');
-      progressTextDiv.textContent = this.i18next.t('form.sendingReport');
-      if (progressBar) progressBar.style.width = '100%';
+      
+      if (progressTextDiv) {
+        progressTextDiv.textContent = this.i18next.t('form.sendingReport');
+      }
+      
+      if (progressBar) {
+        progressBar.style.width = '100%';
+      }
   
       // Form data collection and submission...
       const formData = this.collectVisibleData(isAdmin);
@@ -1702,16 +1739,18 @@ class FormManager {
     } catch (error) {
       this.logger.error('Error submitting snow report:', error);
       this.showError(this.i18next.t('form.validation.submitError'));
-    } finally {
+    }   finally {
       this.isSubmitting = false;
       submitButton.classList.remove('submitting');
       
-      // Only hide modal if not showing success
+      // Only hide modal if not showing success and there was an error
       if (!this.isShowingSuccessModal) {
-        this.logger.debug('Hiding submission modal');
+        this.logger.debug('Hiding submission modal due to error or cancellation');
         submissionModal.style.display = 'none';
         submissionModal.querySelector('.modal-content').classList.remove('submitting');
         submissionModal.querySelector('.modal-content').classList.remove('uploading');
+      } else {
+        this.logger.debug('Keeping modal visible for success page');
       }
     }
   }
@@ -1891,8 +1930,21 @@ class FormManager {
   }
 
   async handleVideoUploads(progressTextDiv, progressBar) {
+    this.logger.debug('Starting video uploads with progress tracking');
+    
     const videoManager = VideoManager.getInstance();
     const videos = videoManager.getVideos();  // Returns ordered array of {file, caption, id}
+    
+    this.logger.debug(`Found ${videos.length} videos to upload`);
+    
+    // Make sure progress bar is visible and at 0%
+    if (progressBar) {
+      progressBar.style.width = '0%';
+      this.logger.debug('Video progress bar initialized at 0%');
+    } else {
+      this.logger.warn('Progress bar element not found for video uploads');
+    }
+    
     const videoIds = [];
     const videoCaptions = {};
     const videoOrder = new Map();  // Track original order
