@@ -91,12 +91,6 @@ class DatabaseManager {
                 lastUpdated: new Date().toISOString()
             });
         }
-
-        if (!db.objectStoreNames.contains('videos')) {
-            const videoStore = db.createObjectStore('videos', { keyPath: 'id' });
-            videoStore.createIndex('timestamp', 'timestamp', { unique: false });
-            videoStore.createIndex('formId', 'formId', { unique: false });
-        }
     }
 
     async saveFormData(data) {
@@ -123,10 +117,10 @@ class DatabaseManager {
             // Keep only the most recent submitted form
             const recentSubmitted = submittedForms[0];
     
-            // Delete all other forms
+            // Delete all other forms and their associated media
             for (const form of existingForms) {
                 if (form !== unsubmittedForm && form !== recentSubmitted) {
-                    await store.delete(form.id);
+                    await this.clearFormAndMedia(form.id);
                 }
             }
         }
@@ -147,6 +141,98 @@ class DatabaseManager {
         });
     }
 
+    // This is a new method to delete a form and all its associated media
+    async clearFormAndMedia(formId) {
+        try {
+            this.logger.debug(`Clearing form ${formId} and associated media`);
+            await this.deleteFormMedia(formId);
+            await this.deleteFormData(formId);
+            return true;
+        } catch (error) {
+            this.logger.error(`Error clearing form ${formId} and media:`, error);
+            throw error;
+        }
+    }
+
+    // Helper method to delete form data only
+    async deleteFormData(formId) {
+        const db = await this.getDatabase();
+        const transaction = db.transaction(['formData'], 'readwrite');
+        const store = transaction.objectStore('formData');
+        
+        return new Promise((resolve, reject) => {
+            const request = store.delete(formId);
+            request.onsuccess = () => {
+                this.logger.debug(`Form ${formId} deleted successfully`);
+                resolve();
+            };
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    // Helper method to delete all media associated with a form
+    async deleteFormMedia(formId) {
+        const db = await this.getDatabase();
+        
+        // First delete photos
+        await this.deleteMediaByFormId(formId, 'photos');
+        
+        // Then delete videos
+        await this.deleteMediaByFormId(formId, 'videos');
+        
+        return true;
+    }
+
+    // Generic method to delete media from a specific store by formId
+    async deleteMediaByFormId(formId, storeName) {
+        const db = await this.getDatabase();
+        const transaction = db.transaction([storeName], 'readwrite');
+        const store = transaction.objectStore(storeName);
+        const index = store.index('formId');
+        
+        return new Promise((resolve, reject) => {
+            const request = index.getAll(formId);
+            
+            request.onsuccess = () => {
+                const items = request.result;
+                if (items.length > 0) {
+                    this.logger.debug(`Deleting ${items.length} ${storeName} for form ${formId}`);
+                    
+                    // Create a counter to track completion
+                    let deleteCount = 0;
+                    
+                    items.forEach(item => {
+                        const deleteRequest = store.delete(item.id);
+                        
+                        deleteRequest.onsuccess = () => {
+                            deleteCount++;
+                            if (deleteCount === items.length) {
+                                this.logger.debug(`All ${storeName} for form ${formId} deleted successfully`);
+                                resolve();
+                            }
+                        };
+                        
+                        deleteRequest.onerror = (e) => {
+                            this.logger.error(`Error deleting ${storeName} ${item.id}:`, e.target.error);
+                            // Continue with other deletions even if one fails
+                            deleteCount++;
+                            if (deleteCount === items.length) {
+                                resolve();
+                            }
+                        };
+                    });
+                } else {
+                    this.logger.debug(`No ${storeName} found for form ${formId}`);
+                    resolve();
+                }
+            };
+            
+            request.onerror = () => {
+                this.logger.error(`Error getting ${storeName} for form ${formId}:`, request.error);
+                reject(request.error);
+            };
+        });
+    }
 
     async markFormAsSubmitted(formId) {
         try {
@@ -161,10 +247,10 @@ class DatabaseManager {
                 request.onerror = () => reject(request.error);
             });
     
-            // Delete any previously submitted forms
-            const oldSubmittedForms = forms.filter(form => form.submitted);
+            // Delete any previously submitted forms and their media
+            const oldSubmittedForms = forms.filter(form => form.submitted && form.id !== formId);
             for (const oldForm of oldSubmittedForms) {
-                await store.delete(oldForm.id);
+                await this.clearFormAndMedia(oldForm.id);
             }
     
             // Update current form to submitted status
@@ -353,35 +439,9 @@ class DatabaseManager {
         });
     }
 
+    // This method is now deprecated in favor of clearFormAndMedia
     async clearForm(formId) {
-        const db = await this.getDatabase();
-        const transaction = db.transaction(['formData', 'photos'], 'readwrite');
-        
-        // Delete form data
-        const formStore = transaction.objectStore('formData');
-        const photoStore = transaction.objectStore('photos');
-        const photoIndex = photoStore.index('formId');
-
-        return new Promise((resolve, reject) => {
-            // First get all photos for this form
-            const photoRequest = photoIndex.getAll(formId);
-            
-            photoRequest.onsuccess = () => {
-                // Delete each photo
-                const photos = photoRequest.result;
-                photos.forEach(photo => {
-                    photoStore.delete(photo.id);
-                });
-
-                // Delete form data
-                const formRequest = formStore.delete(formId);
-                formRequest.onsuccess = () => resolve();
-                formRequest.onerror = () => reject(formRequest.error);
-            };
-            
-            photoRequest.onerror = () => reject(photoRequest.error);
-            transaction.onerror = () => reject(transaction.error);
-        });
+        return this.clearFormAndMedia(formId);
     }
 
     async clearDatabase() {
@@ -540,6 +600,75 @@ class DatabaseManager {
             this.logger.error('Error updating video caption:', error);
             throw error;
         }
+    }
+    
+    // New method to clean up orphaned media (photos/videos without a valid form)
+    async cleanupOrphanedMedia() {
+        try {
+            this.logger.debug('Starting orphaned media cleanup');
+            
+            // Get all form IDs
+            const formIds = await this.getAllFormIds();
+            this.logger.debug(`Found ${formIds.length} valid forms`);
+            
+            // Cleanup photos
+            await this.cleanupOrphanedMediaInStore('photos', formIds);
+            
+            // Cleanup videos
+            await this.cleanupOrphanedMediaInStore('videos', formIds);
+            
+            this.logger.debug('Orphaned media cleanup complete');
+            return true;
+        } catch (error) {
+            this.logger.error('Error cleaning up orphaned media:', error);
+            return false;
+        }
+    }
+    
+    async getAllFormIds() {
+        const db = await this.getDatabase();
+        const transaction = db.transaction(['formData'], 'readonly');
+        const store = transaction.objectStore('formData');
+        
+        return new Promise((resolve, reject) => {
+            const request = store.getAllKeys();
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+    
+    async cleanupOrphanedMediaInStore(storeName, validFormIds) {
+        const db = await this.getDatabase();
+        const transaction = db.transaction([storeName], 'readwrite');
+        const store = transaction.objectStore(storeName);
+        
+        const allMedia = await new Promise((resolve, reject) => {
+            const request = store.getAll();
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+        
+        // Find orphaned media (those with formId not in validFormIds)
+        const orphanedMedia = allMedia.filter(item => !validFormIds.includes(item.formId));
+        
+        if (orphanedMedia.length > 0) {
+            this.logger.debug(`Found ${orphanedMedia.length} orphaned ${storeName} to delete`);
+            
+            // Delete each orphaned item
+            for (const item of orphanedMedia) {
+                await new Promise((resolve, reject) => {
+                    const request = store.delete(item.id);
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            this.logger.debug(`Deleted ${orphanedMedia.length} orphaned ${storeName}`);
+        } else {
+            this.logger.debug(`No orphaned ${storeName} found`);
+        }
+        
+        return orphanedMedia.length;
     }
 }
 
