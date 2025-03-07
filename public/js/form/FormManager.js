@@ -1719,7 +1719,9 @@ class FormManager {
       if (result.success) {
         showingSuccessModal = true;
         await this.dbManager.markFormAsSubmitted(this.currentFormId);
-        
+
+        await this.dbManager.cleanupOrphanedMedia();
+
         this.logger.debug('Form submission successful, showing links modal');
         
         // Show success modal with links
