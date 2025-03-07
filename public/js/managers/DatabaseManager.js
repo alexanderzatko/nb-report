@@ -94,16 +94,9 @@ class DatabaseManager {
     }
 
     async saveFormData(data) {
+        // Step 1: Get all existing forms
         const db = await this.getDatabase();
-        const transaction = db.transaction(['formData'], 'readwrite');
-        const store = transaction.objectStore('formData');
-    
-        // Find all existing forms
-        const existingForms = await new Promise((resolve, reject) => {
-            const request = store.getAll();
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error);
-        });
+        const existingForms = await this.getAllForms();
     
         // Filter to find unsubmitted form
         const unsubmittedForm = existingForms.find(form => !form.submitted);
@@ -134,9 +127,24 @@ class DatabaseManager {
             ...data
         };
     
+        const transaction = db.transaction(['formData'], 'readwrite');
+        const store = transaction.objectStore('formData');
+        
         return new Promise((resolve, reject) => {
             const request = store.add(formData);
             request.onsuccess = () => resolve(formData.id);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async getAllForms() {
+        const db = await this.getDatabase();
+        const transaction = db.transaction(['formData'], 'readonly');
+        const store = transaction.objectStore('formData');
+        
+        return new Promise((resolve, reject) => {
+            const request = store.getAll();
+            request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.error);
         });
     }
@@ -167,26 +175,53 @@ class DatabaseManager {
                 resolve();
             };
             request.onerror = () => reject(request.error);
+            
+            transaction.onerror = (e) => reject(e.target.error);
         });
     }
 
     // Helper method to delete all media associated with a form
     async deleteFormMedia(formId) {
-        const db = await this.getDatabase();
-        
-        // First delete photos
-        await this.deleteMediaByFormId(formId, 'photos');
-        
-        // Then delete videos
-        await this.deleteMediaByFormId(formId, 'videos');
-        
-        return true;
+        try {
+            // First delete photos
+            await this.deleteMediaByFormId(formId, 'photos');
+            
+            // Then delete videos
+            await this.deleteMediaByFormId(formId, 'videos');
+            
+            return true;
+        } catch (error) {
+            this.logger.error(`Error deleting media for form ${formId}:`, error);
+            throw error;
+        }
     }
 
     // Generic method to delete media from a specific store by formId
     async deleteMediaByFormId(formId, storeName) {
         const db = await this.getDatabase();
-        const transaction = db.transaction([storeName], 'readwrite');
+        
+        // First get all matching items
+        const items = await this.getMediaByFormId(formId, storeName);
+        
+        if (items.length > 0) {
+            this.logger.debug(`Deleting ${items.length} ${storeName} for form ${formId}`);
+            
+            // Delete each item in a separate transaction
+            for (const item of items) {
+                await this.deleteMediaItem(storeName, item.id);
+            }
+            
+            this.logger.debug(`All ${storeName} for form ${formId} deleted successfully`);
+        } else {
+            this.logger.debug(`No ${storeName} found for form ${formId}`);
+        }
+        
+        return true;
+    }
+
+    async getMediaByFormId(formId, storeName) {
+        const db = await this.getDatabase();
+        const transaction = db.transaction([storeName], 'readonly');
         const store = transaction.objectStore(storeName);
         const index = store.index('formId');
         
@@ -194,84 +229,92 @@ class DatabaseManager {
             const request = index.getAll(formId);
             
             request.onsuccess = () => {
-                const items = request.result;
-                if (items.length > 0) {
-                    this.logger.debug(`Deleting ${items.length} ${storeName} for form ${formId}`);
-                    
-                    // Create a counter to track completion
-                    let deleteCount = 0;
-                    
-                    items.forEach(item => {
-                        const deleteRequest = store.delete(item.id);
-                        
-                        deleteRequest.onsuccess = () => {
-                            deleteCount++;
-                            if (deleteCount === items.length) {
-                                this.logger.debug(`All ${storeName} for form ${formId} deleted successfully`);
-                                resolve();
-                            }
-                        };
-                        
-                        deleteRequest.onerror = (e) => {
-                            this.logger.error(`Error deleting ${storeName} ${item.id}:`, e.target.error);
-                            // Continue with other deletions even if one fails
-                            deleteCount++;
-                            if (deleteCount === items.length) {
-                                resolve();
-                            }
-                        };
-                    });
-                } else {
-                    this.logger.debug(`No ${storeName} found for form ${formId}`);
-                    resolve();
-                }
+                resolve(request.result);
             };
             
-            request.onerror = () => {
-                this.logger.error(`Error getting ${storeName} for form ${formId}:`, request.error);
-                reject(request.error);
+            request.onerror = (e) => {
+                this.logger.error(`Error getting ${storeName} for form ${formId}:`, e.target.error);
+                reject(e.target.error);
+            };
+        });
+    }
+
+    async deleteMediaItem(storeName, itemId) {
+        const db = await this.getDatabase();
+        const transaction = db.transaction([storeName], 'readwrite');
+        const store = transaction.objectStore(storeName);
+        
+        return new Promise((resolve, reject) => {
+            const request = store.delete(itemId);
+            
+            request.onsuccess = () => {
+                resolve();
+            };
+            
+            request.onerror = (e) => {
+                this.logger.error(`Error deleting ${storeName} ${itemId}:`, e.target.error);
+                reject(e.target.error);
             };
         });
     }
 
     async markFormAsSubmitted(formId) {
         try {
-            const db = await this.getDatabase();
-            const transaction = db.transaction(['formData'], 'readwrite');
-            const store = transaction.objectStore('formData');
-    
-            // Get all forms
-            const forms = await new Promise((resolve, reject) => {
-                const request = store.getAll();
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject(request.error);
-            });
-    
-            // Delete any previously submitted forms and their media
+            this.logger.debug(`Marking form ${formId} as submitted`);
+            
+            // Step 1: Get all forms
+            const forms = await this.getAllForms();
+            
+            // Step 2: Delete old submitted forms
             const oldSubmittedForms = forms.filter(form => form.submitted && form.id !== formId);
+            
             for (const oldForm of oldSubmittedForms) {
                 await this.clearFormAndMedia(oldForm.id);
             }
-    
-            // Update current form to submitted status
+            
+            // Step 3: Get the current form in a new transaction
+            const db = await this.getDatabase();
+            const getFormTransaction = db.transaction(['formData'], 'readonly');
+            const getFormStore = getFormTransaction.objectStore('formData');
+            
             const currentForm = await new Promise((resolve, reject) => {
-                const request = store.get(formId);
+                const request = getFormStore.get(formId);
                 request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject(request.error);
+                request.onerror = (e) => reject(e.target.error);
             });
-    
-            if (currentForm) {
-                currentForm.submitted = true;
-                currentForm.submittedAt = new Date().toISOString();
-                
-                await new Promise((resolve, reject) => {
-                    const request = store.put(currentForm);
-                    request.onsuccess = () => resolve();
-                    request.onerror = () => reject(request.error);
-                });
+            
+            if (!currentForm) {
+                this.logger.warn(`Form ${formId} not found or already deleted`);
+                return false;
             }
-    
-            return true;
+            
+            // Step 4: Update the form in yet another transaction
+            const updateTransaction = db.transaction(['formData'], 'readwrite');
+            const updateStore = updateTransaction.objectStore('formData');
+            
+            // Update the form object
+            currentForm.submitted = true;
+            currentForm.submittedAt = new Date().toISOString();
+            
+            return new Promise((resolve, reject) => {
+                const updateRequest = updateStore.put(currentForm);
+                
+                updateRequest.onsuccess = () => {
+                    this.logger.debug(`Form ${formId} marked as submitted successfully`);
+                    resolve(true);
+                };
+                
+                updateRequest.onerror = (e) => {
+                    this.logger.error(`Error updating form ${formId}:`, e.target.error);
+                    reject(e.target.error);
+                };
+                
+                // Handle transaction error
+                updateTransaction.onerror = (e) => {
+                    this.logger.error(`Transaction error when marking form ${formId} as submitted:`, e.target.error);
+                    reject(e.target.error);
+                };
+            });
         } catch (error) {
             this.logger.error('Error marking form as submitted:', error);
             throw error;
@@ -428,15 +471,7 @@ class DatabaseManager {
     }
     
     async deletePhoto(photoId) {
-        const db = await this.getDatabase();
-        const transaction = db.transaction(['photos'], 'readwrite');
-        const store = transaction.objectStore('photos');
-
-        return new Promise((resolve, reject) => {
-            const request = store.delete(photoId);
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject(request.error);
-        });
+        return this.deleteMediaItem('photos', photoId);
     }
 
     // This method is now deprecated in favor of clearFormAndMedia
@@ -448,14 +483,23 @@ class DatabaseManager {
         const db = await this.getDatabase();
         const stores = [...db.objectStoreNames];
         
-        const transaction = db.transaction(stores, 'readwrite');
-        stores.forEach(store => {
-            transaction.objectStore(store).clear();
-        });
-
+        // Clear each store in a separate transaction
+        for (const storeName of stores) {
+            await this.clearObjectStore(storeName);
+        }
+        
+        return true;
+    }
+    
+    async clearObjectStore(storeName) {
+        const db = await this.getDatabase();
+        const transaction = db.transaction([storeName], 'readwrite');
+        const store = transaction.objectStore(storeName);
+        
         return new Promise((resolve, reject) => {
-            transaction.oncomplete = () => resolve();
-            transaction.onerror = () => reject(transaction.error);
+            const request = store.clear();
+            request.onsuccess = () => resolve();
+            request.onerror = (e) => reject(e.target.error);
         });
     }
 
@@ -561,15 +605,7 @@ class DatabaseManager {
     }
     
     async deleteVideo(videoId) {
-        const db = await this.getDatabase();
-        const transaction = db.transaction(['videos'], 'readwrite');
-        const store = transaction.objectStore('videos');
-    
-        return new Promise((resolve, reject) => {
-            const request = store.delete(videoId);
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject(request.error);
-        });
+        return this.deleteMediaItem('videos', videoId);
     }
     
     async updateVideoCaption(videoId, caption) {
@@ -602,7 +638,7 @@ class DatabaseManager {
         }
     }
     
-    // New method to clean up orphaned media (photos/videos without a valid form)
+    // Method to clean up orphaned media (photos/videos without a valid form)
     async cleanupOrphanedMedia() {
         try {
             this.logger.debug('Starting orphaned media cleanup');
@@ -612,16 +648,23 @@ class DatabaseManager {
             this.logger.debug(`Found ${formIds.length} valid forms`);
             
             // Cleanup photos
-            await this.cleanupOrphanedMediaInStore('photos', formIds);
+            const orphanedPhotos = await this.cleanupOrphanedMediaInStore('photos', formIds);
             
             // Cleanup videos
-            await this.cleanupOrphanedMediaInStore('videos', formIds);
+            const orphanedVideos = await this.cleanupOrphanedMediaInStore('videos', formIds);
             
-            this.logger.debug('Orphaned media cleanup complete');
-            return true;
+            this.logger.debug(`Orphaned media cleanup complete: ${orphanedPhotos} photos and ${orphanedVideos} videos removed`);
+            return {
+                photos: orphanedPhotos,
+                videos: orphanedVideos
+            };
         } catch (error) {
             this.logger.error('Error cleaning up orphaned media:', error);
-            return false;
+            return {
+                photos: 0,
+                videos: 0,
+                error: error.message
+            };
         }
     }
     
@@ -633,20 +676,15 @@ class DatabaseManager {
         return new Promise((resolve, reject) => {
             const request = store.getAllKeys();
             request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error);
+            request.onerror = (e) => reject(e.target.error);
         });
     }
     
     async cleanupOrphanedMediaInStore(storeName, validFormIds) {
         const db = await this.getDatabase();
-        const transaction = db.transaction([storeName], 'readwrite');
-        const store = transaction.objectStore(storeName);
         
-        const allMedia = await new Promise((resolve, reject) => {
-            const request = store.getAll();
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error);
-        });
+        // Get all media in this store
+        const allMedia = await this.getAllFromStore(storeName);
         
         // Find orphaned media (those with formId not in validFormIds)
         const orphanedMedia = allMedia.filter(item => !validFormIds.includes(item.formId));
@@ -656,11 +694,7 @@ class DatabaseManager {
             
             // Delete each orphaned item
             for (const item of orphanedMedia) {
-                await new Promise((resolve, reject) => {
-                    const request = store.delete(item.id);
-                    request.onsuccess = () => resolve();
-                    request.onerror = () => reject(request.error);
-                });
+                await this.deleteMediaItem(storeName, item.id);
             }
             
             this.logger.debug(`Deleted ${orphanedMedia.length} orphaned ${storeName}`);
@@ -669,6 +703,18 @@ class DatabaseManager {
         }
         
         return orphanedMedia.length;
+    }
+    
+    async getAllFromStore(storeName) {
+        const db = await this.getDatabase();
+        const transaction = db.transaction([storeName], 'readonly');
+        const store = transaction.objectStore(storeName);
+        
+        return new Promise((resolve, reject) => {
+            const request = store.getAll();
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = (e) => reject(e.target.error);
+        });
     }
 }
 
