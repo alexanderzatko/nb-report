@@ -358,23 +358,8 @@ async setupDashboardCards() {
 
   async setupFormButtons() {
     console.log('Setting up form buttons');
-
-    // Cancel Button
-    const cancelButton = document.getElementById('cancel-button');
-    if (cancelButton) {
-        console.log('Found cancel button');
-        cancelButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Cancel button clicked');
-            this.formManager?.resetForm(); // Optional form reset if formManager exists
-            this.showDashboard();
-        });
-
-        // Add visual feedback
-        cancelButton.style.cursor = 'pointer';
-        this.addButtonHoverEffects(cancelButton);
-    }
+    // Note: Cancel button handler is set up by FormManager.setupEventListeners()
+    // to ensure proper form state management and clearing
   }
 
   addButtonHoverEffects(button) {

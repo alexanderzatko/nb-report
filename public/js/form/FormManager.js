@@ -534,10 +534,14 @@ class FormManager {
   
       const cancelButton = document.getElementById('cancel-button');
       if (cancelButton) {
-          // Remove any existing click handler to avoid duplicates
-          cancelButton.removeEventListener('click', this.handleCancel);
+          // Clone the button to remove all existing event listeners (including ones from UIManager)
+          const newCancelButton = cancelButton.cloneNode(true);
+          cancelButton.parentNode.replaceChild(newCancelButton, cancelButton);
           // Add new cancel handler
-          cancelButton.addEventListener('click', () => this.handleCancel());
+          newCancelButton.addEventListener('click', () => this.handleCancel());
+          
+          // Add visual feedback
+          newCancelButton.style.cursor = 'pointer';
       }
   }
 
@@ -2634,10 +2638,13 @@ class FormManager {
   handleCancel() {
     this.stopAutoSave();
     this.stopTrackingFormTime();
+    // resetForm() clears all form data and shows the dashboard
     this.resetForm();
-    document.getElementById('dashboard-container').style.display = 'block';
-    document.getElementById('snow-report-form').style.display = 'none';
-    document.getElementById('continue-draft-link').style.display = 'none';
+    // Hide continue draft link if it exists
+    const continueDraftLink = document.getElementById('continue-draft-link');
+    if (continueDraftLink) {
+      continueDraftLink.style.display = 'none';
+    }
   }
 
   resetForm(keepDatabaseData = false) {
