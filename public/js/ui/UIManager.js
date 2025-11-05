@@ -103,8 +103,12 @@ class UIManager {
 
       const draftForm = forms.find(form => !form.submitted);
       const newReportCard = document.getElementById('continue-draft-link');
-      if (draftForm && newReportCard) {
-          newReportCard.style.display = 'block';
+      if (newReportCard) {
+          if (draftForm) {
+              newReportCard.style.display = 'block';
+          } else {
+              newReportCard.style.display = 'none';
+          }
       }
 
       const loginContainer = document.getElementById('login-container');
@@ -211,8 +215,12 @@ async setupDashboardCards() {
 
     const draftForm = forms.find(form => !form.submitted);
     const newReportCard = document.getElementById('continue-draft-link');
-    if (draftForm && newReportCard) {
-        newReportCard.style.removeProperty('display');
+    if (newReportCard) {
+        if (draftForm) {
+            newReportCard.style.removeProperty('display');
+        } else {
+            newReportCard.style.display = 'none';
+        }
     }
 
     // Continue Report Card
@@ -413,11 +421,20 @@ async setupDashboardCards() {
 
         const draftForm = forms.find(form => !form.submitted);
         const continueReportCard = document.getElementById('continue-draft-link');
-        if (draftForm && continueReportCard) {
-            continueReportCard.style.display = 'block';
+        if (continueReportCard) {
+            if (draftForm) {
+                continueReportCard.style.display = 'block';
+            } else {
+                continueReportCard.style.display = 'none';
+            }
         }
     } catch (error) {
         this.logger.error('Error checking for draft forms:', error);
+        // On error, hide the card to be safe
+        const continueReportCard = document.getElementById('continue-draft-link');
+        if (continueReportCard) {
+            continueReportCard.style.display = 'none';
+        }
     }
     
     const dashboardContainer = document.getElementById('dashboard-container');

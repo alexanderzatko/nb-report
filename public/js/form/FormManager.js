@@ -1732,7 +1732,7 @@ class FormManager {
         this.showSuccessWithLinks(result);
         
         this.stopTrackingFormTime();
-        this.resetForm(true);
+        await this.resetForm(true);
         
         // Show dashboard
         document.getElementById('dashboard-container').style.display = 'block';
@@ -2635,11 +2635,11 @@ class FormManager {
     }
   }
 
-  handleCancel() {
+  async handleCancel() {
     this.stopAutoSave();
     this.stopTrackingFormTime();
     // resetForm() clears all form data and shows the dashboard
-    this.resetForm();
+    await this.resetForm();
     // Hide continue draft link if it exists
     const continueDraftLink = document.getElementById('continue-draft-link');
     if (continueDraftLink) {
@@ -2647,7 +2647,7 @@ class FormManager {
     }
   }
 
-  resetForm(keepDatabaseData = false) {
+  async resetForm(keepDatabaseData = false) {
 
     // Clear clone interval if exists
     if (this.autoSaveInterval) {
@@ -2660,7 +2660,7 @@ class FormManager {
     // Only clear database if explicitly requested
     if (!keepDatabaseData && this.currentFormId) {
         try {
-            this.dbManager.clearForm(this.currentFormId);
+            await this.dbManager.clearForm(this.currentFormId);
             this.currentFormId = null;
         } catch (error) {
             this.logger.error('Error clearing form data:', error);
