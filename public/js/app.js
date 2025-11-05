@@ -167,7 +167,7 @@ class App {
           this.processingAuth = true;
           this.initializationInProgress = true;
           try {
-              console.log('Processing OAuth callback...');
+              this.logger.debug('Processing OAuth callback...');
               const success = await this.managers.auth.handleOAuthCallback(
                   urlParams.get('code'),
                   urlParams.get('state')
@@ -175,14 +175,14 @@ class App {
               window.history.replaceState({}, document.title, '/');
               
             if (success) {
-              console.log('OAuth callback successful, fetching user data...');
+              this.logger.debug('OAuth callback successful, fetching user data...');
               // First fetch user data
               const userData = await this.refreshUserData();
               await this.managers.ui.updateUIBasedOnAuthState(true, userData);
               await this.initializeFeatureManagers();
               return true;
             } else {
-              console.log('OAuth callback failed, showing login...');
+              this.logger.debug('OAuth callback failed, showing login...');
               await this.managers.ui.initializeLoginUI();
             }
           } finally {
@@ -262,7 +262,7 @@ class App {
         return currentUserData;
       }
     } catch (error) {
-      console.error('Error refreshing user data:', error);
+      this.logger.error('Error refreshing user data:', error);
       throw error;
     }
   }
@@ -378,7 +378,7 @@ const app = App.getInstance();
 // Start the application when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   app.start().catch(error => {
-    console.error('Failed to start application:', error);
+    app.logger.error('Failed to start application:', error);
   });
 });
 

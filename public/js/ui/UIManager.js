@@ -89,7 +89,7 @@ class UIManager {
 
   async initializeAuthenticatedUI() {
     this.logger.debug('Starting initializeAuthenticatedUI');
-    console.log('Initializing authenticated UI');
+    this.logger.debug('Initializing authenticated UI');
 
     try {
       const db = await this.dbManager.getDatabase();
@@ -113,7 +113,7 @@ class UIManager {
       if (loginContainer) loginContainer.style.display = 'none';
       if (dashboardContainer) {
           dashboardContainer.style.display = 'block';
-          console.log('Dashboard container is now visible');
+          this.logger.debug('Dashboard container is now visible');
       }
 
       // Initialize GPS functionality
@@ -162,7 +162,6 @@ class UIManager {
       this.updateFullPageContent();
       this.logger.debug('Authenticated UI initialization complete');
     } catch (error) {
-        console.error('Error initializing authenticated UI:', error);
         this.logger.error('Error initializing authenticated UI:', error);
         throw error;
     }
@@ -173,17 +172,17 @@ class UIManager {
   }
   
 async setupDashboardCards() {
-    console.log('Setting up dashboard cards');
+    this.logger.debug('Setting up dashboard cards');
      
     const setupCard = (cardElement, handler) => {
         if (cardElement) {
-            console.log(`Found card: ${cardElement.id}`);
+            this.logger.debug(`Found card: ${cardElement.id}`);
             cardElement.removeAttribute('href');
             
             cardElement.addEventListener('click', async (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log(`Card clicked: ${cardElement.id}`);
+                this.logger.debug(`Card clicked: ${cardElement.id}`);
                 await handler();
             });
 
@@ -245,25 +244,25 @@ async setupDashboardCards() {
     });
     
     if (!continueReportLink && !newReportLink) {
-        console.log('No report cards found');
+        this.logger.debug('No report cards found');
         return;
     }
 
     // Settings Card
     const settingsLink = document.getElementById('settings-link');
     if (settingsLink) {
-        console.log('Found settings link');
+        this.logger.debug('Found settings link');
         // Remove existing href to prevent default behavior
         settingsLink.removeAttribute('href');
         
         settingsLink.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('Settings card clicked');
+            this.logger.debug('Settings card clicked');
             this.showSettings();
         });
     } else {
-        console.log('Settings link not found');
+        this.logger.debug('Settings link not found');
     }
 
     // GPS Recording Card
@@ -321,16 +320,16 @@ async setupDashboardCards() {
 }
 
   async setupSettingsButtons() {
-    console.log('Setting up settings buttons');
+    this.logger.debug('Setting up settings buttons');
 
     // Dashboard Return Button
     const dashboardButton = document.getElementById('dashboard-button');
     if (dashboardButton) {
-        console.log('Found dashboard button');
+        this.logger.debug('Found dashboard button');
         dashboardButton.addEventListener('click', async (e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('Dashboard button clicked');
+            this.logger.debug('Dashboard button clicked');
             await this.showDashboard();
         });
 
@@ -342,11 +341,11 @@ async setupDashboardCards() {
     // Logout Button
     const logoutButton = document.getElementById('logout-button');
     if (logoutButton) {
-        console.log('Found logout button');
+        this.logger.debug('Found logout button');
         logoutButton.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('Logout button clicked');
+            this.logger.debug('Logout button clicked');
             this.handleLogoutClick();
         });
 
@@ -357,7 +356,7 @@ async setupDashboardCards() {
   }
 
   async setupFormButtons() {
-    console.log('Setting up form buttons');
+    this.logger.debug('Setting up form buttons');
     // Note: Cancel button handler is set up by FormManager.setupEventListeners()
     // to ensure proper form state management and clearing
   }
@@ -387,7 +386,6 @@ async setupDashboardCards() {
   }
 
   async showDashboard() {
-    console.log('Showing dashboard');
     this.logger.debug('Showing dashboard');
     
     const stateManager = StateManager.getInstance();
@@ -398,7 +396,7 @@ async setupDashboardCards() {
       const container = document.getElementById(id);
       if (container) {
           container.style.display = 'none';
-          console.log(`Hidden container: ${id}`);
+          this.logger.debug(`Hidden container: ${id}`);
       }
     });
 
@@ -425,7 +423,7 @@ async setupDashboardCards() {
     const dashboardContainer = document.getElementById('dashboard-container');
     if (dashboardContainer) {
       dashboardContainer.style.display = 'block';
-      console.log('Dashboard container is now visible');
+      this.logger.debug('Dashboard container is now visible');
       // Update user elements when showing dashboard
       if (userData) {
           this.updateUserSpecificElements(userData);
@@ -440,7 +438,6 @@ async setupDashboardCards() {
   }
 
   showSettings() {
-    console.log('Showing settings');
     this.logger.debug('Showing settings');
     
     const containers = ['dashboard-container', 'snow-report-form'];
@@ -448,7 +445,7 @@ async setupDashboardCards() {
       const container = document.getElementById(id);
       if (container) {
           container.style.display = 'none';
-          console.log(`Hidden container: ${id}`);
+          this.logger.debug(`Hidden container: ${id}`);
       }
     });
 
@@ -576,26 +573,6 @@ async setupDashboardCards() {
     }
   }
 
-  async updateGPSCardVisibility() {
-      const gpsCard = document.querySelector('[data-feature="gps-recording"]');
-      if (!gpsCard) return;
-  
-      const gpsManager = GPSManager.getInstance();
-      const capability = gpsManager.checkGPSCapability();
-  
-      if (capability.supported) {
-          gpsCard.classList.remove('disabled');
-          if (gpsManager.isRecording) {
-              this.updateGPSCardForRecording(gpsCard);
-          } else {
-              this.updateGPSCardForStandby(gpsCard);
-          }
-      } else {
-          gpsCard.classList.add('disabled');
-          gpsCard.querySelector('p').textContent = capability.reason;
-      }
-  }
-
   updateGPSCardForRecording(card) {
       const stateManager = StateManager.getInstance();
       const recordingState = stateManager.getState('gps.recording');
@@ -611,12 +588,13 @@ async setupDashboardCards() {
       this.logger.debug('Formatted values:', { distance, elevation });
       
       card.querySelector('h3').textContent = this.i18next.t('dashboard.stopGpsRecording');
-      card.querySelector('p').textContent = this.i18next.t('dashboard.recordingStatsDist', {
+      const distanceText = this.i18next.t('dashboard.recordingStatsDist', {
           distance: distance
       });
-      card.querySelector('p').textContent = this.i18next.t('dashboard.recordingStatsEle', {
+      const elevationText = this.i18next.t('dashboard.recordingStatsEle', {
           elevation: elevation
       });
+      card.querySelector('p').textContent = `${distanceText} ${elevationText}`;
   
       // Ensure recording class is present
       card.classList.add('recording');

@@ -1,7 +1,9 @@
 import i18next from '/node_modules/i18next/dist/esm/i18next.js';
 import HttpBackend from '/node_modules/i18next-http-backend/esm/index.js';
 import LanguageDetector from '/node_modules/i18next-browser-languagedetector/dist/esm/i18nextBrowserLanguageDetector.js';
+import Logger from './utils/Logger.js';
 
+const logger = Logger.getInstance();
 let initPromise = null;
 let isInitialized = false;
 
@@ -43,14 +45,14 @@ const initI18next = async () => {
         }
       });
       window.dispatchEvent(event);
-      console.log('Language changed event dispatched:', i18next.language);
+      logger.debug('Language changed event dispatched:', i18next.language);
     });
 
-    console.log('i18next initialized successfully, current language:', i18next.language);
-    console.log('Loaded translations:', i18next.getResourceBundle(i18next.language, 'translation'));
+    logger.debug('i18next initialized successfully, current language:', i18next.language);
+    logger.debug('Loaded translations:', i18next.getResourceBundle(i18next.language, 'translation'));
     
   } catch (error) {
-    console.error('Error initializing i18next:', error);
+    logger.error('Error initializing i18next:', error);
     initPromise = null;
     isInitialized = false;
     throw error;

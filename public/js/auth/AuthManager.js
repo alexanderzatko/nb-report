@@ -2,6 +2,7 @@
 
 import StateManager from '../state/StateManager.js';
 import StorageManager from '../storage/StorageManager.js';
+import Logger from '../utils/Logger.js';
 
 class AuthManager {
   static instance = null;
@@ -14,6 +15,7 @@ class AuthManager {
       return AuthManager.instance;
     }
 
+    this.logger = Logger.getInstance();
     this.initPromise = null;
     this.exchangingToken = false;
     this.stateCheckInProgress = false;
@@ -101,7 +103,7 @@ class AuthManager {
       this.notifyAuthStateChange(false);
       return false;
     } catch (error) {
-        console.error('Error checking auth status:', error);
+        this.logger.error('Error checking auth status:', error);
         // If error occurs but we have valid stored data, stay logged in
         if (storedAuthData && this.validateStoredAuthData(storedAuthData)) {
             return true;
@@ -148,7 +150,7 @@ class AuthManager {
       const data = localStorage.getItem(AuthManager.AUTH_DATA_KEY);
       return data ? JSON.parse(data) : null;
     } catch (e) {
-      console.error('Error parsing stored auth data:', e);
+      this.logger.error('Error parsing stored auth data:', e);
       return null;
     }
   }
@@ -172,7 +174,7 @@ class AuthManager {
         }
 
       } catch (e) {
-        console.error('Error parsing cached user data:', e);
+        this.logger.error('Error parsing cached user data:', e);
       }
     }
   }
@@ -248,11 +250,11 @@ class AuthManager {
   }
 
   async handleOAuthCallback(code, state) {
-    console.log('handleOAuthCallback called');
-    console.log('Code:', code, 'State:', state);
+    this.logger.debug('handleOAuthCallback called');
+    this.logger.debug('Code:', code, 'State:', state);
   
     if (this.exchangingToken) {
-      console.log('Token exchange already in progress');
+      this.logger.debug('Token exchange already in progress');
       return false;
     }
   
@@ -261,10 +263,10 @@ class AuthManager {
     try {
       if (state) {
         const storedState = sessionStorage.getItem(AuthManager.OAUTH_STATE_KEY);
-        console.log('Stored state:', storedState);
+        this.logger.debug('Stored state:', storedState);
         
         if (!storedState || !state) {
-          console.error('Missing state');
+          this.logger.error('Missing state');
           return false;
         }
   
@@ -272,39 +274,39 @@ class AuthManager {
         const [returnedTimestamp] = state.split('.');
         const [storedTimestamp] = storedState.split('.');
         
-        console.log('Timestamps - Returned:', returnedTimestamp, 'Stored:', storedTimestamp);
+        this.logger.debug('Timestamps - Returned:', returnedTimestamp, 'Stored:', storedTimestamp);
         
         // Allow for small timing differences (within 5 seconds)
         const timeDiff = Math.abs(parseInt(returnedTimestamp) - parseInt(storedTimestamp));
         if (timeDiff > 5000) {
-          console.error('Timestamp difference too large:', timeDiff);
+          this.logger.error('Timestamp difference too large:', timeDiff);
           return false;
         }
   
         // Verify the complete state if timestamps are close
         if (state !== storedState) {
-          console.error('States do not match');
+          this.logger.error('States do not match');
           return false;
         }
       }
   
       if (code) {
-        console.log('Exchanging token');
+        this.logger.debug('Exchanging token');
         try {
           const success = await this.exchangeToken(code);
           if (success) {
             // Store the session ID we got from the response
             const sessionId = localStorage.getItem(AuthManager.SESSION_KEY);
             if (sessionId) {
-              console.log('Storing session ID:', sessionId);
+              this.logger.debug('Storing session ID:', sessionId);
               localStorage.setItem(AuthManager.SESSION_KEY, sessionId);
             }
-            console.log('Token exchanged successfully');
+            this.logger.debug('Token exchanged successfully');
             await this.checkAuthStatus(); // Ensure we get the latest auth status
             return true;
           }
         } catch (error) {
-          console.error('Error exchanging token:', error);
+          this.logger.error('Error exchanging token:', error);
         }
       }
   
@@ -318,19 +320,21 @@ class AuthManager {
   }
 
   clearAuthData() {
-    console.log('Clearing auth data...');
+    this.logger.debug('Clearing auth data...');
     const beforeClear = {
+      sessionStorage: {
+        state: sessionStorage.getItem(AuthManager.OAUTH_STATE_KEY),
+        initiatedAt: sessionStorage.getItem('oauth_initiated_at')
+      },
       localStorage: {
-        state: localStorage.getItem(AuthManager.OAUTH_STATE_KEY),
-        initiatedAt: localStorage.getItem('oauth_initiated_at'),
         sessionId: localStorage.getItem(AuthManager.SESSION_KEY),
         authData: localStorage.getItem(AuthManager.AUTH_DATA_KEY)
       }
     };
-    console.log('Before clearing:', beforeClear);
+    this.logger.debug('Before clearing:', beforeClear);
 
-    localStorage.removeItem(AuthManager.OAUTH_STATE_KEY);
-    localStorage.removeItem('oauth_initiated_at');
+    sessionStorage.removeItem(AuthManager.OAUTH_STATE_KEY);
+    sessionStorage.removeItem('oauth_initiated_at');
     localStorage.removeItem(AuthManager.SESSION_KEY);
     localStorage.removeItem(AuthManager.AUTH_DATA_KEY);
     
@@ -343,18 +347,20 @@ class AuthManager {
     }
 
     const afterClear = {
+      sessionStorage: {
+        state: sessionStorage.getItem(AuthManager.OAUTH_STATE_KEY),
+        initiatedAt: sessionStorage.getItem('oauth_initiated_at')
+      },
       localStorage: {
-        state: localStorage.getItem(AuthManager.OAUTH_STATE_KEY),
-        initiatedAt: localStorage.getItem('oauth_initiated_at'),
         sessionId: localStorage.getItem(AuthManager.SESSION_KEY),
         authData: localStorage.getItem(AuthManager.AUTH_DATA_KEY)
       }
     };
-    console.log('After clearing:', afterClear);
+    this.logger.debug('After clearing:', afterClear);
   }
   
 async initiateOAuth() {
-    console.log('InitiateOAuth called');
+    this.logger.debug('InitiateOAuth called');
     try {
       // Clear any existing auth data before starting new auth flow
       this.clearAuthData();
@@ -364,7 +370,7 @@ async initiateOAuth() {
       const randomPart = Math.random().toString(36).substring(2, 15);
       const state = `${timestamp}.${randomPart}`;
       
-      console.log('Generated state:', state);
+      this.logger.debug('Generated state:', state);
       
       // Store state in sessionStorage before making the request
       sessionStorage.setItem(AuthManager.OAUTH_STATE_KEY, state);
@@ -373,7 +379,7 @@ async initiateOAuth() {
       // Verify state was stored
       const storedState = sessionStorage.getItem(AuthManager.OAUTH_STATE_KEY);
       if (storedState !== state) {
-        console.error('Failed to store OAuth state');
+        this.logger.error('Failed to store OAuth state');
         return false;
       }
 
@@ -393,7 +399,7 @@ async initiateOAuth() {
       }
       
       const data = await response.json();
-      console.log('OAuth initiation data:', data);
+      this.logger.debug('OAuth initiation data:', data);
       
       if (!data.authUrl) {
         throw new Error('No auth URL received');
@@ -405,12 +411,12 @@ async initiateOAuth() {
         throw new Error('State verification failed before redirect');
       }
 
-      console.log('All checks passed, redirecting to:', data.authUrl);
+      this.logger.debug('All checks passed, redirecting to:', data.authUrl);
       window.location.href = data.authUrl;
       return true;
 
     } catch (error) {
-      console.error('Error initiating OAuth:', error);
+      this.logger.error('Error initiating OAuth:', error);
       return false;
     }
   }
@@ -425,7 +431,7 @@ async initiateOAuth() {
   }
   
   async exchangeToken(code) {
-    console.log('Attempting to exchange token with code:', code);
+    this.logger.debug('Attempting to exchange token with code:', code);
     try {
       const response = await fetch('/api/exchange-token', {
         method: 'POST',
@@ -440,26 +446,26 @@ async initiateOAuth() {
         credentials: 'include'
       });
   
-      console.log('Exchange token response status:', response.status);
+      this.logger.debug('Exchange token response status:', response.status);
       
       if (!response.ok) {
         const errorData = await response.text();
-        console.error('Server error response:', errorData);
+        this.logger.error('Server error response:', errorData);
         throw new Error('Failed to exchange token');
       }
   
       const data = await response.json();
-      console.log('Exchange token response:', data);
+      this.logger.debug('Exchange token response:', data);
       
       if (data.success) {
-        console.log('Token exchange successful');
+        this.logger.debug('Token exchange successful');
         
         if (data.sessionId) {
           // Create and store complete auth data
           const authData = this.createAuthData(data.sessionId);
           await this.updateStoredAuthData(authData);
 
-          console.log('Storing session ID:', data.sessionId);
+          this.logger.debug('Storing session ID:', data.sessionId);
           localStorage.setItem(AuthManager.SESSION_KEY, data.sessionId);
         }
 
@@ -470,7 +476,7 @@ async initiateOAuth() {
         throw new Error('Token exchange failed');
       }
     } catch (error) {
-      console.error('Error exchanging token:', error);
+      this.logger.error('Error exchanging token:', error);
       return false;
     }
   }
@@ -522,7 +528,7 @@ async initiateOAuth() {
           if (response.ok) {
               const data = await response.json();
               if (data.success) {
-                  console.log('Token refreshed successfully');
+                  this.logger.debug('Token refreshed successfully');
                   return true;
               }
           } else if (response.status === 401) {
@@ -582,24 +588,24 @@ async initiateOAuth() {
 
   async logout() {
     try {
-      console.log('Logout function called');
+      this.logger.debug('Logout function called');
       
       const response = await fetch('/api/logout', { 
         method: 'POST',
         credentials: 'include',
       });
 
-      console.log('Logout response status:', response.status);
+      this.logger.debug('Logout response status:', response.status);
       const data = await response.json();
       StorageManager.getInstance().clearSelectedSkiCenter();
-      console.log('Logout response:', data);
+      this.logger.debug('Logout response:', data);
       this.clearAuthData();
 
       const stateManager = StateManager.getInstance();
       stateManager.setState('auth.user', null);
       stateManager.setState('storage.userData', null);
 
-      console.log('Logout successful');
+      this.logger.debug('Logout successful');
       return true;
 
     } catch (error) {
