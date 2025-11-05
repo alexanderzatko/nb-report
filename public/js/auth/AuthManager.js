@@ -180,6 +180,7 @@ class AuthManager {
   }
   
   setupTokenRefresh() {
+    // Log info message (fire and forget, don't await to avoid blocking)
     fetch('/api/log-error', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -190,6 +191,9 @@ class AuthManager {
                 timestamp: new Date().toISOString()
             }
         })
+    }).catch(err => {
+        // Silently handle fetch errors - logging shouldn't break the app
+        this.logger.debug('Failed to log setup message:', err);
     });
     
     if (this.tokenRefreshInterval) {

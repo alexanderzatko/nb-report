@@ -218,8 +218,15 @@ app.post('/api/log-error', (req, res) => {
       isAuthenticated: !!req.session?.accessToken
     };
 
-    // Log even if there's no session - these could be important startup errors
-    logger.error('Client-side error', logData);
+    // Log with the appropriate level based on what the client sent
+    const logMessage = 'Client-side ' + (level === 'error' ? 'error' : level === 'warn' ? 'warning' : 'info');
+    if (level === 'error') {
+      logger.error(logMessage, logData);
+    } else if (level === 'warn') {
+      logger.warn(logMessage, logData);
+    } else {
+      logger.info(logMessage, logData);
+    }
     
     res.status(200).json({ status: 'logged' });
   } catch (err) {
