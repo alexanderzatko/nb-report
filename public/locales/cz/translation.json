@@ -43,17 +43,17 @@
     }
   },
   "voucher": {
-    "generateVoucher": "Generovat voucher",
-    "generateVoucherDesc": "Generovat nový sezónní nebo 3denní přístupový voucher",
-    "formTitle": "Generovat nový voucher",
+    "generateVoucher": "Generovat kupon",
+    "generateVoucherDesc": "Generovat nový sezónní nebo 3denní přístupový kupon",
+    "formTitle": "Generovat nový kupon",
     "wholeSeason": "Celá sezóna",
     "threeDays": "3 dny",
     "backToDashboard": "Zpět na hlavní stránku",
-    "urlLabel": "URL voucheru",
+    "urlLabel": "URL kuponu",
     "urlPlaceholder": "https://mapa.nabezky.sk",
-    "error": "Nepodařilo se vygenerovat voucher. Zkuste to prosím znovu.",
-    "voucherNumber": "Číslo voucheru",
-    "createTestVoucher": "Vytvořit testovací voucher"
+    "error": "Nepodařilo se vygenerovat kupon. Zkuste to prosím znovu.",
+    "voucherNumber": "Číslo kuponu",
+    "createTestVoucher": "Vytvořit testovací kupon"
   },
   "auth": {
     "loginText": "Přihlásit se do aplikace",
