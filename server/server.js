@@ -777,10 +777,21 @@ app.get('/api/user-data', async (req, res) => {
 });
 
 app.post('/api/rules_create_voucher', async (req, res) => {
-  logger.info('Voucher creation request received', { sessionID: req.sessionID });
+  logger.info('Voucher creation request received', { 
+    sessionID: req.sessionID,
+    hasSession: !!req.session,
+    hasAccessToken: !!req.session?.accessToken,
+    accessTokenLength: req.session?.accessToken?.length,
+    cookies: req.cookies,
+    body: req.body
+  });
   
   if (!req.session || !req.session.accessToken) {
-    logger.warn('Unauthorized voucher creation request', { sessionID: req.sessionID });
+    logger.warn('Unauthorized voucher creation request', { 
+      sessionID: req.sessionID,
+      hasSession: !!req.session,
+      sessionKeys: req.session ? Object.keys(req.session) : null
+    });
     return res.status(401).json({ error: 'Not authenticated' });
   }
 
@@ -791,9 +802,17 @@ app.post('/api/rules_create_voucher', async (req, res) => {
     return res.status(400).json({ error: 'Missing required parameters: duration, count, ski_center_ID' });
   }
 
+  const endpointUrl = `${OAUTH_PROVIDER_URL}/nabezky/rules/rules_create_voucher`;
+  logger.info('Calling nabezky endpoint', {
+    url: endpointUrl,
+    hasAccessToken: !!req.session.accessToken,
+    accessTokenLength: req.session.accessToken.length,
+    requestBody: { duration, count, ski_center_ID }
+  });
+
   try {
     const response = await axios.post(
-      `${OAUTH_PROVIDER_URL}/nabezky/rules/rules_create_voucher`,
+      endpointUrl,
       {
         duration,
         count,
@@ -815,10 +834,18 @@ app.post('/api/rules_create_voucher', async (req, res) => {
     logger.error('Error creating voucher:', {
       message: error.message,
       response: error.response?.data,
-      status: error.response?.status
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      headers: error.response?.headers,
+      endpointUrl: endpointUrl,
+      accessTokenLength: req.session?.accessToken?.length
     });
     
     if (error.response?.status === 401) {
+      logger.warn('Nabezky server returned 401 - authentication failed', {
+        endpoint: endpointUrl,
+        responseData: error.response?.data
+      });
       res.status(401).json({ error: 'Not authenticated' });
     } else if (error.response?.status === 400) {
       res.status(400).json({ error: error.response.data?.error || 'Invalid request' });
