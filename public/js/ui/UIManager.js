@@ -414,6 +414,8 @@ async setupDashboardCards() {
     
     if (cancelButton) {
       cancelButton.addEventListener('click', async () => {
+        // Reset test voucher checkbox when canceling
+        this.resetTestVoucherCheckbox();
         await this.showDashboard();
       });
       cancelButton.style.cursor = 'pointer';
@@ -447,6 +449,8 @@ async setupDashboardCards() {
       
       this.logger.debug('Using test voucher number', { testVoucherNumber });
       this.showVoucherDisplay(testVoucherNumber, qrCodeUrl);
+      // Reset checkbox after showing test voucher
+      this.resetTestVoucherCheckbox();
       return;
     }
     
@@ -472,6 +476,8 @@ async setupDashboardCards() {
         const qrCodeUrl = `${voucherUrl}?voucher=${voucherData.voucher_number}`;
         
         this.showVoucherDisplay(voucherData.voucher_number, qrCodeUrl);
+        // Reset checkbox after successful voucher generation
+        this.resetTestVoucherCheckbox();
       } else {
         throw new Error('Invalid voucher response');
       }
@@ -598,6 +604,14 @@ async setupDashboardCards() {
     this.updateBackground('settings');
   }
 
+  resetTestVoucherCheckbox() {
+    const testVoucherCheckbox = document.getElementById('test-voucher-checkbox');
+    if (testVoucherCheckbox) {
+      testVoucherCheckbox.checked = false;
+      this.logger.debug('Test voucher checkbox reset');
+    }
+  }
+
   showVoucherForm() {
     this.logger.debug('Showing voucher form');
     
@@ -613,6 +627,10 @@ async setupDashboardCards() {
     if (voucherFormContainer) {
       voucherFormContainer.style.display = 'block';
     }
+    
+    // Reset test voucher checkbox when showing the form
+    this.resetTestVoucherCheckbox();
+    
     this.updateBackground('form');
   }
 
