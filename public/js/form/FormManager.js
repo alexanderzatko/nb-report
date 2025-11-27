@@ -9,6 +9,7 @@ import GPSManager from '../managers/GPSManager.js';
 import StateManager from '../state/StateManager.js';
 import AuthManager from '../auth/AuthManager.js';
 import DatabaseManager from '../managers/DatabaseManager.js';
+import UIManager from '../ui/UIManager.js';
 
 class FormManager {
   static instance = null;
@@ -1734,10 +1735,9 @@ class FormManager {
         this.stopTrackingFormTime();
         await this.resetForm(true);
         
-        // Show dashboard
-        document.getElementById('dashboard-container').style.display = 'block';
-        document.getElementById('snow-report-form').style.display = 'none';
-        document.getElementById('continue-draft-link').style.display = 'none';
+        // Show dashboard using UIManager to ensure all dashboard elements are properly updated
+        const uiManager = UIManager.getInstance();
+        await uiManager.showDashboard();
       } else {
         this.logger.error('Form submission failed with result:', result);
         this.showError(result.message || this.i18next.t('form.validation.submitError'));
@@ -2638,13 +2638,11 @@ class FormManager {
   async handleCancel() {
     this.stopAutoSave();
     this.stopTrackingFormTime();
-    // resetForm() clears all form data and shows the dashboard
+    // resetForm() clears all form data
     await this.resetForm();
-    // Hide continue draft link if it exists
-    const continueDraftLink = document.getElementById('continue-draft-link');
-    if (continueDraftLink) {
-      continueDraftLink.style.display = 'none';
-    }
+    // Show dashboard using UIManager to ensure all dashboard elements are properly updated
+    const uiManager = UIManager.getInstance();
+    await uiManager.showDashboard();
   }
 
   async resetForm(keepDatabaseData = false) {
