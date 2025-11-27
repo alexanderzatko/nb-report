@@ -2,6 +2,7 @@
 
 import Logger from '../utils/Logger.js';
 import NetworkManager from '../network/NetworkManager.js';
+import ConfigManager from '../config/ConfigManager.js';
 
 class VoucherManager {
   static instance = null;
@@ -13,6 +14,7 @@ class VoucherManager {
     
     this.logger = Logger.getInstance();
     this.networkManager = NetworkManager.getInstance();
+    this.configManager = ConfigManager.getInstance();
     
     VoucherManager.instance = this;
   }
@@ -28,7 +30,8 @@ class VoucherManager {
     this.logger.debug('Creating voucher', { duration, count, ski_center_ID });
     
     try {
-      const response = await this.networkManager.post('/api/rules_create_voucher', {
+      const endpoint = this.configManager.getEndpoint('voucher.create');
+      const response = await this.networkManager.post(endpoint, {
         duration,
         count,
         ski_center_ID

@@ -51,6 +51,9 @@ class ConfigManager {
           },
           report: {
             submit: '/api/submit-snow-report'
+          },
+          voucher: {
+            create: '/api/rules_create_voucher'
           }
         },
         timeout: 30000,
