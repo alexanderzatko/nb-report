@@ -44,7 +44,7 @@
   },
   "voucher": {
     "generateVoucher": "Generate voucher",
-    "generateVoucherDesc": "Generate new seasonal, or 3-day access voucher to Mapa Na bežky",
+    "generateVoucherDesc": "Generate new seasonal, or 3-day access voucher",
     "formTitle": "Generate new voucher",
     "wholeSeason": "Whole season",
     "threeDays": "3days",

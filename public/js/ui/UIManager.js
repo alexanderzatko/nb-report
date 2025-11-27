@@ -119,6 +119,17 @@ class UIManager {
       if (dashboardContainer) {
           dashboardContainer.style.display = 'block';
           this.logger.debug('Dashboard container is now visible');
+          
+          // Update voucher card visibility based on admin status
+          const stateManager = StateManager.getInstance();
+          const userData = stateManager.getState('auth.user');
+          if (userData) {
+              const voucherCard = document.getElementById('generate-voucher-link');
+              if (voucherCard) {
+                  voucherCard.style.display = userData.ski_center_admin === "1" ? 'block' : 'none';
+                  this.logger.debug('Voucher card visibility updated:', userData.ski_center_admin === "1" ? 'visible' : 'hidden');
+              }
+          }
       }
 
       // Initialize GPS functionality
@@ -381,6 +392,7 @@ async setupDashboardCards() {
     const wholeSeasonButton = document.getElementById('voucher-whole-season');
     const threeDaysButton = document.getElementById('voucher-three-days');
     const backButton = document.getElementById('voucher-back-button');
+    const cancelButton = document.getElementById('voucher-cancel-button');
     
     if (wholeSeasonButton) {
       wholeSeasonButton.addEventListener('click', async () => {
@@ -398,6 +410,14 @@ async setupDashboardCards() {
       backButton.addEventListener('click', async () => {
         await this.showDashboard();
       });
+    }
+    
+    if (cancelButton) {
+      cancelButton.addEventListener('click', async () => {
+        await this.showDashboard();
+      });
+      cancelButton.style.cursor = 'pointer';
+      this.addButtonHoverEffects(cancelButton);
     }
   }
 
