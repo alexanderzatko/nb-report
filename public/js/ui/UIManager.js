@@ -427,16 +427,34 @@ async setupDashboardCards() {
     const stateManager = StateManager.getInstance();
     const userData = stateManager.getState('auth.user');
     
-    if (!userData || !userData.ski_center_id) {
-      this.logger.error('No ski center ID available');
-      this.showError(this.i18next.t('voucher.error'));
-      return;
-    }
-    
     const errorElement = document.getElementById('voucher-error');
     if (errorElement) {
       errorElement.style.display = 'none';
       errorElement.textContent = '';
+    }
+    
+    // Check if test voucher checkbox is checked
+    const testVoucherCheckbox = document.getElementById('test-voucher-checkbox');
+    const isTestVoucher = testVoucherCheckbox && testVoucherCheckbox.checked;
+    
+    if (isTestVoucher) {
+      // Use test voucher number without calling backend
+      const testVoucherNumber = '999123456789';
+      const StorageManager = (await import('../storage/StorageManager.js')).default;
+      const storageManager = StorageManager.getInstance();
+      const voucherUrl = storageManager.getLocalStorage('voucherUrl') || 'https://mapa.nabezky.sk';
+      const qrCodeUrl = `${voucherUrl}?voucher=${testVoucherNumber}`;
+      
+      this.logger.debug('Using test voucher number', { testVoucherNumber });
+      this.showVoucherDisplay(testVoucherNumber, qrCodeUrl);
+      return;
+    }
+    
+    // Normal voucher generation flow
+    if (!userData || !userData.ski_center_id) {
+      this.logger.error('No ski center ID available');
+      this.showError(this.i18next.t('voucher.error'));
+      return;
     }
     
     try {

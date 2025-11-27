@@ -52,7 +52,8 @@
     "urlLabel": "URL voucheru",
     "urlPlaceholder": "https://mapa.nabezky.sk",
     "error": "Nepodarilo sa vygenerovať voucher. Skúste to prosím znova.",
-    "voucherNumber": "Číslo voucheru"
+    "voucherNumber": "Číslo voucheru",
+    "createTestVoucher": "Vytvoriť testovací voucher"
   },
   "auth": {
     "loginText": "Prihlásiť sa do aplikácie",

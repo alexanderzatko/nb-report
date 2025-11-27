@@ -52,7 +52,8 @@
     "urlLabel": "Voucher URL",
     "urlPlaceholder": "https://mapa.nabezky.sk",
     "error": "Failed to generate voucher. Please try again.",
-    "voucherNumber": "Voucher Number"
+    "voucherNumber": "Voucher Number",
+    "createTestVoucher": "Create test voucher"
   },
   "auth": {
     "loginText": "Log in",
