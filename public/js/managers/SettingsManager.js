@@ -202,9 +202,23 @@ class SettingsManager {
     }
 
     initializeVoucherUrlField() {
+        const stateManager = StateManager.getInstance();
+        const currentUser = stateManager.getState('auth.user');
+        const isAdmin = currentUser?.ski_center_admin === "1";
+
+        const voucherUrlSection = document.getElementById('voucher-url-section');
+        if (voucherUrlSection) {
+            voucherUrlSection.style.display = isAdmin ? 'block' : 'none';
+        }
+
         const voucherUrlInput = document.getElementById('voucher-url');
         if (!voucherUrlInput) {
             this.logger.warn('Voucher URL input not found');
+            return;
+        }
+
+        // Only initialize if user is admin
+        if (!isAdmin) {
             return;
         }
 
@@ -245,6 +259,20 @@ class SettingsManager {
         const settingsContainer = document.getElementById('settings-container');
         if (settingsContainer) {
             settingsContainer.style.display = 'block';
+        }
+
+        // Update voucher URL field visibility based on admin status
+        this.updateVoucherUrlFieldVisibility();
+    }
+
+    updateVoucherUrlFieldVisibility() {
+        const stateManager = StateManager.getInstance();
+        const currentUser = stateManager.getState('auth.user');
+        const isAdmin = currentUser?.ski_center_admin === "1";
+
+        const voucherUrlSection = document.getElementById('voucher-url-section');
+        if (voucherUrlSection) {
+            voucherUrlSection.style.display = isAdmin ? 'block' : 'none';
         }
     }
 
