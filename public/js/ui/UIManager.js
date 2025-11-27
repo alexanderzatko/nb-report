@@ -603,19 +603,21 @@ async setupDashboardCards() {
     
     if (qrCodeElement && qrCodeUrl) {
       qrCodeElement.innerHTML = '';
-      // QRCode is loaded from CDN, available globally
+      // QRCode is loaded from vendor, available globally
       if (typeof QRCode !== 'undefined') {
-        const canvas = document.createElement('canvas');
-        QRCode.toCanvas(canvas, qrCodeUrl, {
-          width: 300,
-          margin: 2
-        }, (error) => {
-          if (error) {
-            this.logger.error('Error generating QR code:', error);
-          } else {
-            qrCodeElement.appendChild(canvas);
-          }
-        });
+        try {
+          // qrcodejs library API
+          const qr = new QRCode(qrCodeElement, {
+            text: qrCodeUrl,
+            width: 300,
+            height: 300,
+            colorDark: '#000000',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.H
+          });
+        } catch (error) {
+          this.logger.error('Error generating QR code:', error);
+        }
       } else {
         this.logger.error('QRCode library not loaded');
       }
