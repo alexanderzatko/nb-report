@@ -6,6 +6,7 @@ import FormManager from '../form/FormManager.js';
 import StateManager from '../state/StateManager.js';
 import GPSManager from '../managers/GPSManager.js';
 import DatabaseManager from '../managers/DatabaseManager.js';
+import VoucherManager from '../managers/VoucherManager.js';
 
 class UIManager {
   static instance = null;
@@ -162,6 +163,7 @@ class UIManager {
       await this.setupDashboardCards();
       await this.setupSettingsButtons();
       await this.setupFormButtons();
+      await this.setupVoucherButtons();
       
       this.updateFullPageContent();
       this.logger.debug('Authenticated UI initialization complete');
@@ -250,6 +252,10 @@ async setupDashboardCards() {
 
         this.showSnowReportForm();
     });
+
+    // Generate Voucher Card
+    const generateVoucherLink = document.getElementById('generate-voucher-link');
+    setupCard(generateVoucherLink, () => this.showVoucherForm());
     
     if (!continueReportLink && !newReportLink) {
         this.logger.debug('No report cards found');
@@ -369,6 +375,77 @@ async setupDashboardCards() {
     // to ensure proper form state management and clearing
   }
 
+  async setupVoucherButtons() {
+    this.logger.debug('Setting up voucher buttons');
+    
+    const wholeSeasonButton = document.getElementById('voucher-whole-season');
+    const threeDaysButton = document.getElementById('voucher-three-days');
+    const backButton = document.getElementById('voucher-back-button');
+    
+    if (wholeSeasonButton) {
+      wholeSeasonButton.addEventListener('click', async () => {
+        await this.handleVoucherGeneration(0);
+      });
+    }
+    
+    if (threeDaysButton) {
+      threeDaysButton.addEventListener('click', async () => {
+        await this.handleVoucherGeneration(3);
+      });
+    }
+    
+    if (backButton) {
+      backButton.addEventListener('click', async () => {
+        await this.showDashboard();
+      });
+    }
+  }
+
+  async handleVoucherGeneration(duration) {
+    this.logger.debug('Handling voucher generation', { duration });
+    
+    const stateManager = StateManager.getInstance();
+    const userData = stateManager.getState('auth.user');
+    
+    if (!userData || !userData.ski_center_id) {
+      this.logger.error('No ski center ID available');
+      this.showError(this.i18next.t('voucher.error'));
+      return;
+    }
+    
+    const errorElement = document.getElementById('voucher-error');
+    if (errorElement) {
+      errorElement.style.display = 'none';
+      errorElement.textContent = '';
+    }
+    
+    try {
+      const voucherManager = VoucherManager.getInstance();
+      const voucherData = await voucherManager.createVoucher({
+        duration: duration,
+        count: 1,
+        ski_center_ID: userData.ski_center_id
+      });
+      
+      if (voucherData && voucherData.voucher_number) {
+        const StorageManager = (await import('../storage/StorageManager.js')).default;
+        const storageManager = StorageManager.getInstance();
+        const voucherUrl = storageManager.getLocalStorage('voucherUrl') || 'https://mapa.nabezky.sk';
+        const qrCodeUrl = `${voucherUrl}?voucher=${voucherData.voucher_number}`;
+        
+        this.showVoucherDisplay(voucherData.voucher_number, qrCodeUrl);
+      } else {
+        throw new Error('Invalid voucher response');
+      }
+    } catch (error) {
+      this.logger.error('Error generating voucher:', error);
+      if (errorElement) {
+        errorElement.textContent = this.i18next.t('voucher.error');
+        errorElement.style.display = 'block';
+      }
+    }
+  }
+
   addButtonHoverEffects(button) {
     button.addEventListener('mouseenter', () => {
         button.style.opacity = '0.8';
@@ -399,7 +476,7 @@ async setupDashboardCards() {
     const stateManager = StateManager.getInstance();
     const userData = stateManager.getState('auth.user');
 
-    const containers = ['settings-container', 'snow-report-form'];
+    const containers = ['settings-container', 'snow-report-form', 'voucher-form-container', 'voucher-display-container'];
     containers.forEach(id => {
       const container = document.getElementById(id);
       if (container) {
@@ -444,6 +521,11 @@ async setupDashboardCards() {
       // Update user elements when showing dashboard
       if (userData) {
           this.updateUserSpecificElements(userData);
+          // Show/hide voucher card based on admin status
+          const voucherCard = document.getElementById('generate-voucher-link');
+          if (voucherCard) {
+              voucherCard.style.display = userData.ski_center_admin === "1" ? 'block' : 'none';
+          }
       }
     }
     this.updateBackground('dashboard');
@@ -457,7 +539,7 @@ async setupDashboardCards() {
   showSettings() {
     this.logger.debug('Showing settings');
     
-    const containers = ['dashboard-container', 'snow-report-form'];
+    const containers = ['dashboard-container', 'snow-report-form', 'voucher-form-container', 'voucher-display-container'];
     containers.forEach(id => {
       const container = document.getElementById(id);
       if (container) {
@@ -476,6 +558,70 @@ async setupDashboardCards() {
       }
     }
     this.updateBackground('settings');
+  }
+
+  showVoucherForm() {
+    this.logger.debug('Showing voucher form');
+    
+    const containers = ['dashboard-container', 'snow-report-form', 'settings-container', 'voucher-display-container'];
+    containers.forEach(id => {
+      const container = document.getElementById(id);
+      if (container) {
+          container.style.display = 'none';
+      }
+    });
+
+    const voucherFormContainer = document.getElementById('voucher-form-container');
+    if (voucherFormContainer) {
+      voucherFormContainer.style.display = 'block';
+    }
+    this.updateBackground('form');
+  }
+
+  showVoucherDisplay(voucherNumber, qrCodeUrl) {
+    this.logger.debug('Showing voucher display', { voucherNumber, qrCodeUrl });
+    
+    const containers = ['dashboard-container', 'snow-report-form', 'settings-container', 'voucher-form-container'];
+    containers.forEach(id => {
+      const container = document.getElementById(id);
+      if (container) {
+          container.style.display = 'none';
+      }
+    });
+
+    const voucherDisplayContainer = document.getElementById('voucher-display-container');
+    const voucherNumberElement = document.getElementById('voucher-number');
+    const qrCodeElement = document.getElementById('voucher-qr-code');
+    
+    if (voucherDisplayContainer) {
+      voucherDisplayContainer.style.display = 'block';
+    }
+    
+    if (voucherNumberElement) {
+      voucherNumberElement.textContent = voucherNumber;
+    }
+    
+    if (qrCodeElement && qrCodeUrl) {
+      qrCodeElement.innerHTML = '';
+      // QRCode is loaded from CDN, available globally
+      if (typeof QRCode !== 'undefined') {
+        const canvas = document.createElement('canvas');
+        QRCode.toCanvas(canvas, qrCodeUrl, {
+          width: 300,
+          margin: 2
+        }, (error) => {
+          if (error) {
+            this.logger.error('Error generating QR code:', error);
+          } else {
+            qrCodeElement.appendChild(canvas);
+          }
+        });
+      } else {
+        this.logger.error('QRCode library not loaded');
+      }
+    }
+    
+    this.updateBackground('form');
   }
 
   async showSnowReportForm() {

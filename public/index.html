@@ -55,6 +55,12 @@
 		            <h3 data-i18n="dashboard.newReport">New Report</h3>
 		            <p data-i18n="dashboard.newReportDesc">Submit a new snow condition report</p>
 		        </a>
+		        <!-- Generate Voucher Card (Admin Only) -->
+		        <a href="#" class="dashboard-card" id="generate-voucher-link" style="display: none;">
+		            <div class="card-icon"></div>
+		            <h3 data-i18n="voucher.generateVoucher">Generate voucher</h3>
+		            <p data-i18n="voucher.generateVoucherDesc">Generate new seasonal, or 3-day access voucher to Mapa Na bežky</p>
+		        </a>
                         <div class="dashboard-header">
                             <h2 id="welcome-head" data-i18n="welcome"></h2>
                         </div>
@@ -73,9 +79,47 @@
                         <h2 id="settings-title" data-i18n="settings.title">Settings</h2>
                     </div>
                     <div class="settings-content">
+                        <div class="settings-section">
+                            <label for="voucher-url" data-i18n="voucher.urlLabel">Voucher URL:</label>
+                            <input type="text" id="voucher-url" placeholder="https://mapa.nabezky.sk" data-i18n-placeholder="voucher.urlPlaceholder" />
+                        </div>
                         <div class="settings-buttons">
                             <button type="button" id="dashboard-button" class="settings-button" data-i18n="settings.returnToDashboard">Return to Dashboard</button>
                             <button type="button" id="logout-button" class="settings-button" data-i18n="auth.logout">Logout</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Voucher Form Page -->
+                <div id="voucher-form-container" class="page-content" style="display: none;">
+                    <div class="dashboard-header">
+                        <h2 data-i18n="voucher.formTitle">Generate new voucher</h2>
+                    </div>
+                    <div class="voucher-form-content">
+                        <div class="voucher-buttons">
+                            <button type="button" id="voucher-whole-season" class="voucher-button" data-duration="0">
+                                <span data-i18n="voucher.wholeSeason">Whole season</span>
+                            </button>
+                            <button type="button" id="voucher-three-days" class="voucher-button" data-duration="3">
+                                <span data-i18n="voucher.threeDays">3days</span>
+                            </button>
+                        </div>
+                        <div id="voucher-error" class="voucher-error" style="display: none;"></div>
+                    </div>
+                </div>
+
+                <!-- Voucher Display Page -->
+                <div id="voucher-display-container" class="page-content" style="display: none;">
+                    <div class="voucher-display-content">
+                        <div class="voucher-number-display">
+                            <h2 data-i18n="voucher.voucherNumber">Voucher Number</h2>
+                            <div id="voucher-number" class="voucher-number-large"></div>
+                        </div>
+                        <div class="voucher-qr-container">
+                            <div id="voucher-qr-code"></div>
+                        </div>
+                        <div class="voucher-actions">
+                            <button type="button" id="voucher-back-button" class="settings-button" data-i18n="voucher.backToDashboard">Back to Dashboard</button>
                         </div>
                     </div>
                 </div>
@@ -341,6 +385,7 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <script type="module" src="/js/app.js"></script>
     <script type="module" src="/js/i18n.js"></script>
 </body>

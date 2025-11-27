@@ -42,6 +42,18 @@
       "title": "Správa stredísk"
     }
   },
+  "voucher": {
+    "generateVoucher": "Generovať voucher",
+    "generateVoucherDesc": "Generovať nový sezónny alebo 3-dňový prístupový voucher pre Mapa Na bežky",
+    "formTitle": "Generovať nový voucher",
+    "wholeSeason": "Celá sezóna",
+    "threeDays": "3 dni",
+    "backToDashboard": "Späť na hlavnú stránku",
+    "urlLabel": "URL voucheru",
+    "urlPlaceholder": "https://mapa.nabezky.sk",
+    "error": "Nepodarilo sa vygenerovať voucher. Skúste to prosím znova.",
+    "voucherNumber": "Číslo voucheru"
+  },
   "auth": {
     "loginText": "Prihlásiť sa do aplikácie",
     "login": "Prihlásiť",

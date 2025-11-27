@@ -776,6 +776,58 @@ app.get('/api/user-data', async (req, res) => {
   }
 });
 
+app.post('/api/rules_create_voucher', async (req, res) => {
+  logger.info('Voucher creation request received', { sessionID: req.sessionID });
+  
+  if (!req.session || !req.session.accessToken) {
+    logger.warn('Unauthorized voucher creation request', { sessionID: req.sessionID });
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  const { duration, count, ski_center_ID } = req.body;
+
+  if (duration === undefined || count === undefined || !ski_center_ID) {
+    logger.warn('Invalid voucher creation parameters', { duration, count, ski_center_ID });
+    return res.status(400).json({ error: 'Missing required parameters: duration, count, ski_center_ID' });
+  }
+
+  try {
+    const response = await axios.post(
+      `${OAUTH_PROVIDER_URL}/nabezky/rules/rules_create_voucher`,
+      {
+        duration,
+        count,
+        ski_center_ID
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${req.session.accessToken}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      }
+    );
+
+    logger.info('Voucher created successfully:', response.data);
+
+    res.json(response.data);
+  } catch (error) {
+    logger.error('Error creating voucher:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    });
+    
+    if (error.response?.status === 401) {
+      res.status(401).json({ error: 'Not authenticated' });
+    } else if (error.response?.status === 400) {
+      res.status(400).json({ error: error.response.data?.error || 'Invalid request' });
+    } else {
+      res.status(500).json({ error: 'Failed to create voucher' });
+    }
+  }
+});
+
 
 // Endpoint to check session validity
 app.get('/api/check-session', (req, res) => {

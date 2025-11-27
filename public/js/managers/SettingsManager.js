@@ -55,6 +55,7 @@ class SettingsManager {
             // Add event listeners for settings controls
             this.setupEventListeners();
             await this.updateSkiCentersSection();
+            this.initializeVoucherUrlField();
             
             this.initialized = true;
             this.logger.debug('Settings manager initialized');
@@ -198,6 +199,36 @@ class SettingsManager {
                 window.dispatchEvent(new Event('showDashboard'));
             });
         }
+    }
+
+    initializeVoucherUrlField() {
+        const voucherUrlInput = document.getElementById('voucher-url');
+        if (!voucherUrlInput) {
+            this.logger.warn('Voucher URL input not found');
+            return;
+        }
+
+        // Load saved value or use default
+        const savedUrl = StorageManager.getInstance().getLocalStorage('voucherUrl');
+        voucherUrlInput.value = savedUrl || 'https://mapa.nabezky.sk';
+
+        // Save on change
+        voucherUrlInput.addEventListener('change', () => {
+            const url = voucherUrlInput.value.trim();
+            if (url) {
+                StorageManager.getInstance().setLocalStorage('voucherUrl', url);
+                this.logger.debug('Voucher URL saved:', url);
+            }
+        });
+
+        // Also save on blur
+        voucherUrlInput.addEventListener('blur', () => {
+            const url = voucherUrlInput.value.trim();
+            if (url) {
+                StorageManager.getInstance().setLocalStorage('voucherUrl', url);
+                this.logger.debug('Voucher URL saved on blur:', url);
+            }
+        });
     }
 
     show() {

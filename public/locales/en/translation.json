@@ -42,6 +42,18 @@
       "title": "Manage Ski Centers"
     }
   },
+  "voucher": {
+    "generateVoucher": "Generate voucher",
+    "generateVoucherDesc": "Generate new seasonal, or 3-day access voucher to Mapa Na bežky",
+    "formTitle": "Generate new voucher",
+    "wholeSeason": "Whole season",
+    "threeDays": "3days",
+    "backToDashboard": "Back to Dashboard",
+    "urlLabel": "Voucher URL",
+    "urlPlaceholder": "https://mapa.nabezky.sk",
+    "error": "Failed to generate voucher. Please try again.",
+    "voucherNumber": "Voucher Number"
+  },
   "auth": {
     "loginText": "Log in",
     "login": "Login",
