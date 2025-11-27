@@ -34,7 +34,7 @@ class VoucherManager {
       const response = await this.networkManager.post(endpoint, {
         duration,
         count,
-        ski_center_ID
+        scenter_nid: ski_center_ID
       });
       
       this.logger.debug('Voucher created successfully', response);

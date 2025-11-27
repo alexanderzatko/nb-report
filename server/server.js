@@ -795,11 +795,14 @@ app.post('/api/rules_create_voucher', async (req, res) => {
     return res.status(401).json({ error: 'Not authenticated' });
   }
 
-  const { duration, count, ski_center_ID } = req.body;
+  const { duration, count, scenter_nid, ski_center_ID } = req.body;
+  
+  // Accept either scenter_nid (from client) or ski_center_ID (legacy), prefer scenter_nid
+  const skiCenterNid = scenter_nid || ski_center_ID;
 
-  if (duration === undefined || count === undefined || !ski_center_ID) {
-    logger.warn('Invalid voucher creation parameters', { duration, count, ski_center_ID });
-    return res.status(400).json({ error: 'Missing required parameters: duration, count, ski_center_ID' });
+  if (duration === undefined || count === undefined || !skiCenterNid) {
+    logger.warn('Invalid voucher creation parameters', { duration, count, scenter_nid, ski_center_ID });
+    return res.status(400).json({ error: 'Missing required parameters: duration, count, scenter_nid' });
   }
 
   const endpointUrl = `${OAUTH_PROVIDER_URL}/nabezky/rules/rules_create_voucher`;
@@ -807,7 +810,7 @@ app.post('/api/rules_create_voucher', async (req, res) => {
     url: endpointUrl,
     hasAccessToken: !!req.session.accessToken,
     accessTokenLength: req.session.accessToken.length,
-    requestBody: { duration, count, ski_center_ID }
+    requestBody: { duration, count, scenter_nid: skiCenterNid }
   });
 
   try {
@@ -816,7 +819,7 @@ app.post('/api/rules_create_voucher', async (req, res) => {
       {
         duration,
         count,
-        ski_center_ID
+        scenter_nid: skiCenterNid
       },
       {
         headers: {
