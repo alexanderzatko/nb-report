@@ -139,7 +139,7 @@
     "photos": "Fotografie:",
     "selectPhotos": "Vybrat fotografie",
     "captionPlaceholder": "Přidat popisek ...",
-    "photoReorderInstruction": "Klikněte kdekoli na fotografii a přetáhněte ji na novou pozici, abyste změnili pořadí fotografií",
+    "photoReorderInstruction": "Klepnutím a přetažením můžete změnit pořadí fotografií.",
     "videos": "Videa:",
     "selectVideos": "Vybrat videa",
     "uploadingVideos": "Nahrává se video {{current}} z {{total}}...",
