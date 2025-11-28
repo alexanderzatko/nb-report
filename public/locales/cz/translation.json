@@ -44,7 +44,7 @@
   },
   "voucher": {
     "generateVoucher": "Generovat kupon",
-    "generateVoucherDesc": "Generovat nový sezónní nebo 3denní přístupový kupon",
+    "generateVoucherDesc": "Generovat kupon pro přístup k mapě Na bežky",
     "formTitle": "Generovat nový kupon",
     "wholeSeason": "Celá sezóna",
     "threeDays": "3 dny",

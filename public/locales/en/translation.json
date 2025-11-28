@@ -44,7 +44,7 @@
   },
   "voucher": {
     "generateVoucher": "Generate voucher",
-    "generateVoucherDesc": "Generate new seasonal, or 3-day access voucher",
+    "generateVoucherDesc": "Generate voucher for access to Na bežky Map",
     "formTitle": "Generate new voucher",
     "wholeSeason": "Whole season",
     "threeDays": "3days",
