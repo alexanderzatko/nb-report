@@ -140,6 +140,20 @@ class PhotoManager {
     this.initialized = false;  // Reset flag when forced
     console.log('Finding photo elements');
 
+    // Create or find photo reorder instruction text
+    let reorderInstruction = document.getElementById('photo-reorder-instruction');
+    const previewContainer = document.getElementById('photo-preview-container');
+    if (previewContainer && !reorderInstruction) {
+      reorderInstruction = document.createElement('p');
+      reorderInstruction.id = 'photo-reorder-instruction';
+      reorderInstruction.className = 'photo-reorder-instruction';
+      reorderInstruction.textContent = this.i18next.t('form.photoReorderInstruction', 'Click anywhere on a photo and drag it to a new position to rearrange the photos order');
+      reorderInstruction.style.display = 'none'; // Hidden by default, shown when 2+ photos
+      previewContainer.parentNode.insertBefore(reorderInstruction, previewContainer);
+    } else if (reorderInstruction) {
+      reorderInstruction.textContent = this.i18next.t('form.photoReorderInstruction', 'Click anywhere on a photo and drag it to a new position to rearrange the photos order');
+    }
+
     // Find existing elements
     const selectPhotosBtn = document.getElementById('select-photos');
     const takePhotoBtn = document.getElementById('take-photo');
@@ -236,32 +250,11 @@ class PhotoManager {
           input.placeholder = this.i18next.t('form.captionPlaceholder', 'Add a caption...');
       });
       
-      // Update reorder control text - find all reorder controls and update their text
-      const reorderControls = document.querySelectorAll('.photo-reorder-controls');
-      reorderControls.forEach(controls => {
-          const children = Array.from(controls.children);
-          children.forEach((child, index) => {
-              if (child.classList.contains('move-photo-up')) {
-                  // Update button title
-                  child.title = this.i18next.t('form.movePhotoUp', 'Move up');
-                  // Find and update next sibling text
-                  const nextSibling = children[index + 1];
-                  if (nextSibling && nextSibling.classList.contains('reorder-text')) {
-                      nextSibling.textContent = this.i18next.t('form.up', 'up');
-                  }
-              } else if (child.classList.contains('move-photo-down')) {
-                  // Update button title
-                  child.title = this.i18next.t('form.movePhotoDown', 'Move down');
-                  // Find and update previous sibling text
-                  const prevSibling = children[index - 1];
-                  if (prevSibling && prevSibling.classList.contains('reorder-text')) {
-                      prevSibling.textContent = this.i18next.t('form.down', 'down');
-                  }
-              } else if (child.classList.contains('reorder-text') && child.classList.contains('move-text')) {
-                  child.textContent = this.i18next.t('form.movePhoto', 'move photo');
-              }
-          });
-      });
+      // Update photo reorder instruction text
+      const reorderInstruction = document.getElementById('photo-reorder-instruction');
+      if (reorderInstruction) {
+          reorderInstruction.textContent = this.i18next.t('form.photoReorderInstruction', 'Click anywhere on a photo and drag it to a new position to rearrange the photos order');
+      }
   }
   
   createInputElements() {
@@ -391,59 +384,6 @@ class PhotoManager {
     // Reorder DOM elements
     await this.reorderDOMElements();
     
-    // Update button states
-    this.updateReorderButtons();
-    
-    // Update database order
-    await this.savePhotoOrderToDatabase();
-  }
-  
-  async movePhotoUp(photoId) {
-    const currentIndex = this.photoEntries.findIndex(entry => entry.id === photoId);
-    if (currentIndex <= 0) {
-      return; // Already at top
-    }
-    
-    // Swap with previous photo
-    [this.photoEntries[currentIndex - 1], this.photoEntries[currentIndex]] = 
-      [this.photoEntries[currentIndex], this.photoEntries[currentIndex - 1]];
-    
-    // Update order indices
-    this.photoEntries.forEach((entry, index) => {
-      entry.order = index;
-    });
-    
-    // Reorder DOM elements
-    await this.reorderDOMElements();
-    
-    // Update button states
-    this.updateReorderButtons();
-    
-    // Update database order
-    await this.savePhotoOrderToDatabase();
-  }
-  
-  async movePhotoDown(photoId) {
-    const currentIndex = this.photoEntries.findIndex(entry => entry.id === photoId);
-    if (currentIndex === -1 || currentIndex >= this.photoEntries.length - 1) {
-      return; // Already at bottom
-    }
-    
-    // Swap with next photo
-    [this.photoEntries[currentIndex], this.photoEntries[currentIndex + 1]] = 
-      [this.photoEntries[currentIndex + 1], this.photoEntries[currentIndex]];
-    
-    // Update order indices
-    this.photoEntries.forEach((entry, index) => {
-      entry.order = index;
-    });
-    
-    // Reorder DOM elements
-    await this.reorderDOMElements();
-    
-    // Update button states
-    this.updateReorderButtons();
-    
     // Update database order
     await this.savePhotoOrderToDatabase();
   }
@@ -483,30 +423,6 @@ class PhotoManager {
     }
   }
   
-  updateReorderButtons() {
-    const previewContainer = document.getElementById('photo-preview-container');
-    if (!previewContainer) {
-      return;
-    }
-    
-    // Sort entries by order to get current positions
-    const sortedEntries = [...this.photoEntries].sort((a, b) => a.order - b.order);
-    
-    sortedEntries.forEach((entry, index) => {
-      const wrapper = previewContainer.querySelector(`[data-photo-id="${entry.id}"]`);
-      if (wrapper) {
-        const moveUpBtn = wrapper.querySelector('.move-photo-up');
-        const moveDownBtn = wrapper.querySelector('.move-photo-down');
-        
-        if (moveUpBtn) {
-          moveUpBtn.disabled = index === 0;
-        }
-        if (moveDownBtn) {
-          moveDownBtn.disabled = index === sortedEntries.length - 1;
-        }
-      }
-    });
-  }
   
   async addTimestampToImage(file, timestamp) {
       return new Promise((resolve, reject) => {
@@ -741,63 +657,6 @@ class PhotoManager {
           controlsDiv.appendChild(rotateBtn);
           controlsDiv.appendChild(removeBtn);
           
-          // Add reorder controls with horizontal layout between photo and caption
-          const reorderControls = document.createElement('div');
-          reorderControls.className = 'photo-reorder-controls';
-          
-          const moveUpBtn = document.createElement('button');
-          moveUpBtn.className = 'move-photo-up';
-          moveUpBtn.innerHTML = '↑';
-          moveUpBtn.title = this.i18next.t('form.movePhotoUp', 'Move up');
-          moveUpBtn.onclick = (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            this.movePhotoUp(photoId).then(() => {
-              this.updateReorderButtons();
-            });
-          };
-          
-          const upText = document.createElement('span');
-          upText.className = 'reorder-text';
-          upText.textContent = this.i18next.t('form.up', 'up');
-          
-          const moveDownBtn = document.createElement('button');
-          moveDownBtn.className = 'move-photo-down';
-          moveDownBtn.innerHTML = '↓';
-          moveDownBtn.title = this.i18next.t('form.movePhotoDown', 'Move down');
-          moveDownBtn.onclick = (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            this.movePhotoDown(photoId).then(() => {
-              this.updateReorderButtons();
-            });
-          };
-          
-          const downText = document.createElement('span');
-          downText.className = 'reorder-text';
-          downText.textContent = this.i18next.t('form.down', 'down');
-          
-          const moveText = document.createElement('span');
-          moveText.className = 'reorder-text move-text';
-          moveText.textContent = this.i18next.t('form.movePhoto', 'move photo');
-          
-          const separator1 = document.createElement('span');
-          separator1.className = 'reorder-separator';
-          separator1.textContent = '|';
-          
-          const separator2 = document.createElement('span');
-          separator2.className = 'reorder-separator';
-          separator2.textContent = '|';
-          
-          // Build horizontal layout: ^ up | move photo | down v
-          reorderControls.appendChild(moveUpBtn);
-          reorderControls.appendChild(upText);
-          reorderControls.appendChild(separator1);
-          reorderControls.appendChild(moveText);
-          reorderControls.appendChild(separator2);
-          reorderControls.appendChild(downText);
-          reorderControls.appendChild(moveDownBtn);
-          
           // Make photo preview draggable
           wrapper.draggable = true;
           wrapper.classList.add('draggable-photo');
@@ -823,20 +682,18 @@ class PhotoManager {
             const draggedPhotoId = e.dataTransfer.getData('text/plain');
             if (draggedPhotoId && draggedPhotoId !== photoId) {
               await this.reorderPhotos(draggedPhotoId, photoId);
-              this.updateReorderButtons();
             }
           });
           
-          // Assemble the layout: img, controls, reorderControls, photoInfo (with caption)
+          // Assemble the layout: img, controls, photoInfo (with caption)
           photoInfo.appendChild(captionInput);
           wrapper.appendChild(img);
           wrapper.appendChild(controlsDiv);
-          wrapper.appendChild(reorderControls);
           wrapper.appendChild(photoInfo);
-          
-          // Update button states after adding
-          setTimeout(() => this.updateReorderButtons(), 0);
           previewContainer.appendChild(wrapper);
+          
+          // Update instruction text visibility
+          this.updateReorderInstructionVisibility();
 
           resolve();
         } catch (error) {
@@ -885,11 +742,11 @@ class PhotoManager {
               entry.order = index;
           });
       
-          // Update button states
-          this.updateReorderButtons();
-          
           // Update database order
           await this.savePhotoOrderToDatabase();
+          
+          // Update instruction text visibility
+          this.updateReorderInstructionVisibility();
         }
       } catch (error) {
           this.logger.error('Error removing photo:', error);
@@ -958,6 +815,20 @@ class PhotoManager {
     if (previewContainer) {
       previewContainer.innerHTML = '';
     }
+    // Update instruction text visibility
+    this.updateReorderInstructionVisibility();
+  }
+  
+  updateReorderInstructionVisibility() {
+    const reorderInstruction = document.getElementById('photo-reorder-instruction');
+    if (reorderInstruction) {
+      // Show instruction only if there are 2+ photos (reordering only makes sense with multiple photos)
+      if (this.photoEntries.length >= 2) {
+        reorderInstruction.style.display = 'block';
+      } else {
+        reorderInstruction.style.display = 'none';
+      }
+    }
   }
 
   setCurrentFormId(formId) {
@@ -1024,11 +895,11 @@ class PhotoManager {
           this.photoEntries.sort((a, b) => a.order - b.order);
           await this.reorderDOMElements();
           
-          // Update button states after restoration
-          this.updateReorderButtons();
-          
           // Update database with correct orders (in case some were missing)
           await this.savePhotoOrderToDatabase();
+          
+          // Update instruction text visibility
+          this.updateReorderInstructionVisibility();
       } catch (error) {
           this.logger.error('Error restoring photos:', error);
       }
