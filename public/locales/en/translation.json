@@ -140,6 +140,8 @@
     "selectPhotos": "Select photos",
     "takePhoto": "Take Photo",
     "captionPlaceholder": "Add acaption ...",
+    "movePhotoUp": "Move photo up",
+    "movePhotoDown": "Move photo down",
     "videos": "Videos:",
     "selectVideos": "Select Videos",
     "videoTooLarge": "Video is too large. Maximum is 50MB",

@@ -359,7 +359,7 @@ class DatabaseManager {
     }
 
     // Photo methods
-    async savePhoto(formId, file, caption = '') {
+    async savePhoto(formId, file, caption = '', order = 0, photoTimestamp = null) {
         try {
             // Convert file to base64 BEFORE starting the transaction
             const fileData = {
@@ -373,7 +373,9 @@ class DatabaseManager {
                 id: Date.now().toString(),
                 formId,
                 caption,
-                timestamp: new Date().toISOString(),
+                order: order,
+                timestamp: photoTimestamp ? photoTimestamp.toISOString() : new Date().toISOString(),
+                photoTimestamp: photoTimestamp ? photoTimestamp.toISOString() : null,
                 file: fileData
             };
     
@@ -437,8 +439,11 @@ class DatabaseManager {
                     const photos = request.result;
                     const processedPhotos = photos.map(photo => ({
                         ...photo,
-                        photo: this.base64ToFile(photo.file.data, photo.file.name, photo.file.type)
+                        photo: this.base64ToFile(photo.file.data, photo.file.name, photo.file.type),
+                        order: photo.order !== undefined ? photo.order : 0
                     }));
+                    // Sort by order
+                    processedPhotos.sort((a, b) => (a.order || 0) - (b.order || 0));
                     resolve(processedPhotos);
                 };
                 
@@ -529,6 +534,36 @@ class DatabaseManager {
             });
         } catch (error) {
             this.logger.error('Error updating caption:', error);
+            throw error;
+        }
+    }
+    
+    async updatePhotoOrder(photoId, order) {
+        try {
+            const db = await this.getDatabase();
+            const transaction = db.transaction(['photos'], 'readwrite');
+            const store = transaction.objectStore('photos');
+    
+            return new Promise((resolve, reject) => {
+                const getRequest = store.get(photoId);
+                
+                getRequest.onsuccess = () => {
+                    const photo = getRequest.result;
+                    if (photo) {
+                        photo.order = order;
+                        const updateRequest = store.put(photo);
+                        updateRequest.onsuccess = () => {
+                            resolve();
+                        };
+                        updateRequest.onerror = () => reject(updateRequest.error);
+                    } else {
+                        reject(new Error('Photo not found'));
+                    }
+                };
+                getRequest.onerror = () => reject(getRequest.error);
+            });
+        } catch (error) {
+            this.logger.error('Error updating photo order:', error);
             throw error;
         }
     }

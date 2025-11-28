@@ -140,6 +140,8 @@
     "selectPhotos": "Vybrať fotografie",
     "takePhoto": "Urobiť fotografiu",
     "captionPlaceholder": "Pridať popisku ...",
+    "movePhotoUp": "Presunúť fotografiu nahor",
+    "movePhotoDown": "Presunúť fotografiu nadol",
     "videos": "Videá:",
     "selectVideos": "Vybrať videá",
     "videoTooLarge": "Video je príliš veľké. Maximum je 50MB",

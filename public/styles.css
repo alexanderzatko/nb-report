@@ -698,6 +698,27 @@ div#photo-preview-container {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  cursor: move;
+  transition: transform 0.2s, opacity 0.2s, border-color 0.2s;
+}
+
+.photo-preview.draggable-photo {
+  cursor: grab;
+}
+
+.photo-preview.draggable-photo:active {
+  cursor: grabbing;
+}
+
+.photo-preview.dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+}
+
+.photo-preview.drag-over {
+  border-color: #0078d4;
+  border-width: 2px;
+  transform: scale(1.05);
 }
 
 .photo-preview img {
@@ -761,6 +782,51 @@ div#photo-preview-container {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.photo-reorder-controls {
+    position: absolute;
+    bottom: 5px;
+    left: 5px;
+    display: flex;
+    gap: 3px;
+    z-index: 2;
+}
+
+.photo-reorder-controls button {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: none;
+    background-color: rgba(0, 120, 212, 0.8);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.3s, background-color 0.3s;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.photo-reorder-controls button:hover {
+    opacity: 1;
+    background-color: rgba(0, 120, 212, 1);
+}
+
+.photo-reorder-controls button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.move-photo-up {
+    bottom: 35px;
+}
+
+.move-photo-down {
+    bottom: 5px;
 }
 /* Photos upload STOP */
 

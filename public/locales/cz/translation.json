@@ -139,6 +139,8 @@
     "photos": "Fotografie:",
     "selectPhotos": "Vybrat fotografie",
     "captionPlaceholder": "Přidat popisek ...",
+    "movePhotoUp": "Posunout fotografii nahoru",
+    "movePhotoDown": "Posunout fotografii dolů",
     "videos": "Videa:",
     "selectVideos": "Vybrat videa",
     "uploadingVideos": "Nahrává se video {{current}} z {{total}}...",

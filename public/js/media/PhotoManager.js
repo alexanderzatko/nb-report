@@ -280,31 +280,47 @@ class PhotoManager {
       const userData = stateManager.getState('auth.user');
       const isAdmin = userData?.ski_center_admin === "1";
   
-      for (const file of fileList) {
-          try {
-              if (!file.type.startsWith('image/')) {
-                  this.logger.warn(`Skipping non-image file: ${file.name}`);
-                  continue;
-              }
+      // Step 1: Extract timestamps for all photos and create file metadata
+      const fileMetadata = [];
+      for (const file of Array.from(fileList)) {
+          if (!file.type.startsWith('image/')) {
+              this.logger.warn(`Skipping non-image file: ${file.name}`);
+              continue;
+          }
+          
+          // Extract timestamp for all photos (for sorting purposes)
+          const photoTimestamp = await this.getPhotoTimestamp(file);
+          fileMetadata.push({
+              file,
+              timestamp: photoTimestamp,
+              timestampValue: photoTimestamp.getTime()
+          });
+      }
   
+      // Step 2: Sort files by timestamp (oldest first)
+      fileMetadata.sort((a, b) => a.timestampValue - b.timestampValue);
+      this.logger.debug('Files sorted by timestamp:', fileMetadata.map(f => ({ name: f.file.name, time: f.timestamp })));
+  
+      // Step 3: Process files in sorted order
+      for (const { file, timestamp: photoTimestamp } of fileMetadata) {
+          try {
               // Process image first
               let processedFile = await this.resizeImage(file);
-              let photoTimestamp;
   
               if (isAdmin) {
-                  photoTimestamp = await this.getPhotoTimestamp(file);
                   this.logger.debug('Original photo timestamp:', photoTimestamp);
   
-                  // Process the image with timestamp
+                  // Process the image with timestamp overlay
                   processedFile = await this.addTimestampToImage(processedFile, photoTimestamp);
               }
   
-              // Save to database
+              // Save to database with order based on timestamp
               let photoId = null;
               if (this.currentFormId) {
                   try {
                       const initialCaption = '';
-                      photoId = await this.dbManager.savePhoto(this.currentFormId, processedFile);
+                      const order = this.photoEntries.length;
+                      photoId = await this.dbManager.savePhoto(this.currentFormId, processedFile, initialCaption, order, photoTimestamp);
                       this.logger.debug('Saved photo to database:', photoId);
                   } catch (error) {
                       this.logger.error('Failed to save photo to database:', error);
@@ -315,7 +331,7 @@ class PhotoManager {
               // Only add to photos array and preview if database save was successful
               if (photoId || !this.currentFormId) {
                   this.photos.push(processedFile);
-                  await this.addPhotoPreview(processedFile, photoId);
+                  await this.addPhotoPreview(processedFile, photoId, '', photoTimestamp);
               }
   
           } catch (error) {
@@ -324,6 +340,145 @@ class PhotoManager {
               continue;
           }
       }
+  }
+  
+  async reorderPhotos(draggedPhotoId, targetPhotoId) {
+    const draggedIndex = this.photoEntries.findIndex(entry => entry.id === draggedPhotoId);
+    const targetIndex = this.photoEntries.findIndex(entry => entry.id === targetPhotoId);
+    
+    if (draggedIndex === -1 || targetIndex === -1) {
+      return;
+    }
+    
+    // Remove dragged photo from its position
+    const [draggedEntry] = this.photoEntries.splice(draggedIndex, 1);
+    
+    // Insert at target position
+    this.photoEntries.splice(targetIndex, 0, draggedEntry);
+    
+    // Update all order indices
+    this.photoEntries.forEach((entry, index) => {
+      entry.order = index;
+    });
+    
+    // Reorder DOM elements
+    await this.reorderDOMElements();
+    
+    // Update button states
+    this.updateReorderButtons();
+    
+    // Update database order
+    await this.savePhotoOrderToDatabase();
+  }
+  
+  async movePhotoUp(photoId) {
+    const currentIndex = this.photoEntries.findIndex(entry => entry.id === photoId);
+    if (currentIndex <= 0) {
+      return; // Already at top
+    }
+    
+    // Swap with previous photo
+    [this.photoEntries[currentIndex - 1], this.photoEntries[currentIndex]] = 
+      [this.photoEntries[currentIndex], this.photoEntries[currentIndex - 1]];
+    
+    // Update order indices
+    this.photoEntries.forEach((entry, index) => {
+      entry.order = index;
+    });
+    
+    // Reorder DOM elements
+    await this.reorderDOMElements();
+    
+    // Update button states
+    this.updateReorderButtons();
+    
+    // Update database order
+    await this.savePhotoOrderToDatabase();
+  }
+  
+  async movePhotoDown(photoId) {
+    const currentIndex = this.photoEntries.findIndex(entry => entry.id === photoId);
+    if (currentIndex === -1 || currentIndex >= this.photoEntries.length - 1) {
+      return; // Already at bottom
+    }
+    
+    // Swap with next photo
+    [this.photoEntries[currentIndex], this.photoEntries[currentIndex + 1]] = 
+      [this.photoEntries[currentIndex + 1], this.photoEntries[currentIndex]];
+    
+    // Update order indices
+    this.photoEntries.forEach((entry, index) => {
+      entry.order = index;
+    });
+    
+    // Reorder DOM elements
+    await this.reorderDOMElements();
+    
+    // Update button states
+    this.updateReorderButtons();
+    
+    // Update database order
+    await this.savePhotoOrderToDatabase();
+  }
+  
+  async reorderDOMElements() {
+    const previewContainer = document.getElementById('photo-preview-container');
+    if (!previewContainer) {
+      return;
+    }
+    
+    // Sort entries by order
+    const sortedEntries = [...this.photoEntries].sort((a, b) => a.order - b.order);
+    
+    // Reorder DOM elements to match sorted entries
+    sortedEntries.forEach((entry) => {
+      const wrapper = previewContainer.querySelector(`[data-photo-id="${entry.id}"]`);
+      if (wrapper) {
+        previewContainer.appendChild(wrapper);
+      }
+    });
+  }
+  
+  async savePhotoOrderToDatabase() {
+    if (!this.currentFormId) {
+      return;
+    }
+    
+    // Update order in database for all photos
+    for (const entry of this.photoEntries) {
+      if (entry.dbId) {
+        try {
+          await this.dbManager.updatePhotoOrder(entry.dbId, entry.order);
+        } catch (error) {
+          this.logger.error('Error updating photo order in database:', error);
+        }
+      }
+    }
+  }
+  
+  updateReorderButtons() {
+    const previewContainer = document.getElementById('photo-preview-container');
+    if (!previewContainer) {
+      return;
+    }
+    
+    // Sort entries by order to get current positions
+    const sortedEntries = [...this.photoEntries].sort((a, b) => a.order - b.order);
+    
+    sortedEntries.forEach((entry, index) => {
+      const wrapper = previewContainer.querySelector(`[data-photo-id="${entry.id}"]`);
+      if (wrapper) {
+        const moveUpBtn = wrapper.querySelector('.move-photo-up');
+        const moveDownBtn = wrapper.querySelector('.move-photo-down');
+        
+        if (moveUpBtn) {
+          moveUpBtn.disabled = index === 0;
+        }
+        if (moveDownBtn) {
+          moveDownBtn.disabled = index === sortedEntries.length - 1;
+        }
+      }
+    });
   }
   
   async addTimestampToImage(file, timestamp) {
@@ -444,7 +599,7 @@ class PhotoManager {
     });
   }
 
-  async addPhotoPreview(file, dbId, caption = '') {
+  async addPhotoPreview(file, dbId, caption = '', timestamp = null) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       
@@ -470,7 +625,8 @@ class PhotoManager {
             dbId: dbId,
             file: file,
             caption: caption,
-            order: photoOrder
+            order: photoOrder,
+            timestamp: timestamp || null
           };
           this.photoEntries.push(photoEntry);
           
@@ -535,6 +691,75 @@ class PhotoManager {
           controlsDiv.appendChild(rotateBtn);
           controlsDiv.appendChild(removeBtn);
           
+          // Add reorder buttons
+          const reorderControls = document.createElement('div');
+          reorderControls.className = 'photo-reorder-controls';
+          
+          const moveUpBtn = document.createElement('button');
+          moveUpBtn.className = 'move-photo-up';
+          moveUpBtn.innerHTML = '↑';
+          moveUpBtn.title = this.i18next.t('form.movePhotoUp', 'Move up');
+          moveUpBtn.onclick = (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            this.movePhotoUp(photoId).then(() => {
+              this.updateReorderButtons();
+            });
+          };
+          
+          const moveDownBtn = document.createElement('button');
+          moveDownBtn.className = 'move-photo-down';
+          moveDownBtn.innerHTML = '↓';
+          moveDownBtn.title = this.i18next.t('form.movePhotoDown', 'Move down');
+          moveDownBtn.onclick = (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            this.movePhotoDown(photoId).then(() => {
+              this.updateReorderButtons();
+            });
+          };
+          
+          // Store button references for later updates
+          wrapper.dataset.moveUpBtn = 'true';
+          wrapper.dataset.moveDownBtn = 'true';
+          
+          reorderControls.appendChild(moveUpBtn);
+          reorderControls.appendChild(moveDownBtn);
+          
+          wrapper.appendChild(reorderControls);
+          
+          // Update button states after adding
+          setTimeout(() => this.updateReorderButtons(), 0);
+          
+          // Make photo preview draggable
+          wrapper.draggable = true;
+          wrapper.classList.add('draggable-photo');
+          wrapper.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', photoId);
+            wrapper.classList.add('dragging');
+          });
+          wrapper.addEventListener('dragend', () => {
+            wrapper.classList.remove('dragging');
+          });
+          wrapper.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            if (!wrapper.classList.contains('drag-over')) {
+              wrapper.classList.add('drag-over');
+            }
+          });
+          wrapper.addEventListener('dragleave', () => {
+            wrapper.classList.remove('drag-over');
+          });
+          wrapper.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            wrapper.classList.remove('drag-over');
+            const draggedPhotoId = e.dataTransfer.getData('text/plain');
+            if (draggedPhotoId && draggedPhotoId !== photoId) {
+              await this.reorderPhotos(draggedPhotoId, photoId);
+              this.updateReorderButtons();
+            }
+          });
+          
           photoInfo.appendChild(captionInput);
           wrapper.appendChild(img);
           wrapper.appendChild(controlsDiv);
@@ -588,17 +813,11 @@ class PhotoManager {
               entry.order = index;
           });
       
-          // Update remaining indices
-          const allPreviews = document.querySelectorAll('.photo-preview');
-          allPreviews.forEach((preview, newIndex) => {
-              preview.dataset.photoIndex = newIndex;
-              const oldIndex = parseInt(preview.dataset.photoIndex);
-              if (this.photoCaptions.has(oldIndex)) {
-                  const caption = this.photoCaptions.get(oldIndex);
-                  this.photoCaptions.delete(oldIndex);
-                  this.photoCaptions.set(newIndex, caption);
-              }
-          });
+          // Update button states
+          this.updateReorderButtons();
+          
+          // Update database order
+          await this.savePhotoOrderToDatabase();
         }
       } catch (error) {
           this.logger.error('Error removing photo:', error);
@@ -710,10 +929,34 @@ class PhotoManager {
           this.photoCaptions.clear();
           this.photoEntries = [];  // Clear photo entries as well
           
-          // Restore each photo
-          for (const photoData of photos) {
-              await this.addPhotoPreview(photoData.photo, photoData.id, photoData.caption);
+          // Restore each photo with order and timestamp
+          // Sort photos by order first to ensure correct restoration order
+          const sortedPhotos = [...photos].sort((a, b) => {
+              const orderA = a.order !== undefined ? a.order : 0;
+              const orderB = b.order !== undefined ? b.order : 0;
+              return orderA - orderB;
+          });
+          
+          for (const photoData of sortedPhotos) {
+              const timestamp = photoData.photoTimestamp ? new Date(photoData.photoTimestamp) : null;
+              const order = photoData.order !== undefined ? photoData.order : this.photoEntries.length;
+              await this.addPhotoPreview(photoData.photo, photoData.id, photoData.caption || '', timestamp);
+              // Update the order of the entry that was just created
+              const lastEntry = this.photoEntries[this.photoEntries.length - 1];
+              if (lastEntry) {
+                  lastEntry.order = order;
+              }
           }
+          
+          // Ensure photos are sorted by order
+          this.photoEntries.sort((a, b) => a.order - b.order);
+          await this.reorderDOMElements();
+          
+          // Update button states after restoration
+          this.updateReorderButtons();
+          
+          // Update database with correct orders (in case some were missing)
+          await this.savePhotoOrderToDatabase();
       } catch (error) {
           this.logger.error('Error restoring photos:', error);
       }
