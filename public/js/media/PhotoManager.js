@@ -235,6 +235,33 @@ class PhotoManager {
       captionInputs.forEach(input => {
           input.placeholder = this.i18next.t('form.captionPlaceholder', 'Add a caption...');
       });
+      
+      // Update reorder control text - find all reorder controls and update their text
+      const reorderControls = document.querySelectorAll('.photo-reorder-controls');
+      reorderControls.forEach(controls => {
+          const children = Array.from(controls.children);
+          children.forEach((child, index) => {
+              if (child.classList.contains('move-photo-up')) {
+                  // Update button title
+                  child.title = this.i18next.t('form.movePhotoUp', 'Move up');
+                  // Find and update next sibling text
+                  const nextSibling = children[index + 1];
+                  if (nextSibling && nextSibling.classList.contains('reorder-text')) {
+                      nextSibling.textContent = this.i18next.t('form.up', 'up');
+                  }
+              } else if (child.classList.contains('move-photo-down')) {
+                  // Update button title
+                  child.title = this.i18next.t('form.movePhotoDown', 'Move down');
+                  // Find and update previous sibling text
+                  const prevSibling = children[index - 1];
+                  if (prevSibling && prevSibling.classList.contains('reorder-text')) {
+                      prevSibling.textContent = this.i18next.t('form.down', 'down');
+                  }
+              } else if (child.classList.contains('reorder-text') && child.classList.contains('move-text')) {
+                  child.textContent = this.i18next.t('form.movePhoto', 'move photo');
+              }
+          });
+      });
   }
   
   createInputElements() {
@@ -636,12 +663,14 @@ class PhotoManager {
           const photoInfo = document.createElement('div');
           photoInfo.className = 'photo-info';
 
-          // Create caption input
-          const captionInput = document.createElement('input');
-          captionInput.type = 'text';
+          // Create caption textarea with auto-expand
+          const captionInput = document.createElement('textarea');
           captionInput.className = 'photo-caption';
           captionInput.placeholder = this.i18next.t('form.captionPlaceholder', 'Add a caption...');
           captionInput.maxLength = 200;
+          captionInput.rows = 1;
+          captionInput.style.resize = 'none';
+          captionInput.style.overflow = 'hidden';
 
           if (dbId) {
               const entry = this.photoEntries.find(entry => entry.dbId === dbId);
@@ -649,6 +678,27 @@ class PhotoManager {
                   captionInput.value = entry.caption;
               }
           }
+
+          // Auto-expand textarea functionality
+          const autoExpand = () => {
+              captionInput.style.height = 'auto';
+              const scrollHeight = captionInput.scrollHeight;
+              const maxHeight = 100; // Maximum height in pixels
+              captionInput.style.height = Math.min(scrollHeight, maxHeight) + 'px';
+              
+              // Show scrollbar if content exceeds max height
+              if (scrollHeight > maxHeight) {
+                  captionInput.style.overflowY = 'auto';
+              } else {
+                  captionInput.style.overflowY = 'hidden';
+              }
+          };
+          captionInput.addEventListener('input', autoExpand);
+          captionInput.addEventListener('paste', () => {
+              setTimeout(autoExpand, 10);
+          });
+          // Call once on load to set initial height
+          setTimeout(autoExpand, 10);
 
           // Save caption to the photoEntry
           captionInput.addEventListener('input', async (e) => {
@@ -691,7 +741,7 @@ class PhotoManager {
           controlsDiv.appendChild(rotateBtn);
           controlsDiv.appendChild(removeBtn);
           
-          // Add reorder buttons
+          // Add reorder controls with horizontal layout between photo and caption
           const reorderControls = document.createElement('div');
           reorderControls.className = 'photo-reorder-controls';
           
@@ -707,6 +757,10 @@ class PhotoManager {
             });
           };
           
+          const upText = document.createElement('span');
+          upText.className = 'reorder-text';
+          upText.textContent = this.i18next.t('form.up', 'up');
+          
           const moveDownBtn = document.createElement('button');
           moveDownBtn.className = 'move-photo-down';
           moveDownBtn.innerHTML = '↓';
@@ -719,17 +773,30 @@ class PhotoManager {
             });
           };
           
-          // Store button references for later updates
-          wrapper.dataset.moveUpBtn = 'true';
-          wrapper.dataset.moveDownBtn = 'true';
+          const downText = document.createElement('span');
+          downText.className = 'reorder-text';
+          downText.textContent = this.i18next.t('form.down', 'down');
           
+          const moveText = document.createElement('span');
+          moveText.className = 'reorder-text move-text';
+          moveText.textContent = this.i18next.t('form.movePhoto', 'move photo');
+          
+          const separator1 = document.createElement('span');
+          separator1.className = 'reorder-separator';
+          separator1.textContent = '|';
+          
+          const separator2 = document.createElement('span');
+          separator2.className = 'reorder-separator';
+          separator2.textContent = '|';
+          
+          // Build horizontal layout: ^ up | move photo | down v
           reorderControls.appendChild(moveUpBtn);
+          reorderControls.appendChild(upText);
+          reorderControls.appendChild(separator1);
+          reorderControls.appendChild(moveText);
+          reorderControls.appendChild(separator2);
+          reorderControls.appendChild(downText);
           reorderControls.appendChild(moveDownBtn);
-          
-          wrapper.appendChild(reorderControls);
-          
-          // Update button states after adding
-          setTimeout(() => this.updateReorderButtons(), 0);
           
           // Make photo preview draggable
           wrapper.draggable = true;
@@ -760,10 +827,15 @@ class PhotoManager {
             }
           });
           
+          // Assemble the layout: img, controls, reorderControls, photoInfo (with caption)
           photoInfo.appendChild(captionInput);
           wrapper.appendChild(img);
           wrapper.appendChild(controlsDiv);
+          wrapper.appendChild(reorderControls);
           wrapper.appendChild(photoInfo);
+          
+          // Update button states after adding
+          setTimeout(() => this.updateReorderButtons(), 0);
           previewContainer.appendChild(wrapper);
 
           resolve();

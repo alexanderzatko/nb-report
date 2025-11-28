@@ -633,18 +633,25 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 /* Photos upload START */
 
 .photo-info {
+    flex-shrink: 0;
   padding: 8px;
   background: rgba(255, 255, 255, 0.9);
   border-top: 1px solid #eee;
 }
 
 .photo-caption {
-  width: 92%;
+  width: 100%;
   padding: 6px;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 14px;
-  margin-top: 8px;
+  font-family: inherit;
+  min-height: 24px;
+  max-height: 100px;
+  line-height: 1.4;
+  resize: none;
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .photo-caption:focus {
@@ -692,7 +699,6 @@ div#photo-preview-container {
 
 .photo-preview {
   position: relative;
-  aspect-ratio: 1;
   border: 1px solid #ccc;
   border-radius: 4px;
   overflow: hidden;
@@ -722,11 +728,11 @@ div#photo-preview-container {
 }
 
 .photo-preview img {
-  flex: 1;
   width: 100%;
-  height: calc(100% - 60px); /* Adjust for caption area */
+  aspect-ratio: 1;
   object-fit: cover;
   transition: transform 0.3s ease;
+  flex-shrink: 0;
 }
 
 .photo-controls {
@@ -785,48 +791,61 @@ div#photo-preview-container {
 }
 
 .photo-reorder-controls {
-    position: absolute;
-    bottom: 5px;
-    left: 5px;
     display: flex;
-    gap: 3px;
-    z-index: 2;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 8px 4px;
+    background-color: #f5f5f5;
+    border-top: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    flex-shrink: 0;
 }
 
 .photo-reorder-controls button {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    border: none;
-    background-color: rgba(0, 120, 212, 0.8);
-    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    background-color: white;
+    color: #333;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    opacity: 0.8;
-    transition: opacity 0.3s, background-color 0.3s;
-    font-size: 14px;
+    transition: background-color 0.2s, border-color 0.2s;
+    font-size: 16px;
     font-weight: bold;
     line-height: 1;
+    padding: 0;
 }
 
-.photo-reorder-controls button:hover {
-    opacity: 1;
-    background-color: rgba(0, 120, 212, 1);
+.photo-reorder-controls button:hover:not(:disabled) {
+    background-color: #e6f3ff;
+    border-color: #0078d4;
 }
 
 .photo-reorder-controls button:disabled {
-    opacity: 0.3;
+    opacity: 0.4;
     cursor: not-allowed;
+    background-color: #f5f5f5;
 }
 
-.move-photo-up {
-    bottom: 35px;
+.reorder-text {
+    font-size: 12px;
+    color: #666;
+    white-space: nowrap;
 }
 
-.move-photo-down {
-    bottom: 5px;
+.reorder-text.move-text {
+    font-weight: 500;
+    color: #333;
+}
+
+.reorder-separator {
+    font-size: 12px;
+    color: #999;
+    margin: 0 2px;
 }
 /* Photos upload STOP */
 
