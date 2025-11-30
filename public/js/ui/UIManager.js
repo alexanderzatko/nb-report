@@ -442,9 +442,8 @@ async setupDashboardCards() {
     if (isTestVoucher) {
       // Use test voucher number without calling backend
       const testVoucherNumber = '999123456789';
-      const StorageManager = (await import('../storage/StorageManager.js')).default;
-      const storageManager = StorageManager.getInstance();
-      const voucherUrl = storageManager.getLocalStorage('voucherUrl') || 'https://mapa.nabezky.sk';
+      const { getVoucherUrl } = await import('../utils/VoucherUrlGenerator.js');
+      const voucherUrl = getVoucherUrl();
       const qrCodeUrl = `${voucherUrl}?voucher=${testVoucherNumber}`;
       
       this.logger.debug('Using test voucher number', { testVoucherNumber });
@@ -470,9 +469,8 @@ async setupDashboardCards() {
       });
       
       if (voucherData && voucherData.voucher_number) {
-        const StorageManager = (await import('../storage/StorageManager.js')).default;
-        const storageManager = StorageManager.getInstance();
-        const voucherUrl = storageManager.getLocalStorage('voucherUrl') || 'https://mapa.nabezky.sk';
+        const { getVoucherUrl } = await import('../utils/VoucherUrlGenerator.js');
+        const voucherUrl = getVoucherUrl();
         const qrCodeUrl = `${voucherUrl}?voucher=${voucherData.voucher_number}`;
         
         this.showVoucherDisplay(voucherData.voucher_number, qrCodeUrl);

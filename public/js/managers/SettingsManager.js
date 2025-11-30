@@ -5,6 +5,7 @@ import AuthManager from '../auth/AuthManager.js';
 import i18next from '/node_modules/i18next/dist/esm/i18next.js';
 import StateManager from '../state/StateManager.js';
 import StorageManager from '../storage/StorageManager.js';
+import { generateDefaultVoucherUrl } from '../utils/VoucherUrlGenerator.js';
     
 class SettingsManager {
     static instance = null;
@@ -163,6 +164,8 @@ class SettingsManager {
                             centerItem.classList.add('active');
                             // Force refresh of the settings view to reflect changes
                             await this.updateSkiCentersSection();
+                            // Update voucher URL field with new default based on selected center
+                            this.updateVoucherUrlField();
                         }
                     }
                 });
@@ -201,6 +204,7 @@ class SettingsManager {
         }
     }
 
+
     initializeVoucherUrlField() {
         const stateManager = StateManager.getInstance();
         const currentUser = stateManager.getState('auth.user');
@@ -222,9 +226,10 @@ class SettingsManager {
             return;
         }
 
-        // Load saved value or use default
+        // Load saved value or use dynamically generated default
         const savedUrl = StorageManager.getInstance().getLocalStorage('voucherUrl');
-        voucherUrlInput.value = savedUrl || 'https://mapa.nabezky.sk';
+        const defaultUrl = generateDefaultVoucherUrl();
+        voucherUrlInput.value = savedUrl || defaultUrl;
 
         // Save on change
         voucherUrlInput.addEventListener('change', () => {
@@ -273,6 +278,26 @@ class SettingsManager {
         const voucherUrlSection = document.getElementById('voucher-url-section');
         if (voucherUrlSection) {
             voucherUrlSection.style.display = isAdmin ? 'block' : 'none';
+        }
+    }
+
+    /**
+     * Updates the voucher URL field with the dynamically generated default
+     * Only updates if the field is empty or contains the old default
+     */
+    updateVoucherUrlField() {
+        const voucherUrlInput = document.getElementById('voucher-url');
+        if (!voucherUrlInput) {
+            return;
+        }
+
+        const savedUrl = StorageManager.getInstance().getLocalStorage('voucherUrl');
+        const currentValue = voucherUrlInput.value;
+        
+        // Only update if field is empty or contains the old default URL
+        if (!savedUrl && (!currentValue || currentValue === 'https://mapa.nabezky.sk')) {
+            const defaultUrl = generateDefaultVoucherUrl();
+            voucherUrlInput.value = defaultUrl;
         }
     }
 
