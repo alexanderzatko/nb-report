@@ -1200,6 +1200,11 @@ class FormManager {
     
     if (!userId || !skiCenterId) {
       // If we don't have user/center IDs, render in default order
+      this.logger.warn('Cannot load trail order: missing userId or skiCenterId', { 
+        userId, 
+        skiCenterId,
+        userDataKeys: userData ? Object.keys(userData) : 'no userData'
+      });
       trails.forEach(([trailId, trailName]) => {
         const trailElement = this.createTrailElement(trailId, trailName);
         container.appendChild(trailElement);
@@ -1211,46 +1216,66 @@ class FormManager {
     const storageKey = this.getTrailOrderStorageKey(userId, skiCenterId);
     const persistedData = storageManager.getLocalStorage(storageKey);
     
-    // Extract trail IDs from backend data
-    const backendTrailIds = trails.map(([trailId]) => trailId).sort();
+    // Normalize trail IDs to strings for consistent comparison
+    const normalizeId = (id) => String(id);
+    const backendTrailIds = trails.map(([trailId]) => normalizeId(trailId)).sort();
     
     // Check if persisted data exists and trail IDs match
     let orderedTrails = trails;
-    if (persistedData && persistedData.trailIds) {
-      const persistedTrailIds = [...persistedData.trailIds].sort();
+    if (persistedData && persistedData.trailIds && persistedData.order) {
+      const persistedTrailIds = persistedData.trailIds.map(normalizeId).sort();
       
-      // Compare trail IDs (as sets)
+      // Compare trail IDs (as sets) - normalize both sides
       const backendSet = new Set(backendTrailIds);
       const persistedSet = new Set(persistedTrailIds);
       
       const idsMatch = backendSet.size === persistedSet.size && 
                        [...backendSet].every(id => persistedSet.has(id));
       
+      this.logger.debug('Checking trail order persistence', {
+        storageKey,
+        backendTrailIds,
+        persistedTrailIds,
+        idsMatch,
+        persistedOrderLength: persistedData.order?.length,
+        trailsLength: trails.length
+      });
+      
       if (idsMatch && persistedData.order && persistedData.order.length === trails.length) {
         // Trail IDs match, apply persisted order
-        const trailMap = new Map(trails.map(([trailId, trailName]) => [trailId, [trailId, trailName]]));
+        const trailMap = new Map(trails.map(([trailId, trailName]) => [normalizeId(trailId), [trailId, trailName]]));
         orderedTrails = persistedData.order
+          .map(normalizeId)
           .map(trailId => trailMap.get(trailId))
           .filter(Boolean); // Remove any missing trails
         
         // Add any new trails that weren't in persisted order (shouldn't happen if IDs match, but safety check)
-        const orderedIds = new Set(orderedTrails.map(([trailId]) => trailId));
+        const orderedIds = new Set(orderedTrails.map(([trailId]) => normalizeId(trailId)));
         trails.forEach(([trailId, trailName]) => {
-          if (!orderedIds.has(trailId)) {
+          if (!orderedIds.has(normalizeId(trailId))) {
             orderedTrails.push([trailId, trailName]);
           }
+        });
+        
+        this.logger.debug('Applied persisted trail order', {
+          originalOrder: trails.map(([id]) => normalizeId(id)),
+          persistedOrder: persistedData.order.map(normalizeId),
+          appliedOrder: orderedTrails.map(([id]) => normalizeId(id))
         });
       } else {
         // Trail IDs don't match, reset order
         this.logger.debug('Trail IDs changed, resetting order', {
           backend: backendTrailIds,
-          persisted: persistedTrailIds
+          persisted: persistedTrailIds,
+          idsMatch,
+          orderLengthsMatch: persistedData.order?.length === trails.length
         });
         // Save new order with current trail IDs
         this.saveTrailOrder(userId, skiCenterId, trails);
       }
     } else {
       // No persisted data, save initial order
+      this.logger.debug('No persisted trail order found, saving initial order', { storageKey });
       this.saveTrailOrder(userId, skiCenterId, trails);
     }
     
@@ -2868,7 +2893,9 @@ class FormManager {
   saveTrailOrder(userId, skiCenterId, trails) {
     const storageManager = StorageManager.getInstance();
     const storageKey = this.getTrailOrderStorageKey(userId, skiCenterId);
-    const trailIds = trails.map(([trailId]) => trailId);
+    // Normalize trail IDs to strings for consistent storage
+    const normalizeId = (id) => String(id);
+    const trailIds = trails.map(([trailId]) => normalizeId(trailId));
     const order = trailIds; // Order is the same as trailIds array
     
     storageManager.setLocalStorage(storageKey, {
@@ -2877,7 +2904,13 @@ class FormManager {
       timestamp: Date.now()
     });
     
-    this.logger.debug('Saved trail order', { userId, skiCenterId, order });
+    this.logger.debug('Saved trail order', { 
+      userId, 
+      skiCenterId, 
+      storageKey,
+      order,
+      trailCount: trails.length 
+    });
   }
 
   async reorderTrails(draggedTrailId, targetTrailId) {
@@ -2927,7 +2960,15 @@ class FormManager {
       
       // Save the reordered trails (order is already correct in currentTrails)
       this.saveTrailOrder(userId, skiCenterId, currentTrails);
-      this.logger.debug('Trails reordered', { newOrder, trailCount: currentTrails.length });
+      this.logger.debug('Trails reordered and saved', { 
+        userId, 
+        skiCenterId, 
+        newOrder, 
+        trailCount: currentTrails.length,
+        trailIds: currentTrails.map(([id]) => id)
+      });
+    } else {
+      this.logger.warn('Cannot save trail order: missing userId or skiCenterId', { userId, skiCenterId });
     }
   }
 }
