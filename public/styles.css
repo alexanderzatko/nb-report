@@ -1008,6 +1008,26 @@ textarea:invalid + .validation-message {
   border-radius: 8px;
   padding: 15px;
   margin-bottom: 15px;
+  transition: transform 0.2s, opacity 0.2s, border-color 0.2s;
+}
+
+.trail-item.draggable-trail {
+  cursor: grab;
+}
+
+.trail-item.draggable-trail:active {
+  cursor: grabbing;
+}
+
+.trail-item.dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+}
+
+.trail-item.drag-over {
+  border: 2px solid #0078d4;
+  border-radius: 8px;
+  transform: scale(1.02);
 }
 
 .trail-name {

@@ -1,5 +1,7 @@
 // user/UserManager.js
 
+import FormManager from '../form/FormManager.js';
+
 class UserManager {
   static instance = null;
 
@@ -47,7 +49,9 @@ class UserManager {
     trailsSection.style.display = 'none';
     if (isAdmin && hasTrails) {
       trailsSection.style.display = 'block';
-      this.initializeTrailsSection(userData.trails);
+      // Use FormManager's initializeTrailsSection which includes drag-and-drop functionality
+      const formManager = FormManager.getInstance();
+      formManager.initializeTrailsSection(userData.trails);
     }
     
     console.log('Form initialization:', {
@@ -56,20 +60,6 @@ class UserManager {
       trails: userData?.trails,
       trailsSectionDisplay: trailsSection?.style.display
     });
-  }
-
-  initializeTrailsSection(trails) {
-    const container = document.getElementById('trails-container');
-    container.innerHTML = '';
-    
-    trails.forEach(([trailId, trailName]) => {
-      const trailElement = this.createTrailElement(trailId, trailName);
-      container.appendChild(trailElement);
-    });
-  }
-
-  createTrailElement(trailId, trailName) {
-    // ... existing createTrailElement code ...
   }
 }
 

@@ -10,6 +10,7 @@ import StateManager from '../state/StateManager.js';
 import AuthManager from '../auth/AuthManager.js';
 import DatabaseManager from '../managers/DatabaseManager.js';
 import UIManager from '../ui/UIManager.js';
+import StorageManager from '../storage/StorageManager.js';
 
 class FormManager {
   static instance = null;
@@ -1178,16 +1179,127 @@ class FormManager {
 
     container.innerHTML = '';
     
-    trails.forEach(([trailId, trailName]) => {
-      const trailElement = this.createTrailElement(trailId, trailName);
+    // Get user data to determine if admin and get identifiers
+    const stateManager = StateManager.getInstance();
+    const userData = stateManager.getState('auth.user');
+    const isAdmin = userData?.ski_center_admin === "1";
+    
+    if (!isAdmin || !trails || trails.length === 0) {
+      // For non-admin or no trails, just render in order
+      trails.forEach(([trailId, trailName]) => {
+        const trailElement = this.createTrailElement(trailId, trailName);
+        container.appendChild(trailElement);
+      });
+      return;
+    }
+    
+    // For admin users, check for persisted order
+    const storageManager = StorageManager.getInstance();
+    const userId = userData?.nabezky_uid;
+    const skiCenterId = userData?.ski_center_id;
+    
+    if (!userId || !skiCenterId) {
+      // If we don't have user/center IDs, render in default order
+      trails.forEach(([trailId, trailName]) => {
+        const trailElement = this.createTrailElement(trailId, trailName);
+        container.appendChild(trailElement);
+      });
+      return;
+    }
+    
+    // Get persisted order
+    const storageKey = this.getTrailOrderStorageKey(userId, skiCenterId);
+    const persistedData = storageManager.getLocalStorage(storageKey);
+    
+    // Extract trail IDs from backend data
+    const backendTrailIds = trails.map(([trailId]) => trailId).sort();
+    
+    // Check if persisted data exists and trail IDs match
+    let orderedTrails = trails;
+    if (persistedData && persistedData.trailIds) {
+      const persistedTrailIds = [...persistedData.trailIds].sort();
+      
+      // Compare trail IDs (as sets)
+      const backendSet = new Set(backendTrailIds);
+      const persistedSet = new Set(persistedTrailIds);
+      
+      const idsMatch = backendSet.size === persistedSet.size && 
+                       [...backendSet].every(id => persistedSet.has(id));
+      
+      if (idsMatch && persistedData.order && persistedData.order.length === trails.length) {
+        // Trail IDs match, apply persisted order
+        const trailMap = new Map(trails.map(([trailId, trailName]) => [trailId, [trailId, trailName]]));
+        orderedTrails = persistedData.order
+          .map(trailId => trailMap.get(trailId))
+          .filter(Boolean); // Remove any missing trails
+        
+        // Add any new trails that weren't in persisted order (shouldn't happen if IDs match, but safety check)
+        const orderedIds = new Set(orderedTrails.map(([trailId]) => trailId));
+        trails.forEach(([trailId, trailName]) => {
+          if (!orderedIds.has(trailId)) {
+            orderedTrails.push([trailId, trailName]);
+          }
+        });
+      } else {
+        // Trail IDs don't match, reset order
+        this.logger.debug('Trail IDs changed, resetting order', {
+          backend: backendTrailIds,
+          persisted: persistedTrailIds
+        });
+        // Save new order with current trail IDs
+        this.saveTrailOrder(userId, skiCenterId, trails);
+      }
+    } else {
+      // No persisted data, save initial order
+      this.saveTrailOrder(userId, skiCenterId, trails);
+    }
+    
+    // Render trails in the determined order
+    orderedTrails.forEach(([trailId, trailName]) => {
+      const trailElement = this.createTrailElement(trailId, trailName, isAdmin);
       container.appendChild(trailElement);
     });
   }
 
-  createTrailElement(trailId, trailName) {
+  createTrailElement(trailId, trailName, isDraggable = false) {
     const div = document.createElement('div');
     div.className = 'trail-item';
     div.dataset.trailId = trailId;
+    
+    // Make draggable for admin users
+    if (isDraggable) {
+      div.draggable = true;
+      div.classList.add('draggable-trail');
+      
+      div.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', trailId);
+        div.classList.add('dragging');
+      });
+      
+      div.addEventListener('dragend', () => {
+        div.classList.remove('dragging');
+      });
+      
+      div.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (!div.classList.contains('drag-over')) {
+          div.classList.add('drag-over');
+        }
+      });
+      
+      div.addEventListener('dragleave', () => {
+        div.classList.remove('drag-over');
+      });
+      
+      div.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        div.classList.remove('drag-over');
+        const draggedTrailId = e.dataTransfer.getData('text/plain');
+        if (draggedTrailId && draggedTrailId !== trailId) {
+          await this.reorderTrails(draggedTrailId, trailId);
+        }
+      });
+    }
     
     // Trail name header
     const nameDiv = document.createElement('div');
@@ -2746,6 +2858,77 @@ class FormManager {
 
   getFormData() {
     return this.trailConditions;
+  }
+
+  // Trail reordering methods for admin users
+  getTrailOrderStorageKey(userId, skiCenterId) {
+    return `trail_order_${userId}_${skiCenterId}`;
+  }
+
+  saveTrailOrder(userId, skiCenterId, trails) {
+    const storageManager = StorageManager.getInstance();
+    const storageKey = this.getTrailOrderStorageKey(userId, skiCenterId);
+    const trailIds = trails.map(([trailId]) => trailId);
+    const order = trailIds; // Order is the same as trailIds array
+    
+    storageManager.setLocalStorage(storageKey, {
+      trailIds: trailIds,
+      order: order,
+      timestamp: Date.now()
+    });
+    
+    this.logger.debug('Saved trail order', { userId, skiCenterId, order });
+  }
+
+  async reorderTrails(draggedTrailId, targetTrailId) {
+    const container = document.getElementById('trails-container');
+    if (!container) return;
+
+    // Get all trail elements
+    const trailElements = Array.from(container.querySelectorAll('.trail-item'));
+    
+    // Find indices
+    const draggedIndex = trailElements.findIndex(el => el.dataset.trailId === draggedTrailId);
+    const targetIndex = trailElements.findIndex(el => el.dataset.trailId === targetTrailId);
+    
+    if (draggedIndex === -1 || targetIndex === -1 || draggedIndex === targetIndex) {
+      return;
+    }
+    
+    // Reorder DOM elements
+    const draggedElement = trailElements[draggedIndex];
+    const targetElement = trailElements[targetIndex];
+    
+    if (draggedIndex < targetIndex) {
+      // Moving down
+      targetElement.after(draggedElement);
+    } else {
+      // Moving up
+      targetElement.before(draggedElement);
+    }
+    
+    // Get current order from DOM after reordering
+    const reorderedElements = Array.from(container.querySelectorAll('.trail-item'));
+    const newOrder = reorderedElements.map(el => el.dataset.trailId);
+    
+    // Save new order
+    const stateManager = StateManager.getInstance();
+    const userData = stateManager.getState('auth.user');
+    const userId = userData?.nabezky_uid;
+    const skiCenterId = userData?.ski_center_id;
+    
+    if (userId && skiCenterId) {
+      // Get current trails data to preserve trail names from reordered elements
+      const currentTrails = reorderedElements.map(el => {
+        const trailId = el.dataset.trailId;
+        const trailName = el.querySelector('.trail-name')?.textContent || '';
+        return [trailId, trailName];
+      });
+      
+      // Save the reordered trails (order is already correct in currentTrails)
+      this.saveTrailOrder(userId, skiCenterId, currentTrails);
+      this.logger.debug('Trails reordered', { newOrder, trailCount: currentTrails.length });
+    }
   }
 }
 
