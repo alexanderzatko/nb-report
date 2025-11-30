@@ -442,9 +442,9 @@ async setupDashboardCards() {
     if (isTestVoucher) {
       // Use test voucher number without calling backend
       const testVoucherNumber = '999123456789';
-      const { getVoucherUrl } = await import('../utils/VoucherUrlGenerator.js');
+      const { getVoucherUrl, appendVoucherToUrl } = await import('../utils/VoucherUrlGenerator.js');
       const voucherUrl = getVoucherUrl();
-      const qrCodeUrl = `${voucherUrl}?voucher=${testVoucherNumber}`;
+      const qrCodeUrl = appendVoucherToUrl(voucherUrl, testVoucherNumber);
       
       this.logger.debug('Using test voucher number', { testVoucherNumber });
       this.showVoucherDisplay(testVoucherNumber, qrCodeUrl);
@@ -469,9 +469,9 @@ async setupDashboardCards() {
       });
       
       if (voucherData && voucherData.voucher_number) {
-        const { getVoucherUrl } = await import('../utils/VoucherUrlGenerator.js');
+        const { getVoucherUrl, appendVoucherToUrl } = await import('../utils/VoucherUrlGenerator.js');
         const voucherUrl = getVoucherUrl();
-        const qrCodeUrl = `${voucherUrl}?voucher=${voucherData.voucher_number}`;
+        const qrCodeUrl = appendVoucherToUrl(voucherUrl, voucherData.voucher_number);
         
         this.showVoucherDisplay(voucherData.voucher_number, qrCodeUrl);
         // Reset checkbox after successful voucher generation

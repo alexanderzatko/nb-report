@@ -67,3 +67,21 @@ export function getVoucherUrl() {
     return savedUrl || generateDefaultVoucherUrl();
 }
 
+/**
+ * Appends a voucher number to a URL, properly handling existing query parameters
+ * @param {string} baseUrl - The base URL (may already contain query parameters)
+ * @param {string} voucherNumber - The voucher number to append
+ * @returns {string} The complete URL with voucher parameter
+ */
+export function appendVoucherToUrl(baseUrl, voucherNumber) {
+    if (!baseUrl || !voucherNumber) {
+        return baseUrl || '';
+    }
+    
+    // Check if URL already contains query parameters
+    const hasQueryParams = baseUrl.includes('?');
+    const separator = hasQueryParams ? '&' : '?';
+    
+    return `${baseUrl}${separator}voucher=${voucherNumber}`;
+}
+
