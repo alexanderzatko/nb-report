@@ -212,12 +212,12 @@ class App {
           user_name: userData.user_name
         };
   
-        // Parse trail grooming types (index 7 and 8 from API)
-        if (userData.trail_grooming_types) {
-          currentUserData.trail_grooming_types = userData.trail_grooming_types;
+        // Parse trail grooming types from API
+        if (userData.grooming_types) {
+          currentUserData.trail_grooming_types = userData.grooming_types;
         }
-        if (userData.user_default_grooming !== undefined) {
-          currentUserData.user_default_grooming = userData.user_default_grooming;
+        if (userData.selected_grooming_type !== undefined) {
+          currentUserData.user_default_grooming = userData.selected_grooming_type;
         }
 
         // Handle ski center data for admin users
