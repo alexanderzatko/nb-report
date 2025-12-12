@@ -197,11 +197,18 @@ class App {
     try {
       const userData = await this.managers.network.get('/api/user-data');
       if (userData) {
-        // Cache the full user data response
-        localStorage.setItem('cached_user_data', JSON.stringify(userData));
+        // Transform grooming type field names before caching
+        const transformedUserData = {
+          ...userData,
+          trail_grooming_types: userData.grooming_types,
+          user_default_grooming: userData.selected_grooming_type
+        };
+        
+        // Cache the transformed user data response
+        localStorage.setItem('cached_user_data', JSON.stringify(transformedUserData));
         
         const stateManager = StateManager.getInstance();
-        stateManager.setState('storage.userData', userData);
+        stateManager.setState('storage.userData', transformedUserData);
         
         // Prepare current user data object
         const currentUserData = {
