@@ -57,6 +57,7 @@ class SettingsManager {
             this.setupEventListeners();
             await this.updateSkiCentersSection();
             this.initializeVoucherUrlField();
+            this.initializeGroomingTypeSelector();
             
             this.initialized = true;
             this.logger.debug('Settings manager initialized');
@@ -166,6 +167,8 @@ class SettingsManager {
                             await this.updateSkiCentersSection();
                             // Update voucher URL field with new default based on selected center
                             this.updateVoucherUrlField();
+                            // Update grooming type selector
+                            this.initializeGroomingTypeSelector();
                         }
                     }
                 });
@@ -299,6 +302,65 @@ class SettingsManager {
             const defaultUrl = generateDefaultVoucherUrl();
             voucherUrlInput.value = defaultUrl;
         }
+    }
+
+    initializeGroomingTypeSelector() {
+        const stateManager = StateManager.getInstance();
+        const currentUser = stateManager.getState('auth.user');
+        const isAdmin = currentUser?.ski_center_admin === "1";
+
+        const groomingTypeSection = document.getElementById('grooming-type-section');
+        const groomingTypeSelect = document.getElementById('default-grooming-type');
+        
+        if (!groomingTypeSection || !groomingTypeSelect) {
+            this.logger.warn('Grooming type selector elements not found');
+            return;
+        }
+
+        // Only show for admin users
+        if (!isAdmin) {
+            groomingTypeSection.style.display = 'none';
+            return;
+        }
+
+        groomingTypeSection.style.display = 'block';
+
+        // Get grooming types from state
+        const userData = stateManager.getState('storage.userData');
+        const groomingTypes = userData?.trail_grooming_types || currentUser?.trail_grooming_types;
+        const userDefaultGrooming = userData?.user_default_grooming ?? currentUser?.user_default_grooming;
+
+        if (!groomingTypes || !Array.isArray(groomingTypes)) {
+            this.logger.warn('Grooming types not available in user data');
+            groomingTypeSection.style.display = 'none';
+            return;
+        }
+
+        // Clear existing options
+        groomingTypeSelect.innerHTML = '';
+
+        // Populate dropdown with grooming types
+        groomingTypes.forEach((typeName, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            option.textContent = typeName;
+            groomingTypeSelect.appendChild(option);
+        });
+
+        // Set default value from localStorage or user default
+        const savedValue = StorageManager.getInstance().getLocalStorage('defaultGroomingType');
+        if (savedValue !== null) {
+            groomingTypeSelect.value = savedValue;
+        } else if (userDefaultGrooming !== undefined) {
+            groomingTypeSelect.value = userDefaultGrooming;
+        }
+
+        // Save on change
+        groomingTypeSelect.addEventListener('change', () => {
+            const value = groomingTypeSelect.value;
+            StorageManager.getInstance().setLocalStorage('defaultGroomingType', value);
+            this.logger.debug('Default grooming type saved:', value);
+        });
     }
 
     reset() {

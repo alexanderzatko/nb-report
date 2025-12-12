@@ -40,6 +40,9 @@
     "returnToDashboard": "Návrat na hlavní stránku",
     "skiCenters": {
       "title": "Zpráva středisek"
+    },
+    "groomingType": {
+      "label": "Typ úpravy tratě"
     }
   },
   "voucher": {
@@ -103,6 +106,7 @@
     "snowDepthTotal": "Celková výška sněhu (cm)",
     "snowDepthNew": "Nový sníh (cm)",
     "nextMaintenance": "Nejbližší úprava",
+    "trailGroomingType": "Typ úpravy tratě",
     "maintenance": {
       "unknown": "Neznámé",
       "today": "Dnes",

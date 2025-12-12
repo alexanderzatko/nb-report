@@ -377,6 +377,14 @@ class FormManager {
                       maintenanceBtn.click();
                   }
               }
+              
+              // Restore grooming type
+              if (trailConditions.groomingType !== undefined) {
+                  const groomingSelect = trailElement.querySelector('.grooming-type-select');
+                  if (groomingSelect) {
+                      groomingSelect.value = trailConditions.groomingType;
+                  }
+              }
           }
       });
   }
@@ -1419,6 +1427,71 @@ class FormManager {
     maintenanceGroup.appendChild(maintenanceButtons);
     div.appendChild(maintenanceGroup);
   
+    // Trail Grooming Type Section
+    const groomingGroup = document.createElement('div');
+    groomingGroup.className = 'condition-group';
+    
+    const groomingHeader = document.createElement('div');
+    groomingHeader.className = 'condition-header';
+    
+    const groomingLabel = document.createElement('span');
+    groomingLabel.className = 'condition-label';
+    groomingLabel.textContent = this.i18next.t('form.trailGroomingType');
+    
+    groomingHeader.appendChild(groomingLabel);
+    
+    const groomingSelect = document.createElement('select');
+    groomingSelect.className = 'grooming-type-select';
+    groomingSelect.dataset.trailId = trailId;
+    
+    // Get grooming types from state
+    const stateManager = StateManager.getInstance();
+    const userData = stateManager.getState('storage.userData');
+    const currentUser = stateManager.getState('auth.user');
+    const groomingTypes = userData?.trail_grooming_types || currentUser?.trail_grooming_types;
+    
+    if (groomingTypes && Array.isArray(groomingTypes)) {
+      // Populate dropdown with grooming types
+      groomingTypes.forEach((typeName, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = typeName;
+        groomingSelect.appendChild(option);
+      });
+      
+      // Set default value from Settings or user default
+      const storageManager = StorageManager.getInstance();
+      const defaultGroomingType = storageManager.getLocalStorage('defaultGroomingType');
+      const userDefaultGrooming = userData?.user_default_grooming ?? currentUser?.user_default_grooming;
+      
+      let defaultValue = '0';
+      if (defaultGroomingType !== null) {
+        defaultValue = defaultGroomingType;
+      } else if (userDefaultGrooming !== undefined) {
+        defaultValue = String(userDefaultGrooming);
+      }
+      
+      groomingSelect.value = defaultValue;
+      
+      // Initialize trail conditions with default grooming type
+      if (!this.trailConditions[trailId]) {
+        this.trailConditions[trailId] = {};
+      }
+      this.trailConditions[trailId].groomingType = defaultValue;
+      
+      // Save selection on change
+      groomingSelect.addEventListener('change', () => {
+        if (!this.trailConditions[trailId]) {
+          this.trailConditions[trailId] = {};
+        }
+        this.trailConditions[trailId].groomingType = groomingSelect.value;
+      });
+    }
+    
+    groomingGroup.appendChild(groomingHeader);
+    groomingGroup.appendChild(groomingSelect);
+    div.appendChild(groomingGroup);
+  
     return div;
   }
 
@@ -2199,12 +2272,12 @@ class FormManager {
               'snow-depth-new': 'snowDepthNew'
               // Deliberately omitting 'ski-center-id' as we'll set it directly from state
           };
-  
+
           const postToFbCheckbox = document.getElementById('post-to-fb');
           if (postToFbCheckbox && postToFbCheckbox.closest('div').style.display !== 'none') {
               data.post_to_fb = postToFbCheckbox.checked ? 1 : 0;
           }
-  
+
           Object.entries(adminFields).forEach(([elementId, dataKey]) => {
               const element = document.getElementById(elementId);
               if (element && element.value) {
@@ -2227,6 +2300,13 @@ class FormManager {
                   data.skiCenterId = skiCenterIdInput.value;
                   this.logger.debug('Falling back to form input for ski center ID:', skiCenterIdInput.value);
               }
+          }
+          
+          // Add default grooming type from Settings
+          const storageManager = StorageManager.getInstance();
+          const defaultGroomingType = storageManager.getLocalStorage('defaultGroomingType');
+          if (defaultGroomingType !== null) {
+              data.defaultGroomingType = defaultGroomingType;
           }
       } else {
           // Regular user-specific fields

@@ -117,7 +117,8 @@ class ConfigManager {
           sessionId: 'sessionId',
           language: 'i18nextLng',
           theme: 'theme',
-          selectedSkiCenter: 'selectedSkiCenter'
+          selectedSkiCenter: 'selectedSkiCenter',
+          defaultGroomingType: 'defaultGroomingType'
         }
       },
 

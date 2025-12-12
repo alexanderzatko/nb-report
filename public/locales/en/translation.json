@@ -40,6 +40,9 @@
     "returnToDashboard": "Back to dashboard",
     "skiCenters": {
       "title": "Manage Ski Centers"
+    },
+    "groomingType": {
+      "label": "Trail grooming type"
     }
   },
   "voucher": {
@@ -103,6 +106,7 @@
     "snowDepthTotal": "Total snow height (cm)",
     "snowDepthNew": "New snow (cm)",
     "nextMaintenance": "Next maintenance",
+    "trailGroomingType": "Trail grooming type",
     "maintenance": {
       "unknown": "Unknown",
       "today": "Today",
