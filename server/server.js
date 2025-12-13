@@ -483,6 +483,7 @@ app.post('/api/submit-snow-report', async (req, res) => {
         snowType: formData.snowType,
 
         // Admin form fields
+        snowDepthMin: formData.snowDepthMin,
         snowDepthTotal: formData.snowDepthTotal,
         snowDepthNew: formData.snowDepthNew,
         trailConditions: formData.trailConditions,

@@ -103,6 +103,8 @@
       "VC": "Premenlivé podmienky"
     },
     "trailsSection": "Trate v stredisku",
+    "snowDepthMin": "Minimálna výška snehu (cm)",
+    "snowDepthMax": "Maximálna výška snehu (cm)",
     "snowDepthTotal": "Celková výška snehu (cm)",
     "snowDepthNew": "Nový sneh (cm)",
     "nextMaintenance": "Najbližšia úprava",

@@ -203,6 +203,7 @@ class FormManager {
       if (isAdmin) {
           // Admin-specific fields
           const adminFields = {
+              'snow-depth-min': 'snowDepthMin',
               'snow-depth-total': 'snowDepthTotal',
               'snow-depth-new': 'snowDepthNew',
               'ski-center-id': 'skiCenterId'
@@ -400,6 +401,7 @@ class FormManager {
           snowDepth500: 'snow-depth500',
           snowDepth750: 'snow-depth750',
           snowDepth1000: 'snow-depth1000',
+          snowDepthMin: 'snow-depth-min',
           snowDepthTotal: 'snow-depth-total',
           snowDepthNew: 'snow-depth-new',
           skiCenterId: 'ski-center-id',
@@ -2273,6 +2275,7 @@ class FormManager {
       if (isAdmin) {
           // Admin-specific fields
           const adminFields = {
+              'snow-depth-min': 'snowDepthMin',
               'snow-depth-total': 'snowDepthTotal',
               'snow-depth-new': 'snowDepthNew'
               // Deliberately omitting 'ski-center-id' as we'll set it directly from state
@@ -2356,9 +2359,11 @@ class FormManager {
   }
 
   collectAdminFormData(formData) {
+    const snowDepthMin = document.getElementById('snow-depth-min')?.value;
     const snowDepthTotal = document.getElementById('snow-depth-total')?.value;
     const snowDepthNew = document.getElementById('snow-depth-new')?.value;
     
+    if (snowDepthMin) formData.append('snowDepthMin', snowDepthMin);
     if (snowDepthTotal) formData.append('snowDepthTotal', snowDepthTotal);
     if (snowDepthNew) formData.append('snowDepthNew', snowDepthNew);
     formData.append('trailConditions', JSON.stringify(this.trailConditions));
