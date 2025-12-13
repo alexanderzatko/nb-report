@@ -103,6 +103,9 @@
       "VC": "Variable conditions"
     },
     "trailsSection": "Trails in the ski center",
+    "snowDepthRange": "Snow depth (cm)",
+    "from": "from",
+    "to": "to",
     "snowDepthMin": "Minimum snow depth (cm)",
     "snowDepthMax": "Maximum snow depth (cm)",
     "snowDepthTotal": "Total snow height (cm)",

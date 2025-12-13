@@ -266,14 +266,13 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="snow-depth-min" class="" data-i18n="form.snowDepthMin">Minimálna výška snehu (cm):</label>
-                        <input type="number" id="snow-depth-min" name="snowDepthMin" min="0" data-i18n-validate="form.validation.required" />
-                        <div class="validation-message"></div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="snow-depth-total" class="required-field" data-i18n="form.snowDepthMax">Maximálna výška snehu (cm):</label>
-                        <input type="number" id="snow-depth-total" name="snowDepthTotal" min="0" data-i18n-validate="form.validation.required" />
+                        <label class="required-field" data-i18n="form.snowDepthRange">Snow depth (cm):</label>
+                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            <span data-i18n="form.from">from</span>
+                            <input type="number" id="snow-depth-min" name="snowDepthMin" min="0" style="width: 100px;" />
+                            <span data-i18n="form.to">to</span>
+                            <input type="number" id="snow-depth-total" name="snowDepthTotal" min="0" style="width: 100px;" data-i18n-validate="form.validation.required" />
+                        </div>
                         <div class="validation-message"></div>
                     </div>
 

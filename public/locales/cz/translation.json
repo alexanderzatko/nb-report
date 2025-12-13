@@ -103,6 +103,9 @@
       "VC": "Proměnlivé podmínky"
     },
     "trailsSection": "Tratě ve středisku",
+    "snowDepthRange": "Výška sněhu (cm)",
+    "from": "od",
+    "to": "do",
     "snowDepthMin": "Minimální výška sněhu (cm)",
     "snowDepthMax": "Maximální výška sněhu (cm)",
     "snowDepthTotal": "Celková výška sněhu (cm)",
