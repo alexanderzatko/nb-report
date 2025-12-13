@@ -1912,6 +1912,10 @@ class FormManager {
       const gpxId = await this.handleGpxUpload();
       const formContent = this.collectVisibleData(isAdmin);
   
+      // Get user_default_grooming from Settings
+      const storageManager = StorageManager.getInstance();
+      const userDefaultGrooming = storageManager.getLocalStorage('defaultGroomingType');
+  
       // Include the photo and video data in the submission
       const submissionData = {
           data: {
@@ -1922,7 +1926,8 @@ class FormManager {
               videoCaptions: uploadedVideoData.videoCaptions,
               gpxId,
               reportType: isAdmin ? 'admin' : 'regular',
-              trailConditions: isAdmin ? this.trailConditions : undefined
+              trailConditions: isAdmin ? this.trailConditions : undefined,
+              userDefaultGrooming: userDefaultGrooming !== null ? userDefaultGrooming : undefined
           }
       };
       

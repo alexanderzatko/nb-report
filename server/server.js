@@ -493,6 +493,9 @@ app.post('/api/submit-snow-report', async (req, res) => {
         laborTime: formData.laborTime,
         rewardRequested: formData.rewardRequested,
 
+        // User preferences
+        user_default_grooming: formData.userDefaultGrooming,
+
         // Files data
         photoIds: formData.photoIds || [],
         photoCaptions: formData.photoCaptions || {},
