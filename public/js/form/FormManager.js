@@ -1639,7 +1639,7 @@ class FormManager {
       { value: '0', label: '?', title: this.i18next.t('form.maintenance.unknown') },
       { value: '1', label: '1', title: this.i18next.t('form.maintenance.today') },
       { value: '2', label: '2', title: this.i18next.t('form.maintenance.tomorrow') },
-      { value: '3+', label: '3+', title: this.i18next.t('form.maintenance.laterDays') },
+      { value: '3', label: '3+', title: this.i18next.t('form.maintenance.laterDays') },
       { value: 'Ps', label: 'Ps', title: this.i18next.t('form.maintenance.fridaySaturday') },
       { value: 'snow', label: '❄', title: this.i18next.t('form.maintenance.afterSnow') }
     ];
