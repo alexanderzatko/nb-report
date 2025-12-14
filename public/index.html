@@ -266,12 +266,12 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="required-field" data-i18n="form.snowDepthRange">Snow depth (cm):</label>
+                        <label data-i18n="form.snowDepthRange">Snow depth (cm):</label>
                         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                             <span data-i18n="form.from">from</span>
                             <input type="number" id="snow-depth-min" name="snowDepthMin" min="0" style="width: 100px;" />
                             <span data-i18n="form.to">to</span>
-                            <input type="number" id="snow-depth-total" name="snowDepthTotal" min="0" style="width: 100px;" data-i18n-validate="form.validation.required" />
+                            <input type="number" id="snow-depth-total" name="snowDepthTotal" min="0" style="width: 100px;" class="required-field" data-i18n-validate="form.validation.required" />
                         </div>
                         <div class="validation-message"></div>
                     </div>

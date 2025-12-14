@@ -386,6 +386,22 @@ class FormManager {
                       groomingSelect.value = trailConditions.groomingType;
                   }
               }
+              
+              // Restore snow depth min
+              if (trailConditions.snowDepthMin !== undefined) {
+                  const minInput = trailElement.querySelector(`input[data-trail-id="${trailId}"][data-field="snowDepthMin"]`);
+                  if (minInput) {
+                      minInput.value = trailConditions.snowDepthMin;
+                  }
+              }
+              
+              // Restore snow depth max
+              if (trailConditions.snowDepthMax !== undefined) {
+                  const maxInput = trailElement.querySelector(`input[data-trail-id="${trailId}"][data-field="snowDepthMax"]`);
+                  if (maxInput) {
+                      maxInput.value = trailConditions.snowDepthMax;
+                  }
+              }
           }
       });
   }
@@ -506,25 +522,35 @@ class FormManager {
           
           if (trailElement) {
               Object.entries(conditions).forEach(([type, value]) => {
-                  // Find the condition group by looking for the selected-value span with matching data-for-type
-                  const headerSpan = trailElement.querySelector(`span.selected-value[data-for-type="${type}"]`);
-                  if (headerSpan) {
-                      // Get the parent condition group
-                      const conditionGroup = headerSpan.closest('.condition-group');
-                      if (conditionGroup) {
-                          // Find button with matching value within this condition group
-                          const button = conditionGroup.querySelector(`button[data-value="${value}"]`);
-                          
-                          if (button) {
-                              // Clear previous selection in this group
-                              conditionGroup.querySelectorAll('.condition-btn').forEach(btn => {
-                                  btn.classList.remove('selected');
-                              });
-                              // Select the new button
-                              button.classList.add('selected');
+                  // Handle snow depth input fields
+                  if (type === 'snowDepthMin' || type === 'snowDepthMax') {
+                      const input = trailElement.querySelector(`input[data-trail-id="${trailId}"][data-field="${type}"]`);
+                      if (input) {
+                          input.value = value;
+                      }
+                  }
+                  // Handle buttons and selects
+                  else {
+                      // Find the condition group by looking for the selected-value span with matching data-for-type
+                      const headerSpan = trailElement.querySelector(`span.selected-value[data-for-type="${type}"]`);
+                      if (headerSpan) {
+                          // Get the parent condition group
+                          const conditionGroup = headerSpan.closest('.condition-group');
+                          if (conditionGroup) {
+                              // Find button with matching value within this condition group
+                              const button = conditionGroup.querySelector(`button[data-value="${value}"]`);
                               
-                              // Update the selected value text
-                              headerSpan.textContent = ': ' + button.title;
+                              if (button) {
+                                  // Clear previous selection in this group
+                                  conditionGroup.querySelectorAll('.condition-btn').forEach(btn => {
+                                      btn.classList.remove('selected');
+                                  });
+                                  // Select the new button
+                                  button.classList.add('selected');
+                                  
+                                  // Update the selected value text
+                                  headerSpan.textContent = ': ' + button.title;
+                              }
                           }
                       }
                   }
@@ -1493,6 +1519,63 @@ class FormManager {
     groomingGroup.appendChild(groomingHeader);
     groomingGroup.appendChild(groomingSelect);
     div.appendChild(groomingGroup);
+  
+    // Snow Depth Section
+    const snowDepthGroup = document.createElement('div');
+    snowDepthGroup.className = 'condition-group';
+    
+    const snowDepthHeader = document.createElement('div');
+    snowDepthHeader.className = 'condition-header';
+    
+    const snowDepthLabel = document.createElement('span');
+    snowDepthLabel.className = 'condition-label';
+    snowDepthLabel.textContent = this.i18next.t('form.snowDepthRange');
+    
+    snowDepthHeader.appendChild(snowDepthLabel);
+    
+    const snowDepthInputs = document.createElement('div');
+    snowDepthInputs.style.cssText = 'display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 5px;';
+    
+    const fromLabel = document.createElement('span');
+    fromLabel.textContent = this.i18next.t('form.from');
+    
+    const minInput = document.createElement('input');
+    minInput.type = 'number';
+    minInput.min = '0';
+    minInput.style.width = '80px';
+    minInput.dataset.trailId = trailId;
+    minInput.dataset.field = 'snowDepthMin';
+    minInput.addEventListener('input', () => {
+      if (!this.trailConditions[trailId]) {
+        this.trailConditions[trailId] = {};
+      }
+      this.trailConditions[trailId].snowDepthMin = minInput.value;
+    });
+    
+    const toLabel = document.createElement('span');
+    toLabel.textContent = this.i18next.t('form.to');
+    
+    const maxInput = document.createElement('input');
+    maxInput.type = 'number';
+    maxInput.min = '0';
+    maxInput.style.width = '80px';
+    maxInput.dataset.trailId = trailId;
+    maxInput.dataset.field = 'snowDepthMax';
+    maxInput.addEventListener('input', () => {
+      if (!this.trailConditions[trailId]) {
+        this.trailConditions[trailId] = {};
+      }
+      this.trailConditions[trailId].snowDepthMax = maxInput.value;
+    });
+    
+    snowDepthInputs.appendChild(fromLabel);
+    snowDepthInputs.appendChild(minInput);
+    snowDepthInputs.appendChild(toLabel);
+    snowDepthInputs.appendChild(maxInput);
+    
+    snowDepthGroup.appendChild(snowDepthHeader);
+    snowDepthGroup.appendChild(snowDepthInputs);
+    div.appendChild(snowDepthGroup);
   
     return div;
   }
