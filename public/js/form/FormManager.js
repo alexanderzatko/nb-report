@@ -27,11 +27,6 @@ class FormManager {
             id: 'snow-depth-total',
             type: 'number',
             validationKey: 'form.validation.required'
-          },
-          {
-            id: 'report-note',
-            type: 'textarea',
-            validationKey: 'form.validation.required'
           }
         ]
       },
@@ -55,11 +50,6 @@ class FormManager {
           {
             id: 'region',
             type: 'select',
-            validationKey: 'form.validation.required'
-          },
-          {
-            id: 'report-note',
-            type: 'textarea',
             validationKey: 'form.validation.required'
           }
         ]
