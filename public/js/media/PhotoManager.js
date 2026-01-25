@@ -30,6 +30,72 @@ class PhotoManager {
     return PhotoManager.instance;
   }
 
+  rationalToNumber(value) {
+    if (value === null || value === undefined) return null;
+    if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+    if (typeof value === 'string') {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+    if (typeof value === 'object' && 'numerator' in value) {
+      const denom = value.denominator ?? 1;
+      const num = value.numerator ?? null;
+      if (num === null) return null;
+      const n = denom ? num / denom : num;
+      return Number.isFinite(n) ? n : null;
+    }
+    return null;
+  }
+
+  dmsToDecimal(dmsArray, ref) {
+    if (!Array.isArray(dmsArray) || dmsArray.length < 2) return null;
+    const deg = this.rationalToNumber(dmsArray[0]);
+    const min = this.rationalToNumber(dmsArray[1]);
+    const sec = this.rationalToNumber(dmsArray[2] ?? 0);
+    if (deg === null || min === null || sec === null) return null;
+
+    let dec = deg + (min / 60) + (sec / 3600);
+    if (ref === 'S' || ref === 'W') dec = -dec;
+    return Number.isFinite(dec) ? dec : null;
+  }
+
+  async getPhotoGeoOrientation(file) {
+    const logger = this.logger;
+    return new Promise((resolve) => {
+      EXIF.getData(file, function() {
+        const img = this;
+
+        const latDms = EXIF.getTag(img, 'GPSLatitude');
+        const latRef = EXIF.getTag(img, 'GPSLatitudeRef');
+        const lonDms = EXIF.getTag(img, 'GPSLongitude');
+        const lonRef = EXIF.getTag(img, 'GPSLongitudeRef');
+
+        const gpsImgDirection = EXIF.getTag(img, 'GPSImgDirection');
+
+        const lat = latDms ? PhotoManager.instance.dmsToDecimal(latDms, latRef) : null;
+        const lon = lonDms ? PhotoManager.instance.dmsToDecimal(lonDms, lonRef) : null;
+        const heading = gpsImgDirection !== undefined && gpsImgDirection !== null
+          ? PhotoManager.instance.rationalToNumber(gpsImgDirection)
+          : null;
+
+        // Normalize heading to [0, 360)
+        const headingNormalized = heading !== null
+          ? ((heading % 360) + 360) % 360
+          : null;
+
+        const meta = {
+          lat,
+          lon,
+          // Camera compass direction (degrees), when present
+          orientation: headingNormalized
+        };
+
+        logger.debug('Extracted EXIF geo/orientation:', meta);
+        resolve(meta);
+      });
+    });
+  }
+
   async getPhotoTimestamp(file) {
     const logger = this.logger;
     logger.debug('Getting time from the photo EXIF');
@@ -310,10 +376,13 @@ class PhotoManager {
           
           // Extract timestamp for all photos (for sorting purposes)
           const photoTimestamp = await this.getPhotoTimestamp(file);
+          // Extract lat/lon + orientation from EXIF BEFORE resize (resize strips EXIF)
+          const exifMeta = await this.getPhotoGeoOrientation(file);
           fileMetadata.push({
               file,
               timestamp: photoTimestamp,
-              timestampValue: photoTimestamp.getTime()
+              timestampValue: photoTimestamp.getTime(),
+              exifMeta
           });
       }
   
@@ -322,7 +391,7 @@ class PhotoManager {
       this.logger.debug('Files sorted by timestamp:', fileMetadata.map(f => ({ name: f.file.name, time: f.timestamp })));
   
       // Step 3: Process files in sorted order
-      for (const { file, timestamp: photoTimestamp } of fileMetadata) {
+      for (const { file, timestamp: photoTimestamp, exifMeta } of fileMetadata) {
           try {
               // Process image first
               let processedFile = await this.resizeImage(file);
@@ -340,7 +409,7 @@ class PhotoManager {
                   try {
                       const initialCaption = '';
                       const order = this.photoEntries.length;
-                      photoId = await this.dbManager.savePhoto(this.currentFormId, processedFile, initialCaption, order, photoTimestamp);
+                      photoId = await this.dbManager.savePhoto(this.currentFormId, processedFile, initialCaption, order, photoTimestamp, exifMeta);
                       this.logger.debug('Saved photo to database:', photoId);
                   } catch (error) {
                       this.logger.error('Failed to save photo to database:', error);
@@ -351,7 +420,7 @@ class PhotoManager {
               // Only add to photos array and preview if database save was successful
               if (photoId || !this.currentFormId) {
                   this.photos.push(processedFile);
-                  await this.addPhotoPreview(processedFile, photoId, '', photoTimestamp);
+                  await this.addPhotoPreview(processedFile, photoId, '', photoTimestamp, exifMeta);
               }
   
           } catch (error) {
@@ -542,7 +611,7 @@ class PhotoManager {
     });
   }
 
-  async addPhotoPreview(file, dbId, caption = '', timestamp = null) {
+  async addPhotoPreview(file, dbId, caption = '', timestamp = null, exifMeta = null) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       
@@ -569,7 +638,8 @@ class PhotoManager {
             file: file,
             caption: caption,
             order: photoOrder,
-            timestamp: timestamp || null
+            timestamp: timestamp || null,
+            exif: exifMeta || null
           };
           this.photoEntries.push(photoEntry);
           
@@ -805,7 +875,8 @@ class PhotoManager {
       .map(entry => ({
         file: entry.file,
         caption: entry.caption,
-        id: entry.id
+        id: entry.id,
+        exif: entry.exif || null
       }));
   }
 
@@ -883,7 +954,7 @@ class PhotoManager {
           for (const photoData of sortedPhotos) {
               const timestamp = photoData.photoTimestamp ? new Date(photoData.photoTimestamp) : null;
               const order = photoData.order !== undefined ? photoData.order : this.photoEntries.length;
-              await this.addPhotoPreview(photoData.photo, photoData.id, photoData.caption || '', timestamp);
+              await this.addPhotoPreview(photoData.photo, photoData.id, photoData.caption || '', timestamp, photoData.exif || null);
               // Update the order of the entry that was just created
               const lastEntry = this.photoEntries[this.photoEntries.length - 1];
               if (lastEntry) {

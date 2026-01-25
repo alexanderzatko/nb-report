@@ -12,7 +12,7 @@ class DatabaseManager {
 
         this.logger = Logger.getInstance();
         this.dbName = 'AppDB';
-        this.dbVersion = 4; // Increased version for new stores
+        this.dbVersion = 5; // Increased version for photo EXIF metadata
         this.db = null;
         DatabaseManager.instance = this;
     }
@@ -359,7 +359,7 @@ class DatabaseManager {
     }
 
     // Photo methods
-    async savePhoto(formId, file, caption = '', order = 0, photoTimestamp = null) {
+    async savePhoto(formId, file, caption = '', order = 0, photoTimestamp = null, exif = null) {
         try {
             // Convert file to base64 BEFORE starting the transaction
             const fileData = {
@@ -376,7 +376,8 @@ class DatabaseManager {
                 order: order,
                 timestamp: photoTimestamp ? photoTimestamp.toISOString() : new Date().toISOString(),
                 photoTimestamp: photoTimestamp ? photoTimestamp.toISOString() : null,
-                file: fileData
+                file: fileData,
+                exif: exif || null
             };
     
             // Now start the transaction with the prepared data

@@ -1921,7 +1921,7 @@ class FormManager {
       }
   
       // Photo upload handling
-      let uploadedPhotoData = { photoIds: [], photoCaptions: {} };
+      let uploadedPhotoData = { photoIds: [], photoCaptions: {}, photoLocations: {} };
   
       // Handle photo uploads if present
       const photos = this.photoManager.getPhotos();
@@ -1997,6 +1997,7 @@ class FormManager {
               ...formContent,
               photoIds: uploadedPhotoData.photoIds,
               photoCaptions: uploadedPhotoData.photoCaptions,
+              photoLocations: uploadedPhotoData.photoLocations,
               videoIds: uploadedVideoData.videoIds,
               videoCaptions: uploadedVideoData.videoCaptions,
               gpxId,
@@ -2627,6 +2628,7 @@ class FormManager {
     
     const photoIds = [];
     const photoCaptions = {};
+    const photoLocations = {};
     const photoOrder = new Map();
     let currentPhoto = 0;
     let overallProgress = 0;
@@ -2677,6 +2679,18 @@ class FormManager {
           if (photo.caption) {
             photoCaptions[result.fid] = photo.caption;
           }
+
+          // Map EXIF-derived location/orientation to uploaded file id (fid)
+          if (photo.exif) {
+            // Backward-compatible: older drafts may have `heading`; canonical field is `orientation` (compass degrees)
+            const orientation = photo.exif.orientation ?? photo.exif.heading ?? null;
+            const lat = photo.exif.lat ?? null;
+            const lon = photo.exif.lon ?? null;
+
+            if (lat !== null || lon !== null || orientation !== null) {
+              photoLocations[result.fid] = { lat, lon, orientation };
+            }
+          }
         } catch (error) {
           this.logger.error('Error uploading photo:', error);
           throw new Error(`Failed to upload photo: ${error.message}`);
@@ -2702,7 +2716,8 @@ class FormManager {
   
     return {
       photoIds: sortedPhotoIds,
-      photoCaptions: photoCaptions
+      photoCaptions: photoCaptions,
+      photoLocations: photoLocations
     };
   }
   
