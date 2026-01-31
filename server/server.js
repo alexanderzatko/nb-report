@@ -933,6 +933,16 @@ app.get('/api/check-session', (req, res) => {
   }
 });
 
+// Debug: expose bearer token for REST client testing (opt-in via DEBUG_BEARER_TOKEN=true)
+if (process.env.DEBUG_BEARER_TOKEN === 'true') {
+  app.get('/api/debug/bearer-token', (req, res) => {
+    if (!req.session || !req.session.accessToken) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+    res.json({ token: req.session.accessToken });
+  });
+}
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../public', 'index.html'));
 });

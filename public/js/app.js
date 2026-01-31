@@ -409,4 +409,16 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+// Debug: expose bearer token in console for REST client testing (requires server DEBUG_BEARER_TOKEN=true)
+window.getBearerToken = async function getBearerToken() {
+  const res = await fetch('/api/debug/bearer-token', { credentials: 'include' });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    console.warn('getBearerToken failed:', res.status, data);
+    return null;
+  }
+  console.log('Bearer token (for REST client):', data.token);
+  return data.token;
+};
+
 export default app;
