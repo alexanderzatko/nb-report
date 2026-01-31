@@ -779,6 +779,14 @@ async setupDashboardCards() {
       }
     } catch (err) {
       this.logger.error('Money transfer request failed:', err);
+      const responseData = err.response?.data;
+      if (err.response?.status === 401 && responseData) {
+        this.logger.warn('Balance transfer 401 – server says:', {
+          code: responseData.code,
+          error: responseData.error,
+          detail: responseData.detail
+        });
+      }
       if (errorEl) {
         const is401 = err.response?.status === 401;
         errorEl.textContent = is401
