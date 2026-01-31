@@ -58,6 +58,18 @@
     "voucherNumber": "Číslo kupónu",
     "createTestVoucher": "Vytvoriť testovací kupón"
   },
+  "money": {
+    "cardTitle": "Peniaze",
+    "cardDesc": "Zostatok a prevody lyžiarskeho strediska",
+    "pageTitle": "Peniaze",
+    "refreshBalance": "Obnoviť zostatok",
+    "requestTransfer": "Požiadať o prevod na účet",
+    "backToDashboard": "Späť na hlavnú stránku",
+    "noCenters": "Žiadne lyžiarske strediská.",
+    "transferRequested": "Prevod bol úspešne požiadaný.",
+    "transferError": "Nepodarilo sa požiadať o prevod. Skúste to prosím znova.",
+    "refreshError": "Nepodarilo sa obnoviť zostatok. Skúste to prosím znova."
+  },
   "auth": {
     "loginText": "Prihlásiť sa do aplikácie",
     "login": "Prihlásiť",

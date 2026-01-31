@@ -863,6 +863,48 @@ app.post('/api/rules_create_voucher', async (req, res) => {
   }
 });
 
+app.post('/api/request-balance-transfer', async (req, res) => {
+  if (!req.session || !req.session.accessToken) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  const { scenter_nid, ski_center_id } = req.body;
+  const skiCenterNid = scenter_nid || ski_center_id;
+
+  if (!skiCenterNid) {
+    return res.status(400).json({ error: 'Missing required parameter: scenter_nid or ski_center_id' });
+  }
+
+  const endpointUrl = `${OAUTH_PROVIDER_URL}/nabezky/rules/rules_ski_center_balance_transfer_request`;
+  try {
+    const response = await axios.post(
+      endpointUrl,
+      { scenter_nid: skiCenterNid },
+      {
+        headers: {
+          'Authorization': `Bearer ${req.session.accessToken}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      }
+    );
+    res.json(response.data);
+  } catch (error) {
+    logger.error('Error requesting balance transfer:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      endpointUrl
+    });
+    if (error.response?.status === 401) {
+      res.status(401).json({ error: 'Not authenticated' });
+    } else if (error.response?.status === 400) {
+      res.status(400).json({ error: error.response.data?.error || 'Invalid request' });
+    } else {
+      res.status(500).json({ error: 'Failed to request balance transfer' });
+    }
+  }
+});
 
 // Endpoint to check session validity
 app.get('/api/check-session', (req, res) => {

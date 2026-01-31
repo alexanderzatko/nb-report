@@ -373,7 +373,7 @@ class StateManager {
     if (currentUser) {
         currentUser.ski_center_id = skiCenterId;
         currentUser.ski_center_name = newCenter[1][0];
-        currentUser.trails = newCenter[2];
+        currentUser.trails = newCenter[3];
         
         if (storage.fb_pages) {
             currentUser.fb_pages = storage.fb_pages;
@@ -415,7 +415,7 @@ class StateManager {
     return {
       id: currentCenter[0][0],
       name: currentCenter[1][0],
-      trails: currentCenter[2]
+      trails: currentCenter[3]
     };
   }
   

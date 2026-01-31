@@ -13,7 +13,7 @@ class ConfigManager {
     this.logger = Logger.getInstance();
     this.config = {
       cache: {
-        version: 'v690', // update this for new app release and do the same in service-worker.js
+        version: 'v691', // update this for new app release and do the same in service-worker.js
         name: 'snow-report-cache',
         staticResources: [
           '/',
@@ -54,6 +54,9 @@ class ConfigManager {
           },
           voucher: {
             create: '/api/rules_create_voucher'
+          },
+          money: {
+            requestTransfer: '/api/request-balance-transfer'
           }
         },
         timeout: 30000,

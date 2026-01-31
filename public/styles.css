@@ -1693,3 +1693,53 @@ body {
 .voucher-actions .settings-button {
     width: 100%;
 }
+
+/* Money page */
+.money-balance-list {
+    margin-bottom: 20px;
+}
+
+.money-balance-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.money-balance-row:last-of-type {
+    border-bottom: none;
+}
+
+.money-center-name {
+    font-weight: 500;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.money-balance {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.money-transfer-btn {
+    flex-shrink: 0;
+}
+
+.money-empty {
+    margin: 0;
+    color: rgba(0, 0, 0, 0.6);
+}
+
+.money-success {
+    color: #2d8659;
+    background: #e6f4ed;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+}
+
+.money-actions {
+    margin-top: 20px;
+}

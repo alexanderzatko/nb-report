@@ -61,6 +61,12 @@
 		            <h3 data-i18n="voucher.generateVoucher">Generate voucher</h3>
 		            <p data-i18n="voucher.generateVoucherDesc">Generate new seasonal, or 3-day access voucher</p>
 		        </a>
+		        <!-- Money Card (Admin Only) -->
+		        <a href="#" class="dashboard-card" id="money-link" style="display: none;">
+		            <div class="card-icon"></div>
+		            <h3 data-i18n="money.cardTitle">Money</h3>
+		            <p data-i18n="money.cardDesc">Ski center balance and transfers</p>
+		        </a>
                         <div class="dashboard-header">
                             <h2 id="welcome-head" data-i18n="welcome"></h2>
                         </div>
@@ -135,6 +141,22 @@
                         </div>
                         <div class="voucher-actions">
                             <button type="button" id="voucher-back-button" class="settings-button" data-i18n="voucher.backToDashboard">Back to Dashboard</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Money Page (Admin Only) -->
+                <div id="money-container" class="page-content" style="display: none;">
+                    <div class="dashboard-header">
+                        <h2 data-i18n="money.pageTitle">Money</h2>
+                    </div>
+                    <div class="money-content voucher-form-content">
+                        <div id="money-balance-list" class="money-balance-list"></div>
+                        <div id="money-error" class="voucher-error" style="display: none;"></div>
+                        <div id="money-success" class="money-success" style="display: none;"></div>
+                        <div class="money-actions voucher-actions">
+                            <button type="button" id="money-refresh-button" class="settings-button" data-i18n="money.refreshBalance">Refresh balance</button>
+                            <button type="button" id="money-back-button" class="settings-button" data-i18n="money.backToDashboard">Back to Dashboard</button>
                         </div>
                     </div>
                 </div>

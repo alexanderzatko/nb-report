@@ -7,6 +7,8 @@ import StateManager from '../state/StateManager.js';
 import GPSManager from '../managers/GPSManager.js';
 import DatabaseManager from '../managers/DatabaseManager.js';
 import VoucherManager from '../managers/VoucherManager.js';
+import NetworkManager from '../network/NetworkManager.js';
+import ConfigManager from '../config/ConfigManager.js';
 
 class UIManager {
   static instance = null;
@@ -129,6 +131,10 @@ class UIManager {
                   voucherCard.style.display = userData.ski_center_admin === "1" ? 'block' : 'none';
                   this.logger.debug('Voucher card visibility updated:', userData.ski_center_admin === "1" ? 'visible' : 'hidden');
               }
+              const moneyCard = document.getElementById('money-link');
+              if (moneyCard) {
+                  moneyCard.style.display = userData.ski_center_admin === "1" ? 'block' : 'none';
+              }
           }
       }
 
@@ -175,6 +181,7 @@ class UIManager {
       await this.setupSettingsButtons();
       await this.setupFormButtons();
       await this.setupVoucherButtons();
+      await this.setupMoneyButtons();
       
       this.updateFullPageContent();
       this.logger.debug('Authenticated UI initialization complete');
@@ -267,6 +274,10 @@ async setupDashboardCards() {
     // Generate Voucher Card
     const generateVoucherLink = document.getElementById('generate-voucher-link');
     setupCard(generateVoucherLink, () => this.showVoucherForm());
+
+    // Money Card (Admin Only)
+    const moneyLink = document.getElementById('money-link');
+    setupCard(moneyLink, () => this.showMoneyPage());
     
     if (!continueReportLink && !newReportLink) {
         this.logger.debug('No report cards found');
@@ -518,7 +529,7 @@ async setupDashboardCards() {
     const stateManager = StateManager.getInstance();
     const userData = stateManager.getState('auth.user');
 
-    const containers = ['settings-container', 'snow-report-form', 'voucher-form-container', 'voucher-display-container'];
+    const containers = ['settings-container', 'snow-report-form', 'voucher-form-container', 'voucher-display-container', 'money-container'];
     containers.forEach(id => {
       const container = document.getElementById(id);
       if (container) {
@@ -563,10 +574,14 @@ async setupDashboardCards() {
       // Update user elements when showing dashboard
       if (userData) {
           this.updateUserSpecificElements(userData);
-          // Show/hide voucher card based on admin status
+          // Show/hide voucher and money cards based on admin status
           const voucherCard = document.getElementById('generate-voucher-link');
           if (voucherCard) {
               voucherCard.style.display = userData.ski_center_admin === "1" ? 'block' : 'none';
+          }
+          const moneyCard = document.getElementById('money-link');
+          if (moneyCard) {
+              moneyCard.style.display = userData.ski_center_admin === "1" ? 'block' : 'none';
           }
       }
     }
@@ -581,7 +596,7 @@ async setupDashboardCards() {
   showSettings() {
     this.logger.debug('Showing settings');
     
-    const containers = ['dashboard-container', 'snow-report-form', 'voucher-form-container', 'voucher-display-container'];
+    const containers = ['dashboard-container', 'snow-report-form', 'voucher-form-container', 'voucher-display-container', 'money-container'];
     containers.forEach(id => {
       const container = document.getElementById(id);
       if (container) {
@@ -613,7 +628,7 @@ async setupDashboardCards() {
   showVoucherForm() {
     this.logger.debug('Showing voucher form');
     
-    const containers = ['dashboard-container', 'snow-report-form', 'settings-container', 'voucher-display-container'];
+    const containers = ['dashboard-container', 'snow-report-form', 'settings-container', 'voucher-display-container', 'money-container'];
     containers.forEach(id => {
       const container = document.getElementById(id);
       if (container) {
@@ -635,7 +650,7 @@ async setupDashboardCards() {
   showVoucherDisplay(voucherNumber, qrCodeUrl) {
     this.logger.debug('Showing voucher display', { voucherNumber, qrCodeUrl });
     
-    const containers = ['dashboard-container', 'snow-report-form', 'settings-container', 'voucher-form-container'];
+    const containers = ['dashboard-container', 'snow-report-form', 'settings-container', 'voucher-form-container', 'money-container'];
     containers.forEach(id => {
       const container = document.getElementById(id);
       if (container) {
@@ -680,6 +695,133 @@ async setupDashboardCards() {
     this.updateBackground('form');
   }
 
+  showMoneyPage() {
+    this.logger.debug('Showing money page');
+    const containers = ['dashboard-container', 'snow-report-form', 'settings-container', 'voucher-form-container', 'voucher-display-container'];
+    containers.forEach(id => {
+      const container = document.getElementById(id);
+      if (container) container.style.display = 'none';
+    });
+    const moneyContainer = document.getElementById('money-container');
+    if (moneyContainer) {
+      moneyContainer.style.display = 'block';
+      this.renderMoneyBalances();
+    }
+    this.updateBackground('form');
+  }
+
+  renderMoneyBalances() {
+    const listEl = document.getElementById('money-balance-list');
+    const errorEl = document.getElementById('money-error');
+    const successEl = document.getElementById('money-success');
+    if (errorEl) {
+      errorEl.style.display = 'none';
+      errorEl.textContent = '';
+    }
+    if (successEl) successEl.style.display = 'none';
+    if (!listEl) return;
+    const stateManager = StateManager.getInstance();
+    const storage = stateManager.getState('storage.userData');
+    const centers = storage?.ski_centers_data || [];
+    if (centers.length === 0) {
+      listEl.innerHTML = `<p class="money-empty">${this.i18next.t('money.noCenters')}</p>`;
+      return;
+    }
+    listEl.innerHTML = centers.map((center) => {
+      const id = center[0]?.[0] ?? '';
+      const name = center[1]?.[0] ?? '';
+      const balanceRaw = center[2]?.[0];
+      const balance = balanceRaw !== undefined && balanceRaw !== null && balanceRaw !== '' ? Number(balanceRaw) : 0;
+      const formatted = Number.isNaN(balance) ? String(balanceRaw) : `${balance.toFixed(2)} €`;
+      return `
+        <div class="money-balance-row" data-center-id="${id}">
+          <span class="money-center-name">${this.escapeHtml(name)}</span>
+          <span class="money-balance">${this.escapeHtml(formatted)}</span>
+          <button type="button" class="settings-button money-transfer-btn" data-center-id="${id}" data-i18n="money.requestTransfer">Request transfer</button>
+        </div>`;
+    }).join('');
+    listEl.querySelectorAll('.money-transfer-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const centerId = e.currentTarget.getAttribute('data-center-id');
+        if (centerId) this.handleMoneyTransferRequest(centerId);
+      });
+      this.addButtonHoverEffects(btn);
+    });
+    this.updateFullPageContent();
+  }
+
+  escapeHtml(text) {
+    if (text == null) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  async handleMoneyTransferRequest(scenterNid) {
+    const errorEl = document.getElementById('money-error');
+    const successEl = document.getElementById('money-success');
+    if (errorEl) {
+      errorEl.style.display = 'none';
+      errorEl.textContent = '';
+    }
+    if (successEl) successEl.style.display = 'none';
+    try {
+      const configManager = ConfigManager.getInstance();
+      const endpoint = configManager.getEndpoint('money.requestTransfer');
+      await NetworkManager.getInstance().post(endpoint, { scenter_nid: scenterNid });
+      if (successEl) {
+        successEl.textContent = this.i18next.t('money.transferRequested');
+        successEl.style.display = 'block';
+      }
+    } catch (err) {
+      this.logger.error('Money transfer request failed:', err);
+      if (errorEl) {
+        errorEl.textContent = this.i18next.t('money.transferError');
+        errorEl.style.display = 'block';
+      }
+    }
+  }
+
+  async setupMoneyButtons() {
+    const refreshBtn = document.getElementById('money-refresh-button');
+    const backBtn = document.getElementById('money-back-button');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', async () => {
+        const errorEl = document.getElementById('money-error');
+        const successEl = document.getElementById('money-success');
+        if (errorEl) {
+          errorEl.style.display = 'none';
+          errorEl.textContent = '';
+        }
+        if (successEl) successEl.style.display = 'none';
+        refreshBtn.disabled = true;
+        window.dispatchEvent(new CustomEvent('request-refresh-user-data'));
+      });
+      this.addButtonHoverEffects(refreshBtn);
+    }
+    window.addEventListener('user-data-refreshed', (e) => {
+      const refreshBtn = document.getElementById('money-refresh-button');
+      if (refreshBtn) refreshBtn.disabled = false;
+      const moneyContainer = document.getElementById('money-container');
+      if (moneyContainer && moneyContainer.style.display === 'block') {
+        const detail = e?.detail;
+        if (detail?.error) {
+          const errorEl = document.getElementById('money-error');
+          if (errorEl) {
+            errorEl.textContent = this.i18next.t('money.refreshError');
+            errorEl.style.display = 'block';
+          }
+        } else {
+          this.renderMoneyBalances();
+        }
+      }
+    });
+    if (backBtn) {
+      backBtn.addEventListener('click', async () => this.showDashboard());
+      this.addButtonHoverEffects(backBtn);
+    }
+  }
+
   async showSnowReportForm() {
       this.logger.debug('Showing snow report form');
       
@@ -712,10 +854,12 @@ async setupDashboardCards() {
           const dashboardContainer = document.getElementById('dashboard-container');
           const settingsContainer = document.getElementById('settings-container');
           const snowReportForm = document.getElementById('snow-report-form');
+          const moneyContainer = document.getElementById('money-container');
           
           if (dashboardContainer) dashboardContainer.style.display = 'none';
           if (settingsContainer) settingsContainer.style.display = 'none';
           if (snowReportForm) snowReportForm.style.display = 'block';
+          if (moneyContainer) moneyContainer.style.display = 'none';
 
           this.formManager.startTrackingFormTime();
 
@@ -1057,7 +1201,10 @@ async setupDashboardCards() {
     const containers = [
       'dashboard-container',
       'settings-container',
-      'snow-report-form'
+      'snow-report-form',
+      'voucher-form-container',
+      'voucher-display-container',
+      'money-container'
     ];
 
     containers.forEach(id => {

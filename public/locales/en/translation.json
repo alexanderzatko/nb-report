@@ -58,6 +58,18 @@
     "voucherNumber": "Voucher Number",
     "createTestVoucher": "Create test voucher"
   },
+  "money": {
+    "cardTitle": "Money",
+    "cardDesc": "Ski center balance and transfers",
+    "pageTitle": "Money",
+    "refreshBalance": "Refresh balance",
+    "requestTransfer": "Request transfer to bank",
+    "backToDashboard": "Back to Dashboard",
+    "noCenters": "No ski centers.",
+    "transferRequested": "Transfer requested successfully.",
+    "transferError": "Failed to request transfer. Please try again.",
+    "refreshError": "Failed to refresh balance. Please try again."
+  },
   "auth": {
     "loginText": "Log in",
     "login": "Login",

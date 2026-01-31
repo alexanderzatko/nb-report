@@ -58,6 +58,18 @@
     "voucherNumber": "Číslo kuponu",
     "createTestVoucher": "Vytvořit testovací kupon"
   },
+  "money": {
+    "cardTitle": "Peníze",
+    "cardDesc": "Zůstatek a převody lyžařského střediska",
+    "pageTitle": "Peníze",
+    "refreshBalance": "Obnovit zůstatek",
+    "requestTransfer": "Požádat o převod na účet",
+    "backToDashboard": "Zpět na hlavní stránku",
+    "noCenters": "Žádná lyžařská střediska.",
+    "transferRequested": "Převod byl úspěšně požadán.",
+    "transferError": "Nepodařilo se požádat o převod. Zkuste to prosím znovu.",
+    "refreshError": "Nepodařilo se obnovit zůstatek. Zkuste to prosím znovu."
+  },
   "auth": {
     "loginText": "Přihlásit se do aplikace",
     "login": "Přihlásit",

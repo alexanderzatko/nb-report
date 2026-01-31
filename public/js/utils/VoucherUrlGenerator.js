@@ -31,11 +31,10 @@ export function generateDefaultVoucherUrl() {
             center[0][0] === String(selectedCenterId)
         );
         
-        // Check if region_id is in the center data (could be center[3] or center[3][0] or a property)
+        // Check if region_id is in the center data (center[4] = region id list after balance at [2], trails at [3])
         if (selectedCenter) {
-            // Try different possible structures
-            if (selectedCenter[3] !== undefined) {
-                regionId = Array.isArray(selectedCenter[3]) ? selectedCenter[3][0] : selectedCenter[3];
+            if (selectedCenter[4] !== undefined) {
+                regionId = Array.isArray(selectedCenter[4]) ? selectedCenter[4][0] : selectedCenter[4];
             } else if (selectedCenter.region_id !== undefined) {
                 regionId = selectedCenter.region_id;
             }

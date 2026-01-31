@@ -67,6 +67,17 @@ class App {
           // Initialize offline detection
           window.addEventListener('online', () => this.handleOnlineStatus());
           window.addEventListener('offline', () => this.handleOfflineStatus());
+
+          // Money page: refresh user data on request (e.g. Refresh balance button)
+          const app = this;
+          window.addEventListener('request-refresh-user-data', async () => {
+            try {
+              await app.refreshUserData();
+              window.dispatchEvent(new CustomEvent('user-data-refreshed'));
+            } catch (e) {
+              window.dispatchEvent(new CustomEvent('user-data-refreshed', { detail: { error: e } }));
+            }
+          });
   
           // First try to restore any cached state
           const stateManager = StateManager.getInstance();
@@ -247,10 +258,11 @@ class App {
             await storageManager.setSelectedSkiCenter(selectedCenter[0][0]);
           }
   
-          // Add selected center's data to currentUserData
+          // Add selected center's data to currentUserData (index 2 = balance, 3 = trails)
           currentUserData.ski_center_id = selectedCenter[0][0];
           currentUserData.ski_center_name = selectedCenter[1][0];
-          currentUserData.trails = selectedCenter[2];
+          currentUserData.ski_center_balance = selectedCenter[2]?.[0];
+          currentUserData.trails = selectedCenter[3];
         } else {
           // For non-admin users, clear any stored ski center data
           const storageManager = StorageManager.getInstance();
