@@ -884,7 +884,7 @@ app.post('/api/request-balance-transfer', async (req, res) => {
   try {
     const response = await axios.post(
       endpointUrl,
-      { scenter_nid: skiCenterNid },
+      { ski_center_nid: Number(skiCenterNid) || skiCenterNid },
       {
         headers: {
           'Authorization': `Bearer ${req.session.accessToken}`,
