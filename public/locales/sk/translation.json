@@ -68,6 +68,7 @@
     "noCenters": "Žiadne lyžiarske strediská.",
     "transferRequested": "Prevod bol úspešne požiadaný.",
     "transferError": "Nepodarilo sa požiadať o prevod. Skúste to prosím znova.",
+    "transferUnauthorized": "Platnosť relácie vypršala alebo nemáte oprávnenie. Prosím prihláste sa znova.",
     "refreshError": "Nepodarilo sa obnoviť zostatok. Skúste to prosím znova."
   },
   "auth": {

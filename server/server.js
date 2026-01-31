@@ -865,7 +865,12 @@ app.post('/api/rules_create_voucher', async (req, res) => {
 
 app.post('/api/request-balance-transfer', async (req, res) => {
   if (!req.session || !req.session.accessToken) {
-    return res.status(401).json({ error: 'Not authenticated' });
+    logger.warn('Request balance transfer rejected: no session or access token', {
+      hasSession: !!req.session,
+      hasAccessToken: !!req.session?.accessToken,
+      sessionID: req.sessionID
+    });
+    return res.status(401).json({ error: 'Not authenticated', code: 'NO_SESSION' });
   }
 
   const { scenter_nid, ski_center_id } = req.body;
@@ -890,16 +895,29 @@ app.post('/api/request-balance-transfer', async (req, res) => {
     );
     res.json(response.data);
   } catch (error) {
+    const status = error.response?.status;
+    const upstreamData = error.response?.data;
+
     logger.error('Error requesting balance transfer:', {
       message: error.message,
-      response: error.response?.data,
-      status: error.response?.status,
-      endpointUrl
+      response: upstreamData,
+      status,
+      endpointUrl,
+      sessionID: req.sessionID
     });
-    if (error.response?.status === 401) {
-      res.status(401).json({ error: 'Not authenticated' });
-    } else if (error.response?.status === 400) {
-      res.status(400).json({ error: error.response.data?.error || 'Invalid request' });
+
+    if (status === 401) {
+      logger.warn('Nabezky backend returned 401 for balance transfer (token invalid/expired or insufficient permissions)', {
+        endpoint: endpointUrl,
+        upstreamResponse: upstreamData
+      });
+      res.status(401).json({
+        error: 'Not authenticated',
+        code: 'UPSTREAM_UNAUTHORIZED',
+        detail: upstreamData?.message || upstreamData?.error || 'Token may be expired or you may not have permission for this action.'
+      });
+    } else if (status === 400) {
+      res.status(400).json({ error: upstreamData?.error || 'Invalid request' });
     } else {
       res.status(500).json({ error: 'Failed to request balance transfer' });
     }

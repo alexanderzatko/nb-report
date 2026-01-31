@@ -760,12 +760,16 @@ async setupDashboardCards() {
   async handleMoneyTransferRequest(scenterNid) {
     const errorEl = document.getElementById('money-error');
     const successEl = document.getElementById('money-success');
+    const authManager = AuthManager.getInstance();
     if (errorEl) {
       errorEl.style.display = 'none';
       errorEl.textContent = '';
     }
     if (successEl) successEl.style.display = 'none';
     try {
+      // Refresh token before request so expired token doesn't cause 401
+      await authManager.checkAndRefreshToken();
+
       const configManager = ConfigManager.getInstance();
       const endpoint = configManager.getEndpoint('money.requestTransfer');
       await NetworkManager.getInstance().post(endpoint, { scenter_nid: scenterNid });
@@ -776,8 +780,18 @@ async setupDashboardCards() {
     } catch (err) {
       this.logger.error('Money transfer request failed:', err);
       if (errorEl) {
-        errorEl.textContent = this.i18next.t('money.transferError');
+        const is401 = err.response?.status === 401;
+        errorEl.textContent = is401
+          ? this.i18next.t('money.transferUnauthorized')
+          : this.i18next.t('money.transferError');
         errorEl.style.display = 'block';
+      }
+      // If 401, re-check auth so user may be prompted to log in again
+      if (err.response?.status === 401) {
+        const stillLoggedIn = await authManager.checkAuthStatus();
+        if (!stillLoggedIn) {
+          this.showLoginPrompt();
+        }
       }
     }
   }

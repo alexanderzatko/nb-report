@@ -68,6 +68,7 @@
     "noCenters": "No ski centers.",
     "transferRequested": "Transfer requested successfully.",
     "transferError": "Failed to request transfer. Please try again.",
+    "transferUnauthorized": "Session expired or you don't have permission for this action. Please log in again.",
     "refreshError": "Failed to refresh balance. Please try again."
   },
   "auth": {
