@@ -1701,8 +1701,8 @@ body {
 
 .money-balance-row {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
     gap: 12px;
     padding: 12px 0;
     border-bottom: 1px solid rgba(0, 0, 0, 0.08);
@@ -1710,6 +1710,12 @@ body {
 
 .money-balance-row:last-of-type {
     border-bottom: none;
+}
+
+.money-balance-line {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .money-center-name {
@@ -1724,7 +1730,7 @@ body {
 }
 
 .money-transfer-btn {
-    flex-shrink: 0;
+    align-self: flex-start;
 }
 
 .money-empty {
@@ -1741,5 +1747,18 @@ body {
 }
 
 .money-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
     margin-top: 20px;
+}
+
+#money-back-button.money-dashboard-btn {
+    background: #747f96;
+    color: #fff;
+}
+
+#money-refresh-button.money-refresh-btn {
+    background: rgb(163, 221, 163);
+    color: #1a3d1a;
 }

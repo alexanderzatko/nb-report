@@ -735,8 +735,10 @@ async setupDashboardCards() {
       const formatted = Number.isNaN(balance) ? String(balanceRaw) : `${balance.toFixed(2)} €`;
       return `
         <div class="money-balance-row" data-center-id="${id}">
-          <span class="money-center-name">${this.escapeHtml(name)}</span>
-          <span class="money-balance">${this.escapeHtml(formatted)}</span>
+          <div class="money-balance-line">
+            <span class="money-center-name">${this.escapeHtml(name)}</span>
+            <span class="money-balance">${this.escapeHtml(formatted)}</span>
+          </div>
           <button type="button" class="settings-button money-transfer-btn" data-center-id="${id}" data-i18n="money.requestTransfer">Request transfer</button>
         </div>`;
     }).join('');
