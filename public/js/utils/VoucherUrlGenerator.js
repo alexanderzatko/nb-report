@@ -5,6 +5,21 @@ import StorageManager from '../storage/StorageManager.js';
 import Logger from './Logger.js';
 
 /**
+ * Extracts a numeric region ID from various payload formats.
+ * API may return: ["1897", "Okruh 3km"], "1897,Okruh 3km", or "1897"
+ * @param {string|Array|*} raw - Raw region value from payload
+ * @returns {string|null} The region ID or null
+ */
+function extractRegionId(raw) {
+    if (raw == null) return null;
+    if (Array.isArray(raw)) return extractRegionId(raw[0]);
+    const str = String(raw).trim();
+    if (!str) return null;
+    const commaIdx = str.indexOf(',');
+    return commaIdx >= 0 ? str.slice(0, commaIdx).trim() : str;
+}
+
+/**
  * Generates a dynamic voucher URL based on region ID and ski center ID
  * @returns {string} The generated voucher URL or fallback URL
  */
@@ -22,7 +37,7 @@ export function generateDefaultVoucherUrl() {
     
     // Check if region_id is in the current user data
     if (currentUser?.region_id) {
-        regionId = currentUser.region_id;
+        regionId = extractRegionId(currentUser.region_id);
     }
     // Check if region_id is in the selected ski center data
     else if (storageData?.ski_centers_data?.length > 0) {
@@ -32,11 +47,13 @@ export function generateDefaultVoucherUrl() {
         );
         
         // Check if region_id is in the center data (center[4] = region id list after balance at [2], trails at [3])
+        // center[4] can be [["1897", "Okruh 3km"]] - inner array is [id, name]; we need only the id
         if (selectedCenter) {
             if (selectedCenter[4] !== undefined) {
-                regionId = Array.isArray(selectedCenter[4]) ? selectedCenter[4][0] : selectedCenter[4];
+                const raw = Array.isArray(selectedCenter[4]) ? selectedCenter[4][0] : selectedCenter[4];
+                regionId = extractRegionId(raw);
             } else if (selectedCenter.region_id !== undefined) {
-                regionId = selectedCenter.region_id;
+                regionId = extractRegionId(selectedCenter.region_id);
             }
         }
     }
