@@ -733,13 +733,16 @@ async setupDashboardCards() {
       const balanceRaw = center[2]?.[0];
       const balance = balanceRaw !== undefined && balanceRaw !== null && balanceRaw !== '' ? Number(balanceRaw) : 0;
       const formatted = Number.isNaN(balance) ? String(balanceRaw) : `${balance.toFixed(2)} €`;
+      const transferBtn = balance > 0
+        ? `<button type="button" class="settings-button money-transfer-btn" data-center-id="${id}" data-i18n="money.requestTransfer">Request transfer</button>`
+        : '';
       return `
         <div class="money-balance-row" data-center-id="${id}">
           <div class="money-balance-line">
             <span class="money-center-name">${this.escapeHtml(name)}</span>
             <span class="money-balance">${this.escapeHtml(formatted)}</span>
           </div>
-          <button type="button" class="settings-button money-transfer-btn" data-center-id="${id}" data-i18n="money.requestTransfer">Request transfer</button>
+          ${transferBtn}
         </div>`;
     }).join('');
     listEl.querySelectorAll('.money-transfer-btn').forEach((btn) => {
