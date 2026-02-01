@@ -2999,7 +2999,15 @@ class FormManager {
       const selectedButtons = document.querySelectorAll('.condition-btn.selected');
       selectedButtons.forEach(button => button.classList.remove('selected'));
 
-      this.resetGPXUI();
+      // Clear GPX/track data from IndexedDB and UI when leaving the form (submit or cancel).
+      // This ensures attached GPX is removed after report submission; drafts keep GPX via formState.gpxData until submit.
+      try {
+        const gpsManager = GPSManager.getInstance();
+        await this.clearGPXData(gpsManager);
+      } catch (error) {
+        this.logger.error('Error clearing GPX data during form reset:', error);
+        this.resetGPXUI();
+      }
 
       form.style.display = 'none';
       const dashboardContainer = document.getElementById('dashboard-container');

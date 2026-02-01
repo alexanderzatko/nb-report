@@ -364,7 +364,7 @@ class App {
       }
 
       if (this.managers.form) {
-        this.managers.form.resetForm();
+        await this.managers.form.resetForm();
       }
 
       if (this.managers.photo) {
