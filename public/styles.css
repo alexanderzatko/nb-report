@@ -1695,6 +1695,12 @@ body {
 }
 
 /* Money page */
+.money-content .money-intro,
+.money-content .money-balance-list {
+    width: 100%;
+    box-sizing: border-box;
+}
+
 .money-intro {
     margin: 0 0 12px 0;
     color: rgba(0, 0, 0, 0.75);
