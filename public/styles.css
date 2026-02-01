@@ -1379,7 +1379,7 @@ body {
 }
 
 .dashboard-card {
-    background: #dae9ef;
+    background: rgba(217, 232, 238, 0.9);
     border-radius: 10px;
     padding: 10px;
     width: 100%;
@@ -1695,6 +1695,17 @@ body {
 }
 
 /* Money page */
+.money-intro {
+    margin: 0 0 12px 0;
+    color: rgba(0, 0, 0, 0.75);
+    line-height: 1.5;
+    font-size: 15px;
+}
+
+.money-intro:last-of-type {
+    margin-bottom: 20px;
+}
+
 .money-balance-list {
     margin-bottom: 20px;
 }
