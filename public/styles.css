@@ -1055,6 +1055,7 @@ textarea:invalid + .validation-message {
 .condition-label {
   font-size: 1.1em;
   color: #333;
+  font-weight: unset;
 }
 
 .selected-value {
