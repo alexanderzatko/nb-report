@@ -1584,6 +1584,7 @@ class FormManager {
     const groomedWithoutGpsCheckbox = document.createElement('input');
     groomedWithoutGpsCheckbox.type = 'checkbox';
     groomedWithoutGpsCheckbox.className = 'groomed-without-gps-checkbox';
+    groomedWithoutGpsCheckbox.style.cssText = 'transform: scale(2); transform-origin: left center;';
     groomedWithoutGpsCheckbox.dataset.trailId = trailId;
     groomedWithoutGpsCheckbox.dataset.field = 'groomedWithoutGps';
     if (!this.trailConditions[trailId]) {
