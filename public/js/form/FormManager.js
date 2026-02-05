@@ -377,6 +377,14 @@ class FormManager {
                   }
               }
               
+              // Restore groomed without GPS checkbox
+              if (trailConditions.groomedWithoutGps !== undefined) {
+                  const groomedWithoutGpsCheckbox = trailElement.querySelector(`input[data-trail-id="${trailId}"][data-field="groomedWithoutGps"]`);
+                  if (groomedWithoutGpsCheckbox) {
+                      groomedWithoutGpsCheckbox.checked = !!trailConditions.groomedWithoutGps;
+                  }
+              }
+              
               // Restore snow depth min
               if (trailConditions.snowDepthMin !== undefined) {
                   const minInput = trailElement.querySelector(`input[data-trail-id="${trailId}"][data-field="snowDepthMin"]`);
@@ -1509,6 +1517,34 @@ class FormManager {
     groomingGroup.appendChild(groomingHeader);
     groomingGroup.appendChild(groomingSelect);
     div.appendChild(groomingGroup);
+  
+    // Groomed without GPS checkbox
+    const groomedWithoutGpsGroup = document.createElement('div');
+    groomedWithoutGpsGroup.className = 'condition-group';
+    const groomedWithoutGpsLabel = document.createElement('label');
+    groomedWithoutGpsLabel.className = 'condition-label';
+    groomedWithoutGpsLabel.style.cssText = 'display: flex; align-items: center; gap: 8px; cursor: pointer;';
+    const groomedWithoutGpsCheckbox = document.createElement('input');
+    groomedWithoutGpsCheckbox.type = 'checkbox';
+    groomedWithoutGpsCheckbox.className = 'groomed-without-gps-checkbox';
+    groomedWithoutGpsCheckbox.dataset.trailId = trailId;
+    groomedWithoutGpsCheckbox.dataset.field = 'groomedWithoutGps';
+    if (!this.trailConditions[trailId]) {
+      this.trailConditions[trailId] = {};
+    }
+    this.trailConditions[trailId].groomedWithoutGps = false;
+    groomedWithoutGpsCheckbox.addEventListener('change', () => {
+      if (!this.trailConditions[trailId]) {
+        this.trailConditions[trailId] = {};
+      }
+      this.trailConditions[trailId].groomedWithoutGps = groomedWithoutGpsCheckbox.checked;
+    });
+    groomedWithoutGpsLabel.appendChild(groomedWithoutGpsCheckbox);
+    const groomedWithoutGpsText = document.createElement('span');
+    groomedWithoutGpsText.textContent = this.i18next.t('form.groomedWithoutGps');
+    groomedWithoutGpsLabel.appendChild(groomedWithoutGpsText);
+    groomedWithoutGpsGroup.appendChild(groomedWithoutGpsLabel);
+    div.appendChild(groomedWithoutGpsGroup);
   
     // Snow Depth Section
     const snowDepthGroup = document.createElement('div');
