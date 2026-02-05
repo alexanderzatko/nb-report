@@ -1518,34 +1518,6 @@ class FormManager {
     groomingGroup.appendChild(groomingSelect);
     div.appendChild(groomingGroup);
   
-    // Groomed without GPS checkbox
-    const groomedWithoutGpsGroup = document.createElement('div');
-    groomedWithoutGpsGroup.className = 'condition-group';
-    const groomedWithoutGpsLabel = document.createElement('label');
-    groomedWithoutGpsLabel.className = 'condition-label';
-    groomedWithoutGpsLabel.style.cssText = 'display: flex; align-items: center; gap: 8px; cursor: pointer;';
-    const groomedWithoutGpsCheckbox = document.createElement('input');
-    groomedWithoutGpsCheckbox.type = 'checkbox';
-    groomedWithoutGpsCheckbox.className = 'groomed-without-gps-checkbox';
-    groomedWithoutGpsCheckbox.dataset.trailId = trailId;
-    groomedWithoutGpsCheckbox.dataset.field = 'groomedWithoutGps';
-    if (!this.trailConditions[trailId]) {
-      this.trailConditions[trailId] = {};
-    }
-    this.trailConditions[trailId].groomedWithoutGps = false;
-    groomedWithoutGpsCheckbox.addEventListener('change', () => {
-      if (!this.trailConditions[trailId]) {
-        this.trailConditions[trailId] = {};
-      }
-      this.trailConditions[trailId].groomedWithoutGps = groomedWithoutGpsCheckbox.checked;
-    });
-    groomedWithoutGpsLabel.appendChild(groomedWithoutGpsCheckbox);
-    const groomedWithoutGpsText = document.createElement('span');
-    groomedWithoutGpsText.textContent = this.i18next.t('form.groomedWithoutGps');
-    groomedWithoutGpsLabel.appendChild(groomedWithoutGpsText);
-    groomedWithoutGpsGroup.appendChild(groomedWithoutGpsLabel);
-    div.appendChild(groomedWithoutGpsGroup);
-  
     // Snow Depth Section
     const snowDepthGroup = document.createElement('div');
     snowDepthGroup.className = 'condition-group';
@@ -1602,6 +1574,34 @@ class FormManager {
     snowDepthGroup.appendChild(snowDepthHeader);
     snowDepthGroup.appendChild(snowDepthInputs);
     div.appendChild(snowDepthGroup);
+  
+    // Groomed without GPS checkbox (last in trail block)
+    const groomedWithoutGpsGroup = document.createElement('div');
+    groomedWithoutGpsGroup.className = 'condition-group';
+    const groomedWithoutGpsLabel = document.createElement('label');
+    groomedWithoutGpsLabel.className = 'condition-label';
+    groomedWithoutGpsLabel.style.cssText = 'display: flex; align-items: center; gap: 8px; cursor: pointer;';
+    const groomedWithoutGpsCheckbox = document.createElement('input');
+    groomedWithoutGpsCheckbox.type = 'checkbox';
+    groomedWithoutGpsCheckbox.className = 'groomed-without-gps-checkbox';
+    groomedWithoutGpsCheckbox.dataset.trailId = trailId;
+    groomedWithoutGpsCheckbox.dataset.field = 'groomedWithoutGps';
+    if (!this.trailConditions[trailId]) {
+      this.trailConditions[trailId] = {};
+    }
+    this.trailConditions[trailId].groomedWithoutGps = false;
+    groomedWithoutGpsCheckbox.addEventListener('change', () => {
+      if (!this.trailConditions[trailId]) {
+        this.trailConditions[trailId] = {};
+      }
+      this.trailConditions[trailId].groomedWithoutGps = groomedWithoutGpsCheckbox.checked;
+    });
+    groomedWithoutGpsLabel.appendChild(groomedWithoutGpsCheckbox);
+    const groomedWithoutGpsText = document.createElement('span');
+    groomedWithoutGpsText.textContent = this.i18next.t('form.groomedWithoutGps');
+    groomedWithoutGpsLabel.appendChild(groomedWithoutGpsText);
+    groomedWithoutGpsGroup.appendChild(groomedWithoutGpsLabel);
+    div.appendChild(groomedWithoutGpsGroup);
   
     return div;
   }
