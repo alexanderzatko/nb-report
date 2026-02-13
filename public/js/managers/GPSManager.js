@@ -549,6 +549,8 @@ class GPSManager {
             };
 
             await this.saveTrack(trackData);
+            // Set as current track so exportGPX() uploads this newly imported file, not an older cached track
+            this.currentTrack = trackData;
             this.stateManager.setState('gps.hasTrack', true);
 
             return true;
