@@ -78,7 +78,9 @@
     "loginText": "Log in",
     "login": "Login",
     "logout": "Logout",
-    "loginError": "Unable to connect to login service. Please try again later."
+    "loginError": "Unable to connect to login service. Please try again later.",
+    "loginToCompleteAction": "You need to log in to complete this action. Would you like to log in now?",
+    "actionRequiresConnection": "This action requires an internet connection."
   },
   "form": {
     "cloneReport": "Clone",
@@ -91,6 +93,11 @@
       "submitError": "An error occurred while submitting the report. Please try again.",
       "loginRequired": "Please log in to submit the report."
     },
+    "dataSavedLoginToSend": "Your report has been saved. Log in to send it.",
+    "logInToSend": "Log in",
+    "stay": "Stay",
+    "submitDisabledOffline": "Connect to the internet to send",
+    "submitDisabledLogin": "Log in to send this report",
     "formTitleRegular": "Create Report",
     "formTitleAdmin": "Create Report",
     "reportTitle": "Title:",

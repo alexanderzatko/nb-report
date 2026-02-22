@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v710';  // Should match ConfigManager.js version
+const CACHE_VERSION = 'v711';  // Should match ConfigManager.js version
 const CACHE_NAME = 'snow-report-cache';
 const FULL_CACHE_NAME = `${CACHE_NAME}-${CACHE_VERSION}`;
 const OFFLINE_PAGE = '/offline.html';
@@ -51,14 +51,11 @@ const urlsToCache = [
   '/images/bezkarka.jpg',
 ];
 
-const CACHE_ENDPOINTS = [
-  '/api/auth-status'
-];
-
 const NEVER_CACHE_ENDPOINTS = [
   '/api/nblogin',
   '/api/refresh-token',
-  '/api/user-data'
+  '/api/user-data',
+  '/api/auth-status'
 ];
 
 self.addEventListener('install', function(event) {
@@ -87,43 +84,8 @@ self.addEventListener('install', function(event) {
 self.addEventListener('fetch', function(event) {
   const url = new URL(event.request.url);
 
-  // Special handling for auth-status endpoint
-  if (url.pathname === '/api/auth-status') {
-    event.respondWith(
-        fetch(event.request)
-            .then(response => {
-                // Clone the response before caching
-                const responseToCache = response.clone();
-                caches.open(FULL_CACHE_NAME)
-                    .then(cache => {
-                        cache.put(event.request, responseToCache);
-                    });
-                return response;
-            })
-            .catch(async function() {
-                const cache = await caches.open(FULL_CACHE_NAME);
-                const cachedResponse = await cache.match(event.request);
-                if (cachedResponse) {
-                    return cachedResponse;
-                }
-                // If no cached response but we have auth data in localStorage,
-                // return a synthetic successful response
-                const authData = localStorage.getItem('auth_data');
-                if (authData && JSON.parse(authData).isAuthenticated) {
-                    return new Response(JSON.stringify({
-                        isAuthenticated: true,
-                        fromCache: true
-                    }), {
-                        headers: { 'Content-Type': 'application/json' }
-                    });
-                }
-                throw new Error('No cached auth response');
-            })
-    );
-    return;
-  }
-  
-  // Check if this is a request that should never be cached
+  // Auth-status and other sensitive endpoints: never cache, always fetch from network.
+  // When offline, fetch fails and AuthManager handles via validateStoredAuthData.
   if (NEVER_CACHE_ENDPOINTS.some(endpoint => url.pathname.includes(endpoint))) {
     // Skip cache, always fetch from network
     event.respondWith(

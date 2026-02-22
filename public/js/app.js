@@ -68,6 +68,20 @@ class App {
           window.addEventListener('online', () => this.handleOnlineStatus());
           window.addEventListener('offline', () => this.handleOfflineStatus());
 
+          // Re-validate auth when user returns to app after long absence
+          const INACTIVITY_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
+          let lastHiddenAt = 0;
+          document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+              lastHiddenAt = Date.now();
+            } else if (document.visibilityState === 'visible' && lastHiddenAt > 0) {
+              const inactiveMs = Date.now() - lastHiddenAt;
+              if (inactiveMs >= INACTIVITY_THRESHOLD_MS && navigator.onLine) {
+                this.handleVisibilityRestored();
+              }
+            }
+          });
+
           // Money page: refresh user data on request (e.g. Refresh balance button)
           const app = this;
           window.addEventListener('request-refresh-user-data', async () => {
@@ -144,6 +158,19 @@ class App {
   
   handleOfflineStatus() {
       this.logger.debug('Application is offline');
+  }
+
+  async handleVisibilityRestored() {
+    this.logger.debug('App visible after inactivity, re-validating auth');
+    try {
+      const authManager = AuthManager.getInstance();
+      const isAuthenticated = await authManager.checkAuthStatus();
+      if (!isAuthenticated && this.managers?.ui) {
+        await this.managers.ui.showLoginPrompt();
+      }
+    } catch (error) {
+      this.logger.error('Error re-validating auth on visibility restore:', error);
+    }
   }
   
   async initializeCorei18n() {

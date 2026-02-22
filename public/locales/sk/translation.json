@@ -78,7 +78,9 @@
     "loginText": "Prihlásiť sa do aplikácie",
     "login": "Prihlásiť",
     "logout": "Odhlásiť",
-    "loginError": "Nedarí sa mi pripojiť sa na prihlasovací server. Skúste prosím neskôr."
+    "loginError": "Nedarí sa mi pripojiť sa na prihlasovací server. Skúste prosím neskôr.",
+    "loginToCompleteAction": "Pre dokončenie tejto akcie sa musíte prihlásiť. Chcete sa prihlásiť teraz?",
+    "actionRequiresConnection": "Táto akcia vyžaduje pripojenie k internetu."
   },
   "form": {
     "cloneReport": "Klonovať",
@@ -91,6 +93,11 @@
       "submitError": "Pri odosielaní správy došlo k chybe. Skúste to znova neskôr.",
       "loginRequired": "Pred odoslaním správy musíte byť prihlásení."
     },
+    "dataSavedLoginToSend": "Vaša správa bola uložená. Prihláste sa, aby ste ju mohli odoslať.",
+    "logInToSend": "Prihlásiť sa",
+    "stay": "Zostať",
+    "submitDisabledOffline": "Pripojte sa na internet pre odoslanie",
+    "submitDisabledLogin": "Prihláste sa pre odoslanie správy",
     "formTitleRegular": "Vytvoriť správu",
     "formTitleAdmin": "Vytvoriť správu",
     "reportTitle": "Názov:",

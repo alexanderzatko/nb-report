@@ -140,6 +140,30 @@ class FormManager {
       this.autoSaveInterval = null;
     }
   }
+
+  updateSubmitButtonState() {
+    const form = document.getElementById('snow-report-form');
+    if (!form || form.style.display === 'none') return;
+    const submitButton = document.getElementById('submit-report-button') || document.querySelector('button[type="submit"]');
+    const helperEl = document.getElementById('submit-helper');
+    if (!submitButton) return;
+    const authManager = AuthManager.getInstance();
+    const storedAuth = authManager.getStoredAuthData();
+    const isAuthenticated = !!(storedAuth?.isAuthenticated);
+    const isOnline = navigator.onLine;
+    const shouldDisable = !isOnline || !isAuthenticated;
+    submitButton.disabled = shouldDisable;
+    if (helperEl) {
+      if (shouldDisable) {
+        helperEl.textContent = !isOnline
+          ? this.i18next.t('form.submitDisabledOffline')
+          : this.i18next.t('form.submitDisabledLogin');
+        helperEl.style.display = 'block';
+      } else {
+        helperEl.style.display = 'none';
+      }
+    }
+  }
   
   async saveFormState() {
       if (!this.currentFormId) return;
@@ -579,6 +603,10 @@ class FormManager {
           // Add visual feedback
           newCancelButton.style.cursor = 'pointer';
       }
+
+      window.addEventListener('online', () => this.updateSubmitButtonState());
+      window.addEventListener('offline', () => this.updateSubmitButtonState());
+      AuthManager.getInstance().subscribe('authStateChange', () => this.updateSubmitButtonState());
   }
 
   async replaceCommonSections(activeSection, commonTemplate) {
@@ -789,6 +817,7 @@ class FormManager {
           this.photoManager.setCurrentFormId(this.currentFormId);
           await this.selectManager.refreshAllDropdowns();
         }
+        this.updateSubmitButtonState();
     } catch (error) {
         this.logger.error('Error initializing form:', error);
         throw error;
@@ -1809,6 +1838,7 @@ class FormManager {
   }
 
   startTrackingFormTime() {
+    this.updateSubmitButtonState();
     if (!this.formStartTime) {
       this.formStartTime = new Date();
       this.elapsedTimeInterval = setInterval(() => this.updateElapsedTime(), 1000);
@@ -2072,7 +2102,31 @@ class FormManager {
       }
     } catch (error) {
       this.logger.error('Error submitting snow report:', error);
-      this.showError(this.i18next.t('form.validation.submitError'));
+      const is401 = error.status === 401;
+      const isAuthExpired = error.message?.includes('Authentication expired');
+      if (is401 || isAuthExpired) {
+        try {
+          await this.saveFormState();
+        } catch (saveErr) {
+          this.logger.error('Error saving form state before login redirect:', saveErr);
+        }
+        const authManager = AuthManager.getInstance();
+        authManager.clearAuthData();
+        authManager.notifyAuthStateChange(false);
+        const uiManager = UIManager.getInstance();
+        const wantLogin = await uiManager.showModalDialog({
+          title: '',
+          message: this.i18next.t('form.dataSavedLoginToSend'),
+          confirmText: this.i18next.t('form.logInToSend'),
+          cancelText: this.i18next.t('form.stay'),
+          showCancel: true
+        });
+        if (wantLogin) {
+          await authManager.initiateOAuth();
+        }
+      } else {
+        this.showError(this.i18next.t('form.validation.submitError'));
+      }
     }   finally {
       this.isSubmitting = false;
       submitButton.classList.remove('submitting');
@@ -2515,7 +2569,11 @@ class FormManager {
       });
   
       if (!response.ok) {
-        throw new Error(await response.text());
+        const text = await response.text();
+        const error = new Error(text || `Request failed with status ${response.status}`);
+        error.status = response.status;
+        error.responseText = text;
+        throw error;
       }
   
       const result = await response.json();

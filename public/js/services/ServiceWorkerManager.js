@@ -214,7 +214,7 @@ class ServiceWorkerManager {
          
          if (isAuthenticated) {
              try {
-                 await authManager.refreshToken();
+                 await authManager.checkAndRefreshToken();
              } catch (error) {
                  console.error('Token refresh failed during update:', error);
              }

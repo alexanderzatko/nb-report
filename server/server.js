@@ -293,28 +293,48 @@ app.post('/api/logout', (req, res) => {
   }
 });
 
-app.get('/api/auth-status', (req, res) => {
+app.get('/api/auth-status', async (req, res) => {
   logger.info('Auth status check request received', { 
     sessionID: req.sessionID,
     hasSession: !!req.session,
     hasAccessToken: req.session && !!req.session.accessToken
   });
 
-  // Check if session exists and has valid tokens
-  const isAuthenticated = !!(req.session && req.session.accessToken);
+  let isAuthenticated = !!(req.session && req.session.accessToken);
   
   if (isAuthenticated) {
-    // Refresh the session expiry
-    req.session.touch();
+    try {
+      const response = await axios.post(
+        `${OAUTH_PROVIDER_URL}/nabezky/rules/rules_retrieve_data_for_the_nb_report_app`,
+        {},
+        {
+          headers: {
+            'Authorization': `Bearer ${req.session.accessToken}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          validateStatus: (status) => status === 200 || status === 401
+        }
+      );
+      if (response.status === 401) {
+        logger.info('Auth status: token invalidated by nabezky backend (401)');
+        isAuthenticated = false;
+      } else {
+        req.session.touch();
+      }
+    } catch (error) {
+      logger.warn('Auth status: could not validate token with nabezky', { message: error.message });
+      if (error.response?.status === 401) {
+        isAuthenticated = false;
+      }
+      // On network/other errors, keep current isAuthenticated to avoid logging out due to temporary issues
+    }
   }
 
   res.json({ 
     isAuthenticated,
     sessionID: req.sessionID,
-    // Only include non-sensitive user info here
-    userInfo: isAuthenticated ? {
-      // e.g., username: req.session.username,
-    } : null
+    userInfo: isAuthenticated ? {} : null
   });
 });
 

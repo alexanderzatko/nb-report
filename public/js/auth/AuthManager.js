@@ -77,6 +77,12 @@ class AuthManager {
                 }
             });
 
+            if (response.status === 401) {
+                this.clearAuthData();
+                this.notifyAuthStateChange(false);
+                return false;
+            }
+
             const data = await response.json();
 
             if (data.isAuthenticated) {
@@ -92,10 +98,11 @@ class AuthManager {
                 return true;
             }
         } catch (error) {
-            // If server check fails but we have valid stored data, stay logged in
-            if (this.validateStoredAuthData(storedAuthData)) {
-                return true;
-            }
+            this.logger.error('Auth status fetch failed (online):', error);
+            // When online, do not fall back to stored data - we cannot verify session
+            this.clearAuthData();
+            this.notifyAuthStateChange(false);
+            return false;
         }
       }
 
@@ -104,8 +111,9 @@ class AuthManager {
       return false;
     } catch (error) {
         this.logger.error('Error checking auth status:', error);
-        // If error occurs but we have valid stored data, stay logged in
-        if (storedAuthData && this.validateStoredAuthData(storedAuthData)) {
+        if (!navigator.onLine && storedAuthData && this.validateStoredAuthData(storedAuthData)) {
+            await this.restoreUserState(storedAuthData);
+            this.notifyAuthStateChange(true);
             return true;
         }
         this.notifyAuthStateChange(false);

@@ -470,6 +470,9 @@ async setupDashboardCards() {
       this.showError(this.i18next.t('voucher.error'));
       return;
     }
+
+    const canProceed = await this.requireAuthForAction();
+    if (!canProceed) return;
     
     try {
       const voucherManager = VoucherManager.getInstance();
@@ -771,6 +774,10 @@ async setupDashboardCards() {
       errorEl.textContent = '';
     }
     if (successEl) successEl.style.display = 'none';
+
+    const canProceed = await this.requireAuthForAction();
+    if (!canProceed) return;
+
     try {
       // Refresh token before request so expired token doesn't cause 401
       await authManager.checkAndRefreshToken();
@@ -803,7 +810,7 @@ async setupDashboardCards() {
       if (err.response?.status === 401) {
         const stillLoggedIn = await authManager.checkAuthStatus();
         if (!stillLoggedIn) {
-          this.showLoginPrompt();
+          await this.showLoginPrompt();
         }
       }
     }
@@ -814,6 +821,8 @@ async setupDashboardCards() {
     const backBtn = document.getElementById('money-back-button');
     if (refreshBtn) {
       refreshBtn.addEventListener('click', async () => {
+        const canProceed = await this.requireAuthForAction();
+        if (!canProceed) return;
         const errorEl = document.getElementById('money-error');
         const successEl = document.getElementById('money-success');
         if (errorEl) {
@@ -868,7 +877,7 @@ async setupDashboardCards() {
           if (!userData) {
               this.logger.error('No user data available');
               await AuthManager.getInstance().logout();
-              this.showLoginPrompt();
+              await this.showLoginPrompt();
               return;
           }
   
@@ -1220,6 +1229,33 @@ async setupDashboardCards() {
       this.logger.error('Error during logout:', error);
       this.showError(this.i18next.t('auth.logoutError'));
     }
+  }
+
+  async showLoginPrompt() {
+    await this.resetToLoginState();
+  }
+
+  async requireAuthForAction() {
+    if (!navigator.onLine) {
+      this.showError(this.i18next.t('auth.actionRequiresConnection'));
+      return false;
+    }
+    const authManager = AuthManager.getInstance();
+    const storedAuth = authManager.getStoredAuthData();
+    if (!storedAuth?.isAuthenticated) {
+      const wantLogin = await this.showModalDialog({
+        title: '',
+        message: this.i18next.t('auth.loginToCompleteAction'),
+        confirmText: this.i18next.t('auth.login'),
+        cancelText: this.i18next.t('dashboard.confirmButtons.cancel'),
+        showCancel: true
+      });
+      if (wantLogin) {
+        await authManager.initiateOAuth();
+      }
+      return false;
+    }
+    return true;
   }
 
   async resetToLoginState() {

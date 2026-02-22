@@ -423,6 +423,13 @@ div#private-report-section {
   line-height: 1.4;
 }
 
+.submit-helper {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 0.5rem;
+  line-height: 1.4;
+}
+
 /* The FORM STOP */
 
 
