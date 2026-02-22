@@ -256,6 +256,7 @@
     "slovenia": "Slovenia",
     "spain": "Spain",
     "sweden": "Sweden",
+    "unitedStates": "United States",
     "other": "Other"
   },
   "regions": {
@@ -446,7 +447,17 @@
     "zitavskaPanev": "Žitavská Pánev",
     "zlatohorskaVrchovina": "Zlatohorská Vrchovina",
     "zulovskaPahorkatina": "Zulovská Pahorkatina",
-    "zvolenskaKotlina": "Zvolenská Kotlina"
+    "zvolenskaKotlina": "Zvolenská Kotlina",
+    "zabrezskaVrchovina": "Zábřežská vrchovina",
+    "northernRockyMountains": "Northern Rocky Mountains",
+    "wallaWallaPlateau": "Walla Walla Plateau",
+    "northernCascadeMountains": "Northern Cascade Mountains",
+    "middleCascadeMountains": "Middle Cascade Mountains",
+    "pugetTrough": "Puget Trough",
+    "olympicMountains": "Olympic Mountains",
+    "oregonCoastRange": "Oregon Coast Range",
+    "rilskoRodopskyMasiv": "Rila-Rhodope Massif",
+    "staraPlanina": "Stara Planina"
   },
   "offline": {
     "title": "You're Offline",

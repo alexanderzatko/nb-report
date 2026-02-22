@@ -256,6 +256,7 @@
     "slovenia": "Slovinsko",
     "spain": "Španělsko",
     "sweden": "Švédsko",
+    "unitedStates": "Spojené státy",
     "other": "Jiné"
   },
   "regions": {
@@ -446,7 +447,17 @@
     "zitavskaPanev": "Žitavská Pánev",
     "zlatohorskaVrchovina": "Zlatohorská Vrchovina",
     "zulovskaPahorkatina": "Zulovská Pahorkatina",
-    "zvolenskaKotlina": "Zvolenská Kotlina"
+    "zvolenskaKotlina": "Zvolenská Kotlina",
+    "zabrezskaVrchovina": "Zábřežská vrchovina",
+    "northernRockyMountains": "Northern Rocky Mountains",
+    "wallaWallaPlateau": "Walla Walla Plateau",
+    "northernCascadeMountains": "Northern Cascade Mountains",
+    "middleCascadeMountains": "Middle Cascade Mountains",
+    "pugetTrough": "Puget Trough",
+    "olympicMountains": "Olympic Mountains",
+    "oregonCoastRange": "Oregon Coast Range",
+    "rilskoRodopskyMasiv": "Rilsko-Rodopský masív",
+    "staraPlanina": "Stara Planina"
   },
   "errors": {
     "gps": {
