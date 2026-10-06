@@ -967,6 +967,8 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../public', 'index.html'));
 });
 
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Server running at http://0.0.0.0:${port}`);
+// Listen on IPv6 (::) so Apache ProxyPass to "localhost" (which resolves to ::1
+// on this host) can connect. On Linux this also accepts IPv4 via dual-stack.
+app.listen(port, '::', () => {
+  console.log(`Server running at http://[::]:${port} (dual-stack)`);
 });
