@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v711';  // Should match ConfigManager.js version
+const CACHE_VERSION = 'v712';  // Should match ConfigManager.js version
 const CACHE_NAME = 'snow-report-cache';
 const FULL_CACHE_NAME = `${CACHE_NAME}-${CACHE_VERSION}`;
 const OFFLINE_PAGE = '/offline.html';
@@ -51,13 +51,6 @@ const urlsToCache = [
   '/images/bezkarka.jpg',
 ];
 
-const NEVER_CACHE_ENDPOINTS = [
-  '/api/nblogin',
-  '/api/refresh-token',
-  '/api/user-data',
-  '/api/auth-status'
-];
-
 self.addEventListener('install', function(event) {
   console.log('[ServiceWorker] Install event');
   event.waitUntil(
@@ -84,23 +77,19 @@ self.addEventListener('install', function(event) {
 self.addEventListener('fetch', function(event) {
   const url = new URL(event.request.url);
 
-  // Auth-status and other sensitive endpoints: never cache, always fetch from network.
-  // When offline, fetch fails and AuthManager handles via validateStoredAuthData.
-  if (NEVER_CACHE_ENDPOINTS.some(endpoint => url.pathname.includes(endpoint))) {
-    // Skip cache, always fetch from network
-    event.respondWith(
-      fetch(event.request)
-        .catch(function() {
-          // Only return offline page for navigation requests
-          if (event.request.mode === 'navigate') {
-            return caches.match('/offline.html');
-          }
-          throw new Error('Network request failed');
-        })
-    );
+  // Never intercept API calls — let the browser handle them directly.
+  // Safari reports intercepted POST failures as "TypeError: Load failed" /
+  // "Fetch API cannot load ... due to access control checks" (not real CORS).
+  // Returning offline.html for failed API calls also breaks JSON clients.
+  if (url.pathname.startsWith('/api/')) {
     return;
   }
-  
+
+  // Only cache GET requests for the app shell
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then(function(response) {
@@ -109,8 +98,7 @@ self.addEventListener('fetch', function(event) {
         }
         return fetch(event.request)
           .then(function(response) {
-            // Only cache successful GET requests
-            if (response.status === 200 && event.request.method === 'GET') {
+            if (response.status === 200) {
               const responseClone = response.clone();
               caches.open(FULL_CACHE_NAME)
                 .then(function(cache) {
@@ -120,14 +108,12 @@ self.addEventListener('fetch', function(event) {
             return response;
           })
           .catch(function() {
-            // For navigation requests, return index.html from cache
             if (event.request.mode === 'navigate') {
               return caches.match('/index.html')
                 .then(function(response) {
                   return response || caches.match('/offline.html');
                 });
             }
-            // For other resources that fail to load, try offline.html only if no cached version
             return caches.match('/offline.html');
           });
       })
